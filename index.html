@@ -126,7 +126,12 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
 .chat-status-text{font-size:11px;margin-top:2px;}
 .chat-status-text.online{color:var(--green);}
 .chat-status-text.offline{color:var(--text3);}
-.chat-status-text.typing{color:var(--accent3);font-style:italic;}
+.chat-status-text.typing{display:flex;align-items:center;gap:6px;width:max-content;max-width:100%;margin-top:3px;padding:3px 8px;border-radius:999px;background:rgba(124,110,247,.13);color:#c4b5fd;font-style:normal;font-weight:800;box-shadow:inset 0 0 0 1px rgba(167,139,250,.11);}
+.chat-status-text.typing .typing-label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.chat-identity{display:flex;align-items:center;gap:10px;min-width:0;flex:1;border-radius:13px;padding:4px 6px;margin:-4px 0;cursor:pointer;transition:background .2s ease,transform .2s ease;}
+.chat-identity:hover{background:rgba(124,110,247,.09);}
+.chat-identity:active{transform:scale(.985);}
+.chat-identity-copy{min-width:0;flex:1;}
 .hdr-btn{background:none;border:none;color:var(--text3);cursor:pointer;padding:8px;border-radius:10px;font-size:18px;transition:transform .2s ease,background .2s ease,color .2s ease;}
 .hdr-btn:hover,.footer-btn:hover,.icon-btn:hover{background:rgba(124,110,247,.10);color:var(--accent3);transform:translateY(-1px);}
 
@@ -259,6 +264,25 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
 #profile-panel .field-label{margin:3px 2px 0;color:var(--text2);font-size:11px;letter-spacing:.25px;}
 #profile-panel .field-input{margin:0 0 6px;background:rgba(26,26,40,.72);background:color-mix(in srgb,var(--bg3) 74%,transparent);border-color:rgba(124,110,247,.14);border-radius:12px;transition:border-color .25s ease,box-shadow .25s ease,background .25s ease;}
 #profile-panel .field-input:focus{border-color:var(--accent);background:rgba(30,30,48,.90);box-shadow:0 0 0 3px rgba(124,110,247,.10),0 8px 24px rgba(0,0,0,.14);}
+#profile-panel .profile-bio-input{width:100%;min-height:92px;max-height:150px;resize:vertical;margin:0 0 6px;padding:12px 14px;border:1px solid rgba(124,110,247,.14);border-radius:12px;background:rgba(26,26,40,.72);color:var(--text);font:14px 'Nunito',sans-serif;line-height:1.5;outline:none;}
+#profile-panel .profile-bio-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(124,110,247,.10);}
+.user-profile-card{position:relative;width:min(390px,92vw);padding:0;overflow:hidden;border-color:rgba(167,139,250,.24);background:linear-gradient(165deg,rgba(28,27,48,.98),rgba(16,17,29,.99));}
+.user-profile-cover{height:104px;background:radial-gradient(circle at 20% 20%,rgba(124,110,247,.38),transparent 40%),radial-gradient(circle at 85% 30%,rgba(56,189,248,.18),transparent 38%),linear-gradient(135deg,#201d42,#111527);position:relative;overflow:hidden;}
+.user-profile-cover::before{content:'✦  ·  ✧  ·  ✦';position:absolute;inset:20px 0 auto;text-align:center;color:rgba(255,255,255,.2);font-size:15px;letter-spacing:20px;}
+.user-profile-close{position:absolute;z-index:2;right:12px;top:12px;width:34px;height:34px;border:1px solid rgba(255,255,255,.12);border-radius:11px;background:rgba(10,10,18,.42);color:#fff;font-size:18px;cursor:pointer;backdrop-filter:blur(8px);}
+.user-profile-body{padding:0 20px 20px;text-align:center;}
+.user-profile-avatar{width:92px;height:92px;margin:-48px auto 10px;position:relative;display:grid;place-items:center;border:4px solid #171725;border-radius:30px;background:var(--bg3);font-size:40px;box-shadow:0 15px 34px rgba(0,0,0,.38);}
+.user-profile-avatar .avatar-photo{border-radius:26px;}
+.user-profile-name{font-size:21px;font-weight:900;color:var(--text);}
+.user-profile-nick{margin-top:2px;color:#9c8cff;font-size:12px;font-weight:800;}
+.user-profile-seen{margin-top:7px;color:var(--text3);font-size:11px;}
+.user-profile-status{display:inline-flex;max-width:100%;margin-top:12px;padding:7px 11px;border-radius:10px;background:rgba(124,110,247,.12);color:#d8d4ff;font-size:12px;font-weight:700;overflow-wrap:anywhere;}
+.user-profile-section{margin-top:15px;padding:13px 14px;border:1px solid rgba(255,255,255,.055);border-radius:14px;background:rgba(14,15,25,.42);text-align:left;}
+.user-profile-section-label{margin-bottom:6px;color:var(--text3);font-size:9px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;}
+.user-profile-bio{min-height:20px;color:var(--text2);font-size:13px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere;}
+.user-profile-actions{display:flex;gap:8px;margin-top:16px;}
+.user-profile-actions .modal-btn{min-height:44px;}
+.member-info,.member-item .av{cursor:pointer;}
 #my-nick-display{padding:10px 12px!important;border-radius:10px;background:rgba(124,110,247,.07);border:1px solid rgba(124,110,247,.10);color:var(--text2)!important;}
 #profile-panel .auth-btn{margin-top:4px;border-radius:12px;padding:14px;background:linear-gradient(135deg,var(--accent),#6d5cf6);box-shadow:0 10px 26px rgba(124,110,247,.24);transition:transform .22s ease,box-shadow .22s ease,filter .22s ease;}
 #profile-panel .auth-btn:hover{transform:translateY(-2px);box-shadow:0 14px 30px rgba(124,110,247,.32);filter:brightness(1.05);}
@@ -608,10 +632,12 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
     <div id="active-chat" style="display:none;flex-direction:column;flex:1;min-height:0;">
       <div class="chat-header">
         <button class="back-btn" onclick="goBack()">&#8592;</button>
-        <div class="av" id="chat-av"></div>
-        <div style="flex:1;min-width:0;">
-          <div class="chat-name" id="chat-name-hdr"></div>
-          <div class="chat-status-text offline" id="chat-status-text">...</div>
+        <div class="chat-identity" id="chat-identity" onclick="openCurrentHeaderInfo()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openCurrentHeaderInfo()}" role="button" tabindex="0" aria-label="Открыть информацию">
+          <div class="av" id="chat-av"></div>
+          <div class="chat-identity-copy">
+            <div class="chat-name" id="chat-name-hdr"></div>
+            <div class="chat-status-text offline" id="chat-status-text">...</div>
+          </div>
         </div>
         <div class="chat-header-actions">
           <button class="hdr-btn" id="room-info-btn" onclick="openRoomPanel()" title="Информация" style="display:none">&#9432;</button>
@@ -779,11 +805,36 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
   <div class="field-label">Имя</div>
   <input class="field-input" id="prof-name-inp" autocomplete="off"/>
   <div class="field-label">Статус</div>
-  <input class="field-input" id="prof-status-inp" placeholder="не трогать 🔥" autocomplete="off"/>
+  <input class="field-input" id="prof-status-inp" maxlength="80" placeholder="не трогать 🔥" autocomplete="off"/>
+  <div class="field-label">О себе</div>
+  <textarea class="profile-bio-input" id="prof-bio-inp" maxlength="220" placeholder="Расскажи немного о себе…"></textarea>
   <div class="field-label">Мой ник</div>
   <div id="my-nick-display" style="font-size:13px;color:var(--text3);padding:4px 0;"></div>
   <button class="auth-btn" onclick="saveProfile()">Сохранить</button>
   <button class="close-btn" onclick="closeAllPanels()">Закрыть</button>
+</div>
+
+<!-- USER PROFILE VIEW -->
+<div class="modal-overlay" id="user-profile-modal" onclick="if(event.target===this)closeUserProfile()">
+  <div class="modal user-profile-card">
+    <button class="user-profile-close" onclick="closeUserProfile()" aria-label="Закрыть">✕</button>
+    <div class="user-profile-cover"></div>
+    <div class="user-profile-body">
+      <div class="user-profile-avatar" id="view-profile-avatar"></div>
+      <div class="user-profile-name" id="view-profile-name"></div>
+      <div class="user-profile-nick" id="view-profile-nick"></div>
+      <div class="user-profile-seen" id="view-profile-seen"></div>
+      <div class="user-profile-status" id="view-profile-status"></div>
+      <div class="user-profile-section">
+        <div class="user-profile-section-label">О себе</div>
+        <div class="user-profile-bio" id="view-profile-bio"></div>
+      </div>
+      <div class="user-profile-actions">
+        <button class="modal-btn secondary" onclick="closeUserProfile()">Закрыть</button>
+        <button class="modal-btn primary" id="view-profile-message-btn">Написать</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -1476,6 +1527,25 @@ function handleAvatarFile(input){
   img.onerror=()=>{URL.revokeObjectURL(url);showToast('Не удалось открыть фото');};
   img.src=url;
 }
+var viewedProfileNickV5='';
+function openCurrentHeaderInfo(){if(currentRoom)openRoomPanel();else if(currentChat)openUserProfile(currentChat);}
+async function openUserProfile(nick){
+  if(!nick)return;
+  const {data:user,error}=await sb.from('users').select('*').eq('nick',nick).maybeSingle();
+  if(error||!user){showToast('Профиль не найден');return;}
+  userCache[nick]=user;viewedProfileNickV5=nick;
+  setAvatarElement(document.getElementById('view-profile-avatar'),user);
+  document.getElementById('view-profile-name').textContent=user.name||user.nick;
+  document.getElementById('view-profile-nick').textContent='@'+user.nick;
+  const online=isOnline(user.last_seen);
+  const seen=document.getElementById('view-profile-seen');seen.textContent=online?'● сейчас в сети':formatLastSeen(user.last_seen);seen.style.color=online?'var(--green)':'var(--text3)';
+  const profileData=unpackProfileData(user.status),status=profileData.status.trim();
+  document.getElementById('view-profile-status').textContent=status||'Статус не указан';
+  document.getElementById('view-profile-bio').textContent=(typeof user.bio==='string'&&user.bio.trim())?user.bio.trim():'Пользователь пока ничего о себе не рассказал.';
+  const messageBtn=document.getElementById('view-profile-message-btn');messageBtn.style.display=user.nick===me.nick?'none':'block';messageBtn.onclick=()=>{closeUserProfile();openChat(user.nick);};
+  document.getElementById('user-profile-modal').classList.add('show');
+}
+function closeUserProfile(){document.getElementById('user-profile-modal').classList.remove('show');viewedProfileNickV5='';}
 function buildProfPanel(){
   profAvIdx=me.av;
   const profileData=unpackProfileData(me.status);
@@ -1483,15 +1553,17 @@ function buildProfPanel(){
   renderProfileAvatar();
   document.getElementById('prof-name-inp').value=me.name;
   document.getElementById('prof-status-inp').value=profileData.status;
+  document.getElementById('prof-bio-inp').value=typeof me.bio==='string'?me.bio:'';
   document.getElementById('my-nick-display').textContent='@'+me.nick;
   buildAvGrid('av-grid-prof',me.av,i=>{profAvIdx=i;profAvatarPhoto='';renderProfileAvatar();});
 }
 async function saveProfile(){
   const nextName=document.getElementById('prof-name-inp').value.trim()||me.name;
   const nextStatus=packProfileData(document.getElementById('prof-status-inp').value.trim(),profAvatarPhoto);
-  const {error}=await sb.from('users').update({av:profAvIdx,name:nextName,status:nextStatus}).eq('nick',me.nick);
-  if(error){showToast('Не удалось сохранить аватарку');return;}
-  me.av=profAvIdx;me.name=nextName;me.status=nextStatus;
+  const nextBio=document.getElementById('prof-bio-inp').value.trim().slice(0,220);
+  const {error}=await sb.from('users').update({av:profAvIdx,name:nextName,status:nextStatus,bio:nextBio}).eq('nick',me.nick);
+  if(error){showToast(error.code==='PGRST204'?'Сначала обнови таблицу профилей':'Не удалось сохранить профиль');return;}
+  me.av=profAvIdx;me.name=nextName;me.status=nextStatus;me.bio=nextBio;
   userCache[me.nick]=me;
   closeAllPanels();showToast('Профиль сохранён ✅');
   if(currentChat)renderMessages();
@@ -1505,7 +1577,7 @@ document.getElementById('msg-input').addEventListener('focus',()=>setTimeout(scr
 window.addEventListener('resize',()=>{if(currentChat)setTimeout(scrollToBottom,100);});
 </script>
 <script>
-/* TELECHAT V4 PUBLIC AND PRIVATE ROOMS */
+/* TELECHAT V5 PROFILES AND TYPING */
 var currentRoom=null;
 var roomRows=[];
 var roomsAvailable=true;
@@ -1515,6 +1587,8 @@ var selectedRoomType='group';
 var selectedRoomVisibility='public';
 var selectedRoomIcon='🌌';
 var roomSearchRequestV4=0;
+var lastTypingSentV5=0;
+var typingRefreshTimerV5=null;
 var pendingMedia=null;
 var mediaRecorderV3=null;
 var voiceChunksV3=[];
@@ -1754,21 +1828,40 @@ updateStatusBar=async function(){
   const av=document.getElementById('chat-av');el.textContent=formatLastSeen(data.last_seen);el.className='chat-status-text '+(online?'online':'offline');if(online)av.classList.add('av-online');else av.classList.remove('av-online');
 };
 
+async function refreshTypingIndicatorV5(key){
+  if(!key||key!==conversationKey())return;
+  const {data}=await sb.from('typing').select('nick,ts').eq('chat_key',key).neq('nick',me.nick).gt('ts',Date.now()-5000).order('ts',{ascending:false});
+  if(key!==conversationKey())return;
+  const el=document.getElementById('chat-status-text'),nicks=[...new Set((data||[]).map(item=>item.nick))];
+  if(!nicks.length){
+    clearTimeout(typingRefreshTimerV5);
+    if(el.classList.contains('typing')){el.className='chat-status-text offline';await updateStatusBar();}
+    return;
+  }
+  const users=await Promise.all(nicks.slice(0,3).map(nick=>getUser(nick))),names=users.map((user,index)=>user?user.name:nicks[index]);
+  let label='';
+  if(names.length===1)label=names[0]+' печатает…';
+  else if(names.length===2)label=names[0]+' и '+names[1]+' печатают…';
+  else label=names[0]+' и ещё '+(nicks.length-1)+' печатают…';
+  el.className='chat-status-text typing';
+  el.innerHTML='<span class="typing-dots"><span></span><span></span><span></span></span><span class="typing-label">'+escHtml(label)+'</span>';
+  clearTimeout(typingRefreshTimerV5);typingRefreshTimerV5=setTimeout(()=>refreshTypingIndicatorV5(key),2800);
+}
 sendTyping=async function(){
   const key=conversationKey();if(!key||!canWriteCurrent())return;
-  await sb.from('typing').upsert({chat_key:key,nick:me.nick,ts:Date.now()});if(typingTimer)clearTimeout(typingTimer);
-  typingTimer=setTimeout(()=>sb.from('typing').delete().eq('chat_key',key).eq('nick',me.nick),2500);
+  const input=document.getElementById('msg-input'),now=Date.now();
+  if(!input.value.trim()){clearTimeout(typingTimer);await sb.from('typing').delete().eq('chat_key',key).eq('nick',me.nick);return;}
+  if(now-lastTypingSentV5>700){lastTypingSentV5=now;await sb.from('typing').upsert({chat_key:key,nick:me.nick,ts:now});}
+  if(typingTimer)clearTimeout(typingTimer);
+  typingTimer=setTimeout(async()=>{await sb.from('typing').delete().eq('chat_key',key).eq('nick',me.nick);},2200);
 };
 subscribeTyping=function(){
-  if(typingSub)sb.removeChannel(typingSub);const key=conversationKey();if(!key)return;
-  typingSub=sb.channel('typing-'+key+'-'+Date.now()).on('postgres_changes',{event:'*',schema:'public',table:'typing',filter:'chat_key=eq.'+key},async payload=>{
-    if((payload.eventType==='INSERT'||payload.eventType==='UPDATE')&&payload.new.nick!==me.nick){
-      const u=await getUser(payload.new.nick),el=document.getElementById('chat-status-text');el.className='chat-status-text typing';el.innerHTML=`<span class="typing-dots"><span></span><span></span><span></span></span> ${u?escHtml(u.name):'Кто-то'} печатает...`;
-      setTimeout(async()=>{const {data}=await sb.from('typing').select('nick').eq('chat_key',key).neq('nick',me.nick);if(!data||!data.length)updateStatusBar();},3000);
-    }else updateStatusBar();
-  }).subscribe();
-};
-markAsRead=async function(){
+  if(typingSub)sb.removeChannel(typingSub);clearTimeout(typingRefreshTimerV5);
+  const key=conversationKey();if(!key)return;
+  typingSub=sb.channel('typing-v5-'+key+'-'+Date.now())
+    .on('postgres_changes',{event:'*',schema:'public',table:'typing',filter:'chat_key=eq.'+key},()=>refreshTypingIndicatorV5(key))
+    .subscribe(status=>{if(status==='SUBSCRIBED')refreshTypingIndicatorV5(key);});
+};markAsRead=async function(){
   const key=conversationKey();if(!key)return;const {data:unread}=await sb.from('messages').select('id,read_by').eq('chat_key',key).neq('from_nick',me.nick);if(!unread)return;
   for(const m of unread){const readBy=m.read_by||[];if(!readBy.includes(me.nick))await sb.from('messages').update({read_by:[...readBy,me.nick]}).eq('id',m.id);}
 };
@@ -1873,7 +1966,7 @@ async function renderRoomPanel(){
   document.getElementById('room-access-icon').textContent=isPublic?'🌍':'🔒';document.getElementById('room-access-title').textContent=isPublic?'Общее пространство':'Приватное пространство';document.getElementById('room-access-text').textContent=isPublic?'Его можно найти по названию и вступить самостоятельно.':'Его не видно в общем поиске. Войти можно только по приглашению владельца.';
   const accessChange=document.getElementById('room-access-change');accessChange.style.display=isOwner?'grid':'none';document.getElementById('room-access-public').classList.toggle('active',isPublic);document.getElementById('room-access-private').classList.toggle('active',!isPublic);
   document.getElementById('room-add-member-section').style.display=isOwner?'block':'none';const list=document.getElementById('room-member-list');list.innerHTML='';
-  for(const member of members||[]){const u=users.find(x=>x.nick===member.user_nick)||{nick:member.user_nick,name:member.user_nick,av:0,status:''},row=document.createElement('div');row.className='member-item';row.innerHTML='<div class="av">'+avatarMarkup(u)+'</div><div class="member-info"><div class="member-name">'+escHtml(u.name)+(member.role==='owner'?'<span class="room-owner-star">★</span>':'')+'</div><div class="member-nick">@'+escHtml(u.nick)+' · '+(member.role==='owner'?'владелец':'участник')+'</div></div>'+(isOwner&&member.role!=='owner'?'<button class="member-remove" data-member-nick="'+escHtml(u.nick)+'" title="Удалить">✕</button>':'');const removeBtn=row.querySelector('.member-remove');if(removeBtn)removeBtn.onclick=()=>removeRoomMember(member.user_nick);list.appendChild(row);}
+  for(const member of members||[]){const u=users.find(x=>x.nick===member.user_nick)||{nick:member.user_nick,name:member.user_nick,av:0,status:''},row=document.createElement('div');row.className='member-item';row.innerHTML='<div class="av">'+avatarMarkup(u)+'</div><div class="member-info"><div class="member-name">'+escHtml(u.name)+(member.role==='owner'?'<span class="room-owner-star">★</span>':'')+'</div><div class="member-nick">@'+escHtml(u.nick)+' · '+(member.role==='owner'?'владелец':'участник')+'</div></div>'+(isOwner&&member.role!=='owner'?'<button class="member-remove" data-member-nick="'+escHtml(u.nick)+'" title="Удалить">✕</button>':'');row.onclick=()=>openUserProfile(member.user_nick);const removeBtn=row.querySelector('.member-remove');if(removeBtn)removeBtn.onclick=e=>{e.stopPropagation();removeRoomMember(member.user_nick);};list.appendChild(row);}
   const action=document.getElementById('room-leave-btn');action.textContent=isOwner?'Удалить пространство':'Покинуть пространство';action.onclick=isOwner?deleteCurrentRoom:leaveRoom;
 }
 async function setRoomVisibility(visibility){
