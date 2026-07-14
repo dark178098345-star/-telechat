@@ -102,7 +102,7 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
 .search-inp{width:100%;background:rgba(26,26,40,.72);background:color-mix(in srgb,var(--bg3) 74%,transparent);border:1px solid var(--border);border-radius:10px;padding:9px 12px 9px 34px;font-size:14px;color:var(--text);outline:none;font-family:inherit;-webkit-appearance:none;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
 .search-inp:focus{border-color:var(--accent);}
 .search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:14px;pointer-events:none;}
-.search-results{background:var(--bg2);border:1px solid var(--border);border-radius:10px;margin-top:6px;display:none;max-height:200px;overflow-y:auto;position:absolute;width:100%;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,.4);}
+.search-results{background:var(--bg2);border:1px solid var(--border);border-radius:12px;margin-top:6px;display:none;max-height:min(420px,58vh);overflow-y:auto;position:absolute;width:100%;z-index:50;box-shadow:0 16px 38px rgba(0,0,0,.48);}
 .search-result-item{display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer;}
 .search-result-item:active{background:var(--bg3);}
 .contacts-list{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
@@ -359,6 +359,26 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
 .room-type-switch{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:4px;margin-bottom:15px;border-radius:11px;background:var(--bg3);}
 .room-type-btn{border:0;border-radius:8px;padding:10px;background:transparent;color:var(--text3);font:700 12px 'Nunito',sans-serif;cursor:pointer;}
 .room-type-btn.active{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;box-shadow:0 8px 20px rgba(91,77,224,.2);}
+.room-privacy-switch{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:6px 0 8px;}
+.room-privacy-btn{display:flex;align-items:center;justify-content:center;gap:7px;min-height:44px;border:1px solid var(--border);border-radius:12px;background:var(--bg3);color:var(--text3);font:800 12px 'Nunito',sans-serif;cursor:pointer;transition:.2s ease;}
+.room-privacy-btn.active{border-color:rgba(124,110,247,.7);background:linear-gradient(145deg,rgba(124,110,247,.27),rgba(91,77,224,.14));color:#ddd8ff;box-shadow:0 8px 22px rgba(50,38,130,.18),inset 0 0 0 1px rgba(196,181,253,.08);}
+.room-privacy-note{min-height:31px;margin-bottom:12px;color:var(--text3);font-size:10px;line-height:1.45;}
+.room-visibility-badge{display:inline-flex;align-items:center;margin-left:4px;padding:1px 5px;border-radius:5px;background:rgba(52,211,153,.1);color:#6ee7b7;font-size:8px;font-weight:800;vertical-align:2px;}
+.room-visibility-badge.private{background:rgba(251,191,36,.09);color:#fcd34d;}
+.search-section-label{padding:9px 11px 5px;color:var(--text3);font-size:9px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;}
+.search-room-copy{min-width:0;flex:1;}
+.search-room-name{display:flex;align-items:center;gap:3px;font-size:13px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.search-room-meta{margin-top:2px;color:var(--text3);font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.search-room-action{flex:0 0 auto;border:1px solid rgba(124,110,247,.28);border-radius:9px;padding:7px 9px;background:rgba(124,110,247,.13);color:#c4b5fd;font:800 10px 'Nunito',sans-serif;cursor:pointer;}
+.search-room-action.join{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;}
+.room-access-card{display:flex;align-items:flex-start;gap:10px;padding:11px;border:1px solid rgba(124,110,247,.16);border-radius:12px;background:rgba(26,26,40,.52);}
+.room-access-icon{font-size:20px;line-height:1.2;}
+.room-access-copy{min-width:0;flex:1;}
+.room-access-title{font-size:12px;font-weight:800;color:var(--text);}
+.room-access-text{margin-top:2px;color:var(--text3);font-size:10px;line-height:1.4;}
+.room-access-change{margin-top:9px;display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.room-access-change button{border:1px solid var(--border);border-radius:9px;padding:8px 4px;background:var(--bg3);color:var(--text3);font:800 10px 'Nunito',sans-serif;cursor:pointer;}
+.room-access-change button.active{border-color:var(--accent);background:rgba(124,110,247,.18);color:#c4b5fd;}
 .room-icons{display:flex;gap:7px;flex-wrap:wrap;margin:6px 0 14px;}
 .room-icon-option{width:38px;height:38px;display:grid;place-items:center;border-radius:12px;border:1px solid transparent;background:var(--bg3);font-size:19px;cursor:pointer;transition:.2s ease;}
 .room-icon-option.selected{border-color:var(--accent);background:rgba(124,110,247,.15);transform:translateY(-2px);box-shadow:0 7px 18px rgba(0,0,0,.2);}
@@ -501,15 +521,21 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
       <button class="room-type-btn active" id="room-type-group" onclick="selectRoomType('group')">👥 Группа</button>
       <button class="room-type-btn" id="room-type-channel" onclick="selectRoomType('channel')">📢 Канал</button>
     </div>
+    <div class="field-label">Доступ</div>
+    <div class="room-privacy-switch">
+      <button class="room-privacy-btn active" id="room-visibility-public" onclick="selectRoomVisibility('public')">🌍 Общая</button>
+      <button class="room-privacy-btn" id="room-visibility-private" onclick="selectRoomVisibility('private')">🔒 Приватная</button>
+    </div>
+    <div class="room-privacy-note" id="room-privacy-hint">Общую можно найти по названию и вступить самостоятельно.</div>
     <div class="field-label">Название</div>
     <input class="field-input" id="room-name-input" maxlength="48" placeholder="Например: Наша команда" autocomplete="off">
     <div class="field-label">Описание</div>
     <textarea class="room-description" id="room-description-input" maxlength="180" placeholder="О чём это пространство?"></textarea>
     <div class="field-label">Иконка</div>
     <div class="room-icons" id="room-icons"></div>
-    <div class="field-label">Участники по никам</div>
+    <div class="field-label">Пригласить по никам</div>
     <input class="field-input" id="room-members-input" placeholder="nick1, nick2" autocomplete="off" autocapitalize="none">
-    <div style="font-size:10px;color:var(--text3);margin-top:-6px;margin-bottom:12px;line-height:1.45">Можно добавить позже. В канале писать сможет только владелец.</div>
+    <div style="font-size:10px;color:var(--text3);margin-top:-6px;margin-bottom:12px;line-height:1.45">Приглашённых пользователей добавит сразу. В канале писать сможет только владелец.</div>
     <div class="modal-btns">
       <button class="modal-btn secondary" onclick="closeCreateRoomModal()">Отмена</button>
       <button class="modal-btn primary" id="create-room-submit" onclick="createRoom()">Создать</button>
@@ -557,7 +583,7 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
       </div>
       <div class="search-wrap">
         <span class="search-icon">&#128269;</span>
-        <input class="search-inp" id="search-inp" placeholder="найти по нику..." oninput="doSearch()" autocomplete="off" autocorrect="off" autocapitalize="none"/>
+        <input class="search-inp" id="search-inp" placeholder="люди, группы и каналы..." oninput="doSearch()" autocomplete="off" autocorrect="off" autocapitalize="none"/>
         <div class="search-results" id="search-results"></div>
       </div>
       <div class="sidebar-tabs" role="tablist" aria-label="Разделы чатов">
@@ -648,11 +674,25 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
     <div class="panel-section-title">Описание</div>
     <div id="room-panel-description" style="font-size:12px;color:var(--text2);line-height:1.55"></div>
   </div>
+  <div class="panel-section">
+    <div class="panel-section-title">Доступ</div>
+    <div class="room-access-card">
+      <div class="room-access-icon" id="room-access-icon">🔒</div>
+      <div class="room-access-copy">
+        <div class="room-access-title" id="room-access-title">Приватное пространство</div>
+        <div class="room-access-text" id="room-access-text">Войти можно только по приглашению владельца.</div>
+      </div>
+    </div>
+    <div class="room-access-change" id="room-access-change" style="display:none">
+      <button id="room-access-public" onclick="setRoomVisibility('public')">🌍 Общая</button>
+      <button id="room-access-private" onclick="setRoomVisibility('private')">🔒 Приватная</button>
+    </div>
+  </div>
   <div class="panel-section" id="room-add-member-section">
-    <div class="panel-section-title">Добавить участника</div>
+    <div class="panel-section-title">Пригласить участника</div>
     <div style="display:flex;gap:7px">
       <input class="field-input" id="room-add-member-input" placeholder="ник" style="margin:0;min-width:0" autocomplete="off" autocapitalize="none">
-      <button class="modal-btn primary" onclick="addRoomMember()" style="flex:0 0 auto;padding:0 14px">Добавить</button>
+      <button class="modal-btn primary" onclick="addRoomMember()" style="flex:0 0 auto;padding:0 14px">Пригласить</button>
     </div>
   </div>
   <div class="panel-section">
@@ -1465,14 +1505,16 @@ document.getElementById('msg-input').addEventListener('focus',()=>setTimeout(scr
 window.addEventListener('resize',()=>{if(currentChat)setTimeout(scrollToBottom,100);});
 </script>
 <script>
-/* TELECHAT V3 ROOMS AND MEDIA */
+/* TELECHAT V4 PUBLIC AND PRIVATE ROOMS */
 var currentRoom=null;
 var roomRows=[];
 var roomsAvailable=true;
 var roomMemberSubV3=null;
 var sidebarFilter='all';
 var selectedRoomType='group';
+var selectedRoomVisibility='public';
 var selectedRoomIcon='🌌';
+var roomSearchRequestV4=0;
 var pendingMedia=null;
 var mediaRecorderV3=null;
 var voiceChunksV3=[];
@@ -1489,6 +1531,74 @@ function conversationKey(){
   return '';
 }
 function canWriteCurrent(){return !currentRoom||currentRoom.type==='group'||currentRoom.owner_nick===me.nick;}
+function normalizedRoomVisibility(room){return room&&room.visibility==='public'?'public':'private';}
+function roomVisibilityBadge(room){
+  const isPublic=normalizedRoomVisibility(room)==='public';
+  return '<span class="room-visibility-badge'+(isPublic?'':' private')+'">'+(isPublic?'🌍 общая':'🔒 приватная')+'</span>';
+}
+function closeGlobalSearch(){
+  const box=document.getElementById('search-results');
+  box.style.display='none';box.innerHTML='';document.getElementById('search-inp').value='';
+}
+async function joinPublicRoom(room,action){
+  if(action){action.disabled=true;action.textContent='Входим…';}
+  const {data:fresh,error}=await sb.from('rooms').select('*').eq('id',room.id).maybeSingle();
+  if(error||!fresh){if(action){action.disabled=false;action.textContent='Вступить';}showToast('Пространство больше недоступно');return;}
+  if(normalizedRoomVisibility(fresh)!=='public'){if(action){action.disabled=false;action.textContent='Вступить';}showToast('Это пространство стало приватным 🔒');return;}
+  const role=fresh.owner_nick===me.nick?'owner':'member';
+  const {error:joinError}=await sb.from('room_members').upsert({room_id:fresh.id,user_nick:me.nick,role,joined_at:Date.now()},{onConflict:'room_id,user_nick'});
+  if(joinError){if(action){action.disabled=false;action.textContent='Вступить';}showToast('Не удалось вступить');return;}
+  closeGlobalSearch();await renderContacts();await openRoom(Object.assign({},fresh,{my_role:role}));showToast('Ты вступил в '+(fresh.type==='channel'?'канал 📢':'группу 👥'));
+}
+doSearch=async function(){
+  const requestId=++roomSearchRequestV4;
+  const q=document.getElementById('search-inp').value.trim().toLowerCase();
+  const box=document.getElementById('search-results');
+  if(!q){box.style.display='none';box.innerHTML='';return;}
+  box.style.display='block';
+  if(q.length<2){box.innerHTML='<div style="padding:11px 12px;font-size:12px;color:var(--text3)">Введи минимум 2 символа</div>';return;}
+  box.innerHTML='<div style="padding:11px 12px;font-size:12px;color:var(--text3)">Ищем…</div>';
+  const safeQ=q.replace(/[%_]/g,'\\$&');
+  const membersRes=await sb.from('room_members').select('room_id,role').eq('user_nick',me.nick);
+  if(requestId!==roomSearchRequestV4)return;
+  const memberRoles=new Map((membersRes.data||[]).map(item=>[String(item.room_id),item.role]));
+  const memberIds=Array.from(memberRoles.keys());
+  const usersPromise=sb.from('users').select('*').ilike('nick','%'+safeQ+'%').neq('nick',me.nick).limit(8);
+  const publicRoomsPromise=sb.from('rooms').select('*').eq('visibility','public').ilike('name','%'+safeQ+'%').limit(12);
+  const ownRoomsPromise=memberIds.length?sb.from('rooms').select('*').in('id',memberIds).ilike('name','%'+safeQ+'%').limit(12):Promise.resolve({data:[],error:null});
+  const results=await Promise.all([usersPromise,publicRoomsPromise,ownRoomsPromise]);
+  if(requestId!==roomSearchRequestV4)return;
+  const users=results[0].data||[],roomMap=new Map();
+  (results[1].data||[]).concat(results[2].data||[]).forEach(room=>roomMap.set(String(room.id),room));
+  const rooms=Array.from(roomMap.values()).sort((a,b)=>{
+    const joinedA=memberRoles.has(String(a.id))?0:1,joinedB=memberRoles.has(String(b.id))?0:1;
+    return joinedA-joinedB||String(a.name).localeCompare(String(b.name),'ru');
+  });
+  box.innerHTML='';
+  if(rooms.length){
+    const label=document.createElement('div');label.className='search-section-label';label.textContent='Группы и каналы';box.appendChild(label);
+    rooms.forEach(room=>{
+      const joined=memberRoles.has(String(room.id));
+      const el=document.createElement('div');el.className='search-result-item';
+      const actionText=joined?'Открыть':'Вступить';
+      el.innerHTML='<div class="room-avatar">'+escHtml(room.icon||'🌌')+'</div><div class="search-room-copy"><div class="search-room-name">'+escHtml(room.name)+'<span class="room-type-badge">'+(room.type==='channel'?'канал':'группа')+'</span>'+roomVisibilityBadge(room)+'</div><div class="search-room-meta">'+escHtml(room.description||'Без описания')+'</div></div><button class="search-room-action'+(joined?'':' join')+'" type="button">'+actionText+'</button>';
+      el.onclick=async()=>{
+        if(joined){closeGlobalSearch();await openRoom(Object.assign({},room,{my_role:memberRoles.get(String(room.id))||'member'}));}
+        else await joinPublicRoom(room,el.querySelector('.search-room-action'));
+      };
+      box.appendChild(el);
+    });
+  }
+  if(users.length){
+    const label=document.createElement('div');label.className='search-section-label';label.textContent='Люди';box.appendChild(label);
+    users.forEach(u=>{
+      const online=isOnline(u.last_seen),el=document.createElement('div');el.className='search-result-item';
+      el.innerHTML='<div class="av'+(online?' av-online':'')+'">'+avatarMarkup(u)+'</div><div><div style="font-size:13px;font-weight:700;color:var(--text)">'+escHtml(u.name)+'</div><div style="font-size:11px;color:var(--text3)">@'+escHtml(u.nick)+' · '+formatLastSeen(u.last_seen)+'</div></div>';
+      el.onclick=()=>{closeGlobalSearch();openChat(u.nick);};box.appendChild(el);
+    });
+  }
+  if(!rooms.length&&!users.length)box.innerHTML='<div style="padding:11px 12px;font-size:12px;color:var(--text3)">Ничего не найдено</div>';
+};
 function setSidebarFilter(filter,btn){
   sidebarFilter=filter;
   document.querySelectorAll('.sidebar-tab').forEach(el=>el.classList.toggle('active',el===btn));
@@ -1535,9 +1645,19 @@ function toggleVoicePlayback(btn){
   audio.onended=()=>{btn.textContent='▶';progress.style.width='0%';duration.textContent=formatDuration(audio.duration||0);};
 }
 
+async function handleRoomMembershipChangeV4(){
+  await renderContacts();
+  if(currentRoom){
+    const {data:membership}=await sb.from('room_members').select('role').eq('room_id',currentRoom.id).eq('user_nick',me.nick).maybeSingle();
+    if(!membership){showToast('Доступ к пространству закрыт');closeAllPanels();goBack();}
+  }
+}
 async function loadMyRooms(){
   if(!roomMemberSubV3){
-    roomMemberSubV3=sb.channel('my-rooms-'+me.nick).on('postgres_changes',{event:'*',schema:'public',table:'room_members',filter:'user_nick=eq.'+me.nick},()=>renderContacts()).subscribe();
+    roomMemberSubV3=sb.channel('my-rooms-'+me.nick)
+      .on('postgres_changes',{event:'*',schema:'public',table:'room_members',filter:'user_nick=eq.'+me.nick},handleRoomMembershipChangeV4)
+      .on('postgres_changes',{event:'UPDATE',schema:'public',table:'rooms'},()=>renderContacts())
+      .subscribe();
   }
   const {data:members,error}=await sb.from('room_members').select('room_id,role').eq('user_nick',me.nick);
   if(error){roomsAvailable=false;roomRows=[];return roomRows;}
@@ -1563,7 +1683,7 @@ renderContacts=async function(){
     for(const room of visibleRooms){
       const last=roomLast['room_'+room.id];
       const el=document.createElement('div');el.className='contact'+(currentRoom&&String(currentRoom.id)===String(room.id)?' active':'');
-      el.innerHTML=`<div class="room-avatar">${escHtml(room.icon||'🌌')}</div><div class="contact-info"><div class="contact-name">${escHtml(room.name)}<span class="room-type-badge">${room.type==='channel'?'канал':'группа'}</span>${room.owner_nick===me.nick?'<span class="room-owner-star">★</span>':''}</div><div class="contact-last">${last?escHtml(messagePreviewText(last.text).substring(0,38)):escHtml(room.description||'Пока без сообщений')}</div></div><div class="contact-time">${last?formatMsgTime(last.ts):''}</div>`;
+      el.innerHTML='<div class="room-avatar">'+escHtml(room.icon||'🌌')+'</div><div class="contact-info"><div class="contact-name">'+escHtml(room.name)+'<span class="room-type-badge">'+(room.type==='channel'?'канал':'группа')+'</span>'+roomVisibilityBadge(room)+(room.owner_nick===me.nick?'<span class="room-owner-star">★</span>':'')+'</div><div class="contact-last">'+(last?escHtml(messagePreviewText(last.text).substring(0,38)):escHtml(room.description||'Пока без сообщений'))+'</div></div><div class="contact-time">'+(last?formatMsgTime(last.ts):'')+'</div>';
       el.onclick=()=>openRoom(room);list.appendChild(el);rendered++;
     }
   }
@@ -1626,7 +1746,7 @@ updateStatusBar=async function(){
   const el=document.getElementById('chat-status-text');
   if(currentRoom){
     const {count}=await sb.from('room_members').select('*',{count:'exact',head:true}).eq('room_id',currentRoom.id);
-    el.className='chat-status-text offline';el.textContent=`${currentRoom.type==='channel'?'канал':'группа'} · ${count||1} участников`;return;
+    el.className='chat-status-text offline';el.textContent=(currentRoom.type==='channel'?'канал':'группа')+' · '+(count||1)+' участников · '+(normalizedRoomVisibility(currentRoom)==='public'?'общая':'приватная');return;
   }
   if(!currentChat)return;
   const {data}=await sb.from('users').select('last_seen').eq('nick',currentChat).maybeSingle();if(!data)return;
@@ -1722,29 +1842,50 @@ function stopVoiceUi(){clearInterval(voiceTimerV3);clearTimeout(voiceLimitTimerV
 
 function buildRoomIcons(){const box=document.getElementById('room-icons');box.innerHTML='';ROOM_ICONS.forEach(icon=>{const btn=document.createElement('button');btn.type='button';btn.className='room-icon-option'+(icon===selectedRoomIcon?' selected':'');btn.textContent=icon;btn.onclick=()=>{selectedRoomIcon=icon;box.querySelectorAll('.room-icon-option').forEach(el=>el.classList.toggle('selected',el===btn));};box.appendChild(btn);});}
 function selectRoomType(type){selectedRoomType=type;document.getElementById('room-type-group').classList.toggle('active',type==='group');document.getElementById('room-type-channel').classList.toggle('active',type==='channel');}
-function openCreateRoomModal(){selectedRoomType='group';selectedRoomIcon='🌌';selectRoomType('group');document.getElementById('room-name-input').value='';document.getElementById('room-description-input').value='';document.getElementById('room-members-input').value='';buildRoomIcons();document.getElementById('room-modal').classList.add('show');}
+function selectRoomVisibility(visibility){
+  selectedRoomVisibility=visibility==='private'?'private':'public';
+  document.getElementById('room-visibility-public').classList.toggle('active',selectedRoomVisibility==='public');
+  document.getElementById('room-visibility-private').classList.toggle('active',selectedRoomVisibility==='private');
+  document.getElementById('room-privacy-hint').textContent=selectedRoomVisibility==='public'?'Общую можно найти по названию и вступить самостоятельно.':'Приватную не видно в общем поиске. Войти можно только после приглашения владельца.';
+}
+function openCreateRoomModal(){
+  selectedRoomType='group';selectedRoomVisibility='public';selectedRoomIcon='🌌';selectRoomType('group');selectRoomVisibility('public');
+  document.getElementById('room-name-input').value='';document.getElementById('room-description-input').value='';document.getElementById('room-members-input').value='';buildRoomIcons();document.getElementById('room-modal').classList.add('show');
+}
 function closeCreateRoomModal(){document.getElementById('room-modal').classList.remove('show');}
 async function createRoom(){
   const name=document.getElementById('room-name-input').value.trim(),description=document.getElementById('room-description-input').value.trim();if(name.length<2){showToast('Название слишком короткое');return;}
   const btn=document.getElementById('create-room-submit');btn.disabled=true;btn.textContent='Создаём…';const created_at=Date.now();
-  const {data:room,error}=await sb.from('rooms').insert({type:selectedRoomType,name,description,icon:selectedRoomIcon,owner_nick:me.nick,created_at}).select('*').single();
-  if(error){btn.disabled=false;btn.textContent='Создать';showToast(error.code==='42P01'?'Сначала подключи таблицы Supabase':'Не удалось создать пространство');return;}
+  const {data:room,error}=await sb.from('rooms').insert({type:selectedRoomType,visibility:selectedRoomVisibility,name,description,icon:selectedRoomIcon,owner_nick:me.nick,created_at}).select('*').single();
+  if(error){btn.disabled=false;btn.textContent='Создать';showToast(error.code==='42P01'||error.code==='PGRST204'?'Сначала обнови таблицы Supabase':'Не удалось создать пространство');return;}
   const requested=document.getElementById('room-members-input').value.toLowerCase().split(/[\s,]+/).map(v=>v.trim()).filter(v=>v&&v!==me.nick);let valid=[];
   if(requested.length){const {data:users}=await sb.from('users').select('nick').in('nick',[...new Set(requested)]);valid=(users||[]).map(u=>u.nick);}
   const rows=[{room_id:room.id,user_nick:me.nick,role:'owner',joined_at:created_at},...valid.map(nick=>({room_id:room.id,user_nick:nick,role:'member',joined_at:created_at}))];await sb.from('room_members').upsert(rows,{onConflict:'room_id,user_nick'});
-  btn.disabled=false;btn.textContent='Создать';closeCreateRoomModal();await renderContacts();await openRoom({...room,my_role:'owner'});showToast(selectedRoomType==='channel'?'Канал создан 📢':'Группа создана 👥');
+  btn.disabled=false;btn.textContent='Создать';closeCreateRoomModal();await renderContacts();await openRoom(Object.assign({},room,{my_role:'owner'}));
+  const accessLabel=selectedRoomVisibility==='public'?'общая 🌍':'приватная 🔒';showToast((selectedRoomType==='channel'?'Канал создан 📢':'Группа создана 👥')+' · '+accessLabel);
 }
 async function openRoomPanel(){if(!currentRoom)return;await renderRoomPanel();openPanel('room-panel');}
 async function renderRoomPanel(){
   document.getElementById('room-panel-icon').textContent=currentRoom.icon||'🌌';document.getElementById('room-panel-name').textContent=currentRoom.name;document.getElementById('room-panel-description').textContent=currentRoom.description||'Описание пока не добавлено';
   const {data:members}=await sb.from('room_members').select('*').eq('room_id',currentRoom.id).order('joined_at',{ascending:true}),nicks=(members||[]).map(m=>m.user_nick);let users=[];if(nicks.length){const res=await sb.from('users').select('*').in('nick',nicks);users=res.data||[];}
-  document.getElementById('room-panel-meta').textContent=`${currentRoom.type==='channel'?'Канал':'Группа'} · ${nicks.length} участников`;const isOwner=currentRoom.owner_nick===me.nick;document.getElementById('room-add-member-section').style.display=isOwner?'block':'none';const list=document.getElementById('room-member-list');list.innerHTML='';
-  for(const member of members||[]){const u=users.find(x=>x.nick===member.user_nick)||{nick:member.user_nick,name:member.user_nick,av:0,status:''},row=document.createElement('div');row.className='member-item';row.innerHTML=`<div class="av">${avatarMarkup(u)}</div><div class="member-info"><div class="member-name">${escHtml(u.name)}${member.role==='owner'?'<span class="room-owner-star">★</span>':''}</div><div class="member-nick">@${escHtml(u.nick)} · ${member.role==='owner'?'владелец':'участник'}</div></div>${isOwner&&member.role!=='owner'?`<button class="member-remove" onclick="removeRoomMember('${u.nick}')" title="Удалить">✕</button>`:''}`;list.appendChild(row);}
+  const visibility=normalizedRoomVisibility(currentRoom),isPublic=visibility==='public',isOwner=currentRoom.owner_nick===me.nick;
+  document.getElementById('room-panel-meta').textContent=(currentRoom.type==='channel'?'Канал':'Группа')+' · '+nicks.length+' участников · '+(isPublic?'общая':'приватная');
+  document.getElementById('room-access-icon').textContent=isPublic?'🌍':'🔒';document.getElementById('room-access-title').textContent=isPublic?'Общее пространство':'Приватное пространство';document.getElementById('room-access-text').textContent=isPublic?'Его можно найти по названию и вступить самостоятельно.':'Его не видно в общем поиске. Войти можно только по приглашению владельца.';
+  const accessChange=document.getElementById('room-access-change');accessChange.style.display=isOwner?'grid':'none';document.getElementById('room-access-public').classList.toggle('active',isPublic);document.getElementById('room-access-private').classList.toggle('active',!isPublic);
+  document.getElementById('room-add-member-section').style.display=isOwner?'block':'none';const list=document.getElementById('room-member-list');list.innerHTML='';
+  for(const member of members||[]){const u=users.find(x=>x.nick===member.user_nick)||{nick:member.user_nick,name:member.user_nick,av:0,status:''},row=document.createElement('div');row.className='member-item';row.innerHTML='<div class="av">'+avatarMarkup(u)+'</div><div class="member-info"><div class="member-name">'+escHtml(u.name)+(member.role==='owner'?'<span class="room-owner-star">★</span>':'')+'</div><div class="member-nick">@'+escHtml(u.nick)+' · '+(member.role==='owner'?'владелец':'участник')+'</div></div>'+(isOwner&&member.role!=='owner'?'<button class="member-remove" data-member-nick="'+escHtml(u.nick)+'" title="Удалить">✕</button>':'');const removeBtn=row.querySelector('.member-remove');if(removeBtn)removeBtn.onclick=()=>removeRoomMember(member.user_nick);list.appendChild(row);}
   const action=document.getElementById('room-leave-btn');action.textContent=isOwner?'Удалить пространство':'Покинуть пространство';action.onclick=isOwner?deleteCurrentRoom:leaveRoom;
+}
+async function setRoomVisibility(visibility){
+  if(!currentRoom||currentRoom.owner_nick!==me.nick)return;visibility=visibility==='private'?'private':'public';if(normalizedRoomVisibility(currentRoom)===visibility)return;
+  const {data,error}=await sb.from('rooms').update({visibility}).eq('id',currentRoom.id).eq('owner_nick',me.nick).select('*').single();
+  if(error){showToast('Не удалось изменить доступ');return;}
+  currentRoom=Object.assign({},currentRoom,data);roomRows=roomRows.map(room=>String(room.id)===String(data.id)?Object.assign({},room,data):room);
+  await renderRoomPanel();await renderContacts();await updateStatusBar();showToast(visibility==='public'?'Теперь пространство общее 🌍':'Теперь пространство приватное 🔒');
 }
 async function addRoomMember(){
   if(!currentRoom||currentRoom.owner_nick!==me.nick)return;const nick=document.getElementById('room-add-member-input').value.trim().toLowerCase();if(!nick)return;const {data:user}=await sb.from('users').select('nick').eq('nick',nick).maybeSingle();if(!user){showToast('Пользователь не найден');return;}
-  const {error}=await sb.from('room_members').upsert({room_id:currentRoom.id,user_nick:nick,role:'member',joined_at:Date.now()},{onConflict:'room_id,user_nick'});if(error)showToast('Не удалось добавить');else{document.getElementById('room-add-member-input').value='';showToast('Участник добавлен ✅');renderRoomPanel();updateStatusBar();}
+  const {error}=await sb.from('room_members').upsert({room_id:currentRoom.id,user_nick:nick,role:'member',joined_at:Date.now()},{onConflict:'room_id,user_nick'});if(error)showToast('Не удалось добавить');else{document.getElementById('room-add-member-input').value='';showToast('Пользователь приглашён ✅');renderRoomPanel();updateStatusBar();}
 }
 async function removeRoomMember(nick){if(!currentRoom||currentRoom.owner_nick!==me.nick)return;if(!confirm('Удалить участника @'+nick+'?'))return;await sb.from('room_members').delete().eq('room_id',currentRoom.id).eq('user_nick',nick);renderRoomPanel();updateStatusBar();}
 async function leaveRoom(){if(!currentRoom||currentRoom.owner_nick===me.nick)return;if(!confirm('Покинуть это пространство?'))return;await sb.from('room_members').delete().eq('room_id',currentRoom.id).eq('user_nick',me.nick);closeAllPanels();goBack();renderContacts();}
