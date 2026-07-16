@@ -463,6 +463,32 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
   .room-modal{width:94%;padding:18px;}
 }
 </style>
+
+<style id="telechat-banner-styles">
+/* TELECHAT BANNER ONLY V9 */
+.profile-banner-editor{margin:0 0 8px}
+.profile-banner-preview{height:96px;position:relative;overflow:hidden;border:1px solid rgba(167,139,250,.20);border-radius:16px;background:#171725;box-shadow:0 12px 30px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.04);transition:background .25s ease,transform .25s ease}
+.profile-banner-preview::after{content:'Предпросмотр баннера';position:absolute;left:10px;bottom:8px;padding:4px 8px;border-radius:8px;background:rgba(7,8,15,.42);color:rgba(255,255,255,.76);font-size:9px;font-weight:800;backdrop-filter:blur(8px)}
+.banner-presets{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:9px}
+.banner-preset-btn{height:42px;position:relative;overflow:hidden;border:2px solid transparent;border-radius:11px;background:#171725;cursor:pointer;box-shadow:0 5px 13px rgba(0,0,0,.15);transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
+.banner-preset-btn:hover{transform:translateY(-2px)}
+.banner-preset-btn.selected{border-color:#fff;box-shadow:0 0 0 2px var(--accent),0 8px 18px rgba(91,77,224,.28)}
+.banner-preset-btn span{position:absolute;left:6px;bottom:4px;color:#fff;font-size:8px;font-weight:900;text-shadow:0 1px 5px #000}
+.banner-upload-row{display:flex;gap:7px;margin-top:9px}
+.banner-upload-btn,.banner-reset-btn{flex:1;border:1px solid rgba(124,110,247,.20);border-radius:10px;padding:9px 8px;background:rgba(124,110,247,.09);color:var(--text2);font:800 10px 'Nunito',sans-serif;cursor:pointer;transition:.18s ease}
+.banner-upload-btn:hover,.banner-reset-btn:hover{background:rgba(124,110,247,.17);color:var(--text);transform:translateY(-1px)}
+.banner-reset-btn{flex:0 0 38px;color:var(--red)}
+.banner-upload-hint{margin-top:6px;color:var(--text3);font-size:9px;line-height:1.4;text-align:center}
+.banner-preset-cosmos{background:radial-gradient(circle at 18% 26%,rgba(216,180,254,.82) 0 2px,transparent 3px),radial-gradient(circle at 72% 18%,rgba(125,211,252,.65) 0 1px,transparent 2px),radial-gradient(ellipse at 23% 28%,rgba(124,58,237,.58),transparent 44%),radial-gradient(ellipse at 82% 72%,rgba(14,165,233,.34),transparent 46%),linear-gradient(135deg,#211640,#080d1c)}
+.banner-preset-aurora{background:radial-gradient(ellipse at 25% 120%,rgba(45,212,191,.78),transparent 55%),radial-gradient(ellipse at 72% -15%,rgba(168,85,247,.72),transparent 58%),linear-gradient(135deg,#071c2a,#15132e 54%,#09151d)}
+.banner-preset-sunset{background:radial-gradient(circle at 78% 28%,rgba(254,240,138,.82) 0 8%,transparent 9%),linear-gradient(165deg,transparent 55%,rgba(76,29,149,.28) 56%),linear-gradient(135deg,#fb7185,#f59e0b 48%,#6d28d9)}
+.banner-preset-ocean{background:radial-gradient(ellipse at 70% 95%,rgba(103,232,249,.52),transparent 48%),linear-gradient(155deg,rgba(255,255,255,.13) 0 1px,transparent 2px 22px),linear-gradient(135deg,#075985,#0c4a6e 45%,#111827)}
+.banner-preset-ember{background:radial-gradient(circle at 20% 78%,rgba(251,191,36,.80) 0 2px,transparent 3px),radial-gradient(circle at 72% 30%,rgba(248,113,113,.75) 0 2px,transparent 3px),radial-gradient(ellipse at 50% 120%,rgba(239,68,68,.75),transparent 55%),linear-gradient(135deg,#3f0b1c,#150711 62%,#07060b)}
+.banner-preset-midnight{background:radial-gradient(circle at 20% 25%,rgba(255,255,255,.75) 0 1px,transparent 2px),radial-gradient(circle at 65% 60%,rgba(196,181,253,.5) 0 1px,transparent 2px),radial-gradient(circle at 84% 18%,rgba(125,211,252,.45) 0 1px,transparent 2px),linear-gradient(135deg,#111827,#080812 55%,#020617)}
+.profile-banner-preview.banner-photo,.user-profile-cover.banner-photo{background-position:center!important;background-size:cover!important;background-repeat:no-repeat!important}
+.user-profile-cover.banner-photo::before{display:none}
+@media(max-width:640px){.banner-presets{grid-template-columns:repeat(2,1fr)}.profile-banner-preview{height:88px}}
+</style>
 </head>
 <body>
 <div id="startup-loader" role="status" aria-live="polite" aria-label="Загрузка tele.chat">
@@ -793,6 +819,18 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
 <!-- PROFILE -->
 <div class="side-panel left" id="profile-panel">
   <div class="panel-title">&#128100; Профиль</div>
+
+  <div class="field-label">Баннер профиля</div>
+  <div class="profile-banner-editor">
+    <div class="profile-banner-preview banner-preset-cosmos" id="profile-banner-preview"></div>
+    <div class="banner-presets" id="profile-banner-presets"></div>
+    <div class="banner-upload-row">
+      <button type="button" class="banner-upload-btn" onclick="document.getElementById('banner-file-input').click()">🖼️ Фото из галереи</button>
+      <button type="button" class="banner-reset-btn" onclick="selectProfileBanner('cosmos')" title="Вернуть стандартный баннер">↺</button>
+      <input type="file" id="banner-file-input" accept="image/*" onchange="handleProfileBannerFile(this)" hidden>
+    </div>
+    <div class="banner-upload-hint">Можно выбрать готовый вариант или загрузить свою широкую обложку</div>
+  </div>
   <div class="av-preview" id="prof-av-prev"></div>
   <div class="avatar-upload-actions">
     <button type="button" class="avatar-upload-btn" onclick="document.getElementById('avatar-file-input').click()">🖼️ Фото из галереи</button>
@@ -818,7 +856,7 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
 <div class="modal-overlay" id="user-profile-modal" onclick="if(event.target===this)closeUserProfile()">
   <div class="modal user-profile-card">
     <button class="user-profile-close" onclick="closeUserProfile()" aria-label="Закрыть">✕</button>
-    <div class="user-profile-cover"></div>
+    <div class="user-profile-cover banner-preset-cosmos" id="view-profile-cover"></div>
     <div class="user-profile-body">
       <div class="user-profile-avatar" id="view-profile-avatar"></div>
       <div class="user-profile-name" id="view-profile-name"></div>
@@ -1985,5 +2023,119 @@ async function leaveRoom(){if(!currentRoom||currentRoom.owner_nick===me.nick)ret
 async function deleteCurrentRoom(){
   if(!currentRoom||currentRoom.owner_nick!==me.nick)return;if(!confirm('Удалить пространство и все сообщения?'))return;const id=currentRoom.id,key='room_'+id;await sb.from('messages').delete().eq('chat_key',key);await sb.from('polls').delete().eq('chat_key',key);await sb.from('room_members').delete().eq('room_id',id);await sb.from('rooms').delete().eq('id',id);closeAllPanels();goBack();renderContacts();showToast('Пространство удалено');
 }
-</script></body>
+</script>
+<script>
+/* TELECHAT BANNER ONLY V9 */
+const PROFILE_BANNER_PRESETS=[
+  {id:'cosmos',name:'Космос'},
+  {id:'aurora',name:'Аврора'},
+  {id:'sunset',name:'Закат'},
+  {id:'ocean',name:'Океан'},
+  {id:'ember',name:'Искры'},
+  {id:'midnight',name:'Полночь'}
+];
+let selectedProfileBanner='preset:cosmos';
+
+function normalizeProfileBanner(value){
+  if(typeof value!=='string'||!value)return 'preset:cosmos';
+  if(value.startsWith('photo:data:image/'))return value;
+  if(value.startsWith('preset:')&&PROFILE_BANNER_PRESETS.some(item=>item.id===value.slice(7)))return value;
+  return 'preset:cosmos';
+}
+function applyProfileBanner(element,value){
+  if(!element)return;
+  const normalized=normalizeProfileBanner(value);
+  PROFILE_BANNER_PRESETS.forEach(item=>element.classList.remove('banner-preset-'+item.id));
+  element.classList.remove('banner-photo');
+  element.style.backgroundImage='';
+  if(normalized.startsWith('photo:')){
+    element.classList.add('banner-photo');
+    element.style.backgroundImage='linear-gradient(rgba(6,7,13,.05),rgba(6,7,13,.16)),url("'+normalized.slice(6)+'")';
+  }else{
+    element.classList.add('banner-preset-'+normalized.slice(7));
+  }
+}
+function renderProfileBannerEditor(){
+  const grid=document.getElementById('profile-banner-presets');
+  const preview=document.getElementById('profile-banner-preview');
+  if(!grid||!preview)return;
+  if(!grid.children.length){
+    PROFILE_BANNER_PRESETS.forEach(item=>{
+      const button=document.createElement('button');
+      button.type='button';
+      button.className='banner-preset-btn banner-preset-'+item.id;
+      button.dataset.bannerId=item.id;
+      button.innerHTML='<span>'+item.name+'</span>';
+      button.onclick=()=>selectProfileBanner(item.id);
+      grid.appendChild(button);
+    });
+  }
+  grid.querySelectorAll('.banner-preset-btn').forEach(button=>button.classList.toggle('selected',selectedProfileBanner==='preset:'+button.dataset.bannerId));
+  applyProfileBanner(preview,selectedProfileBanner);
+}
+function selectProfileBanner(id){
+  selectedProfileBanner='preset:'+id;
+  renderProfileBannerEditor();
+}
+function handleProfileBannerFile(input){
+  const file=input.files&&input.files[0];
+  if(!file)return;
+  if(!file.type.startsWith('image/')){showToast('Выбери изображение');input.value='';return;}
+  if(file.size>12*1024*1024){showToast('Фото слишком большое — максимум 12 МБ');input.value='';return;}
+  const image=new Image();
+  const url=URL.createObjectURL(file);
+  image.onload=()=>{
+    try{
+      const canvas=document.createElement('canvas');
+      canvas.width=720;canvas.height=240;
+      const context=canvas.getContext('2d');
+      const targetRatio=3;
+      const sourceRatio=image.width/image.height;
+      let sx=0,sy=0,sw=image.width,sh=image.height;
+      if(sourceRatio>targetRatio){sw=image.height*targetRatio;sx=(image.width-sw)/2;}
+      else{sh=image.width/targetRatio;sy=(image.height-sh)/2;}
+      context.drawImage(image,sx,sy,sw,sh,0,0,720,240);
+      selectedProfileBanner='photo:'+canvas.toDataURL('image/jpeg',.68);
+      renderProfileBannerEditor();
+      showToast('Баннер выбран — нажми «Сохранить»');
+    }catch(error){showToast('Не удалось обработать изображение');}
+    URL.revokeObjectURL(url);
+    input.value='';
+  };
+  image.onerror=()=>{URL.revokeObjectURL(url);input.value='';showToast('Не удалось открыть изображение');};
+  image.src=url;
+}
+
+const buildProfPanelBeforeBanners=buildProfPanel;
+buildProfPanel=function(){
+  buildProfPanelBeforeBanners();
+  selectedProfileBanner=normalizeProfileBanner(me&&me.banner);
+  renderProfileBannerEditor();
+};
+
+const openUserProfileBeforeBanners=openUserProfile;
+openUserProfile=async function(nick){
+  await openUserProfileBeforeBanners(nick);
+  const user=userCache[nick];
+  applyProfileBanner(document.getElementById('view-profile-cover'),user&&user.banner);
+};
+
+saveProfile=async function(){
+  const nextName=document.getElementById('prof-name-inp').value.trim()||me.name;
+  const nextStatus=packProfileData(document.getElementById('prof-status-inp').value.trim(),profAvatarPhoto);
+  const nextBio=document.getElementById('prof-bio-inp').value.trim().slice(0,220);
+  const nextBanner=normalizeProfileBanner(selectedProfileBanner);
+  const {error}=await sb.from('users').update({av:profAvIdx,name:nextName,status:nextStatus,bio:nextBio,banner:nextBanner}).eq('nick',me.nick);
+  if(error){
+    showToast(error.code==='PGRST204'?'Сначала выполни обновление таблицы профилей':'Не удалось сохранить профиль');
+    return;
+  }
+  me.av=profAvIdx;me.name=nextName;me.status=nextStatus;me.bio=nextBio;me.banner=nextBanner;
+  userCache[me.nick]=me;
+  closeAllPanels();showToast('Профиль и баннер сохранены ✅');
+  if(currentChat)renderMessages();
+  renderContacts();
+};
+</script>
+</body>
 </html>
