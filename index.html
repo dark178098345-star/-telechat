@@ -489,6 +489,19 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
 .user-profile-cover.banner-photo::before{display:none}
 @media(max-width:640px){.banner-presets{grid-template-columns:repeat(2,1fr)}.profile-banner-preview{height:88px}}
 </style>
+
+<style id="telechat-profile-video-styles">
+/* TELECHAT PROFILE VIDEO + CREATOR BADGE V10 */
+.avatar-photo.avatar-video,.profile-media-video{width:100%;height:100%;display:block;object-fit:cover;border-radius:inherit;pointer-events:none}
+.profile-banner-video{position:absolute;inset:0;width:100%;height:100%;display:block;object-fit:cover}
+.profile-banner-preview .profile-banner-video{z-index:0}
+.user-profile-cover .profile-banner-video{z-index:0}
+.privileged-media-only[hidden]{display:none!important}
+.verified-badge{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;margin-left:4px;border-radius:50%;background:#20a7f5;color:#fff;font-size:10px;font-weight:1000;line-height:1;vertical-align:-2px;box-shadow:0 0 0 1px rgba(255,255,255,.18),0 3px 9px rgba(32,167,245,.28)}
+.verified-badge.large{width:17px;height:17px;font-size:11px;vertical-align:-2px}
+.profile-nick-marker{display:none!important}
+.video-limit-hint{margin:-1px 0 7px;text-align:center;color:#8f89ad;font-size:9px;line-height:1.35}
+</style>
 </head>
 <body>
 <div id="startup-loader" role="status" aria-live="polite" aria-label="Загрузка tele.chat">
@@ -826,6 +839,9 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
     <div class="banner-presets" id="profile-banner-presets"></div>
     <div class="banner-upload-row">
       <button type="button" class="banner-upload-btn" onclick="document.getElementById('banner-file-input').click()">🖼️ Фото из галереи</button>
+
+      <button type="button" class="banner-upload-btn privileged-media-only" id="banner-video-btn" onclick="document.getElementById('banner-video-input').click()" hidden>🎬 Видео</button>
+      <input type="file" id="banner-video-input" accept="video/mp4,video/webm,video/quicktime" onchange="handleProfileBannerVideo(this)" hidden>
       <button type="button" class="banner-reset-btn" onclick="selectProfileBanner('cosmos')" title="Вернуть стандартный баннер">↺</button>
       <input type="file" id="banner-file-input" accept="image/*" onchange="handleProfileBannerFile(this)" hidden>
     </div>
@@ -834,6 +850,9 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
   <div class="av-preview" id="prof-av-prev"></div>
   <div class="avatar-upload-actions">
     <button type="button" class="avatar-upload-btn" onclick="document.getElementById('avatar-file-input').click()">🖼️ Фото из галереи</button>
+
+    <button type="button" class="avatar-upload-btn privileged-media-only" id="avatar-video-btn" onclick="document.getElementById('avatar-video-input').click()" hidden>🎬 Видео</button>
+    <input type="file" id="avatar-video-input" accept="video/mp4,video/webm,video/quicktime" onchange="handleProfileAvatarVideo(this)" hidden>
     <button type="button" class="avatar-remove-btn" id="avatar-remove-btn" onclick="removeProfilePhoto()" title="Удалить фото" hidden>✕</button>
     <input type="file" id="avatar-file-input" accept="image/*" onchange="handleAvatarFile(this)" hidden>
   </div>
@@ -2136,6 +2155,297 @@ saveProfile=async function(){
   if(currentChat)renderMessages();
   renderContacts();
 };
+</script>
+
+<script>
+/* TELECHAT PROFILE VIDEO + CREATOR BADGE V10 */
+const PROFILE_VIDEO_NICKS=['creator','tele'];
+const PROFILE_VIDEO_BUCKET='profile-media';
+const PROFILE_VIDEO_MAX_SECONDS=10;
+const PROFILE_VIDEO_MAX_BYTES=12*1024*1024;
+let selectedAvatarVideo='';
+let pendingAvatarVideoFile=null;
+let pendingAvatarVideoPreview='';
+let pendingBannerVideoFile=null;
+let pendingBannerVideoPreview='';
+
+function canUseProfileVideo(nick){return PROFILE_VIDEO_NICKS.includes(String(nick||'').toLowerCase());}
+function isCreatorVerified(nick){return String(nick||'').toLowerCase()==='creator';}
+function verifiedBadgeHtml(nick,large=false){
+  return isCreatorVerified(nick)?'<span class="verified-badge'+(large?' large':'')+'" title="Подтверждённый создатель" aria-label="Подтверждённый создатель">✓</span>':'';
+}
+function safeMediaUrl(value){
+  const url=String(value||'');
+  if(url.startsWith('blob:'))return url;
+  try{
+    const parsed=new URL(url);
+    return parsed.protocol==='https:'&&parsed.hostname==='xvnazoervzccixtfhuaa.supabase.co'&&parsed.pathname.includes('/storage/v1/object/public/'+PROFILE_VIDEO_BUCKET+'/')?url:'';
+  }catch(error){return '';}
+}
+function escapeMediaAttribute(value){
+  return String(value||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function clearObjectPreview(kind){
+  const key=kind==='avatar'?'pendingAvatarVideoPreview':'pendingBannerVideoPreview';
+  const value=kind==='avatar'?pendingAvatarVideoPreview:pendingBannerVideoPreview;
+  if(value&&value.startsWith('blob:'))URL.revokeObjectURL(value);
+  if(kind==='avatar')pendingAvatarVideoPreview='';
+  else pendingBannerVideoPreview='';
+}
+function profileVideoExtension(file){
+  if(file.type==='video/webm')return 'webm';
+  if(file.type==='video/quicktime')return 'mov';
+  return 'mp4';
+}
+function validateProfileVideo(file){
+  return new Promise(resolve=>{
+    if(!file||!file.type.startsWith('video/')){showToast('Выбери видео');resolve('');return;}
+    if(file.size>PROFILE_VIDEO_MAX_BYTES){showToast('Видео слишком большое — максимум 12 МБ');resolve('');return;}
+    const preview=URL.createObjectURL(file);
+    const video=document.createElement('video');
+    const finish=value=>{video.removeAttribute('src');video.load();resolve(value);};
+    video.preload='metadata';
+    video.onloadedmetadata=()=>{
+      if(!Number.isFinite(video.duration)||video.duration<=0){URL.revokeObjectURL(preview);showToast('Не удалось определить длину видео');finish('');return;}
+      if(video.duration>PROFILE_VIDEO_MAX_SECONDS+.15){URL.revokeObjectURL(preview);showToast('Видео должно быть не длиннее 10 секунд');finish('');return;}
+      finish(preview);
+    };
+    video.onerror=()=>{URL.revokeObjectURL(preview);showToast('Формат видео не поддерживается');finish('');};
+    video.src=preview;
+  });
+}
+async function uploadProfileVideo(file,kind){
+  const extension=profileVideoExtension(file);
+  const path=me.nick+'/'+kind+'-'+Date.now()+'.'+extension;
+  const result=await sb.storage.from(PROFILE_VIDEO_BUCKET).upload(path,file,{contentType:file.type,cacheControl:'3600',upsert:false});
+  if(result.error)throw result.error;
+  const publicResult=sb.storage.from(PROFILE_VIDEO_BUCKET).getPublicUrl(path);
+  return publicResult.data.publicUrl+'?v='+Date.now();
+}
+async function removeOldProfileVideo(url){
+  const safe=safeMediaUrl(url);
+  if(!safe)return;
+  try{
+    const parsed=new URL(safe);
+    const marker='/storage/v1/object/public/'+PROFILE_VIDEO_BUCKET+'/';
+    const index=parsed.pathname.indexOf(marker);
+    if(index<0)return;
+    const path=decodeURIComponent(parsed.pathname.slice(index+marker.length));
+    await sb.storage.from(PROFILE_VIDEO_BUCKET).remove([path]);
+  }catch(error){}
+}
+
+const avatarMarkupBeforeVideo=avatarMarkup;
+avatarMarkup=function(user){
+  const nick=String(user&&user.nick||'').toLowerCase();
+  const media=safeMediaUrl(user&&user.avatar_video);
+  const marker='<i class="profile-nick-marker" data-profile-nick="'+escapeMediaAttribute(nick)+'"></i>';
+  if(canUseProfileVideo(nick)&&media){
+    return '<video class="avatar-photo avatar-video" src="'+escapeMediaAttribute(media)+'" autoplay loop muted playsinline preload="metadata"></video>'+marker;
+  }
+  return avatarMarkupBeforeVideo(user)+marker;
+};
+
+const normalizeProfileBannerBeforeVideo=normalizeProfileBanner;
+normalizeProfileBanner=function(value){
+  const raw=String(value||'');
+  if(raw.startsWith('video:')&&safeMediaUrl(raw.slice(6)))return raw;
+  return normalizeProfileBannerBeforeVideo(value);
+};
+const applyProfileBannerBeforeVideo=applyProfileBanner;
+applyProfileBanner=function(element,value){
+  if(!element)return;
+  const oldVideo=element.querySelector('.profile-banner-video');
+  if(oldVideo)oldVideo.remove();
+  const raw=String(value||'');
+  const ownerNick=element.id==='view-profile-cover'?viewedProfileNickV5:(me&&me.nick);
+  const videoUrl=raw.startsWith('video:')?safeMediaUrl(raw.slice(6)):'';
+  if(videoUrl&&canUseProfileVideo(ownerNick)){
+    PROFILE_BANNER_PRESETS.forEach(item=>element.classList.remove('banner-preset-'+item.id));
+    element.classList.remove('banner-photo');
+    element.style.backgroundImage='';
+    const video=document.createElement('video');
+    video.className='profile-banner-video';
+    video.src=videoUrl;
+    video.autoplay=true;video.loop=true;video.muted=true;video.playsInline=true;video.preload='metadata';
+    element.appendChild(video);
+    video.play().catch(()=>{});
+    return;
+  }
+  applyProfileBannerBeforeVideo(element,value);
+};
+
+const selectProfileBannerBeforeVideo=selectProfileBanner;
+selectProfileBanner=function(id){
+  clearObjectPreview('banner');
+  pendingBannerVideoFile=null;
+  selectProfileBannerBeforeVideo(id);
+};
+const handleProfileBannerFileBeforeVideo=handleProfileBannerFile;
+handleProfileBannerFile=function(input){
+  clearObjectPreview('banner');
+  pendingBannerVideoFile=null;
+  handleProfileBannerFileBeforeVideo(input);
+};
+
+async function handleProfileAvatarVideo(input){
+  const file=input.files&&input.files[0];input.value='';
+  if(!canUseProfileVideo(me&&me.nick)){showToast('Видеоаватар доступен только creator и tele');return;}
+  const preview=await validateProfileVideo(file);
+  if(!preview)return;
+  clearObjectPreview('avatar');
+  pendingAvatarVideoFile=file;
+  pendingAvatarVideoPreview=preview;
+  selectedAvatarVideo=preview;
+  profAvatarPhoto='';
+  renderProfileAvatar();
+  showToast('Видеоаватар выбран — нажми «Сохранить»');
+}
+async function handleProfileBannerVideo(input){
+  const file=input.files&&input.files[0];input.value='';
+  if(!canUseProfileVideo(me&&me.nick)){showToast('Видеобаннер доступен только creator и tele');return;}
+  const preview=await validateProfileVideo(file);
+  if(!preview)return;
+  clearObjectPreview('banner');
+  pendingBannerVideoFile=file;
+  pendingBannerVideoPreview=preview;
+  selectedProfileBanner='video:'+preview;
+  renderProfileBannerEditor();
+  showToast('Видеобаннер выбран — нажми «Сохранить»');
+}
+
+const renderProfileAvatarBeforeVideo=renderProfileAvatar;
+renderProfileAvatar=function(){
+  const preview=document.getElementById('prof-av-prev');
+  const panel=document.getElementById('profile-panel');
+  const removeBtn=document.getElementById('avatar-remove-btn');
+  const videoUrl=safeMediaUrl(selectedAvatarVideo);
+  if(canUseProfileVideo(me&&me.nick)&&videoUrl){
+    preview.innerHTML='<video class="avatar-photo avatar-video" src="'+escapeMediaAttribute(videoUrl)+'" autoplay loop muted playsinline preload="metadata"></video>';
+    panel.classList.add('has-photo');
+    removeBtn.hidden=false;
+    preview.querySelector('video').play().catch(()=>{});
+    return;
+  }
+  renderProfileAvatarBeforeVideo();
+};
+const removeProfilePhotoBeforeVideo=removeProfilePhoto;
+removeProfilePhoto=function(){
+  clearObjectPreview('avatar');
+  pendingAvatarVideoFile=null;
+  selectedAvatarVideo='';
+  removeProfilePhotoBeforeVideo();
+};
+const handleAvatarFileBeforeVideo=handleAvatarFile;
+handleAvatarFile=function(input){
+  clearObjectPreview('avatar');
+  pendingAvatarVideoFile=null;
+  selectedAvatarVideo='';
+  handleAvatarFileBeforeVideo(input);
+};
+
+const buildProfPanelBeforeVideo=buildProfPanel;
+buildProfPanel=function(){
+  buildProfPanelBeforeVideo();
+  const allowed=canUseProfileVideo(me&&me.nick);
+  document.getElementById('avatar-video-btn').hidden=!allowed;
+  document.getElementById('banner-video-btn').hidden=!allowed;
+  selectedAvatarVideo=allowed&&safeMediaUrl(me&&me.avatar_video)?me.avatar_video:'';
+  pendingAvatarVideoFile=null;pendingBannerVideoFile=null;
+  clearObjectPreview('avatar');clearObjectPreview('banner');
+  renderProfileAvatar();renderProfileBannerEditor();
+  const nick=document.getElementById('my-nick-display');
+  nick.innerHTML='@'+escHtml(me.nick)+verifiedBadgeHtml(me.nick,true);
+  const grid=document.getElementById('av-grid-prof');
+  if(!grid.dataset.videoChoiceBound){
+    grid.dataset.videoChoiceBound='1';
+    grid.addEventListener('click',event=>{
+      if(!event.target.closest('.av-option'))return;
+      clearObjectPreview('avatar');pendingAvatarVideoFile=null;selectedAvatarVideo='';
+      setTimeout(renderProfileAvatar,0);
+    });
+  }
+};
+
+const openUserProfileBeforeVideo=openUserProfile;
+openUserProfile=async function(nick){
+  await openUserProfileBeforeVideo(nick);
+  const user=userCache[nick];
+  if(!user)return;
+  document.getElementById('view-profile-nick').innerHTML='@'+escHtml(user.nick)+verifiedBadgeHtml(user.nick,true);
+  applyProfileBanner(document.getElementById('view-profile-cover'),user.banner);
+  enhanceVerifiedBadges();
+};
+
+saveProfile=async function(){
+  const button=document.querySelector('#profile-panel .auth-btn');
+  const originalText=button.textContent;
+  button.disabled=true;button.innerHTML='<span class="spinner"></span>Сохраняем...';
+  try{
+    const allowed=canUseProfileVideo(me&&me.nick);
+    const oldAvatarVideo=me.avatar_video||'';
+    const oldBanner=String(me.banner||'');
+    let nextAvatarVideo=allowed?safeMediaUrl(selectedAvatarVideo):'';
+    let nextBanner=normalizeProfileBanner(selectedProfileBanner);
+    if(pendingAvatarVideoFile)nextAvatarVideo=await uploadProfileVideo(pendingAvatarVideoFile,'avatar');
+    if(pendingBannerVideoFile)nextBanner='video:'+await uploadProfileVideo(pendingBannerVideoFile,'banner');
+    if(!allowed){
+      nextAvatarVideo='';
+      if(String(nextBanner).startsWith('video:'))nextBanner='preset:cosmos';
+    }
+    const nextName=document.getElementById('prof-name-inp').value.trim()||me.name;
+    const nextStatus=packProfileData(document.getElementById('prof-status-inp').value.trim(),profAvatarPhoto);
+    const nextBio=document.getElementById('prof-bio-inp').value.trim().slice(0,220);
+    const result=await sb.from('users').update({av:profAvIdx,name:nextName,status:nextStatus,bio:nextBio,banner:nextBanner,avatar_video:nextAvatarVideo}).eq('nick',me.nick);
+    if(result.error)throw result.error;
+    me.av=profAvIdx;me.name=nextName;me.status=nextStatus;me.bio=nextBio;me.banner=nextBanner;me.avatar_video=nextAvatarVideo;
+    userCache[me.nick]=me;
+    if(oldAvatarVideo&&oldAvatarVideo!==nextAvatarVideo)removeOldProfileVideo(oldAvatarVideo);
+    if(oldBanner.startsWith('video:')&&oldBanner!==nextBanner)removeOldProfileVideo(oldBanner.slice(6));
+    clearObjectPreview('avatar');clearObjectPreview('banner');
+    pendingAvatarVideoFile=null;pendingBannerVideoFile=null;
+    closeAllPanels();showToast('Профиль сохранён ✅');
+    if(currentChat)renderMessages();
+    renderContacts();
+  }catch(error){
+    const message=String(error&&error.message||'');
+    showToast(message.includes('avatar_video')||message.includes('Bucket')||message.includes('bucket')?'Сначала выполни SQL для видео профиля':'Не удалось сохранить видео профиля');
+  }finally{
+    button.disabled=false;button.textContent=originalText;
+  }
+};
+
+function addBadgeToElement(element,nick,large=false){
+  if(!element||!isCreatorVerified(nick)||element.querySelector('.verified-badge'))return;
+  element.insertAdjacentHTML('beforeend',verifiedBadgeHtml(nick,large));
+}
+function enhanceVerifiedBadges(){
+  document.querySelectorAll('.profile-nick-marker[data-profile-nick="creator"]').forEach(marker=>{
+    const avatar=marker.closest('.av');
+    if(!avatar)return;
+    const container=avatar.closest('.contact,.search-result-item,.member-item,.chat-identity');
+    if(!container)return;
+    let target=container.querySelector('.contact-name,.member-name,.chat-name');
+    if(!target){
+      const copy=avatar.nextElementSibling;
+      target=copy&&copy.firstElementChild;
+    }
+    addBadgeToElement(target,'creator');
+  });
+  const creatorName=userCache.creator&&userCache.creator.name;
+  if(creatorName){
+    document.querySelectorAll('.msg-sender-name').forEach(element=>{
+      if(element.textContent.trim()===creatorName)addBadgeToElement(element,'creator');
+    });
+  }
+}
+const verifiedObserver=new MutationObserver(()=>queueMicrotask(enhanceVerifiedBadges));
+verifiedObserver.observe(document.body,{childList:true,subtree:true});
+
+const renderContactsBeforeVerified=renderContacts;
+renderContacts=async function(){const value=await renderContactsBeforeVerified();enhanceVerifiedBadges();return value;};
+const openChatBeforeVerified=openChat;
+openChat=async function(nick){const value=await openChatBeforeVerified(nick);enhanceVerifiedBadges();return value;};
 </script>
 </body>
 </html>
