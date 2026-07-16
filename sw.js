@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v5-avatar-fix';
+const CACHE_NAME='telechat-shell-v9-banner-only';
 const APP_SHELL=[
   './',
   './index.html',
