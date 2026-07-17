@@ -2,6 +2,8 @@
 (()=>{
   const css=document.createElement('style');
   css.textContent=`
+  html,body,body *{-webkit-user-select:none;user-select:none}
+  input,textarea,[contenteditable="true"]{-webkit-user-select:text;user-select:text}
   .chat-photo{background:rgba(124,110,247,.06)}
   body.telechat-app-paused *,body.telechat-app-paused *::before,body.telechat-app-paused *::after{animation-play-state:paused!important}
   @media (prefers-reduced-motion:reduce){.emoji-bg::before,.emoji-bg::after,.emoji-particle{animation:none!important}}`;
