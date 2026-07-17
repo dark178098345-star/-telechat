@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v14-follow-lists';
+const CACHE_NAME='telechat-shell-v15-performance';
 const APP_SHELL=[
   './',
   './index.html',
@@ -8,7 +8,8 @@ const APP_SHELL=[
   './icon-maskable-512.png',
   './apple-touch-icon.png',
   './profile-performance-v11.js',
-  './followers-v12.js'
+  './followers-v12.js',
+  './app-performance-v15.js'
 ];
 
 self.addEventListener('install',event=>{
