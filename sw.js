@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v13-latin-nicks';
+const CACHE_NAME='telechat-shell-v14-follow-lists';
 const APP_SHELL=[
   './',
   './index.html',
