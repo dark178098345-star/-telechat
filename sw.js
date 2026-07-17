@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v15-performance';
+const CACHE_NAME='telechat-shell-v16-no-text-selection';
 const APP_SHELL=[
   './',
   './index.html',
