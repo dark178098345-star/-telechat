@@ -623,7 +623,7 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
     </div>
     <div id="reg-form" style="display:none">
       <div class="field-label">Ник (уникальный)</div>
-      <input class="field-input" id="r-nick" placeholder="например: ghostboy99" autocomplete="off" autocorrect="off" autocapitalize="none"/>
+      <input class="field-input" id="r-nick" placeholder="например: ghostboy99" autocomplete="off" autocorrect="off" autocapitalize="none" inputmode="text" maxlength="20" pattern="[A-Za-z0-9_]+" title="Только английские буквы, цифры и _" oninput="this.value=this.value.replace(/[^A-Za-z0-9_]/g,'').toLowerCase()"/>
       <div class="field-label">Имя</div>
       <input class="field-input" id="r-name" placeholder="как тебя зовут" autocomplete="off"/>
       <div class="field-label">Пароль</div>
@@ -1056,6 +1056,8 @@ async function doRegister(){
   const err=document.getElementById('auth-err');
   if(!nick||!name||!pass){err.textContent='Заполни все поля!';return;}
   if(nick.length<3){err.textContent='Ник минимум 3 символа';return;}
+  if(nick.length>20){err.textContent='Ник максимум 20 символов';return;}
+  if(!/^[a-z0-9_]+$/.test(nick)){err.textContent='Ник: только английские буквы, цифры и _';return;}
   const btn=document.getElementById('reg-btn');
   btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Проверяем...';
   const {data:ex}=await sb.from('users').select('nick').eq('nick',nick).maybeSingle();
