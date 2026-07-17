@@ -502,6 +502,7 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
 .profile-nick-marker{display:none!important}
 .video-limit-hint{margin:-1px 0 7px;text-align:center;color:#8f89ad;font-size:9px;line-height:1.35}
 </style>
+<link rel="stylesheet" href="./ui-polish-v16.css">
 </head>
 <body>
 <div id="startup-loader" role="status" aria-live="polite" aria-label="Загрузка tele.chat">
@@ -656,10 +657,17 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
       </div>
     </div>
     <div class="contacts-list" id="contacts-list"></div>
-    <div class="sidebar-footer">
-      <button class="footer-btn" onclick="openPanel('profile-panel')">&#128100;</button>
-      <button class="footer-btn" onclick="openPanel('settings-panel')">&#9881;</button>
-    </div>
+    <nav class="sidebar-footer telechat-bottom-nav" aria-label="Основная навигация">
+      <button class="telechat-nav-btn active" type="button" data-nav="chats" onclick="telechatNavigate('chats')" aria-label="Чаты">
+        <span class="telechat-nav-icon" aria-hidden="true">💬</span><span>Чаты</span>
+      </button>
+      <button class="telechat-nav-btn" type="button" data-nav="settings" onclick="telechatNavigate('settings')" aria-label="Настройки">
+        <span class="telechat-nav-icon" aria-hidden="true">⚙️</span><span>Настройки</span>
+      </button>
+      <button class="telechat-nav-btn" type="button" data-nav="profile" onclick="telechatNavigate('profile')" aria-label="Профиль">
+        <span class="telechat-nav-avatar" id="footer-profile-avatar" aria-hidden="true">👤</span><span>Профиль</span>
+      </button>
+    </nav>
   </div>
 
   <div class="chat-main">
@@ -773,50 +781,50 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
 </div>
 <!-- SETTINGS -->
 <div class="side-panel right" id="settings-panel">
-  <div class="panel-title">&#9881; Настройки</div>
+  <div class="panel-head">
+    <div class="panel-head-mark" aria-hidden="true">⚙️</div>
+    <div class="panel-head-copy"><div class="panel-title">Настройки</div><div class="panel-subtitle">Оформи tele.chat под себя</div></div>
+    <button class="panel-head-close" type="button" onclick="closeAllPanels()" aria-label="Закрыть">×</button>
+  </div>
   <div class="panel-section">
     <div class="panel-section-title">Тема</div>
     <div class="setting-row">
-      <div><div class="setting-label">Цвет</div></div>
+      <div class="setting-copy"><div class="setting-label">Цвет интерфейса</div><div class="setting-note">Выбери настроение приложения</div></div>
       <div class="theme-btns">
-        <div class="theme-btn t-dark active" onclick="setTheme('dark',this)"></div>
-        <div class="theme-btn t-light" onclick="setTheme('light',this)"></div>
-        <div class="theme-btn t-green" onclick="setTheme('green',this)"></div>
+        <button class="theme-btn t-dark active" type="button" data-theme="dark" onclick="setTheme('dark')" aria-label="Тёмная тема" title="Тёмная"></button>
+        <button class="theme-btn t-light" type="button" data-theme="light" onclick="setTheme('light')" aria-label="Светлая тема" title="Светлая"></button>
+        <button class="theme-btn t-green" type="button" data-theme="green" onclick="setTheme('green')" aria-label="Зелёная тема" title="Зелёная"></button>
       </div>
     </div>
   </div>
   <div class="panel-section">
     <div class="panel-section-title">Шрифт</div>
     <div class="setting-row">
-      <div class="setting-label">Размер</div>
+      <div class="setting-copy"><div class="setting-label">Размер текста</div><div class="setting-note">Для комфортного чтения</div></div>
       <div class="font-btns">
-        <button class="font-btn" onclick="setFont(12,this)">S</button>
-        <button class="font-btn active" onclick="setFont(14,this)">M</button>
-        <button class="font-btn" onclick="setFont(16,this)">L</button>
-        <button class="font-btn" onclick="setFont(18,this)">XL</button>
+        <button class="font-btn" type="button" data-font="12" onclick="setFont(12)">S</button>
+        <button class="font-btn active" type="button" data-font="14" onclick="setFont(14)">M</button>
+        <button class="font-btn" type="button" data-font="16" onclick="setFont(16)">L</button>
+        <button class="font-btn" type="button" data-font="18" onclick="setFont(18)">XL</button>
       </div>
     </div>
   </div>
   <div class="panel-section">
     <div class="panel-section-title">Уведомления</div>
     <div class="setting-row">
-      <div><div class="setting-label">Звук</div></div>
-      <label style="cursor:pointer;display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text2);">
-        <input type="checkbox" id="sound-toggle" checked style="accent-color:var(--accent);width:16px;height:16px;">вкл
-      </label>
+      <div class="setting-copy"><div class="setting-label">Звуки сообщений</div><div class="setting-note">Отправка и новые сообщения</div></div>
+      <label class="setting-switch" title="Звуки сообщений"><input type="checkbox" id="sound-toggle" checked aria-label="Звуки сообщений"></label>
     </div>
     <div class="setting-row">
-      <div><div class="setting-label">Push-уведомления</div></div>
+      <div class="setting-copy"><div class="setting-label">Push-уведомления</div><div class="setting-note">О новых сообщениях вне приложения</div></div>
       <button class="font-btn" onclick="requestPush()" id="push-btn">Включить</button>
     </div>
   </div>
   <div class="panel-section">
     <div class="panel-section-title">Анимация</div>
     <div class="setting-row">
-      <div class="setting-label">Летящие эмодзи</div>
-      <label style="cursor:pointer;display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text2);">
-        <input type="checkbox" id="emoji-toggle" checked onchange="toggleEmojiAnim()" style="accent-color:var(--accent);width:16px;height:16px;">вкл
-      </label>
+      <div class="setting-copy"><div class="setting-label">Летящие эмодзи</div><div class="setting-note">Живой космический фон</div></div>
+      <label class="setting-switch" title="Летящие эмодзи"><input type="checkbox" id="emoji-toggle" checked onchange="toggleEmojiAnim()" aria-label="Летящие эмодзи"></label>
     </div>
   </div>
   <div class="panel-section" id="install-app-section">
@@ -826,51 +834,67 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
       <div class="install-app-hint" id="install-app-hint">Откроется отдельным приложением без адресной строки</div>
     </div>
   </div>
-  <button class="close-btn" onclick="closeAllPanels()">Закрыть</button>
+  <button class="close-btn" onclick="closeAllPanels()">Закрыть настройки</button>
 </div>
-
 <!-- PROFILE -->
 <div class="side-panel left" id="profile-panel">
-  <div class="panel-title">&#128100; Профиль</div>
-
-  <div class="field-label">Баннер профиля</div>
-  <div class="profile-banner-editor">
-    <div class="profile-banner-preview banner-preset-cosmos" id="profile-banner-preview"></div>
-    <div class="banner-presets" id="profile-banner-presets"></div>
-    <div class="banner-upload-row">
-      <button type="button" class="banner-upload-btn" onclick="document.getElementById('banner-file-input').click()">🖼️ Фото из галереи</button>
-
-      <button type="button" class="banner-upload-btn privileged-media-only" id="banner-video-btn" onclick="document.getElementById('banner-video-input').click()" hidden>🎬 Видео</button>
-      <input type="file" id="banner-video-input" accept="video/mp4,video/webm,video/quicktime" onchange="handleProfileBannerVideo(this)" hidden>
-      <button type="button" class="banner-reset-btn" onclick="selectProfileBanner('cosmos')" title="Вернуть стандартный баннер">↺</button>
-      <input type="file" id="banner-file-input" accept="image/*" onchange="handleProfileBannerFile(this)" hidden>
+  <div class="panel-head">
+    <div class="panel-head-mark" aria-hidden="true">👤</div>
+    <div class="panel-head-copy"><div class="panel-title">Профиль</div><div class="panel-subtitle">Так тебя видят другие пользователи</div></div>
+    <button class="panel-head-close" type="button" onclick="closeAllPanels()" aria-label="Закрыть">×</button>
+  </div>
+  <button class="profile-preview-btn" type="button" onclick="previewMyProfile()">
+    <span class="profile-preview-icon" aria-hidden="true">👁️</span>
+    <span class="profile-preview-copy"><span class="profile-preview-title">Предпросмотр профиля</span><span class="profile-preview-note">Открыть свою карточку как у других</span></span>
+    <span class="profile-preview-arrow" aria-hidden="true">›</span>
+  </button>
+  <section class="profile-editor-card">
+    <div class="profile-card-title">✨ Оформление</div>
+    <div class="profile-banner-editor">
+      <div class="profile-banner-preview banner-preset-cosmos" id="profile-banner-preview"></div>
+      <div class="profile-avatar-toolbar">
+        <div class="av-preview" id="prof-av-prev"></div>
+        <div class="profile-avatar-upload-copy">
+          <div class="avatar-upload-actions">
+            <button type="button" class="avatar-upload-btn" onclick="document.getElementById('avatar-file-input').click()">🖼️ Фото</button>
+            <button type="button" class="avatar-upload-btn privileged-media-only" id="avatar-video-btn" onclick="document.getElementById('avatar-video-input').click()" hidden>🎬 Видео</button>
+            <button type="button" class="avatar-remove-btn" id="avatar-remove-btn" onclick="removeProfilePhoto()" title="Удалить фото" hidden>✕</button>
+          </div>
+          <div class="avatar-upload-hint">Фото обрежется и сожмётся автоматически</div>
+        </div>
+      </div>
+      <div class="banner-presets" id="profile-banner-presets"></div>
+      <div class="banner-upload-row">
+        <button type="button" class="banner-upload-btn" onclick="document.getElementById('banner-file-input').click()">🖼️ Загрузить баннер</button>
+        <button type="button" class="banner-upload-btn privileged-media-only" id="banner-video-btn" onclick="document.getElementById('banner-video-input').click()" hidden>🎬 Видео</button>
+        <button type="button" class="banner-reset-btn" onclick="selectProfileBanner('cosmos')" title="Вернуть стандартный баннер">↺</button>
+      </div>
+      <div class="banner-upload-hint">Выбери готовый стиль или загрузи свою широкую обложку</div>
     </div>
-    <div class="banner-upload-hint">Можно выбрать готовый вариант или загрузить свою широкую обложку</div>
-  </div>
-  <div class="av-preview" id="prof-av-prev"></div>
-  <div class="avatar-upload-actions">
-    <button type="button" class="avatar-upload-btn" onclick="document.getElementById('avatar-file-input').click()">🖼️ Фото из галереи</button>
-
-    <button type="button" class="avatar-upload-btn privileged-media-only" id="avatar-video-btn" onclick="document.getElementById('avatar-video-input').click()" hidden>🎬 Видео</button>
-    <input type="file" id="avatar-video-input" accept="video/mp4,video/webm,video/quicktime" onchange="handleProfileAvatarVideo(this)" hidden>
-    <button type="button" class="avatar-remove-btn" id="avatar-remove-btn" onclick="removeProfilePhoto()" title="Удалить фото" hidden>✕</button>
     <input type="file" id="avatar-file-input" accept="image/*" onchange="handleAvatarFile(this)" hidden>
+    <input type="file" id="avatar-video-input" accept="video/mp4,video/webm,video/quicktime" onchange="handleProfileAvatarVideo(this)" hidden>
+    <input type="file" id="banner-file-input" accept="image/*" onchange="handleProfileBannerFile(this)" hidden>
+    <input type="file" id="banner-video-input" accept="video/mp4,video/webm,video/quicktime" onchange="handleProfileBannerVideo(this)" hidden>
+  </section>
+  <section class="profile-choice-card">
+    <div class="profile-card-title">🎭 Аватар из коллекции</div>
+    <div class="av-grid" id="av-grid-prof"></div>
+  </section>
+  <section class="profile-fields-card">
+    <div class="profile-card-title">✍️ Информация</div>
+    <div class="field-label">Имя</div>
+    <input class="field-input" id="prof-name-inp" maxlength="48" placeholder="Как к тебе обращаться" autocomplete="off"/>
+    <div class="field-label">Статус</div>
+    <input class="field-input" id="prof-status-inp" maxlength="80" placeholder="не трогать 🔥" autocomplete="off"/>
+    <div class="field-label">О себе</div>
+    <textarea class="profile-bio-input" id="prof-bio-inp" maxlength="220" placeholder="Расскажи немного о себе…"></textarea>
+    <div class="profile-nick-row"><div class="field-label">Мой ник</div><div id="my-nick-display"></div></div>
+  </section>
+  <div class="profile-action-dock">
+    <button class="close-btn" type="button" onclick="closeAllPanels()">Закрыть</button>
+    <button class="auth-btn" type="button" onclick="saveProfile()">Сохранить</button>
   </div>
-  <div class="avatar-upload-hint">Фото автоматически обрежется в квадрат и сожмётся</div>
-  <div class="field-label">Аватарка</div>
-  <div class="av-grid" id="av-grid-prof"></div>
-  <div class="field-label">Имя</div>
-  <input class="field-input" id="prof-name-inp" autocomplete="off"/>
-  <div class="field-label">Статус</div>
-  <input class="field-input" id="prof-status-inp" maxlength="80" placeholder="не трогать 🔥" autocomplete="off"/>
-  <div class="field-label">О себе</div>
-  <textarea class="profile-bio-input" id="prof-bio-inp" maxlength="220" placeholder="Расскажи немного о себе…"></textarea>
-  <div class="field-label">Мой ник</div>
-  <div id="my-nick-display" style="font-size:13px;color:var(--text3);padding:4px 0;"></div>
-  <button class="auth-btn" onclick="saveProfile()">Сохранить</button>
-  <button class="close-btn" onclick="closeAllPanels()">Закрыть</button>
 </div>
-
 <!-- USER PROFILE VIEW -->
 <div class="modal-overlay" id="user-profile-modal" onclick="if(event.target===this)closeUserProfile()">
   <div class="modal user-profile-card">
@@ -2452,5 +2476,6 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <script src="./profile-performance-v11.js"></script>
 <script src="./followers-v12.js"></script>
 <script src="./app-performance-v15.js"></script>
+<script src="./ui-polish-v16.js"></script>
 </body>
 </html>
