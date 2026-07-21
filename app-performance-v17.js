@@ -26,7 +26,7 @@
 
   const renderContactsFallbackV17=renderContacts;
   let contactsInFlightV17=null,contactsQueuedV17=false;
-  let sidebarMessagesCacheV17=[],sidebarCacheReadyV17=false,sidebarCacheUpdatedAtV17=0;
+  let sidebarMessagesCacheV17=[],sidebarCacheReadyV17=false,sidebarCacheUpdatedAtV17=0,sidebarLocalPaintCreditsV25=0;
 
   function collectPrivateChatsV17(allMsgs){
     const seen=new Set(),chats=[];
@@ -78,6 +78,15 @@
     return true;
   }
 
+  function applySidebarMessageV25(message){
+    if(!sidebarCacheReadyV17||!message?.chat_key)return false;
+    sidebarMessagesCacheV17=[message,...sidebarMessagesCacheV17.filter(item=>{
+      if(message.id&&item.id)return String(item.id)!==String(message.id);
+      return !(item.chat_key===message.chat_key&&item.from_nick===message.from_nick&&Number(item.ts)===Number(message.ts));
+    })].sort((a,b)=>Number(b.ts||0)-Number(a.ts||0)).slice(0,500);
+    sidebarCacheUpdatedAtV17=Date.now();sidebarLocalPaintCreditsV25++;return true;
+  }
+  window.telechatApplySidebarMessageV25=applySidebarMessageV25;
   async function renderContactsNowV17(){
     try{
       const list=document.getElementById('contacts-list');if(!list||!me)return;
@@ -90,6 +99,7 @@
   }
 
   renderContacts=async function(){
+    if(sidebarLocalPaintCreditsV25>0&&sidebarCacheReadyV17){sidebarLocalPaintCreditsV25--;return paintSidebarV17(sidebarMessagesCacheV17);}
     if(contactsInFlightV17){contactsQueuedV17=true;return contactsInFlightV17;}
     contactsInFlightV17=renderContactsNowV17().finally(()=>{contactsInFlightV17=null;if(contactsQueuedV17){contactsQueuedV17=false;requestAnimationFrame(()=>renderContacts());}});
     return contactsInFlightV17;
@@ -132,6 +142,12 @@
     }
   };
 
+  const appendMessageBeforeV25=appendMessage;
+  appendMessage=async function(message,doScroll=true){
+    const value=await appendMessageBeforeV25(message,doScroll);
+    if(doScroll&&message?.chat_key)applySidebarMessageV25(message);
+    return value;
+  };
   const renderMessageContentBeforeV15=renderMessageContent;
   renderMessageContent=function(text){
     return renderMessageContentBeforeV15(text).replace('<img class="chat-photo"','<img class="chat-photo" loading="lazy" decoding="async"');

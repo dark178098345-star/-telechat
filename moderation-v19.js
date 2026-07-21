@@ -1,7 +1,7 @@
 /* TELECHAT MODERATION V19 — lightweight creator/admin controls */
 (()=>{
   const MOD_FIELDS='nick,role,verified,muted_until,muted_forever,banned_until,banned_forever,moderation_reason,session_version';
-  let targetV19=null,watchTimerV19=null,sessionVersionV19=0,decoratingV19=false;
+  let targetV19=null,watchTimerV19=null,sessionVersionV19=0,decoratingV19=false;const moderationCacheV25=new Map(),moderationInflightV25=new Map(),MODERATION_TTL_V25=20000;
 
   const lower=value=>String(value||'').trim().toLowerCase();
   const nowV19=()=>Date.now();
@@ -38,11 +38,12 @@
     return '';
   };
 
-  async function loadModerationUserV19(nick){
-    nick=lower(nick);if(!nick)return null;
-    const result=await sb.from('users').select(MOD_FIELDS).eq('nick',nick).maybeSingle();
-    if(result.error||!result.data)return userCache[nick]||null;
-    return mergeModerationV19(result.data);
+  async function loadModerationUserV19(nick,force=false){
+    nick=lower(nick);if(!nick)return null;const cached=moderationCacheV25.get(nick);
+    if(!force&&cached&&Date.now()-cached.time<MODERATION_TTL_V25)return cached.user;
+    if(!force&&moderationInflightV25.has(nick))return moderationInflightV25.get(nick);
+    const task=(async()=>{const result=await sb.from('users').select(MOD_FIELDS).eq('nick',nick).maybeSingle();if(result.error||!result.data)return userCache[nick]||null;const user=mergeModerationV19(result.data);moderationCacheV25.set(nick,{user,time:Date.now()});return user;})().finally(()=>moderationInflightV25.delete(nick));
+    moderationInflightV25.set(nick,task);return task;
   }
   async function loadModerationDirectoryV19(){
     const result=await sb.from('users').select('nick,role,verified').limit(1000);
@@ -159,7 +160,7 @@
     const reason=document.getElementById('moderation-reason').value.trim();document.querySelectorAll('#moderation-modal button').forEach(button=>button.disabled=true);
     try{
       const result=await sb.rpc('telechat_moderate',{p_actor_nick:me.nick,p_target_nick:targetV19.nick,p_action:action,p_minutes:minutes,p_reason:reason});
-      if(result.error)throw result.error;if(result.data)targetV19=mergeModerationV19({...targetV19,...result.data});else targetV19=await loadModerationUserV19(targetV19.nick);
+      if(result.error)throw result.error;if(result.data){targetV19=mergeModerationV19({...targetV19,...result.data});moderationCacheV25.set(targetV19.nick,{user:targetV19,time:Date.now()});}else targetV19=await loadModerationUserV19(targetV19.nick,true);
       renderModerationModalV19();renderProfileRoleV19(targetV19);if(typeof renderContacts==='function')renderContacts();refreshBadgesV19();showToast('Действие выполнено ✅');
     }catch(error){const message=String(error?.message||'');showToast(message.includes('telechat_moderate')?'Сначала выполни SQL модерации':(message||'Не удалось выполнить действие'));}
     finally{document.querySelectorAll('#moderation-modal button').forEach(button=>button.disabled=false);}
@@ -206,7 +207,7 @@
   };
 
   const openProfileBeforeV19=openUserProfile;
-  openUserProfile=async function(nick,...args){const value=await openProfileBeforeV19(nick,...args);const user=await loadModerationUserV19(nick);if(lower(viewedProfileNickV5)===lower(nick))renderProfileRoleV19(user||userCache[lower(nick)]);return value;};
+  openUserProfile=async function(nick,...args){const profileTask=openProfileBeforeV19(nick,...args),moderationTask=loadModerationUserV19(nick);const [value,user]=await Promise.all([profileTask,moderationTask]);if(lower(viewedProfileNickV5)===lower(nick))renderProfileRoleV19(user||userCache[lower(nick)]);return value;};
   const closeProfileBeforeV19=closeUserProfile;closeUserProfile=function(){closeModerationV19();targetV19=null;return closeProfileBeforeV19();};
 
   let observerFrameV21=0;const observerV19=new MutationObserver(()=>{if(observerFrameV21)return;observerFrameV21=requestAnimationFrame(()=>{observerFrameV21=0;decorateBadgesV19();});});observerV19.observe(document.body,{childList:true,subtree:true});

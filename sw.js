@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v24-message-reliability';
+const CACHE_NAME='telechat-shell-v25-performance-audit';
 const APP_SHELL=[
   './',
   './index.html',

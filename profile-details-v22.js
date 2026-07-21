@@ -16,7 +16,7 @@
     if(moonSummary&&moonSummary.parentElement!==moonGroup)moonGroup.appendChild(moonSummary);if(moonActions&&moonActions.parentElement!==moonGroup)moonGroup.appendChild(moonActions);if(followStats&&followStats.parentElement!==socialGroup)socialGroup.appendChild(followStats);if(moderation&&moderation.parentElement!==moderationGroup)moderationGroup.appendChild(moderation);
   }
   function setDetailsV22(open){detailsOpenV22=!!open;const toggle=document.getElementById('profile-details-toggle'),shell=document.getElementById('profile-details-shell');if(!toggle||!shell)return;toggle.setAttribute('aria-expanded',String(detailsOpenV22));shell.classList.toggle('open',detailsOpenV22);toggle.querySelector('.profile-details-title').textContent=detailsOpenV22?'Скрыть подробности':'Подробнее';}
-  const openBeforeV22=openUserProfile;openUserProfile=async function(nick,...args){const value=await openBeforeV22(nick,...args);ensureDetailsV22();organizeDetailsV22();setDetailsV22(false);requestAnimationFrame(organizeDetailsV22);setTimeout(organizeDetailsV22,220);return value;};
+  const openBeforeV22=openUserProfile;openUserProfile=async function(nick,...args){const profileTask=openBeforeV22(nick,...args);ensureDetailsV22();organizeDetailsV22();setDetailsV22(false);requestAnimationFrame(organizeDetailsV22);const value=await profileTask;organizeDetailsV22();return value;};
   const closeBeforeV22=closeUserProfile;closeUserProfile=function(){setDetailsV22(false);return closeBeforeV22();};
   window.toggleProfileDetailsV22=()=>setDetailsV22(!detailsOpenV22);ensureDetailsV22();setDetailsV22(false);
 })();

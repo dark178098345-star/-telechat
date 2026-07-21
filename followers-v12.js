@@ -26,7 +26,7 @@
   @keyframes follow-shimmer{to{background-position:-200% 0}}@keyframes follow-spin{to{transform:rotate(360deg)}}@keyframes follow-list-fade{from{opacity:0;transform:scale(.98)}to{opacity:1;transform:scale(1)}}`;
   document.head.appendChild(css);
 
-  const state={target:'',following:false,followers:0,followingCount:0,request:0,ready:false};
+  const state={target:'',following:false,followers:0,followingCount:0,request:0,ready:false},followCacheV25=new Map(),FOLLOW_TTL_V25=30000;
   function ensureUi(){
     const seen=document.getElementById('view-profile-seen'),actions=document.querySelector('.user-profile-actions');
     if(!seen||!actions)return;
@@ -57,14 +57,14 @@
     button.style.display=own?'none':'';button.classList.toggle('following',state.following);button.textContent=state.following?'✓ Вы подписаны':'Подписаться';
   }
   async function loadFollowV12(nick){
-    ensureUi();state.target=String(nick||'').toLowerCase();state.ready=false;const request=++state.request;loading(true);render();
+    ensureUi();state.target=String(nick||'').toLowerCase();const request=++state.request,cached=followCacheV25.get(state.target);if(cached&&Date.now()-cached.time<FOLLOW_TTL_V25){Object.assign(state,cached.data,{ready:true});render();loading(false);return;}state.ready=false;loading(true);render();
     try{
       const followers=sb.from('user_follows').select('follower_nick',{count:'exact',head:true}).eq('following_nick',state.target);
       const following=sb.from('user_follows').select('following_nick',{count:'exact',head:true}).eq('follower_nick',state.target);
       const mine=me&&me.nick!==state.target?sb.from('user_follows').select('follower_nick').eq('follower_nick',me.nick).eq('following_nick',state.target).maybeSingle():Promise.resolve({data:null,error:null});
       const [a,b,c]=await Promise.all([followers,following,mine]);if(request!==state.request)return;
       if(a.error||b.error||c.error)throw a.error||b.error||c.error;
-      state.followers=a.count||0;state.followingCount=b.count||0;state.following=!!c.data;state.ready=true;render();
+      state.followers=a.count||0;state.followingCount=b.count||0;state.following=!!c.data;state.ready=true;followCacheV25.set(state.target,{time:Date.now(),data:{followers:state.followers,followingCount:state.followingCount,following:state.following}});render();
     }catch(e){
       if(request!==state.request)return;state.followers=0;state.followingCount=0;state.following=false;render();
       const button=document.getElementById('follow-btn');if(button&&state.target!==me?.nick){button.textContent='Подписки скоро';button.disabled=true;}
@@ -74,7 +74,7 @@
     if(!me||!state.target||state.target===me.nick||!state.ready)return;
     const was=state.following;state.following=!was;state.followers+=was?-1:1;render();document.getElementById('follow-btn').disabled=true;
     const result=was?await sb.from('user_follows').delete().eq('follower_nick',me.nick).eq('following_nick',state.target):await sb.from('user_follows').insert({follower_nick:me.nick,following_nick:state.target,created_at:Date.now()});
-    if(result.error){state.following=was;state.followers+=was?1:-1;render();showToast('Не удалось изменить подписку');}else showToast(state.following?'Вы подписались ✅':'Подписка отменена');
+    if(result.error){state.following=was;state.followers+=was?1:-1;render();showToast('Не удалось изменить подписку');}else{followCacheV25.set(state.target,{time:Date.now(),data:{followers:state.followers,followingCount:state.followingCount,following:state.following}});showToast(state.following?'Вы подписались ✅':'Подписка отменена');}
     document.getElementById('follow-btn').disabled=false;
   }
   let listRequestV14=0;
@@ -133,6 +133,6 @@
   window.openFollowListV14=openFollowListV14;
   window.closeFollowListV14=closeFollowListV14;
   window.loadFollowV12=loadFollowV12;window.toggleFollowV12=toggleFollowV12;ensureUi();
-  const openBefore=openUserProfile;openUserProfile=async function(nick,...args){await openBefore(nick,...args);await loadFollowV12(nick);};
+  const openBefore=openUserProfile;openUserProfile=async function(nick,...args){const profileTask=openBefore(nick,...args),followTask=loadFollowV12(nick);const [value]=await Promise.all([profileTask,followTask]);return value;};
   const closeBefore=closeUserProfile;closeUserProfile=function(){state.request++;state.target='';closeFollowListV14();closeBefore();};
 })();
