@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v17-navigation-settings';
+const CACHE_NAME='telechat-shell-v18-fast-tabs';
 const APP_SHELL=[
   './',
   './index.html',
@@ -9,7 +9,7 @@ const APP_SHELL=[
   './apple-touch-icon.png',
   './profile-performance-v11.js',
   './followers-v12.js',
-  './app-performance-v15.js',
+  './app-performance-v17.js',
   './ui-polish-v16.css',
   './ui-polish-v16.js'
 ];
