@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v18-fast-tabs';
+const CACHE_NAME='telechat-shell-v19-moderation';
 const APP_SHELL=[
   './',
   './index.html',
@@ -11,7 +11,9 @@ const APP_SHELL=[
   './followers-v12.js',
   './app-performance-v17.js',
   './ui-polish-v16.css',
-  './ui-polish-v16.js'
+  './ui-polish-v16.js',
+  './moderation-v19.css',
+  './moderation-v19.js'
 ];
 
 self.addEventListener('install',event=>{
