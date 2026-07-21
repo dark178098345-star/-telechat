@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v19-moderation';
+const CACHE_NAME='telechat-shell-v20-moons';
 const APP_SHELL=[
   './',
   './index.html',
@@ -13,7 +13,9 @@ const APP_SHELL=[
   './ui-polish-v16.css',
   './ui-polish-v16.js',
   './moderation-v19.css',
-  './moderation-v19.js'
+  './moderation-v19.js',
+  './moons-v20.css',
+  './moons-v20.js'
 ];
 
 self.addEventListener('install',event=>{
