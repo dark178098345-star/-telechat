@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v21-gift-chat';
+const CACHE_NAME='telechat-shell-v22-profile-details';
 const APP_SHELL=[
   './',
   './index.html',
@@ -15,7 +15,9 @@ const APP_SHELL=[
   './moderation-v19.css',
   './moderation-v19.js',
   './moons-v20.css',
-  './moons-v20.js'
+  './moons-v20.js',
+  './profile-details-v22.css',
+  './profile-details-v22.js'
 ];
 
 self.addEventListener('install',event=>{
