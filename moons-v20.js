@@ -3,7 +3,7 @@
   const LIMIT_WINDOW=1814400000;
   let catalogV20=[],catalogReadyV20=false,catalogTabV20='regular',giftTargetV20='',selectedGiftV20=null;
   let viewedMoonUserV20=null,profileMoonRequestV20=0,limitedNextV20=0,giftRealtimeV20=null,celebrationTimerV20=null;
-  let catalogPromiseV21=null,cooldownLoadedAtV21=0;const moonUserTimesV21=new Map();
+  let catalogPromiseV21=null,cooldownLoadedAtV21=0;const moonUserTimesV21=new Map(),collectionGiftsV23=new Map();
   const lowerV20=value=>String(value||'').trim().toLowerCase();
   const creatorV20=nick=>lowerV20(nick)==='creator';
   const themeClassV20=theme=>'gift-theme-'+String(theme||'violet').replace(/[^a-z]/g,'');
@@ -47,6 +47,7 @@
       <div class="moon-overlay" id="gift-catalog-modal"><section class="moon-card"><header class="moon-head"><div class="moon-head-orb">🎁</div><div class="moon-head-copy"><div class="moon-title">Обсерватория подарков</div><div class="moon-subtitle" id="gift-catalog-target"></div></div><div class="moon-head-balance" id="gift-catalog-balance"></div><button class="moon-close" data-moon-close>×</button></header><div class="moon-body"><div class="gift-tabs"><button class="gift-tab active" data-gift-tab="regular">25 подарков</button><button class="gift-tab" data-gift-tab="limited">12 лимитированных</button></div><div class="gift-limit-banner" id="gift-limit-banner"></div><div class="gift-grid" id="gift-catalog-grid"></div></div></section></div>
       <div class="moon-overlay" id="gift-confirm-modal"><section class="moon-card compact"><header class="moon-head"><div class="moon-head-orb">✦</div><div class="moon-head-copy"><div class="moon-title">Отправить подарок</div><div class="moon-subtitle" id="gift-confirm-target"></div></div><button class="moon-close" data-moon-close>×</button></header><div class="moon-body"><div id="gift-confirm-content"></div><label class="moon-label" for="gift-confirm-message">Подпись к подарку</label><input class="moon-input" id="gift-confirm-message" maxlength="120" placeholder="Напиши пару тёплых слов"><button class="moon-submit" id="gift-confirm-send" style="width:100%;margin-top:12px">Отправить подарок</button></div></section></div>
       <div class="moon-overlay" id="gift-collection-modal"><section class="moon-card"><header class="moon-head"><div class="moon-head-orb">✧</div><div class="moon-head-copy"><div class="moon-title">Коллекция подарков</div><div class="moon-subtitle" id="gift-collection-owner"></div></div><div class="moon-head-balance" id="gift-collection-count"></div><button class="moon-close" data-moon-close>×</button></header><div class="moon-body"><div class="gift-collection-grid" id="gift-collection-grid"></div></div></section></div>
+      <div class="moon-overlay" id="gift-detail-modal"><section class="moon-card compact"><header class="moon-head"><div class="moon-head-orb">✦</div><div class="moon-head-copy"><div class="moon-title">Подарок</div><div class="moon-subtitle">тёплый момент в tele.chat</div></div><button class="moon-close" data-moon-close>×</button></header><div class="moon-body" id="gift-detail-content"></div></section></div>
       <div class="moon-celebration" id="moon-celebration"><div class="moon-celebration-box"><div class="moon-celebration-icon" id="moon-celebration-icon">🌙</div><div class="moon-celebration-title" id="moon-celebration-title"></div><div class="moon-celebration-sub" id="moon-celebration-sub"></div></div></div>`;
     document.body.appendChild(root);
     document.querySelectorAll('[data-moon-close]').forEach(button=>button.onclick=()=>button.closest('.moon-overlay').classList.remove('show'));
@@ -55,6 +56,7 @@
     document.getElementById('moon-transfer-send').onclick=()=>runMoonTransferV20('send');document.getElementById('moon-creator-grant').onclick=()=>runMoonTransferV20('grant');document.getElementById('moon-creator-take').onclick=()=>runMoonTransferV20('take');
     document.querySelectorAll('[data-gift-tab]').forEach(button=>button.onclick=()=>{catalogTabV20=button.dataset.giftTab;renderGiftCatalogV20();});document.getElementById('gift-confirm-send').onclick=sendSelectedGiftV20;
     document.getElementById('gift-catalog-grid').onclick=event=>{const button=event.target.closest('[data-gift-id]');if(button&&!button.disabled)openGiftConfirmV20(button.dataset.giftId);};
+    document.getElementById('gift-collection-grid').onclick=event=>{const card=event.target.closest('[data-owned-gift-id]');if(card)openGiftDetailV23(card.dataset.ownedGiftId);};
   }
 
   async function fetchMoonUserV20(nick,force=false){
@@ -138,8 +140,20 @@
   function giftChatHtmlV21(gift){
     const theme=themeClassV20(gift.t),owner=lowerV20(gift.o);return '<button type="button" class="chat-gift-card '+theme+(gift.l?' limited':'')+'" data-chat-gift-owner="'+escHtml(owner)+'"><span class="chat-gift-label">'+(gift.l?'ЛИМИТИРОВАННЫЙ ПОДАРОК':'ПОДАРОК TELE.CHAT')+'</span><span class="chat-gift-orbit"><span>'+escHtml(gift.i||'🎁')+'</span></span><strong>'+escHtml(gift.n||'Подарок')+'</strong><span class="chat-gift-price">'+compactV20(gift.p)+' 🌙</span>'+(gift.m?'<em>«'+escHtml(gift.m)+'»</em>':'')+'<span class="chat-gift-open">Открыть коллекцию ›</span></button>';
   }
+  async function persistGiftChatV23(row){
+    let lastError=null;
+    for(let attempt=0;attempt<3;attempt++){
+      const result=await sb.from('messages').insert(row);if(!result.error)return true;lastError=result.error;
+      const existing=await sb.from('messages').select('id').eq('chat_key',row.chat_key).eq('from_nick',row.from_nick).eq('ts',row.ts).limit(1);if(!existing.error&&existing.data?.length)return true;
+      if(attempt<2)await new Promise(resolve=>setTimeout(resolve,250*(attempt+1)));
+    }
+    console.error('Gift chat message was not saved',lastError);return false;
+  }
   async function postGiftChatCardV21(gift,target,recordId,message){
-    target=lowerV20(target);if(!me||!target||target===me.nick)return;const text=packGiftChatV21(gift,target,recordId,message),ts=Date.now(),key=chatKey(me.nick,target),row={chat_key:key,from_nick:me.nick,text,ts,reply_text:null,read_by:[],deleted:false};if(currentChat===target&&!currentRoom)appendMessage(row);const result=await sb.from('messages').insert(row);if(result.error){if(currentChat===target&&!currentRoom)renderMessages();return;}renderContacts();
+    target=lowerV20(target);if(!me||!target)return false;if(target===me.nick)return true;
+    const text=packGiftChatV21(gift,target,recordId,message),ts=Date.now(),key=chatKey(me.nick,target),row={chat_key:key,from_nick:me.nick,text,ts,reply_text:null,read_by:[],deleted:false};
+    const saved=await persistGiftChatV23(row);if(!saved){showToast('Подарок в коллекции, но карточку чата сохранить не удалось');return false;}
+    if(currentChat===target&&!currentRoom)await renderMessages();renderContacts();if(typeof playSendSound==='function')playSendSound();return true;
   }
   const previewBeforeV21=messagePreviewText;messagePreviewText=function(text){const gift=unpackGiftChatV21(text);return gift?'🎁 Подарок: '+gift.n:previewBeforeV21(text);};
   const contentBeforeV21=renderMessageContent;renderMessageContent=function(text){const gift=unpackGiftChatV21(text);return gift?giftChatHtmlV21(gift):contentBeforeV21(text);};
@@ -147,16 +161,21 @@
     if(!selectedGiftV20||!giftTargetV20)return;const button=document.getElementById('gift-confirm-send'),message=document.getElementById('gift-confirm-message').value.trim();button.disabled=true;button.textContent='Отправляем…';
     try{
       const result=await sb.rpc('telechat_send_gift',{p_actor_nick:me.nick,p_target_nick:giftTargetV20,p_gift_id:selectedGiftV20.id,p_message:message});if(result.error)throw result.error;if(!creatorV20(me.nick)){me.moons=Number(result.data.balance);mergeMoonUserV20(me);}if(selectedGiftV20.limited)limitedNextV20=Number(result.data.next_limited_at||Date.now()+LIMIT_WINDOW);
-      const sentGift=selectedGiftV20,sentTarget=giftTargetV20;document.getElementById('gift-confirm-modal').classList.remove('show');document.getElementById('gift-catalog-modal').classList.remove('show');showCelebrationV20(sentGift.icon,'Подарок отправлен',sentGift.name+' · @'+sentTarget);postGiftChatCardV21(sentGift,sentTarget,result.data.gift_record_id,message).catch(()=>{});if(lowerV20(viewedProfileNickV5)===sentTarget)loadProfileMoonsV20(sentTarget);
+      const sentGift=selectedGiftV20,sentTarget=giftTargetV20;document.getElementById('gift-confirm-modal').classList.remove('show');document.getElementById('gift-catalog-modal').classList.remove('show');const chatSaved=await postGiftChatCardV21(sentGift,sentTarget,result.data.gift_record_id,message);showCelebrationV20(sentGift.icon,'Подарок отправлен',sentGift.name+' · @'+sentTarget+(chatSaved?'':' · без карточки чата'));if(lowerV20(viewedProfileNickV5)===sentTarget)loadProfileMoonsV20(sentTarget);
     }catch(error){showToast(moonErrorV20(error));}finally{button.disabled=false;button.textContent='Отправить подарок';}
   }
 
   async function openCollectionV20(nick){
     ensureMoonUiV20();nick=lowerV20(nick);const owner=userCache[nick]||{nick,name:nick},modal=document.getElementById('gift-collection-modal'),box=document.getElementById('gift-collection-grid');document.getElementById('gift-collection-owner').textContent=(owner.name||nick)+' · @'+nick;document.getElementById('gift-collection-count').textContent='…';box.innerHTML='<div class="moon-empty" style="grid-column:1/-1">Собираем созвездие…</div>';modal.classList.add('show');
-    const result=await sb.from('user_gifts').select('*').eq('owner_nick',nick).order('created_at',{ascending:false}).limit(200);if(result.error){box.innerHTML='<div class="moon-empty" style="grid-column:1/-1">Коллекция пока недоступна</div>';return;}const gifts=result.data||[];document.getElementById('gift-collection-count').textContent=compactV20(gifts.length)+' 🎁';if(!gifts.length){box.innerHTML='<div class="moon-empty" style="grid-column:1/-1">У пользователя пока нет подарков</div>';return;}
-    box.innerHTML=gifts.map(gift=>'<article class="owned-gift '+themeClassV20(gift.theme)+(gift.limited?' limited':'')+'"><span class="gift-serial">#'+String(gift.id).padStart(6,'0')+'</span><div class="gift-orbit"><span class="gift-icon">'+gift.gift_icon+'</span></div><div class="gift-name">'+escHtml(gift.gift_name)+'</div><div class="gift-price">'+compactV20(gift.price)+' 🌙</div><div class="owned-gift-sender">от @'+escHtml(gift.sender_nick)+' · '+dateV20(gift.created_at)+'</div>'+(gift.message?'<div class="owned-gift-message">'+escHtml(gift.message)+'</div>':'')+'</article>').join('');
+    const result=await sb.from('user_gifts').select('*').eq('owner_nick',nick).order('created_at',{ascending:false}).limit(200);if(result.error){box.innerHTML='<div class="moon-empty" style="grid-column:1/-1">Коллекция пока недоступна</div>';return;}const gifts=result.data||[];collectionGiftsV23.clear();gifts.forEach(gift=>collectionGiftsV23.set(String(gift.id),gift));document.getElementById('gift-collection-count').textContent=compactV20(gifts.length)+' 🎁';if(!gifts.length){box.innerHTML='<div class="moon-empty" style="grid-column:1/-1">У пользователя пока нет подарков</div>';return;}
+    box.innerHTML=gifts.map(gift=>'<button type="button" class="owned-gift '+themeClassV20(gift.theme)+(gift.limited?' limited':'')+'" data-owned-gift-id="'+escHtml(String(gift.id))+'"><span class="gift-serial">#'+String(gift.id).padStart(6,'0')+'</span><div class="gift-orbit"><span class="gift-icon">'+gift.gift_icon+'</span></div><div class="gift-name">'+escHtml(gift.gift_name)+'</div><div class="gift-price">'+compactV20(gift.price)+' 🌙</div><div class="owned-gift-sender">от @'+escHtml(gift.sender_nick)+' · '+dateV20(gift.created_at)+'</div>'+(gift.message?'<div class="owned-gift-message">'+escHtml(gift.message)+'</div>':'')+'<span class="owned-gift-more">Подробнее ›</span></button>').join('');
   }
 
+  function openGiftDetailV23(id){
+    const gift=collectionGiftsV23.get(String(id));if(!gift)return;const modal=document.getElementById('gift-detail-modal'),box=document.getElementById('gift-detail-content'),sender=lowerV20(gift.sender_nick);
+    box.innerHTML='<div class="gift-detail-hero '+themeClassV20(gift.theme)+(gift.limited?' limited':'')+'"><span class="gift-detail-serial">#'+String(gift.id).padStart(6,'0')+'</span><div class="gift-orbit"><span class="gift-icon">'+escHtml(gift.gift_icon||'🎁')+'</span></div><strong>'+escHtml(gift.gift_name||'Подарок')+'</strong><span>'+compactV20(gift.price)+' 🌙</span></div><div class="gift-detail-note"><span>ТЁПЛОЕ СООБЩЕНИЕ</span><blockquote>'+(gift.message?'«'+escHtml(gift.message)+'»':'Без подписи')+'</blockquote></div><button type="button" class="gift-detail-sender" data-gift-detail-sender="'+escHtml(sender)+'"><span>Отправитель</span><strong>@'+escHtml(sender)+'</strong><small>'+dateV20(gift.created_at)+' · открыть профиль ›</small></button>';
+    box.querySelector('[data-gift-detail-sender]').onclick=()=>{modal.classList.remove('show');document.getElementById('gift-collection-modal').classList.remove('show');openUserProfile(sender);};modal.classList.add('show');
+  }
   function showCelebrationV20(icon,title,subtitle){
     ensureMoonUiV20();const overlay=document.getElementById('moon-celebration');document.getElementById('moon-celebration-icon').textContent=icon;document.getElementById('moon-celebration-title').textContent=title;document.getElementById('moon-celebration-sub').textContent=subtitle;overlay.querySelectorAll('.moon-particle').forEach(item=>item.remove());for(let i=0;i<18;i++){const particle=document.createElement('span');particle.className='moon-particle';particle.textContent=i%3?'✦':'🌙';const angle=Math.PI*2*i/18,distance=100+Math.random()*170;particle.style.setProperty('--x',Math.cos(angle)*distance+'px');particle.style.setProperty('--y',Math.sin(angle)*distance+'px');particle.style.animationDelay=Math.random()*.25+'s';overlay.appendChild(particle);}clearTimeout(celebrationTimerV20);overlay.classList.remove('show');void overlay.offsetWidth;overlay.classList.add('show');celebrationTimerV20=setTimeout(()=>overlay.classList.remove('show'),2450);
   }

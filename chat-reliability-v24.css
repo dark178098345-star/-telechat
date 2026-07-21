@@ -1,0 +1,6 @@
+/* TELECHAT CHAT RELIABILITY V24 */
+.send-btn:disabled{cursor:wait;opacity:.72;transform:none!important}
+.send-btn.is-sending{box-shadow:0 0 0 4px rgba(124,110,247,.12),0 8px 24px rgba(124,110,247,.22)}
+.send-spinner-v24{display:block;width:17px;height:17px;border:2px solid rgba(255,255,255,.32);border-top-color:#fff;border-radius:50%;animation:send-spin-v24 .65s linear infinite}
+@keyframes send-spin-v24{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.send-spinner-v24{animation-duration:1.4s}}

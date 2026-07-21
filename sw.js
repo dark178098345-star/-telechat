@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v22-profile-details';
+const CACHE_NAME='telechat-shell-v24-message-reliability';
 const APP_SHELL=[
   './',
   './index.html',
@@ -17,7 +17,9 @@ const APP_SHELL=[
   './moons-v20.css',
   './moons-v20.js',
   './profile-details-v22.css',
-  './profile-details-v22.js'
+  './profile-details-v22.js',
+  './chat-reliability-v24.css',
+  './chat-reliability-v24.js'
 ];
 
 self.addEventListener('install',event=>{
