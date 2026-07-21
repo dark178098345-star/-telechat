@@ -209,7 +209,7 @@
   openUserProfile=async function(nick,...args){const value=await openProfileBeforeV19(nick,...args);const user=await loadModerationUserV19(nick);if(lower(viewedProfileNickV5)===lower(nick))renderProfileRoleV19(user||userCache[lower(nick)]);return value;};
   const closeProfileBeforeV19=closeUserProfile;closeUserProfile=function(){closeModerationV19();targetV19=null;return closeProfileBeforeV19();};
 
-  const observerV19=new MutationObserver(decorateBadgesV19);observerV19.observe(document.body,{childList:true,subtree:true});
+  let observerFrameV21=0;const observerV19=new MutationObserver(()=>{if(observerFrameV21)return;observerFrameV21=requestAnimationFrame(()=>{observerFrameV21=0;decorateBadgesV19();});});observerV19.observe(document.body,{childList:true,subtree:true});
   document.addEventListener('keydown',event=>{if(event.key==='Escape')closeModerationV19();});
   const forced=sessionStorage.getItem('telechat-moderation-message');if(forced){sessionStorage.removeItem('telechat-moderation-message');setTimeout(()=>{const err=document.getElementById('auth-err');if(err)err.textContent=forced;},50);}
   window.openModerationV19=openModerationV19;window.closeModerationV19=closeModerationV19;window.loadModerationDirectoryV19=loadModerationDirectoryV19;ensureUiV19();

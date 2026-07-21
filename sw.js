@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v20-moons';
+const CACHE_NAME='telechat-shell-v21-gift-chat';
 const APP_SHELL=[
   './',
   './index.html',

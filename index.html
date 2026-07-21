@@ -2467,7 +2467,8 @@ function enhanceVerifiedBadges(){
     });
   }
 }
-const verifiedObserver=new MutationObserver(()=>queueMicrotask(enhanceVerifiedBadges));
+let verifiedBadgeFrameV21=0;
+const verifiedObserver=new MutationObserver(()=>{if(verifiedBadgeFrameV21)return;verifiedBadgeFrameV21=requestAnimationFrame(()=>{verifiedBadgeFrameV21=0;enhanceVerifiedBadges();});});
 verifiedObserver.observe(document.body,{childList:true,subtree:true});
 
 const renderContactsBeforeVerified=renderContacts;

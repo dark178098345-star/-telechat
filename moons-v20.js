@@ -3,6 +3,7 @@
   const LIMIT_WINDOW=1814400000;
   let catalogV20=[],catalogReadyV20=false,catalogTabV20='regular',giftTargetV20='',selectedGiftV20=null;
   let viewedMoonUserV20=null,profileMoonRequestV20=0,limitedNextV20=0,giftRealtimeV20=null,celebrationTimerV20=null;
+  let catalogPromiseV21=null,cooldownLoadedAtV21=0;const moonUserTimesV21=new Map();
   const lowerV20=value=>String(value||'').trim().toLowerCase();
   const creatorV20=nick=>lowerV20(nick)==='creator';
   const themeClassV20=theme=>'gift-theme-'+String(theme||'violet').replace(/[^a-z]/g,'');
@@ -53,18 +54,18 @@
     document.getElementById('moon-wallet-transfer').onclick=()=>openTransferV20('');document.getElementById('moon-wallet-gifts').onclick=()=>openGiftCatalogV20(me?.nick);
     document.getElementById('moon-transfer-send').onclick=()=>runMoonTransferV20('send');document.getElementById('moon-creator-grant').onclick=()=>runMoonTransferV20('grant');document.getElementById('moon-creator-take').onclick=()=>runMoonTransferV20('take');
     document.querySelectorAll('[data-gift-tab]').forEach(button=>button.onclick=()=>{catalogTabV20=button.dataset.giftTab;renderGiftCatalogV20();});document.getElementById('gift-confirm-send').onclick=sendSelectedGiftV20;
+    document.getElementById('gift-catalog-grid').onclick=event=>{const button=event.target.closest('[data-gift-id]');if(button&&!button.disabled)openGiftConfirmV20(button.dataset.giftId);};
   }
 
-  async function fetchMoonUserV20(nick){
-    nick=lowerV20(nick);if(!nick)return null;const result=await sb.from('users').select('nick,name,av,moons').eq('nick',nick).maybeSingle();
-    if(result.error||!result.data)return userCache[nick]||null;return mergeMoonUserV20(result.data);
+  async function fetchMoonUserV20(nick,force=false){
+    nick=lowerV20(nick);if(!nick)return null;const cached=userCache[nick];if(!force&&cached&&cached.moons!=null&&Date.now()-(moonUserTimesV21.get(nick)||0)<30000)return cached;
+    const result=await sb.from('users').select('nick,name,av,moons').eq('nick',nick).maybeSingle();if(result.error||!result.data)return cached||null;moonUserTimesV21.set(nick,Date.now());return mergeMoonUserV20(result.data);
   }
   async function loadCatalogV20(){
-    if(catalogReadyV20)return catalogV20;const result=await sb.from('moon_gifts').select('*').order('sort_order',{ascending:true});if(result.error)throw result.error;catalogV20=result.data||[];catalogReadyV20=true;return catalogV20;
+    if(catalogReadyV20)return catalogV20;if(catalogPromiseV21)return catalogPromiseV21;catalogPromiseV21=(async()=>{const result=await sb.from('moon_gifts').select('*').order('sort_order',{ascending:true});if(result.error)throw result.error;catalogV20=result.data||[];catalogReadyV20=true;return catalogV20;})().finally(()=>catalogPromiseV21=null);return catalogPromiseV21;
   }
-  async function loadLimitedCooldownV20(){
-    if(!me)return 0;const result=await sb.from('user_gifts').select('created_at').eq('sender_nick',me.nick).eq('limited',true).order('created_at',{ascending:false}).limit(1);
-    limitedNextV20=result.error||!result.data?.length?0:Number(result.data[0].created_at)+LIMIT_WINDOW;return limitedNextV20;
+  async function loadLimitedCooldownV20(force=false){
+    if(!me)return 0;if(!force&&Date.now()-cooldownLoadedAtV21<45000)return limitedNextV20;const result=await sb.from('user_gifts').select('created_at').eq('sender_nick',me.nick).eq('limited',true).order('created_at',{ascending:false}).limit(1);cooldownLoadedAtV21=Date.now();limitedNextV20=result.error||!result.data?.length?0:Number(result.data[0].created_at)+LIMIT_WINDOW;return limitedNextV20;
   }
 
   function renderShowcaseV20(gifts){
@@ -117,8 +118,8 @@
   }
 
   async function openGiftCatalogV20(target){
-    if(!me)return;ensureMoonUiV20();giftTargetV20=lowerV20(target||me.nick);catalogTabV20='regular';document.getElementById('gift-catalog-modal').classList.add('show');document.getElementById('gift-catalog-grid').innerHTML='<div class="moon-empty" style="grid-column:1/-1">Открываем обсерваторию…</div>';
-    try{await Promise.all([loadCatalogV20(),loadLimitedCooldownV20(),fetchMoonUserV20(giftTargetV20)]);renderGiftCatalogV20();}catch(error){document.getElementById('gift-catalog-grid').innerHTML='<div class="moon-empty" style="grid-column:1/-1">Сначала выполни SQL для Лун</div>';}
+    if(!me)return;ensureMoonUiV20();giftTargetV20=lowerV20(target||me.nick);catalogTabV20='regular';document.getElementById('gift-catalog-modal').classList.add('show');if(catalogReadyV20)renderGiftCatalogV20();else document.getElementById('gift-catalog-grid').innerHTML='<div class="moon-empty" style="grid-column:1/-1">Открываем обсерваторию…</div>';
+    try{await Promise.all([loadCatalogV20(),loadLimitedCooldownV20(),fetchMoonUserV20(giftTargetV20)]);if(document.getElementById('gift-catalog-modal').classList.contains('show'))renderGiftCatalogV20();}catch(error){document.getElementById('gift-catalog-grid').innerHTML='<div class="moon-empty" style="grid-column:1/-1">Не удалось открыть обсерваторию</div>';}
   }
   function renderGiftCatalogV20(){
     if(!catalogReadyV20)return;const limited=catalogTabV20==='limited',target=userCache[giftTargetV20]||{nick:giftTargetV20};document.querySelectorAll('[data-gift-tab]').forEach(button=>button.classList.toggle('active',button.dataset.giftTab===catalogTabV20));document.getElementById('gift-catalog-target').textContent=(giftTargetV20===me.nick?'подарок себе':'для '+(target.name||'@'+giftTargetV20));document.getElementById('gift-catalog-balance').textContent=balanceTextV20(me)+' 🌙';
@@ -126,16 +127,27 @@
     const gifts=catalogV20.filter(gift=>!!gift.limited===limited),box=document.getElementById('gift-catalog-grid');box.innerHTML=gifts.map(gift=>{
       const expired=gift.limited&&Number(gift.available_until)<=Date.now(),unaffordable=!creatorV20(me.nick)&&Number(me.moons||0)<Number(gift.price),disabled=expired||(gift.limited&&cooldown)||unaffordable;
       return '<button class="gift-card '+themeClassV20(gift.theme)+(gift.limited?' limited':'')+'" data-gift-id="'+escHtml(gift.id)+'" '+(disabled?'disabled':'')+'><div class="gift-orbit"><span class="gift-icon">'+gift.icon+'</span></div><div class="gift-name">'+escHtml(gift.name)+'</div><div class="gift-price">'+compactV20(gift.price)+' 🌙</div><div class="gift-meta">'+(expired?'коллекция закрыта':unaffordable?'не хватает Лун':gift.limited?countdownV20(gift.available_until):gift.rarity)+'</div></button>';
-    }).join('');box.querySelectorAll('[data-gift-id]').forEach(button=>button.onclick=()=>openGiftConfirmV20(button.dataset.giftId));
+    }).join('');
   }
   function openGiftConfirmV20(id){
     selectedGiftV20=catalogV20.find(gift=>gift.id===id);if(!selectedGiftV20)return;const target=userCache[giftTargetV20]||{nick:giftTargetV20,name:giftTargetV20};document.getElementById('gift-confirm-target').textContent='для '+(target.name||target.nick)+' · @'+target.nick;document.getElementById('gift-confirm-content').innerHTML='<div class="gift-confirm-preview '+themeClassV20(selectedGiftV20.theme)+'"><div class="gift-orbit"><span class="gift-icon">'+selectedGiftV20.icon+'</span></div></div><div class="gift-confirm-name">'+escHtml(selectedGiftV20.name)+'</div><div class="gift-confirm-price">'+compactV20(selectedGiftV20.price)+' 🌙</div><div class="gift-confirm-target">Подарок останется в коллекции профиля</div>'+(selectedGiftV20.limited?'<div class="gift-confirm-limit">Лимитированный экземпляр · следующий через 21 день</div>':'');document.getElementById('gift-confirm-message').value='';document.getElementById('gift-confirm-modal').classList.add('show');
   }
+  const GIFT_CHAT_PREFIX_V21='[tc_gift_v1]';
+  function packGiftChatV21(gift,target,recordId,message){return GIFT_CHAT_PREFIX_V21+encodeURIComponent(JSON.stringify({v:1,id:gift.id,n:gift.name,i:gift.icon,t:gift.theme,p:Number(gift.price||0),l:!!gift.limited,o:target,r:recordId||0,m:String(message||'').slice(0,120)}));}
+  function unpackGiftChatV21(text){if(!String(text||'').startsWith(GIFT_CHAT_PREFIX_V21))return null;try{return JSON.parse(decodeURIComponent(String(text).slice(GIFT_CHAT_PREFIX_V21.length)));}catch(error){return null;}}
+  function giftChatHtmlV21(gift){
+    const theme=themeClassV20(gift.t),owner=lowerV20(gift.o);return '<button type="button" class="chat-gift-card '+theme+(gift.l?' limited':'')+'" data-chat-gift-owner="'+escHtml(owner)+'"><span class="chat-gift-label">'+(gift.l?'ЛИМИТИРОВАННЫЙ ПОДАРОК':'ПОДАРОК TELE.CHAT')+'</span><span class="chat-gift-orbit"><span>'+escHtml(gift.i||'🎁')+'</span></span><strong>'+escHtml(gift.n||'Подарок')+'</strong><span class="chat-gift-price">'+compactV20(gift.p)+' 🌙</span>'+(gift.m?'<em>«'+escHtml(gift.m)+'»</em>':'')+'<span class="chat-gift-open">Открыть коллекцию ›</span></button>';
+  }
+  async function postGiftChatCardV21(gift,target,recordId,message){
+    target=lowerV20(target);if(!me||!target||target===me.nick)return;const text=packGiftChatV21(gift,target,recordId,message),ts=Date.now(),key=chatKey(me.nick,target),row={chat_key:key,from_nick:me.nick,text,ts,reply_text:null,read_by:[],deleted:false};if(currentChat===target&&!currentRoom)appendMessage(row);const result=await sb.from('messages').insert(row);if(result.error){if(currentChat===target&&!currentRoom)renderMessages();return;}renderContacts();
+  }
+  const previewBeforeV21=messagePreviewText;messagePreviewText=function(text){const gift=unpackGiftChatV21(text);return gift?'🎁 Подарок: '+gift.n:previewBeforeV21(text);};
+  const contentBeforeV21=renderMessageContent;renderMessageContent=function(text){const gift=unpackGiftChatV21(text);return gift?giftChatHtmlV21(gift):contentBeforeV21(text);};
   async function sendSelectedGiftV20(){
     if(!selectedGiftV20||!giftTargetV20)return;const button=document.getElementById('gift-confirm-send'),message=document.getElementById('gift-confirm-message').value.trim();button.disabled=true;button.textContent='Отправляем…';
     try{
       const result=await sb.rpc('telechat_send_gift',{p_actor_nick:me.nick,p_target_nick:giftTargetV20,p_gift_id:selectedGiftV20.id,p_message:message});if(result.error)throw result.error;if(!creatorV20(me.nick)){me.moons=Number(result.data.balance);mergeMoonUserV20(me);}if(selectedGiftV20.limited)limitedNextV20=Number(result.data.next_limited_at||Date.now()+LIMIT_WINDOW);
-      document.getElementById('gift-confirm-modal').classList.remove('show');document.getElementById('gift-catalog-modal').classList.remove('show');showCelebrationV20(selectedGiftV20.icon,'Подарок отправлен',selectedGiftV20.name+' · @'+giftTargetV20);if(lowerV20(viewedProfileNickV5)===giftTargetV20)loadProfileMoonsV20(giftTargetV20);
+      const sentGift=selectedGiftV20,sentTarget=giftTargetV20;document.getElementById('gift-confirm-modal').classList.remove('show');document.getElementById('gift-catalog-modal').classList.remove('show');showCelebrationV20(sentGift.icon,'Подарок отправлен',sentGift.name+' · @'+sentTarget);postGiftChatCardV21(sentGift,sentTarget,result.data.gift_record_id,message).catch(()=>{});if(lowerV20(viewedProfileNickV5)===sentTarget)loadProfileMoonsV20(sentTarget);
     }catch(error){showToast(moonErrorV20(error));}finally{button.disabled=false;button.textContent='Отправить подарок';}
   }
 
@@ -156,6 +168,7 @@
   const loginBeforeV20=doLogin;doLogin=async function(...args){const value=await loginBeforeV20(...args);if(me)initMoonsV20();return value;};
   const profileBeforeV20=openUserProfile;openUserProfile=async function(nick,...args){const value=await profileBeforeV20(nick,...args);loadProfileMoonsV20(nick);return value;};
   const closeProfileBeforeV20=closeUserProfile;closeUserProfile=function(){profileMoonRequestV20++;viewedMoonUserV20=null;document.getElementById('view-profile-cover')?.querySelector('.moon-profile-showcase')?.remove();return closeProfileBeforeV20();};
+  document.addEventListener('click',event=>{const card=event.target.closest('[data-chat-gift-owner]');if(card){event.stopPropagation();openCollectionV20(card.dataset.chatGiftOwner);}});
   document.addEventListener('keydown',event=>{if(event.key==='Escape')document.querySelectorAll('.moon-overlay.show').forEach(item=>item.classList.remove('show'));});
   setInterval(()=>{if(document.getElementById('gift-catalog-modal')?.classList.contains('show'))renderGiftCatalogV20();},60000);
   window.openMoonWalletV20=openWalletV20;window.openGiftCatalogV20=openGiftCatalogV20;window.openMoonCollectionV20=openCollectionV20;ensureMoonUiV20();
