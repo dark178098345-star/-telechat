@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v26-animated-profile';
+const CACHE_NAME='telechat-shell-v27-cosmic-motion';
 const APP_SHELL=[
   './',
   './index.html',
@@ -18,6 +18,8 @@ const APP_SHELL=[
   './moons-v20.js',
   './animated-profile-v26.css',
   './animated-profile-v26.js',
+  './cosmic-background-v27.css',
+  './cosmic-background-v27.js',
   './profile-details-v22.css',
   './profile-details-v22.js',
   './chat-reliability-v24.css',
