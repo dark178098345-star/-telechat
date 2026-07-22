@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v25-performance-audit';
+const CACHE_NAME='telechat-shell-v26-animated-profile';
 const APP_SHELL=[
   './',
   './index.html',
@@ -16,6 +16,8 @@ const APP_SHELL=[
   './moderation-v19.js',
   './moons-v20.css',
   './moons-v20.js',
+  './animated-profile-v26.css',
+  './animated-profile-v26.js',
   './profile-details-v22.css',
   './profile-details-v22.js',
   './chat-reliability-v24.css',

@@ -505,6 +505,7 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
 <link rel="stylesheet" href="./ui-polish-v16.css">
 <link rel="stylesheet" href="./moderation-v19.css">
 <link rel="stylesheet" href="./moons-v20.css">
+<link rel="stylesheet" href="./animated-profile-v26.css">
 <link rel="stylesheet" href="./profile-details-v22.css">
 <link rel="stylesheet" href="./chat-reliability-v24.css">
 </head>
@@ -2199,7 +2200,12 @@ let pendingAvatarVideoPreview='';
 let pendingBannerVideoFile=null;
 let pendingBannerVideoPreview='';
 
-function canUseProfileVideo(nick){return PROFILE_VIDEO_NICKS.includes(String(nick||'').toLowerCase());}
+function canUseProfileVideo(userOrNick){
+  const nick=String(typeof userOrNick==='object'&&userOrNick?userOrNick.nick:userOrNick||'').toLowerCase();
+  if(PROFILE_VIDEO_NICKS.includes(nick))return true;
+  const user=typeof userOrNick==='object'&&userOrNick?userOrNick:(me&&String(me.nick).toLowerCase()===nick?me:userCache[nick]);
+  return user?.animated_profile===true;
+}
 function isCreatorVerified(nick){return String(nick||'').toLowerCase()==='creator';}
 function verifiedBadgeHtml(nick,large=false){
   return isCreatorVerified(nick)?'<span class="verified-badge'+(large?' large':'')+'" title="Подтверждённый создатель" aria-label="Подтверждённый создатель">✓</span>':'';
@@ -2270,7 +2276,7 @@ avatarMarkup=function(user){
   const nick=String(user&&user.nick||'').toLowerCase();
   const media=safeMediaUrl(user&&user.avatar_video);
   const marker='<i class="profile-nick-marker" data-profile-nick="'+escapeMediaAttribute(nick)+'"></i>';
-  if(canUseProfileVideo(nick)&&media){
+  if(canUseProfileVideo(user)&&media){
     return '<video class="avatar-photo avatar-video" src="'+escapeMediaAttribute(media)+'" autoplay loop muted playsinline preload="metadata"></video>'+marker;
   }
   return avatarMarkupBeforeVideo(user)+marker;
@@ -2290,7 +2296,7 @@ applyProfileBanner=function(element,value){
   const raw=String(value||'');
   const ownerNick=element.id==='view-profile-cover'?viewedProfileNickV5:(me&&me.nick);
   const videoUrl=raw.startsWith('video:')?safeMediaUrl(raw.slice(6)):'';
-  if(videoUrl&&canUseProfileVideo(ownerNick)){
+  if(videoUrl&&canUseProfileVideo(me&&String(me.nick).toLowerCase()===String(ownerNick).toLowerCase()?me:userCache[String(ownerNick||'').toLowerCase()])){
     PROFILE_BANNER_PRESETS.forEach(item=>element.classList.remove('banner-preset-'+item.id));
     element.classList.remove('banner-photo');
     element.style.backgroundImage='';
@@ -2320,7 +2326,7 @@ handleProfileBannerFile=function(input){
 
 async function handleProfileAvatarVideo(input){
   const file=input.files&&input.files[0];input.value='';
-  if(!canUseProfileVideo(me&&me.nick)){showToast('Видеоаватар доступен только creator и tele');return;}
+  if(!canUseProfileVideo(me)){showToast('Открой анимированный профиль за 4 000 Лун');return;}
   const preview=await validateProfileVideo(file);
   if(!preview)return;
   clearObjectPreview('avatar');
@@ -2333,7 +2339,7 @@ async function handleProfileAvatarVideo(input){
 }
 async function handleProfileBannerVideo(input){
   const file=input.files&&input.files[0];input.value='';
-  if(!canUseProfileVideo(me&&me.nick)){showToast('Видеобаннер доступен только creator и tele');return;}
+  if(!canUseProfileVideo(me)){showToast('Открой анимированный профиль за 4 000 Лун');return;}
   const preview=await validateProfileVideo(file);
   if(!preview)return;
   clearObjectPreview('banner');
@@ -2350,7 +2356,7 @@ renderProfileAvatar=function(){
   const panel=document.getElementById('profile-panel');
   const removeBtn=document.getElementById('avatar-remove-btn');
   const videoUrl=safeMediaUrl(selectedAvatarVideo);
-  if(canUseProfileVideo(me&&me.nick)&&videoUrl){
+  if(canUseProfileVideo(me)&&videoUrl){
     preview.innerHTML='<video class="avatar-photo avatar-video" src="'+escapeMediaAttribute(videoUrl)+'" autoplay loop muted playsinline preload="metadata"></video>';
     panel.classList.add('has-photo');
     removeBtn.hidden=false;
@@ -2377,7 +2383,7 @@ handleAvatarFile=function(input){
 const buildProfPanelBeforeVideo=buildProfPanel;
 buildProfPanel=function(){
   buildProfPanelBeforeVideo();
-  const allowed=canUseProfileVideo(me&&me.nick);
+  const allowed=canUseProfileVideo(me);
   document.getElementById('avatar-video-btn').hidden=!allowed;
   document.getElementById('banner-video-btn').hidden=!allowed;
   selectedAvatarVideo=allowed&&safeMediaUrl(me&&me.avatar_video)?me.avatar_video:'';
@@ -2412,7 +2418,7 @@ saveProfile=async function(){
   const originalText=button.textContent;
   button.disabled=true;button.innerHTML='<span class="spinner"></span>Сохраняем...';
   try{
-    const allowed=canUseProfileVideo(me&&me.nick);
+    const allowed=canUseProfileVideo(me);
     const oldAvatarVideo=me.avatar_video||'';
     const oldBanner=String(me.banner||'');
     let nextAvatarVideo=allowed?safeMediaUrl(selectedAvatarVideo):'';
@@ -2484,6 +2490,7 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <script src="./ui-polish-v16.js"></script>
 <script src="./moderation-v19.js"></script>
 <script src="./moons-v20.js"></script>
+<script src="./animated-profile-v26.js"></script>
 <script src="./profile-details-v22.js"></script>
 <script src="./chat-reliability-v24.js"></script>
 </body>

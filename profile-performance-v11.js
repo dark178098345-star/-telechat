@@ -11,18 +11,18 @@
     const load=document.createElement('div');load.id='profile-load';load.className='profile-load';load.innerHTML='<div class="profile-load-box"><div class="profile-load-orbit"></div><div class="profile-load-logo">tele.chat</div><div class="profile-load-text" id="profile-load-text">Загружаем профиль…</div><div class="profile-load-sub">аватарка · баннер · информация</div><button class="profile-load-retry" id="profile-load-retry">Повторить</button></div>';card.appendChild(load);
   }
 
-  const lightFields='nick,name,av,status,last_seen,avatar_video',profileFields='nick,name,av,status,bio,banner,last_seen,avatar_video';
+  const lightFields='nick,name,av,status,last_seen,avatar_video,animated_profile',profileFields='nick,name,av,status,bio,banner,last_seen,avatar_video,animated_profile';
   const cache=new Map(),inflight=new Map(),lightInflight=new Map(),times=new Map();let token=0,lastNick='';
   function merge(user){if(!user||!user.nick)return null;userCache[user.nick]=Object.assign({},userCache[user.nick]||{},user);times.set(user.nick,Date.now());return userCache[user.nick];}
   async function light(nick){
     if(lightInflight.has(nick))return lightInflight.get(nick);
-    const task=(async()=>{let r=await sb.from('users').select(lightFields).eq('nick',nick).maybeSingle();if(r.error&&String(r.error.message).includes('avatar_video'))r=await sb.from('users').select('nick,name,av,status,last_seen').eq('nick',nick).maybeSingle();return r.data?merge(r.data):null;})().finally(()=>lightInflight.delete(nick));
+    const task=(async()=>{let r=await sb.from('users').select(lightFields).eq('nick',nick).maybeSingle();if(r.error&&/avatar_video|animated_profile/.test(String(r.error.message)))r=await sb.from('users').select('nick,name,av,status,last_seen').eq('nick',nick).maybeSingle();return r.data?merge(r.data):null;})().finally(()=>lightInflight.delete(nick));
     lightInflight.set(nick,task);return task;
   }
   getUser=async function(nick){nick=String(nick||'').toLowerCase();if(!nick)return null;const saved=userCache[nick];if(saved){if(Date.now()-(times.get(nick)||0)>45000)light(nick).catch(()=>{});return saved;}return light(nick);};
   async function full(nick,force){
     const saved=cache.get(nick);if(!force&&saved&&Date.now()-saved.time<90000)return saved.user;if(inflight.has(nick))return inflight.get(nick);
-    const task=(async()=>{let r=await sb.from('users').select(profileFields).eq('nick',nick).maybeSingle();if(r.error&&String(r.error.message).includes('avatar_video'))r=await sb.from('users').select('nick,name,av,status,bio,banner,last_seen').eq('nick',nick).maybeSingle();if(r.error)throw r.error;if(!r.data)throw Error('Профиль не найден');const user=merge(r.data);cache.set(nick,{user,time:Date.now()});return user;})().finally(()=>inflight.delete(nick));
+    const task=(async()=>{let r=await sb.from('users').select(profileFields).eq('nick',nick).maybeSingle();if(r.error&&/avatar_video|animated_profile/.test(String(r.error.message)))r=await sb.from('users').select('nick,name,av,status,bio,banner,last_seen').eq('nick',nick).maybeSingle();if(r.error)throw r.error;if(!r.data)throw Error('Профиль не найден');const user=merge(r.data);cache.set(nick,{user,time:Date.now()});return user;})().finally(()=>inflight.delete(nick));
     inflight.set(nick,task);return task;
   }
   function mode(type,text){const load=document.getElementById('profile-load'),refresh=document.getElementById('profile-refresh');if(!load)return;load.classList.remove('show','error');refresh.classList.remove('show');if(type==='load')load.classList.add('show');if(type==='refresh')refresh.classList.add('show');if(type==='error'){load.classList.add('show','error');document.getElementById('profile-load-text').textContent=text||'Не удалось загрузить профиль';}}

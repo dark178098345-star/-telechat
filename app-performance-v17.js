@@ -9,7 +9,7 @@
   @media (prefers-reduced-motion:reduce){.emoji-bg::before,.emoji-bg::after,.emoji-particle{animation:none!important}}`;
   document.head.appendChild(css);
 
-  const USER_FIELDS_V15='nick,name,av,status,last_seen,avatar_video';
+  const USER_FIELDS_V15='nick,name,av,status,last_seen,avatar_video,animated_profile';
   async function batchUsersV15(nicks){
     const unique=[...new Set((nicks||[]).map(nick=>String(nick||'').toLowerCase()).filter(Boolean))];
     const missing=unique.filter(nick=>!userCache[nick]);

@@ -96,9 +96,10 @@
     const box=document.getElementById('moon-history');const result=await sb.rpc('telechat_moon_history',{p_nick:me.nick,p_limit:50});if(result.error){box.innerHTML='<div class="moon-empty">История появится после запуска SQL для Лун</div>';return;}
     const rows=result.data||[];if(!rows.length){box.innerHTML='<div class="moon-empty">Здесь появятся переводы и подарки</div>';return;}
     box.innerHTML=rows.map(row=>{
-      const from=lowerV20(row.from_nick),to=lowerV20(row.to_nick),mine=lowerV20(me.nick),gift=row.kind==='gift',grant=row.kind==='creator_grant',take=row.kind==='creator_take',incoming=to===mine&&from!==mine;
+      const from=lowerV20(row.from_nick),to=lowerV20(row.to_nick),mine=lowerV20(me.nick),gift=row.kind==='gift',grant=row.kind==='creator_grant',take=row.kind==='creator_take',animated=row.kind==='animated_profile',incoming=to===mine&&from!==mine;
       let icon='🌙',name='',sign='',amount='';
-      if(gift){const giftInfo=catalogV20.find(item=>item.id===row.gift_id);icon=giftInfo?.icon||'🎁';name=(incoming?'Подарок от @'+from:'Подарок для @'+to);amount=compactV20(row.amount)+' 🌙';sign=creatorV20(mine)?'':incoming?'':'−';}
+      if(animated){icon='🎬';name='Анимированный профиль';amount=compactV20(row.amount)+' 🌙';sign='−';}
+      else if(gift){const giftInfo=catalogV20.find(item=>item.id===row.gift_id);icon=giftInfo?.icon||'🎁';name=(incoming?'Подарок от @'+from:'Подарок для @'+to);amount=compactV20(row.amount)+' 🌙';sign=creatorV20(mine)?'':incoming?'':'−';}
       else if(grant){icon='✦';name=incoming?'Начислено creator':'Начисление @'+to;sign=incoming?'+':'';amount=compactV20(row.amount)+' 🌙';}
       else if(take){icon='◇';name=incoming?'Списано creator':'Списание у @'+to;sign=incoming?'−':'';amount=compactV20(row.amount)+' 🌙';}
       else{icon=incoming?'↙':'↗';name=incoming?'Перевод от @'+from:'Перевод для @'+to;sign=incoming?'+':creatorV20(mine)?'':'−';amount=compactV20(row.amount)+' 🌙';}
