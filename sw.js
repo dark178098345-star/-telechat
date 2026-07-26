@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v30-profile-avatar-fix';
+const CACHE_NAME='telechat-shell-v31-voice-calls';
 const APP_SHELL=[
   './',
   './index.html',
@@ -24,7 +24,9 @@ const APP_SHELL=[
   './profile-details-v22.js',
   './profile-card-v29.css',
   './chat-reliability-v24.css',
-  './chat-reliability-v24.js'
+  './chat-reliability-v24.js',
+  './voice-calls-v31.css',
+  './voice-calls-v31.js'
 ];
 
 self.addEventListener('install',event=>{
