@@ -1,9 +1,14 @@
-/* TELECHAT COSMIC BACKGROUND V27 — wandering stars + lightweight meteor showers */
+/* TELECHAT COSMIC BACKGROUND V29 — distant moon + frequent independent meteor showers */
 (()=>{
   const bg=document.getElementById('emojiBg');
   if(!bg||document.getElementById('cosmic-star-layer-v27'))return;
 
   const reduceMotion=window.matchMedia?.('(prefers-reduced-motion: reduce)');
+  const moon=document.createElement('div');
+  moon.id='cosmic-moon-v29';
+  moon.className='cosmic-moon-v29';
+  moon.setAttribute('aria-hidden','true');
+  moon.innerHTML='<i></i><i></i><i></i><span></span>';
   const starLayer=document.createElement('div');
   starLayer.id='cosmic-star-layer-v27';
   starLayer.className='cosmic-star-layer-v27';
@@ -12,13 +17,13 @@
   shootingLayer.id='cosmic-shooting-layer-v27';
   shootingLayer.className='cosmic-shooting-layer-v27';
   shootingLayer.setAttribute('aria-hidden','true');
-  bg.append(starLayer,shootingLayer);
+  bg.append(moon,starLayer,shootingLayer);
 
   const random=(min,max)=>min+Math.random()*(max-min);
   const palette=['star-white','star-violet','star-blue','star-soft'];
   function makeStars(){
     starLayer.replaceChildren();
-    const count=reduceMotion?.matches?18:(innerWidth<=640?24:38);
+    const count=reduceMotion?.matches?20:(innerWidth<=640?29:44);
     const fragment=document.createDocumentFragment();
     for(let index=0;index<count;index++){
       const star=document.createElement('i');
@@ -31,7 +36,7 @@
   }
 
   function effectsEnabled(){
-    return !document.hidden&&!reduceMotion?.matches&&!bg.classList.contains('no-emoji')&&!document.body.classList.contains('telechat-app-paused');
+    return !document.hidden&&!reduceMotion?.matches&&!document.body.classList.contains('telechat-app-paused');
   }
   function spawnShootingStar(delay=0){
     if(!effectsEnabled())return false;
@@ -51,12 +56,12 @@
   let showerTimer=0;
   function scheduleSky(){
     clearTimeout(showerTimer);
-    const wait=random(8500,18500);
+    const wait=random(4200,9200);
     showerTimer=setTimeout(()=>{
       if(effectsEnabled()){
-        const shower=Math.random()<.27;
-        const count=shower?Math.floor(random(2,4)):1;
-        for(let index=0;index<count;index++)spawnShootingStar(index*random(180,380));
+        const shower=Math.random()<.44;
+        const count=shower?Math.floor(random(2,5)):1;
+        for(let index=0;index<count;index++)spawnShootingStar(index*random(140,310));
       }
       scheduleSky();
     },wait);
@@ -64,10 +69,11 @@
 
   makeStars();
   scheduleSky();
-  setTimeout(()=>spawnShootingStar(),random(1800,4200));
+  setTimeout(()=>spawnShootingStar(),random(900,2200));
   let resizeTimer=0;
   addEventListener('resize',()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(makeStars,300);},{passive:true});
   reduceMotion?.addEventListener?.('change',()=>{makeStars();scheduleSky();});
 
   window.spawnShootingStarV27=()=>spawnShootingStar();
+  window.spawnShootingStarV29=()=>spawnShootingStar();
 })();

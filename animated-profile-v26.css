@@ -17,3 +17,7 @@
 @keyframes animatedProfileFade{from{opacity:0}to{opacity:1}}@keyframes animatedProfileRise{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
 @media(max-width:480px){.animated-profile-card{margin-left:7px;margin-right:7px;padding:11px}.animated-profile-wallet{min-width:60px}.animated-profile-modal{border-radius:22px}}
 @media(prefers-reduced-motion:reduce){.animated-profile-overlay.show,.animated-profile-modal{animation:none}.animated-profile-buy{transition:none}}
+
+/* TELECHAT MOBILE UNLOCK FIX V29 */
+.animated-profile-buy{width:100%;min-width:0;min-height:44px;height:auto;padding:9px 12px;line-height:1.3;white-space:normal;touch-action:manipulation;flex-shrink:0}
+@media(max-width:480px){.animated-profile-card{grid-template-columns:42px minmax(0,1fr);gap:9px;min-height:0!important}.animated-profile-wallet{grid-column:1/-1;display:flex;min-width:0;flex-direction:row;align-items:center;justify-content:space-between;padding:8px 10px;border:1px solid rgba(255,255,255,.055);border-radius:11px;background:rgba(8,11,26,.28)}.animated-profile-wallet span{margin:0;order:-1}.animated-profile-buy{grid-column:1/-1;min-height:46px;font-size:11px}.animated-profile-modal{max-height:calc(100dvh - 24px);overflow-y:auto}}

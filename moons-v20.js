@@ -71,11 +71,14 @@
   }
 
   function renderShowcaseV20(gifts){
-    const cover=document.getElementById('view-profile-cover');if(!cover)return;cover.querySelector('.moon-profile-showcase')?.remove();if(!gifts?.length)return;
-    const layer=document.createElement('div');layer.className='moon-profile-showcase';gifts.slice(0,5).forEach(gift=>{const star=document.createElement('span');star.className='moon-showcase-star '+themeClassV20(gift.theme);star.textContent=gift.gift_icon;star.title=gift.gift_name;layer.appendChild(star);});cover.appendChild(layer);
+    const body=document.querySelector('#user-profile-modal .user-profile-body'),status=document.getElementById('view-profile-status');if(!body||!status)return;let shelf=document.getElementById('moon-profile-showcase-v29');
+    if(!gifts?.length){shelf?.remove();return;}
+    if(!shelf){shelf=document.createElement('section');shelf.id='moon-profile-showcase-v29';shelf.className='moon-profile-showcase-v29';status.insertAdjacentElement('afterend',shelf);}
+    shelf.innerHTML='<button type="button" class="moon-showcase-head" data-limited-showcase-open><span><small>✦ РЕДКИЕ ЭКЗЕМПЛЯРЫ</small><strong>Лимитированная коллекция</strong></span><em>Все подарки ›</em></button><div class="moon-profile-showcase-list">'+gifts.slice(0,5).map(gift=>'<button type="button" class="moon-showcase-star '+themeClassV20(gift.theme)+'" title="'+escHtml(gift.gift_name)+'" aria-label="'+escHtml(gift.gift_name)+'"><span>'+escHtml(gift.gift_icon)+'</span><small>'+escHtml(gift.gift_name)+'</small></button>').join('')+'</div>';
+    shelf.querySelectorAll('button').forEach(button=>button.onclick=()=>viewedMoonUserV20&&openCollectionV20(viewedMoonUserV20.nick));
   }
   async function loadProfileMoonsV20(nick){
-    ensureMoonUiV20();nick=lowerV20(nick);const request=++profileMoonRequestV20;
+    ensureMoonUiV20();nick=lowerV20(nick);const request=++profileMoonRequestV20;renderShowcaseV20([]);
     try{
       const [user,countResult,limitedResult]=await Promise.all([
         fetchMoonUserV20(nick),
@@ -162,8 +165,8 @@
     if(!selectedGiftV20||!giftTargetV20)return;const button=document.getElementById('gift-confirm-send'),message=document.getElementById('gift-confirm-message').value.trim();button.disabled=true;button.textContent='Отправляем…';
     try{
       const result=await sb.rpc('telechat_send_gift',{p_actor_nick:me.nick,p_target_nick:giftTargetV20,p_gift_id:selectedGiftV20.id,p_message:message});if(result.error)throw result.error;if(!creatorV20(me.nick)){me.moons=Number(result.data.balance);mergeMoonUserV20(me);}if(selectedGiftV20.limited&&!creatorV20(me.nick))limitedNextV20=Number(result.data.next_limited_at||Date.now()+LIMIT_WINDOW);else if(creatorV20(me.nick))limitedNextV20=0;
-      const sentGift=selectedGiftV20,sentTarget=giftTargetV20;document.getElementById('gift-confirm-modal').classList.remove('show');document.getElementById('gift-catalog-modal').classList.remove('show');const chatSaved=await postGiftChatCardV21(sentGift,sentTarget,result.data.gift_record_id,message);showCelebrationV20(sentGift.icon,'Подарок отправлен',sentGift.name+' · @'+sentTarget+(chatSaved?'':' · без карточки чата'));if(lowerV20(viewedProfileNickV5)===sentTarget)loadProfileMoonsV20(sentTarget);
-    }catch(error){showToast(moonErrorV20(error));}finally{button.disabled=false;button.textContent='Отправить подарок';}
+      const sentGift=selectedGiftV20,sentTarget=giftTargetV20,selfGift=lowerV20(sentTarget)===lowerV20(me.nick);document.getElementById('gift-confirm-modal').classList.remove('show');document.getElementById('gift-catalog-modal').classList.remove('show');const chatSaved=selfGift||await postGiftChatCardV21(sentGift,sentTarget,result.data.gift_record_id,message);if(lowerV20(viewedProfileNickV5)===sentTarget)await loadProfileMoonsV20(sentTarget);showCelebrationV20(sentGift.icon,selfGift?'Подарок добавлен в профиль':'Подарок отправлен',sentGift.name+' · @'+sentTarget+(chatSaved?'':' · без карточки чата'));
+    }catch(error){const messageText=String(error?.message||'');showToast(creatorV20(me?.nick)&&/21 день/.test(messageText)?'Выполни SQL V29 — старое ограничение ещё на сервере':moonErrorV20(error));}finally{button.disabled=false;button.textContent='Отправить подарок';}
   }
 
   async function openCollectionV20(nick){
@@ -187,7 +190,7 @@
 
   const loginBeforeV20=doLogin;doLogin=async function(...args){const value=await loginBeforeV20(...args);if(me)initMoonsV20();return value;};
   const profileBeforeV20=openUserProfile;openUserProfile=async function(nick,...args){const profileTask=profileBeforeV20(nick,...args);loadProfileMoonsV20(nick);return profileTask;};
-  const closeProfileBeforeV20=closeUserProfile;closeUserProfile=function(){profileMoonRequestV20++;viewedMoonUserV20=null;document.getElementById('view-profile-cover')?.querySelector('.moon-profile-showcase')?.remove();return closeProfileBeforeV20();};
+  const closeProfileBeforeV20=closeUserProfile;closeUserProfile=function(){profileMoonRequestV20++;viewedMoonUserV20=null;document.getElementById('moon-profile-showcase-v29')?.remove();return closeProfileBeforeV20();};
   document.addEventListener('click',event=>{const card=event.target.closest('[data-chat-gift-owner]');if(card){event.stopPropagation();openCollectionV20(card.dataset.chatGiftOwner);}});
   document.addEventListener('keydown',event=>{if(event.key==='Escape')document.querySelectorAll('.moon-overlay.show').forEach(item=>item.classList.remove('show'));});
   setInterval(()=>{if(document.getElementById('gift-catalog-modal')?.classList.contains('show'))renderGiftCatalogV20();},60000);

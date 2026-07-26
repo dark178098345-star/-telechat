@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v28-creator-unlimited-gifts';
+const CACHE_NAME='telechat-shell-v29-profile-cosmos-gifts';
 const APP_SHELL=[
   './',
   './index.html',
@@ -22,6 +22,7 @@ const APP_SHELL=[
   './cosmic-background-v27.js',
   './profile-details-v22.css',
   './profile-details-v22.js',
+  './profile-card-v29.css',
   './chat-reliability-v24.css',
   './chat-reliability-v24.js'
 ];
