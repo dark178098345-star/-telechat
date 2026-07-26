@@ -8,13 +8,16 @@
     {urls:'stun:stun.l.google.com:19302'},
     {urls:'stun:stun1.l.google.com:19302'}
   ]};
-  let callState=null,incomingCall=null,callRealtime=null,initializedFor='';
+  let callState=null,incomingCall=null,callRealtime=null,initializedFor='',lastPersonalPeer='';
   let ringTimer=null,ringContext=null,ringStep=0,callTimer=null,noAnswerTimer=null;
   let meterContext=null,meterFrame=0,meterSources=[];
 
   const byId=id=>document.getElementById(id);
   const nowV31=()=>Date.now();
-  const safeNickV31=value=>/^[a-z0-9_]{3,20}$/i.test(String(value||''))?String(value).toLowerCase():'';
+  const safeNickV31=value=>{
+    const nick=String(value||'').trim();
+    return /^[a-z0-9_]{3,20}$/i.test(nick)?nick:'';
+  };
   const callErrorV31=error=>String(error?.message||error||'').trim();
   const formatCallTimeV31=seconds=>{
     const value=Math.max(0,Math.floor(Number(seconds)||0));
@@ -140,7 +143,8 @@
 
   function updateCallButtonV31(){
     const button=byId('voice-call-btn');if(!button)return;
-    button.hidden=!(currentChat&&!currentRoom&&me&&currentChat!==me.nick);
+    const peer=safeNickV31(currentChat||lastPersonalPeer);
+    button.hidden=!(peer&&me&&peer.toLowerCase()!==String(me.nick||'').toLowerCase()&&(!currentRoom||!!currentChat));
     button.classList.toggle('active',!!callState);
     button.title=callState?'Вернуться в звонок':'Голосовой звонок';
   }
@@ -216,8 +220,10 @@
     ensureCallUiV31();
     if(callState){restoreCallV31();return;}
     if(incomingCall){showCallUiV31('incoming',incomingCall.caller_nick,'Входящий голосовой звонок');return;}
-    const peer=safeNickV31(peerOverride||currentChat);
-    if(!peer||peer===me?.nick||currentRoom){showToast('Звонить можно только в личном чате');return;}
+    const peer=safeNickV31(peerOverride||currentChat||lastPersonalPeer);
+    if(currentRoom&&!currentChat&&!peerOverride){showToast('Открой личный чат, чтобы позвонить');return;}
+    if(!peer){showToast('Не удалось определить собеседника — открой чат ещё раз');return;}
+    if(peer.toLowerCase()===String(me?.nick||'').toLowerCase()){showToast('Нельзя позвонить самому себе');return;}
     if(callUnavailableV31())return;
     let stream;
     try{stream=await requestMicrophoneV31();}catch(error){return;}
@@ -445,9 +451,9 @@
   const previousLogin=doLogin;
   doLogin=async function(){const result=await previousLogin();if(me)initCallsV31();return result;};
   const previousOpenChat=openChat;
-  openChat=async function(nick){const result=await previousOpenChat(nick);updateCallButtonV31();return result;};
+  openChat=async function(nick){lastPersonalPeer=safeNickV31(nick);const result=await previousOpenChat(nick);updateCallButtonV31();return result;};
   const previousOpenRoom=openRoom;
-  openRoom=async function(room){const result=await previousOpenRoom(room);updateCallButtonV31();return result;};
+  openRoom=async function(room){lastPersonalPeer='';const result=await previousOpenRoom(room);updateCallButtonV31();return result;};
   const previousBack=goBack;
   goBack=function(){const result=previousBack();updateCallButtonV31();return result;};
   document.addEventListener('click',event=>{if(!event.target.closest('#call-speaker-btn')&&!event.target.closest('#call-volume-panel'))byId('call-volume-panel')?.classList.remove('show');});
