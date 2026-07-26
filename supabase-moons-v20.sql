@@ -188,7 +188,7 @@ begin
   select exists(select 1 from public.users where lower(nick)=v_target) into v_target_exists;
   if v_balance is null then raise exception 'Отправитель не найден'; end if;
   if not v_target_exists then raise exception 'Получатель не найден'; end if;
-  if v_gift.limited then
+  if v_gift.limited and v_actor<>'creator' then
     select max(created_at) into v_last_limited from public.user_gifts where lower(sender_nick)=v_actor and limited=true;
     if coalesce(v_last_limited,0)>v_now-1814400000 then
       raise exception 'Лимитированный подарок доступен один раз в 21 день';
@@ -204,7 +204,7 @@ begin
   returning id into v_record_id;
   insert into public.moon_transactions(from_nick,to_nick,amount,kind,gift_id,note,created_at)
   values(v_actor,v_target,v_gift.price,'gift',v_gift.id,left(coalesce(p_message,''),120),v_now);
-  return jsonb_build_object('ok',true,'balance',case when v_actor='creator' then 1000000000 else v_balance end,'gift_record_id',v_record_id,'gift_id',v_gift.id,'limited',v_gift.limited,'next_limited_at',case when v_gift.limited then v_now+1814400000 else null end);
+  return jsonb_build_object('ok',true,'balance',case when v_actor='creator' then 1000000000 else v_balance end,'gift_record_id',v_record_id,'gift_id',v_gift.id,'limited',v_gift.limited,'next_limited_at',case when v_gift.limited and v_actor<>'creator' then v_now+1814400000 else null end);
 end;
 $$;
 

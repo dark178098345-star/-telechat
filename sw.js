@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v27-cosmic-motion';
+const CACHE_NAME='telechat-shell-v28-creator-unlimited-gifts';
 const APP_SHELL=[
   './',
   './index.html',
