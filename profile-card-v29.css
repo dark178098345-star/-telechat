@@ -1,20 +1,26 @@
-/* TELECHAT PROFILE CARD V29 — clean identity layout + collectible shelf */
+/* TELECHAT PROFILE CARD V30 - larger card + unclipped avatar overlap */
 #user-profile-modal{
-  padding:14px;
+  padding:9px;
   background:radial-gradient(circle at 50% 15%,rgba(98,79,224,.16),transparent 38%),rgba(2,3,10,.76);
   backdrop-filter:blur(13px);
   -webkit-backdrop-filter:blur(13px);
 }
 .user-profile-card{
-  width:min(430px,calc(100vw - 24px));
-  max-height:min(760px,calc(100dvh - 28px));
+  width:min(480px,calc(100vw - 18px));
+  max-width:none;
+  max-height:min(820px,calc(100dvh - 18px));
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  scrollbar-width:thin;
+  scrollbar-color:rgba(132,112,244,.42) transparent;
   border-radius:27px;
   border-color:rgba(178,164,255,.27);
   background:radial-gradient(circle at 85% 8%,rgba(83,122,237,.12),transparent 28%),linear-gradient(168deg,rgba(27,26,47,.99),rgba(11,13,25,.995));
   box-shadow:0 36px 110px rgba(0,0,0,.66),inset 0 1px rgba(255,255,255,.055);
 }
 .user-profile-cover{
-  height:128px;
+  height:144px;
   flex:0 0 auto;
   border-bottom:1px solid rgba(255,255,255,.055);
 }
@@ -36,33 +42,30 @@
 }
 .user-profile-body{
   display:grid;
-  grid-template-columns:98px minmax(0,1fr);
+  grid-template-columns:112px minmax(0,1fr);
   column-gap:14px;
   align-items:start;
-  max-height:calc(100dvh - 158px);
-  padding:0 18px 18px;
-  overflow-x:hidden;
-  overflow-y:auto;
+  max-height:none;
+  padding:0 22px 22px;
+  overflow:visible;
   text-align:left;
-  scrollbar-width:thin;
-  scrollbar-color:rgba(132,112,244,.42) transparent;
 }
 .user-profile-avatar{
   grid-column:1;
   grid-row:1 / span 3;
-  width:94px;
-  height:94px;
-  margin:-43px 0 0;
+  width:106px;
+  height:106px;
+  margin:-50px 0 0;
   border:4px solid #171725;
-  border-radius:31px;
+  border-radius:34px;
   box-shadow:0 16px 38px rgba(0,0,0,.46),0 0 0 1px rgba(180,166,255,.2);
 }
 .user-profile-name{
   grid-column:2;
-  margin-top:13px;
+  margin-top:16px;
   overflow:hidden;
   color:#f7f5ff;
-  font-size:21px;
+  font-size:23px;
   line-height:1.12;
   text-overflow:ellipsis;
   white-space:nowrap;
@@ -102,13 +105,13 @@
 .user-profile-cover>.moon-profile-showcase{display:none!important}
 
 @media(max-width:520px){
-  #user-profile-modal{align-items:center;padding:10px}
-  .user-profile-card{width:calc(100vw - 20px);max-height:calc(100dvh - 20px);border-radius:23px}
-  .user-profile-cover{height:112px}
-  .user-profile-body{grid-template-columns:82px minmax(0,1fr);column-gap:11px;max-height:calc(100dvh - 132px);padding:0 13px 15px}
-  .user-profile-avatar{width:78px;height:78px;margin-top:-35px;border-width:3px;border-radius:26px;font-size:34px}
-  .user-profile-avatar .avatar-photo{border-radius:23px}
-  .user-profile-name{margin-top:10px;font-size:18px}
+  #user-profile-modal{align-items:center;padding:5px}
+  .user-profile-card{width:calc(100vw - 10px);max-height:calc(100dvh - 10px);border-radius:23px}
+  .user-profile-cover{height:126px}
+  .user-profile-body{grid-template-columns:96px minmax(0,1fr);column-gap:12px;max-height:none;padding:0 14px 18px;overflow:visible}
+  .user-profile-avatar{width:90px;height:90px;margin-top:-41px;border-width:3px;border-radius:29px;font-size:38px}
+  .user-profile-avatar .avatar-photo{border-radius:26px}
+  .user-profile-name{margin-top:12px;font-size:20px}
   .user-profile-nick{font-size:11px}
   .user-profile-seen{margin-top:5px;font-size:9px}
   .user-profile-status{margin-top:12px;font-size:11px}
@@ -116,9 +119,10 @@
 }
 
 @media(max-width:350px){
-  .user-profile-body{grid-template-columns:72px minmax(0,1fr);column-gap:9px;padding-left:10px;padding-right:10px}
-  .user-profile-avatar{width:68px;height:68px;border-radius:22px;font-size:30px}
-  .user-profile-name{font-size:16px}
+  .user-profile-card{width:calc(100vw - 6px);max-height:calc(100dvh - 6px)}
+  .user-profile-body{grid-template-columns:88px minmax(0,1fr);column-gap:9px;padding-left:10px;padding-right:10px}
+  .user-profile-avatar{width:82px;height:82px;margin-top:-38px;border-radius:27px;font-size:34px}
+  .user-profile-name{font-size:18px}
 }
 
 @media(prefers-reduced-motion:reduce){.user-profile-card{scroll-behavior:auto}}

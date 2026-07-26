@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v29-profile-cosmos-gifts';
+const CACHE_NAME='telechat-shell-v30-profile-avatar-fix';
 const APP_SHELL=[
   './',
   './index.html',
