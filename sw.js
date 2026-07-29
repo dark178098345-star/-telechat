@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v34-fast-chats-apk';
+const CACHE_NAME='telechat-shell-v35-message-send';
 const APP_SHELL=[
   './',
   './index.html',
@@ -25,6 +25,8 @@ const APP_SHELL=[
   './profile-card-v29.css',
   './chat-reliability-v24.css',
   './chat-reliability-v24.js',
+  './message-send-animation-v35.css',
+  './message-send-animation-v35.js',
   './voice-calls-v32.css?v=33',
   './voice-calls-v32.js?v=33'
 ];

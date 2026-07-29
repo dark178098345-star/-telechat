@@ -1,0 +1,61 @@
+/* TELECHAT MESSAGE SEND ANIMATION V35 */
+.msg.me.send-pop-v35 {
+  position: relative;
+  transform-origin: 100% 100%;
+  will-change: transform, opacity;
+  animation: message-send-pop-v35 .36s cubic-bezier(.18, .86, .25, 1.18) both;
+}
+
+.msg.me.send-pop-v35 .msg-bubble {
+  animation: message-bubble-glow-v35 .58s ease-out both;
+}
+
+.send-btn.send-success-v35 {
+  animation: send-button-success-v35 .48s cubic-bezier(.2, .9, .3, 1.25);
+}
+
+@keyframes message-send-pop-v35 {
+  0% {
+    opacity: .12;
+    transform: translate3d(18px, 12px, 0) scale(.88);
+  }
+  68% {
+    opacity: 1;
+    transform: translate3d(-1px, -1px, 0) scale(1.025);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes message-bubble-glow-v35 {
+  0% {
+    filter: brightness(1.18);
+    box-shadow: 0 0 0 0 rgba(124, 92, 255, .36);
+  }
+  100% {
+    filter: brightness(1);
+    box-shadow: 0 0 0 9px rgba(124, 92, 255, 0);
+  }
+}
+
+@keyframes send-button-success-v35 {
+  0%, 100% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(.86) rotate(-7deg);
+  }
+  72% {
+    transform: scale(1.08) rotate(3deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .msg.me.send-pop-v35,
+  .msg.me.send-pop-v35 .msg-bubble,
+  .send-btn.send-success-v35 {
+    animation: none !important;
+  }
+}
