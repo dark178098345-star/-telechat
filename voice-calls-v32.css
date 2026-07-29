@@ -226,3 +226,146 @@
 @media(prefers-reduced-motion:reduce){
   .voice-call-person.speaking .voice-call-avatar,.voice-call-connector-dot,.voice-call-sheet-loading i{animation:none}
 }
+
+/* CALL SCREEN V33 */
+.voice-call-overlay{
+  padding:0;
+  background:rgba(4,5,18,.78);
+  backdrop-filter:blur(5px);
+  -webkit-backdrop-filter:blur(5px)
+}
+.voice-call-overlay::before{
+  position:absolute;inset:0;content:'';pointer-events:none;
+  background:
+    radial-gradient(circle at 20% 42%,rgba(103,75,211,.12),transparent 30%),
+    radial-gradient(circle at 83% 72%,rgba(23,120,173,.11),transparent 32%),
+    linear-gradient(145deg,rgba(10,9,30,.44),rgba(3,8,21,.68))
+}
+.voice-call-surface{
+  width:100%;height:100%;border:0;border-radius:0;
+  background:transparent;box-shadow:none
+}
+.voice-call-topbar{min-height:112px;padding:25px 170px 12px;z-index:2}
+.voice-call-brand{font-size:25px;letter-spacing:-.05em}
+.voice-call-status{
+  display:flex;align-items:center;justify-content:center;gap:8px;max-width:520px;margin-top:9px;
+  color:#aaa3c1;font-size:12px;font-weight:850
+}
+.voice-call-status::before{
+  width:7px;height:7px;flex:0 0 7px;border-radius:50%;content:'';
+  background:#8f7dff;box-shadow:0 0 12px rgba(143,125,255,.85)
+}
+.voice-call-overlay[data-mode="calling"] .voice-call-status::before,
+.voice-call-overlay[data-mode="incoming"] .voice-call-status::before{animation:call-status-v33 1.15s ease-in-out infinite}
+.voice-call-overlay[data-mode="active"] .voice-call-status{color:#70e6a4}
+.voice-call-overlay[data-mode="active"] .voice-call-status::before{background:#39df88;box-shadow:0 0 13px rgba(57,223,136,.82)}
+.voice-call-minimize{top:24px;left:24px;width:44px;height:44px;background:rgba(19,19,47,.78)}
+.voice-call-top-actions{
+  position:absolute;top:24px;right:24px;display:flex;align-items:center;gap:8px
+}
+.voice-call-add-top,.voice-call-count{
+  min-height:42px;border:1px solid rgba(160,143,255,.18);border-radius:14px;
+  background:rgba(17,18,43,.74);color:#d5ceef;box-shadow:0 12px 28px rgba(0,0,0,.2)
+}
+.voice-call-add-top{
+  display:flex;align-items:center;gap:7px;padding:0 13px;cursor:pointer;font:inherit;
+  transition:transform .18s ease,background .18s ease,border-color .18s ease
+}
+.voice-call-add-top:hover{transform:translateY(-1px);border-color:rgba(156,136,255,.38);background:rgba(42,38,82,.78)}
+.voice-call-add-top span{font-size:16px}.voice-call-add-top b{font-size:10px;font-weight:950}
+.voice-call-count{position:static;display:flex;align-items:center;padding:0 12px;font-size:9px}
+.voice-call-overlay[data-group="false"] .voice-call-count{display:none}
+.voice-call-overlay[data-mode="calling"] .voice-call-add-top,
+.voice-call-overlay[data-mode="incoming"] .voice-call-top-actions{display:none}
+.voice-call-stage{position:relative;z-index:1;padding:12px 24px 10px;overflow:auto}
+.voice-call-parties{width:min(780px,94vw);gap:28px;padding:18px}
+.voice-call-parties[data-count="2"]{grid-template-columns:minmax(0,1fr) 96px minmax(0,1fr)}
+.voice-call-avatar{
+  width:clamp(158px,18vw,194px);height:clamp(158px,18vw,194px);border-width:3px;
+  box-shadow:0 0 0 8px rgba(124,110,247,.07),0 24px 62px rgba(0,0,0,.38)
+}
+.voice-call-person{gap:11px}
+.voice-call-person-name{max-width:220px;font-size:18px}
+.voice-call-person-hint{margin-top:-5px;color:#918aa7;font-size:9px;letter-spacing:.08em}
+.voice-call-person.pending .voice-call-avatar{
+  opacity:.64;filter:grayscale(1) saturate(0) brightness(.62);
+  animation:call-pending-v33 1.8s ease-in-out infinite
+}
+.voice-call-person.pending .voice-call-avatar::after{
+  inset:auto 14px 13px;content:'\000412\00042B\000417\00042B\000412\000410\000415\00041C';height:25px;
+  border:1px solid rgba(210,206,232,.18);background:rgba(10,11,25,.84);color:#ded9ec;
+  font-size:8px;font-weight:1000;letter-spacing:.1em
+}
+.voice-call-person.pending .voice-call-person-name{color:#aaa5b8}
+.voice-call-person.pending .voice-call-person-hint{color:#918ba1}
+.voice-call-connector{position:relative;width:96px;height:28px;gap:11px}
+.voice-call-connector::before{
+  position:absolute;z-index:0;right:5px;left:5px;height:1px;content:'';
+  background:linear-gradient(90deg,transparent,rgba(126,111,223,.3),transparent)
+}
+.voice-call-connector-dot{position:relative;z-index:1;width:9px;height:9px}
+.voice-call-timer{margin-top:19px;color:#b7a8ff;font-size:30px;font-weight:900}
+.voice-call-add-legacy{display:none!important}
+.voice-call-controls,.voice-call-incoming-actions{
+  position:relative;z-index:2;gap:46px;width:min(620px,calc(100% - 32px));margin:15px 0 max(22px,env(safe-area-inset-bottom));
+  padding:18px 24px;border-color:rgba(157,140,245,.18);border-radius:30px;background:rgba(13,15,38,.76);
+  box-shadow:0 22px 55px rgba(0,0,0,.3),inset 0 1px rgba(255,255,255,.045);
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)
+}
+.voice-call-control{width:64px;height:64px;font-size:24px}
+.voice-call-control-label{font-size:9px;letter-spacing:.015em}
+.voice-call-overlay[data-mode="incoming"] .voice-call-timer{display:none}
+.voice-call-overlay[data-mode="incoming"] .voice-call-stage{padding-bottom:34px}
+.voice-call-overlay[data-mode="incoming"] .voice-call-incoming-actions{gap:70px}
+.voice-call-parties.group-call{width:min(760px,95vw);grid-template-columns:repeat(3,minmax(0,1fr));gap:26px 18px}
+.voice-call-parties.group-call .voice-call-avatar{width:120px;height:120px}
+.voice-call-parties.group-call .voice-call-person-name{font-size:14px}
+
+@keyframes call-status-v33{0%,100%{opacity:.38;transform:scale(.82)}50%{opacity:1;transform:scale(1.18)}}
+@keyframes call-pending-v33{0%,100%{transform:scale(.985)}50%{transform:scale(1.01)}}
+
+@media(max-width:640px){
+  .voice-call-topbar{min-height:98px;padding:calc(18px + env(safe-area-inset-top)) 68px 8px}
+  .voice-call-brand{font-size:21px}
+  .voice-call-status{margin-top:7px;font-size:10px}
+  .voice-call-minimize{top:calc(14px + env(safe-area-inset-top));left:13px;width:40px;height:40px}
+  .voice-call-top-actions{top:calc(14px + env(safe-area-inset-top));right:13px}
+  .voice-call-add-top{width:42px;height:42px;justify-content:center;padding:0;border-radius:50%}
+  .voice-call-add-top b{display:none}.voice-call-add-top span{font-size:15px}
+  .voice-call-count{min-height:38px;padding:0 9px;font-size:8px}
+  .voice-call-stage{padding:8px 9px 2px}
+  .voice-call-parties{width:100%;gap:11px;padding:9px 4px}
+  .voice-call-parties[data-count="2"]{grid-template-columns:minmax(0,1fr) 54px minmax(0,1fr)}
+  .voice-call-avatar{width:min(32vw,132px);height:min(32vw,132px);font-size:49px}
+  .voice-call-person-name{max-width:35vw;font-size:15px}
+  .voice-call-person-hint{font-size:7px}
+  .voice-call-connector{width:54px;gap:5px}.voice-call-connector-dot{width:7px;height:7px}
+  .voice-call-timer{margin-top:14px;font-size:24px}
+  .voice-call-controls,.voice-call-incoming-actions{
+    gap:28px;width:calc(100% - 20px);margin:13px 0 max(10px,env(safe-area-inset-bottom));padding:15px 10px;border-radius:25px
+  }
+  .voice-call-control{width:58px;height:58px;font-size:22px}
+  .voice-call-control-label{font-size:8px}
+  .voice-call-overlay[data-mode="incoming"] .voice-call-incoming-actions{gap:54px}
+  .voice-call-parties.group-call{grid-template-columns:repeat(2,minmax(0,1fr));gap:17px 8px;padding:4px}
+  .voice-call-parties.group-call .voice-call-avatar{width:min(24vw,94px);height:min(24vw,94px)}
+  .voice-call-parties.group-call .voice-call-person-name{font-size:12px}
+}
+
+@media(max-width:370px){
+  .voice-call-avatar{width:116px;height:116px}
+  .voice-call-controls,.voice-call-incoming-actions{gap:21px}
+}
+
+@media(max-height:690px) and (max-width:640px){
+  .voice-call-topbar{min-height:82px;padding-top:calc(11px + env(safe-area-inset-top))}
+  .voice-call-avatar{width:104px;height:104px}
+  .voice-call-timer{margin-top:7px;font-size:20px}
+  .voice-call-controls,.voice-call-incoming-actions{margin-top:7px;padding:10px}
+  .voice-call-control{width:50px;height:50px;font-size:20px}
+  .voice-call-parties.group-call .voice-call-avatar{width:68px;height:68px}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .voice-call-person.pending .voice-call-avatar,.voice-call-status::before{animation:none}
+}

@@ -55,7 +55,10 @@
                 <div class="voice-call-brand">tele<span>.chat</span></div>
                 <div class="voice-call-status" id="voice-call-status">Соединяем…</div>
               </div>
-              <div class="voice-call-count" id="voice-call-count">1 / ${MAX_PARTICIPANTS}</div>
+              <div class="voice-call-top-actions">
+                <button class="voice-call-add-top" id="call-add-top-btn" type="button" onclick="openInvitePanelV32()" aria-label="&#1044;&#1086;&#1073;&#1072;&#1074;&#1080;&#1090;&#1100; &#1091;&#1095;&#1072;&#1089;&#1090;&#1085;&#1080;&#1082;&#1072;"><span aria-hidden="true">&#128100;&#65291;</span><b>&#1044;&#1086;&#1073;&#1072;&#1074;&#1080;&#1090;&#1100;</b></button>
+                <div class="voice-call-count" id="voice-call-count">1 / ${MAX_PARTICIPANTS}</div>
+              </div>
             </header>
             <div class="voice-call-stage">
               <div class="voice-call-parties" id="voice-call-parties"></div>
@@ -66,7 +69,7 @@
                 <button class="voice-call-control" id="call-mic-btn" type="button" onclick="toggleCallMicV32()" aria-label="Выключить микрофон">🎙</button>
                 <span class="voice-call-control-label" id="call-mic-label">Микрофон</span>
               </div>
-              <div class="voice-call-control-wrap">
+              <div class="voice-call-control-wrap voice-call-add-legacy">
                 <button class="voice-call-control add" id="call-add-btn" type="button" onclick="openInvitePanelV32()" aria-label="Добавить участника">👤<b>+</b></button>
                 <span class="voice-call-control-label">Добавить</span>
               </div>
@@ -209,6 +212,8 @@
     box.dataset.count=String(visible.length);
     box.classList.toggle('two-person',visible.length===2);
     box.classList.toggle('group-call',visible.length>2);
+    const overlay=byId('voice-call-overlay');
+    if(overlay){overlay.dataset.people=String(visible.length);overlay.dataset.group=visible.length>2?'true':'false';}
     box.innerHTML='';
     visible.forEach((item,index)=>{
       const person=document.createElement('article');
@@ -231,7 +236,7 @@
       }
     });
     const joined=visible.filter(item=>item.status==='joined').length;
-    byId('voice-call-count').textContent=Math.max(1,joined)+' / '+MAX_PARTICIPANTS;
+    byId('voice-call-count').textContent=Math.max(1,joined)+'\u0020\u0432\u0020\u0437\u0432\u043e\u043d\u043a\u0435';
     const remoteJoined=visible.filter(item=>item.status==='joined'&&!sameNickV32(item.nick,me?.nick));
     byId('call-mixer-btn').disabled=!remoteJoined.length;
     renderMiniCallV32(visible);
