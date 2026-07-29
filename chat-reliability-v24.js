@@ -20,17 +20,18 @@
   }
 
   async function messageExistsV24(row){
-    const result=await sb.from('messages').select('id').eq('chat_key',row.chat_key).eq('from_nick',row.from_nick).eq('ts',row.ts).limit(1);
-    return !result.error&&result.data?.length>0;
+    const result=await sb.from('messages').select('*').eq('chat_key',row.chat_key).eq('from_nick',row.from_nick).eq('ts',row.ts).limit(1).maybeSingle();
+    return !result.error&&result.data?result.data:null;
   }
 
   async function persistMessageV24(row){
     let lastError=null;
     for(let attempt=0;attempt<2;attempt++){
-      const result=await sb.from('messages').insert(row);
-      if(!result.error)return {ok:true};
+      const result=await sb.from('messages').insert(row).select('*').single();
+      if(!result.error)return {ok:true,row:result.data||row};
       lastError=result.error;
-      if(await messageExistsV24(row))return {ok:true};
+      const existing=await messageExistsV24(row);
+      if(existing)return {ok:true,row:existing};
       if(attempt===0&&shouldRetryV24(lastError))await waitV24(320);else break;
     }
     return {ok:false,error:lastError};
@@ -51,7 +52,7 @@
       const saved=await persistMessageV24(row);
       if(!saved.ok){showToast(friendlySendErrorV24(saved.error));return;}
       input.value='';input.style.height='';cancelReply();cancelPendingMedia();
-      await appendMessage(row);renderContacts();playSendSound();
+      await appendMessage(saved.row||row);renderContacts();playSendSound();
     }catch(error){showToast(friendlySendErrorV24(error));}
     finally{
       messageSendingV24=false;
