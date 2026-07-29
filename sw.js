@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v31-voice-calls';
+const CACHE_NAME='telechat-shell-v32-group-calls';
 const APP_SHELL=[
   './',
   './index.html',
@@ -25,8 +25,8 @@ const APP_SHELL=[
   './profile-card-v29.css',
   './chat-reliability-v24.css',
   './chat-reliability-v24.js',
-  './voice-calls-v31.css',
-  './voice-calls-v31.js'
+  './voice-calls-v32.css',
+  './voice-calls-v32.js'
 ];
 
 self.addEventListener('install',event=>{
