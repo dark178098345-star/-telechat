@@ -10,15 +10,16 @@
   document.head.appendChild(css);
 
   const USER_FIELDS_V15='nick,name,av,status,last_seen,avatar_video,animated_profile';
-  async function batchUsersV15(nicks){
+  const sidebarUserFreshV18=new Map();
+  async function batchUsersV15(nicks,force=false){
     const unique=[...new Set((nicks||[]).map(nick=>String(nick||'').toLowerCase()).filter(Boolean))];
-    const missing=unique.filter(nick=>!userCache[nick]);
+    const missing=unique.filter(nick=>!userCache[nick]||(force&&Date.now()-(sidebarUserFreshV18.get(nick)||0)>60000));
     for(let start=0;start<missing.length;start+=100){
       const part=missing.slice(start,start+100);
       let result=await sb.from('users').select(USER_FIELDS_V15).in('nick',part);
       if(result.error)result=await sb.from('users').select('nick,name,av,status,last_seen').in('nick',part);
       if(result.error)throw result.error;
-      (result.data||[]).forEach(user=>{userCache[user.nick]={...(userCache[user.nick]||{}),...user};});
+      (result.data||[]).forEach(user=>{userCache[user.nick]={...(userCache[user.nick]||{}),...user};sidebarUserFreshV18.set(user.nick,Date.now());});
     }
     return unique.map(nick=>userCache[nick]).filter(Boolean);
   }
@@ -27,6 +28,92 @@
   const renderContactsFallbackV17=renderContacts;
   let contactsInFlightV17=null,contactsQueuedV17=false;
   let sidebarMessagesCacheV17=[],sidebarCacheReadyV17=false,sidebarCacheUpdatedAtV17=0,sidebarLocalPaintCreditsV25=0;
+  const SIDEBAR_SNAPSHOT_TTL_V18=7*24*60*60*1000;
+  const SIDEBAR_NETWORK_TTL_V18=15000;
+  const loadMyRoomsNetworkV18=loadMyRooms;
+  const roomMembershipChangeNetworkV18=handleRoomMembershipChangeV4;
+  let sidebarSnapshotHydratedForV18='',sidebarRefreshTimerV18=null,sidebarSnapshotTimerV18=null;
+  let roomsInFlightV18=null,roomsFreshAtV18=0;
+
+  function privatePeerFromKeyV18(key){
+    if(!me||typeof key!=='string'||key.startsWith('room_'))return '';
+    const ownAtStart=me.nick+'_',ownAtEnd='_'+me.nick;
+    if(key.startsWith(ownAtStart))return key.slice(ownAtStart.length);
+    if(key.endsWith(ownAtEnd))return key.slice(0,-ownAtEnd.length);
+    return '';
+  }
+
+  function compactSidebarMessageV18(message){
+    let preview='';
+    try{preview=messagePreviewText(message?.text||'');}catch(error){preview=String(message?.text||'');}
+    return{id:message?.id,chat_key:String(message?.chat_key||''),from_nick:String(message?.from_nick||''),ts:Number(message?.ts)||0,text:String(preview||'').slice(0,180)};
+  }
+
+  function sidebarSnapshotKeyV18(){return me?.nick?'telechat.sidebar.v18.'+me.nick:'';}
+
+  function saveSidebarSnapshotV18(){
+    const key=sidebarSnapshotKeyV18();if(!key||!sidebarCacheReadyV17)return;
+    try{
+      const nicks=[...new Set(sidebarMessagesCacheV17.map(message=>privatePeerFromKeyV18(message.chat_key)).filter(Boolean))];
+      const users={};
+      nicks.forEach(nick=>{
+        const user=userCache[nick];if(!user)return;
+        let status='';try{status=unpackProfileData(user.status).status||'';}catch(error){status=String(user.status||'').slice(0,100);}
+        users[nick]={nick:user.nick||nick,name:user.name||nick,av:Number(user.av)||0,status:String(status).slice(0,100),last_seen:Number(user.last_seen)||0,avatar_video:user.avatar_video||'',animated_profile:!!user.animated_profile};
+      });
+      const payload={version:18,at:Date.now(),rooms:(roomRows||[]).slice(0,100),messages:sidebarMessagesCacheV17.slice(0,180).map(compactSidebarMessageV18),users};
+      localStorage.setItem(key,JSON.stringify(payload));
+    }catch(error){}
+  }
+
+  function queueSidebarSnapshotV18(){
+    clearTimeout(sidebarSnapshotTimerV18);sidebarSnapshotTimerV18=setTimeout(saveSidebarSnapshotV18,220);
+  }
+
+  function hydrateSidebarSnapshotV18(){
+    if(!me||sidebarSnapshotHydratedForV18===me.nick)return sidebarCacheReadyV17;
+    sidebarSnapshotHydratedForV18=me.nick;
+    try{
+      const raw=localStorage.getItem(sidebarSnapshotKeyV18());if(!raw)return false;
+      const snapshot=JSON.parse(raw),age=Date.now()-Number(snapshot.at||0);
+      if(snapshot.version!==18||age<0||age>SIDEBAR_SNAPSHOT_TTL_V18)return false;
+      roomRows=Array.isArray(snapshot.rooms)?snapshot.rooms:[];roomsAvailable=true;
+      Object.entries(snapshot.users||{}).forEach(([nick,user])=>{userCache[nick]={...(userCache[nick]||{}),...user};});
+      sidebarMessagesCacheV17=(Array.isArray(snapshot.messages)?snapshot.messages:[]).map(compactSidebarMessageV18).filter(message=>message.chat_key);
+      sidebarCacheReadyV17=true;sidebarCacheUpdatedAtV17=Number(snapshot.at)||0;return true;
+    }catch(error){return false;}
+  }
+
+  loadMyRooms=async function(force=false){
+    if(!force&&roomsFreshAtV18&&Date.now()-roomsFreshAtV18<SIDEBAR_NETWORK_TTL_V18)return roomRows;
+    if(roomsInFlightV18)return roomsInFlightV18;
+    roomsInFlightV18=Promise.resolve(loadMyRoomsNetworkV18()).then(rows=>{roomsFreshAtV18=Date.now();return rows;}).finally(()=>{roomsInFlightV18=null;});
+    return roomsInFlightV18;
+  };
+
+  handleRoomMembershipChangeV4=async function(...args){
+    roomsFreshAtV18=0;sidebarCacheUpdatedAtV17=0;
+    return roomMembershipChangeNetworkV18(...args);
+  };
+
+  async function fetchSidebarMessagesV18(){
+    const metaResult=await sb.from('messages').select('id,chat_key,from_nick,ts').eq('deleted',false).order('ts',{ascending:false}).limit(800);
+    if(metaResult.error)throw metaResult.error;
+    const latest=[],seen=new Set();
+    for(const message of metaResult.data||[]){
+      const key=String(message.chat_key||''),relevant=key.startsWith('room_')||!!privatePeerFromKeyV18(key);
+      if(!relevant||seen.has(key)||message.id==null)continue;
+      seen.add(key);latest.push(message);if(latest.length>=180)break;
+    }
+    const textById=new Map();
+    for(let start=0;start<latest.length;start+=80){
+      const ids=latest.slice(start,start+80).map(message=>message.id);
+      const textResult=await sb.from('messages').select('id,text').in('id',ids);
+      if(textResult.error)throw textResult.error;
+      (textResult.data||[]).forEach(message=>textById.set(String(message.id),message.text));
+    }
+    return latest.map(message=>compactSidebarMessageV18({...message,text:textById.get(String(message.id))||''}));
+  }
 
   function collectPrivateChatsV17(allMsgs){
     const seen=new Set(),chats=[];
@@ -80,42 +167,62 @@
 
   function applySidebarMessageV25(message){
     if(!sidebarCacheReadyV17||!message?.chat_key)return false;
-    sidebarMessagesCacheV17=[message,...sidebarMessagesCacheV17.filter(item=>{
-      if(message.id&&item.id)return String(item.id)!==String(message.id);
-      return !(item.chat_key===message.chat_key&&item.from_nick===message.from_nick&&Number(item.ts)===Number(message.ts));
-    })].sort((a,b)=>Number(b.ts||0)-Number(a.ts||0)).slice(0,500);
-    sidebarCacheUpdatedAtV17=Date.now();sidebarLocalPaintCreditsV25++;return true;
+    const compact=compactSidebarMessageV18(message);
+    sidebarMessagesCacheV17=[compact,...sidebarMessagesCacheV17.filter(item=>{
+      if(compact.id&&item.id)return String(item.id)!==String(compact.id);
+      return !(item.chat_key===compact.chat_key&&item.from_nick===compact.from_nick&&Number(item.ts)===Number(compact.ts));
+    })].sort((a,b)=>Number(b.ts||0)-Number(a.ts||0)).slice(0,180);
+    sidebarCacheUpdatedAtV17=Date.now();sidebarLocalPaintCreditsV25++;queueSidebarSnapshotV18();return true;
   }
   window.telechatApplySidebarMessageV25=applySidebarMessageV25;
+
+  function sidebarPrivateNicksV18(messages){
+    return[...new Set((messages||[]).map(message=>privatePeerFromKeyV18(message.chat_key)).filter(Boolean))];
+  }
+
   async function renderContactsNowV17(){
     try{
       const list=document.getElementById('contacts-list');if(!list||!me)return;
-      const messagesPromise=sb.from('messages').select('chat_key,text,ts').eq('deleted',false).order('ts',{ascending:false}).limit(500);
-      const [,messageResult]=await Promise.all([loadMyRooms(),messagesPromise]);
-      if(messageResult.error)throw messageResult.error;
-      sidebarMessagesCacheV17=messageResult.data||[];sidebarCacheReadyV17=true;sidebarCacheUpdatedAtV17=Date.now();
-      await paintSidebarV17(sidebarMessagesCacheV17);
+      const [,messages]=await Promise.all([loadMyRooms(),fetchSidebarMessagesV18()]);
+      sidebarMessagesCacheV17=messages;sidebarCacheReadyV17=true;sidebarCacheUpdatedAtV17=Date.now();
+      await batchUsersV15(sidebarPrivateNicksV18(messages),true);
+      await paintSidebarV17(sidebarMessagesCacheV17);saveSidebarSnapshotV18();
     }catch(error){return renderContactsFallbackV17();}
   }
 
-  renderContacts=async function(){
-    if(sidebarLocalPaintCreditsV25>0&&sidebarCacheReadyV17){sidebarLocalPaintCreditsV25--;return paintSidebarV17(sidebarMessagesCacheV17);}
+  function requestSidebarRefreshV18(){
     if(contactsInFlightV17){contactsQueuedV17=true;return contactsInFlightV17;}
-    contactsInFlightV17=renderContactsNowV17().finally(()=>{contactsInFlightV17=null;if(contactsQueuedV17){contactsQueuedV17=false;requestAnimationFrame(()=>renderContacts());}});
+    contactsInFlightV17=renderContactsNowV17().finally(()=>{
+      contactsInFlightV17=null;
+      if(contactsQueuedV17){contactsQueuedV17=false;setTimeout(requestSidebarRefreshV18,0);}
+    });
     return contactsInFlightV17;
+  }
+
+  renderContacts=async function(){
+    hydrateSidebarSnapshotV18();
+    if(sidebarCacheReadyV17){
+      if(sidebarLocalPaintCreditsV25>0)sidebarLocalPaintCreditsV25--;
+      const painted=await paintSidebarV17(sidebarMessagesCacheV17);
+      if(Date.now()-sidebarCacheUpdatedAtV17>SIDEBAR_NETWORK_TTL_V18&&!sidebarRefreshTimerV18){
+        sidebarRefreshTimerV18=setTimeout(()=>{sidebarRefreshTimerV18=null;requestSidebarRefreshV18();},60);
+      }
+      return painted;
+    }
+    return requestSidebarRefreshV18();
   };
 
-  async function renderSidebarCachedV17(){if(!sidebarCacheReadyV17)return false;return paintSidebarV17(sidebarMessagesCacheV17);}
+  async function renderSidebarCachedV17(){hydrateSidebarSnapshotV18();if(!sidebarCacheReadyV17)return false;return paintSidebarV17(sidebarMessagesCacheV17);}
   let tabRefreshTimerV17=null;
   setSidebarFilter=async function(filter,btn){
     sidebarFilter=['all','group','channel'].includes(filter)?filter:'all';
     document.querySelectorAll('.sidebar-tab').forEach(element=>element.classList.toggle('active',element.dataset.filter===sidebarFilter));
     const usedCache=await renderSidebarCachedV17();
-    if(!usedCache)return renderContacts();
-    if(Date.now()-sidebarCacheUpdatedAtV17>30000){clearTimeout(tabRefreshTimerV17);tabRefreshTimerV17=setTimeout(()=>renderContacts(),220);}
+    if(!usedCache)return requestSidebarRefreshV18();
+    if(Date.now()-sidebarCacheUpdatedAtV17>SIDEBAR_NETWORK_TTL_V18){clearTimeout(tabRefreshTimerV17);tabRefreshTimerV17=setTimeout(requestSidebarRefreshV18,120);}
   };
   window.renderSidebarCachedV17=renderSidebarCachedV17;
-  window.telechatSidebarCacheInfoV17=()=>({ready:sidebarCacheReadyV17,age:sidebarCacheReadyV17?Date.now()-sidebarCacheUpdatedAtV17:null,messages:sidebarMessagesCacheV17.length});
+  window.telechatSidebarCacheInfoV17=()=>({ready:sidebarCacheReadyV17,age:sidebarCacheReadyV17?Date.now()-sidebarCacheUpdatedAtV17:null,messages:sidebarMessagesCacheV17.length,snapshot:sidebarSnapshotHydratedForV18===me?.nick});
   const renderMessagesFallbackV15=renderMessages;
   let messageRequestV15=0;
   renderMessages=async function(){

@@ -1112,7 +1112,7 @@ async function doLogin(){
   const {data,error}=await sb.from('users').select('*').eq('nick',nick).eq('pass',pass).maybeSingle();
   if(error||!data){err.textContent='Неверный логин или пароль';btn.disabled=false;btn.textContent='Войти';return;}
   me=data;userCache[me.nick]=me;
-  await updateOnline();setInterval(updateOnline,25000);
+  updateOnline().catch(()=>{});setInterval(updateOnline,25000);
   document.getElementById('auth-screen').classList.remove('active');
   document.getElementById('chat-screen').classList.add('active');
   await renderContacts();buildProfPanel();buildEmojiPicker();
@@ -2489,7 +2489,7 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 </script>
 <script src="./profile-performance-v11.js"></script>
 <script src="./followers-v12.js"></script>
-<script src="./app-performance-v17.js"></script>
+<script src="./app-performance-v17.js?v=18"></script>
 <script src="./ui-polish-v16.js"></script>
 <script src="./moderation-v19.js"></script>
 <script src="./moons-v20.js"></script>

@@ -1,0 +1,54 @@
+name: Build tele.chat Android APK
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle 8.11.1
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+
+      - name: Install Android API 36
+        run: sdkmanager "platforms;android-36" "build-tools;35.0.0"
+
+      - name: Restore private signing key
+        run: echo "${{ secrets.TELECHAT_KEYSTORE_BASE64 }}" | base64 --decode > android-app/telechat-release.jks
+
+      - name: Build signed installable APK
+        working-directory: android-app
+        env:
+          TELECHAT_KEYSTORE_PATH: ${{ github.workspace }}/android-app/telechat-release.jks
+          TELECHAT_KEYSTORE_PASSWORD: ${{ secrets.TELECHAT_KEYSTORE_PASSWORD }}
+          TELECHAT_KEY_ALIAS: ${{ secrets.TELECHAT_KEY_ALIAS }}
+          TELECHAT_KEY_PASSWORD: ${{ secrets.TELECHAT_KEY_PASSWORD }}
+        run: gradle :app:assembleRelease --stacktrace
+
+      - name: Rename APK
+        run: cp android-app/app/build/outputs/apk/release/app-release.apk tele.chat-1.1.0.apk
+
+      - name: Verify APK signature
+        run: apksigner verify --verbose --print-certs tele.chat-1.1.0.apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: tele-chat-android-apk
+          path: tele.chat-1.1.0.apk
+          if-no-files-found: error
+          retention-days: 30

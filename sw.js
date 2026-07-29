@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v33-call-design';
+const CACHE_NAME='telechat-shell-v34-fast-chats-apk';
 const APP_SHELL=[
   './',
   './index.html',
@@ -9,7 +9,7 @@ const APP_SHELL=[
   './apple-touch-icon.png',
   './profile-performance-v11.js',
   './followers-v12.js',
-  './app-performance-v17.js',
+  './app-performance-v17.js?v=18',
   './ui-polish-v16.css',
   './ui-polish-v16.js',
   './moderation-v19.css',
