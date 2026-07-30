@@ -4,6 +4,7 @@
 
   let voiceSendBusyV38 = false;
   const sendBeforeV38 = sendMsg;
+  const toggleVoiceBeforeV38 = toggleVoiceRecording;
 
   function recordingNowV38() {
     return Boolean(mediaRecorderV3 && mediaRecorderV3.state === 'recording');
@@ -67,6 +68,18 @@
     } finally {
       voiceSendBusyV38 = false;
       if (button) button.setAttribute('aria-label', 'Отправить');
+    }
+  };
+
+  toggleVoiceRecording = async function(...args) {
+    try {
+      return await toggleVoiceBeforeV38(...args);
+    } finally {
+      const recordButton = document.getElementById('record-btn');
+      const input = document.getElementById('msg-input');
+      if (input && document.activeElement === recordButton) {
+        try { input.focus({ preventScroll: true }); } catch (error) { input.focus(); }
+      }
     }
   };
 })();
