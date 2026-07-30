@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v37-desktop-notifications';
+const CACHE_NAME='telechat-shell-v38-voice-send';
 const APP_SHELL=[
   './',
   './index.html',
@@ -31,7 +31,8 @@ const APP_SHELL=[
   './voice-calls-v32.js?v=33',
   './glass-context-v36.css?v=36',
   './message-context-v36.js?v=36',
-  './desktop-notifications-v37.js?v=37'
+  './desktop-notifications-v37.js?v=37',
+  './voice-send-v38.js?v=38'
 ];
 
 self.addEventListener('install',event=>{
