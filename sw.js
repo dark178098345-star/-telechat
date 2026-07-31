@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v40-media-compat';
+const CACHE_NAME='telechat-shell-v41-chat-boot';
 const APP_SHELL=[
   './',
   './index.html',
@@ -33,7 +33,9 @@ const APP_SHELL=[
   './message-context-v36.js?v=36',
   './desktop-notifications-v37.js?v=37',
   './voice-send-v38.js?v=39',
-  './media-compat-v40.js?v=40'
+  './media-compat-v40.js?v=40',
+  './chat-boot-v41.css?v=41',
+  './chat-boot-v41.js?v=41'
 ];
 
 self.addEventListener('install',event=>{
