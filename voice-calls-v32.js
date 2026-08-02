@@ -6,10 +6,17 @@
   const MAX_PARTICIPANTS=6;
   const MEMBER_ACTIVE=new Set(['invited','joined']);
   const MEMBER_FINAL=new Set(['rejected','left','missed']);
-  const RTC_CONFIG={iceServers:[
-    {urls:'stun:stun.l.google.com:19302'},
-    {urls:'stun:stun1.l.google.com:19302'}
-  ]};
+  const RTC_CONFIG={
+    iceServers:[
+      {urls:'stun:stun.l.google.com:19302'},
+      {urls:'stun:stun1.l.google.com:19302'},
+      {urls:'stun:stun2.l.google.com:19302'},
+      {urls:'stun:stun3.l.google.com:19302'},
+      ...(Array.isArray(window.TELECHAT_ICE_SERVERS)?window.TELECHAT_ICE_SERVERS:[])
+    ],
+    iceCandidatePoolSize:4,
+    bundlePolicy:'max-bundle'
+  };
 
   let callState=null,incomingInvite=null,lastPersonalPeer='';
   let inboxRealtime=null,activeRealtime=null,initializedFor='';
@@ -429,10 +436,66 @@
     if(error)throw error;
   }
 
+  function setCallNetworkStatusV42(text){
+    const status=byId('voice-call-status');
+    if(status)status.textContent=text;
+  }
+
+  function armPeerConnectionTimeoutV42(state,peer,delay=14000){
+    if(!state||!peer||peer.connected||state.closing)return;
+    clearTimeout(peer.connectTimer);
+    peer.connectTimer=setTimeout(()=>recoverPeerConnectionV42(state,peer),delay);
+  }
+
+  async function recoverPeerConnectionV42(state,peer){
+    if(callState!==state||!peer||peer.connected||state.closing)return;
+    const pc=peer.pc;
+    if(!pc||pc.connectionState==='closed')return;
+    if(peer.retryCount<1){
+      peer.retryCount++;
+      setCallNetworkStatusV42('Переподключаем…');
+      try{
+        if(pc.signalingState==='have-local-offer')await pc.setLocalDescription({type:'rollback'});
+        if(pc.signalingState==='stable'){
+          const offer=await pc.createOffer({offerToReceiveAudio:true,iceRestart:true});
+          await pc.setLocalDescription(offer);
+          await sendSignalV32(state,peer.nick,'offer',pc.localDescription);
+          armPeerConnectionTimeoutV42(state,peer,15000);
+          return;
+        }
+      }catch(error){console.warn('tele.chat call reconnect',error);}
+      armPeerConnectionTimeoutV42(state,peer,7000);
+      return;
+    }
+    await failPeerConnectionV42(state,peer);
+  }
+
+  async function failPeerConnectionV42(state,peer){
+    if(callState!==state||!peer||state.closing)return;
+    clearTimeout(peer.connectTimer);
+    const connectedOthers=[...(state.peers?.values()||[])].filter(item=>item!==peer&&item.connected);
+    const remoteMembers=[...(state.members?.values()||[])].filter(item=>item.status==='joined'&&!sameNickV32(item.nick,me.nick));
+    removePeerV32(state,peer.nick);
+    if(remoteMembers.length>1||connectedOthers.length){
+      setCallNetworkStatusV42('Не удалось подключить @'+peer.nick);
+      showToast('Участник @'+peer.nick+' не подключился');
+      return;
+    }
+    state.closing=true;
+    setCallNetworkStatusV42('Не удалось соединиться');
+    try{
+      await Promise.allSettled([
+        sb.from('telechat_group_call_members').update({status:'left',left_at:nowV32()}).eq('call_id',state.id).eq('nick',me.nick),
+        sb.from('telechat_group_calls').update({status:'ended',ended_at:nowV32()}).eq('id',state.id)
+      ]);
+    }catch(error){}
+    await finishCallV32('failed',false);
+  }
+
   function createPeerV32(state,nick){
     const existing=state.peers.get(nick);if(existing)return existing;
     const pc=new RTCPeerConnection(RTC_CONFIG);
-    const peer={nick,pc,pendingCandidates:[],remoteStream:null,audio:null,connected:false,disconnectTimer:null,meterStarted:false};
+    const peer={nick,pc,pendingCandidates:[],remoteStream:null,audio:null,connected:false,disconnectTimer:null,connectTimer:null,retryCount:0,meterStarted:false};
     state.peers.set(nick,peer);
     for(const track of state.localStream?.getTracks?.()||[])pc.addTrack(track,state.localStream);
     pc.onicecandidate=event=>{
@@ -455,19 +518,14 @@
     pc.onconnectionstatechange=()=>{
       const status=pc.connectionState;
       if(status==='connected'){
-        peer.connected=true;clearTimeout(peer.disconnectTimer);
+        peer.connected=true;clearTimeout(peer.disconnectTimer);clearTimeout(peer.connectTimer);
         byId(memberDomIdV32(nick))?.classList.add('connected');
         ensureCallStartedV32(state);
         byId('voice-call-status').textContent=state.members.size>2?'Групповой звонок':'Соединено';
       }
       if(status==='failed'||status==='disconnected'){
-        clearTimeout(peer.disconnectTimer);
-        peer.disconnectTimer=setTimeout(()=>{
-          if(callState===state&&(pc.connectionState==='failed'||pc.connectionState==='disconnected')){
-            removePeerV32(state,nick);
-            if([...state.members.values()].filter(item=>item.status==='joined').length<=2)byId('voice-call-status').textContent='Переподключаем…';
-          }
-        },8000);
+        clearTimeout(peer.disconnectTimer);clearTimeout(peer.connectTimer);
+        peer.disconnectTimer=setTimeout(()=>recoverPeerConnectionV42(state,peer),5500);
       }
       if(status==='closed')peer.connected=false;
     };
@@ -488,7 +546,7 @@
 
   function removePeerV32(state,nick){
     const peer=state?.peers?.get(nick);if(!peer)return;
-    clearTimeout(peer.disconnectTimer);
+    clearTimeout(peer.disconnectTimer);clearTimeout(peer.connectTimer);
     try{peer.pc.close();}catch(error){}
     if(peer.audio){peer.audio.pause();peer.audio.srcObject=null;peer.audio.remove();}
     removeSpeakingMeterV32(nick);state.peers.delete(nick);
@@ -502,6 +560,7 @@
     const offer=await peer.pc.createOffer({offerToReceiveAudio:true});
     await peer.pc.setLocalDescription(offer);
     await sendSignalV32(state,nick,'offer',peer.pc.localDescription);
+    armPeerConnectionTimeoutV42(state,peer);
   }
 
   async function flushPeerCandidatesV32(peer){
@@ -529,9 +588,11 @@
         await flushPeerCandidatesV32(peer);
         const answer=await peer.pc.createAnswer();await peer.pc.setLocalDescription(answer);
         await sendSignalV32(state,from,'answer',peer.pc.localDescription);
+        armPeerConnectionTimeoutV42(state,peer);
       }else if(row.kind==='answer'){
         if(!peer.pc.currentRemoteDescription)await peer.pc.setRemoteDescription(row.payload);
         await flushPeerCandidatesV32(peer);
+        armPeerConnectionTimeoutV42(state,peer);
       }else if(row.kind==='candidate'){
         if(peer.pc.remoteDescription){
           try{await peer.pc.addIceCandidate(row.payload);}catch(error){}
@@ -772,6 +833,7 @@
         state.status='active';await showCallUiV32('active','Соединяем участников…',state);
       }
     }
+    if(row.status==='joined'&&!sameNickV32(row.nick,me.nick)){try{await createOfferV32(state,row.nick);}catch(error){}}
     if(state.role==='host'&&state.status==='calling'&&MEMBER_FINAL.has(row.status)&&sameNickV32(row.nick,state.originPeer)){
       const waiting=[...state.members.values()].filter(item=>!sameNickV32(item.nick,me.nick)&&MEMBER_ACTIVE.has(item.status));
       if(!waiting.length){

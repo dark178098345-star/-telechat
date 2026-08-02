@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v41-chat-boot';
+const CACHE_NAME='telechat-shell-v42-fluid-calls';
 const APP_SHELL=[
   './',
   './index.html',
@@ -28,14 +28,16 @@ const APP_SHELL=[
   './message-send-animation-v35.css',
   './message-send-animation-v35.js',
   './voice-calls-v32.css?v=33',
-  './voice-calls-v32.js?v=33',
+  './voice-calls-v32.js?v=42',
   './glass-context-v36.css?v=36',
   './message-context-v36.js?v=36',
   './desktop-notifications-v37.js?v=37',
   './voice-send-v38.js?v=39',
   './media-compat-v40.js?v=40',
   './chat-boot-v41.css?v=41',
-  './chat-boot-v41.js?v=41'
+  './chat-boot-v41.js?v=41',
+  './fluid-ui-v42.css?v=42',
+  './fluid-ui-v42.js?v=42'
 ];
 
 self.addEventListener('install',event=>{

@@ -1,0 +1,185 @@
+/* TELECHAT FLUID UI V42 — fast, compositor-friendly motion */
+:root {
+  --motion-v42: cubic-bezier(.2,.78,.24,1);
+  --motion-spring-v42: cubic-bezier(.2,.9,.24,1.08);
+  --motion-fast-v42: 160ms;
+  --motion-base-v42: 260ms;
+}
+
+html { -webkit-tap-highlight-color: transparent; }
+body { text-rendering: optimizeLegibility; }
+button, [role="button"], .contact, .search-result-item { touch-action: manipulation; }
+
+body.telechat-motion-v42 .sidebar,
+body.telechat-motion-v42 .chat-main,
+body.telechat-motion-v42 .side-panel,
+body.telechat-motion-v42 .modal,
+body.telechat-motion-v42 .voice-call-surface {
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+}
+
+/* Sliding segmented control: tabs now move as one physical pill. */
+.sidebar-tabs {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+.sidebar-tabs::before {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  top: 3px;
+  bottom: 3px;
+  left: 3px;
+  width: calc((100% - 6px) / 3);
+  border: 1px solid rgba(183,164,255,.20);
+  border-radius: 8px;
+  background: linear-gradient(135deg,rgba(124,110,247,.27),rgba(92,79,225,.15));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.05),0 5px 15px rgba(45,35,112,.16);
+  transform: translate3d(calc(var(--tab-index-v42,0) * 100%),0,0);
+  transition: transform 300ms var(--motion-spring-v42),background 240ms ease;
+  pointer-events: none;
+}
+.sidebar-tab {
+  position: relative;
+  z-index: 1;
+  background: transparent !important;
+  box-shadow: none !important;
+  transition: color 210ms ease,transform var(--motion-fast-v42) var(--motion-v42) !important;
+}
+.sidebar-tab:active { transform: scale(.96); }
+
+/* The list paints instantly from cache and settles without jank. */
+.contacts-list {
+  overscroll-behavior: contain;
+  contain: layout paint;
+  scrollbar-gutter: stable;
+}
+.contacts-list.v42-list-enter .list-section-title {
+  animation: section-in-v42 230ms var(--motion-v42) both;
+}
+.contacts-list.v42-list-enter .contact {
+  animation: contact-in-v42 300ms var(--motion-v42) both;
+  animation-delay: min(calc(var(--motion-order-v42,0) * 22ms),132ms);
+}
+.contact {
+  contain: layout paint style;
+  transform: translateZ(0);
+  transition: background-color 180ms ease,border-color 180ms ease,transform 190ms var(--motion-v42),box-shadow 190ms ease !important;
+}
+.contact:hover { box-shadow: inset 0 0 0 1px rgba(167,139,250,.035); }
+.contact:active { transform: translate3d(2px,0,0) scale(.985); }
+.contact .av,.contact .room-avatar {
+  transition: transform 220ms var(--motion-spring-v42),box-shadow 220ms ease;
+}
+.contact:hover .av,.contact:hover .room-avatar { transform: scale(1.035); }
+
+/* Chat change, new messages and media load as one calm movement. */
+#active-chat.v42-chat-opening {
+  opacity: .78;
+  transform: translate3d(5px,0,0) scale(.997);
+  transition: opacity 130ms ease,transform 180ms var(--motion-v42);
+}
+#active-chat.v42-chat-ready {
+  animation: chat-ready-v42 300ms var(--motion-v42) both;
+}
+.messages {
+  overscroll-behavior: contain;
+  overflow-anchor: auto;
+}
+.msg { contain: layout paint; transform: translateZ(0); }
+.msg-bubble {
+  transition: transform 180ms var(--motion-v42),filter 180ms ease,box-shadow 180ms ease;
+}
+.msg:active .msg-bubble { transform: scale(.992); }
+.avatar-photo.v42-media-loading,
+.profile-video.v42-media-loading,
+.avatar-video.v42-media-loading {
+  opacity: 0;
+  transform: scale(1.035);
+}
+.avatar-photo,.profile-video,.avatar-video {
+  transition: opacity 260ms ease,transform 320ms var(--motion-v42);
+}
+
+/* Panels feel connected to the control that opened them. */
+.side-panel.open.v42-panel-enter .panel-head {
+  animation: panel-head-in-v42 280ms var(--motion-v42) both;
+}
+.side-panel.open.v42-panel-enter .panel-section,
+.side-panel.open.v42-panel-enter .profile-editor-card,
+.side-panel.open.v42-panel-enter .profile-choice-card,
+.side-panel.open.v42-panel-enter .profile-fields-card {
+  animation: panel-card-in-v42 330ms var(--motion-v42) both;
+  animation-delay: min(calc(var(--motion-order-v42,0) * 28ms),168ms);
+}
+.panel-overlay { transition: opacity 260ms ease,visibility 260ms,backdrop-filter 320ms ease !important; }
+.modal-overlay.show .modal { animation: modal-in-v42 280ms var(--motion-spring-v42) both !important; }
+
+/* More responsive controls while preserving the glass visual. */
+button,.telechat-nav-btn,.hdr-btn,.icon-btn,.composer-tool,.close-btn,.profile-preview-btn {
+  transform: translateZ(0);
+}
+button.is-pressing-v42,
+.telechat-nav-btn.is-pressing-v42,
+.hdr-btn.is-pressing-v42,
+.icon-btn.is-pressing-v42 {
+  transform: scale(.955) !important;
+  transition-duration: 80ms !important;
+}
+.telechat-nav-btn .telechat-nav-icon {
+  transition: transform 240ms var(--motion-spring-v42),filter 220ms ease;
+}
+.telechat-nav-btn:hover .telechat-nav-icon,
+.telechat-nav-btn.active .telechat-nav-icon { transform: translateY(-1px) scale(1.08); }
+.composer-shell {
+  transition: border-color 190ms ease,box-shadow 230ms ease,background-color 230ms ease,transform 190ms var(--motion-v42) !important;
+}
+.composer-shell:focus-within {
+  transform: translateY(-1px);
+  box-shadow: 0 0 0 3px rgba(124,110,247,.08),0 10px 30px rgba(0,0,0,.12);
+}
+.send-btn:active { transform: scale(.91) !important; }
+
+@keyframes contact-in-v42 {
+  from { opacity:0; transform:translate3d(-7px,3px,0) scale(.992); }
+  to { opacity:1; transform:translate3d(0,0,0) scale(1); }
+}
+@keyframes section-in-v42 {
+  from { opacity:0; transform:translate3d(0,-3px,0); }
+  to { opacity:1; transform:none; }
+}
+@keyframes chat-ready-v42 {
+  from { opacity:.78; transform:translate3d(7px,0,0) scale(.997); }
+  to { opacity:1; transform:none; }
+}
+@keyframes panel-head-in-v42 {
+  from { opacity:0; transform:translate3d(0,-6px,0); }
+  to { opacity:1; transform:none; }
+}
+@keyframes panel-card-in-v42 {
+  from { opacity:0; transform:translate3d(0,9px,0) scale(.992); }
+  to { opacity:1; transform:none; }
+}
+@keyframes modal-in-v42 {
+  from { opacity:0; transform:translate3d(0,10px,0) scale(.975); }
+  to { opacity:1; transform:none; }
+}
+
+@media (max-width:640px) {
+  .contacts-list { scrollbar-gutter: auto; }
+  .contact:hover { transform:none; }
+  body.telechat-motion-v42 .sidebar { transition-duration:340ms !important; }
+  body.telechat-glass-v36 .side-panel {
+    backdrop-filter: blur(17px) saturate(135%) !important;
+    -webkit-backdrop-filter: blur(17px) saturate(135%) !important;
+  }
+}
+
+@media (prefers-reduced-motion:reduce) {
+  .sidebar-tabs::before,.contact,#active-chat,.side-panel,.panel-overlay,.modal,.msg-bubble,.avatar-photo,.profile-video,.avatar-video {
+    animation:none !important;
+    transition-duration:.01ms !important;
+  }
+}
