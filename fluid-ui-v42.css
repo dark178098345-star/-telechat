@@ -76,13 +76,12 @@ body.telechat-motion-v42 .voice-call-surface {
 .contact:hover .av,.contact:hover .room-avatar { transform: scale(1.035); }
 
 /* Chat change, new messages and media load as one calm movement. */
-#active-chat.v42-chat-opening {
-  opacity: .78;
-  transform: translate3d(5px,0,0) scale(.997);
-  transition: opacity 130ms ease,transform 180ms var(--motion-v42);
-}
+#active-chat.v42-chat-opening,
 #active-chat.v42-chat-ready {
-  animation: chat-ready-v42 300ms var(--motion-v42) both;
+  opacity: 1;
+  transform: none;
+  transition: none;
+  animation: none;
 }
 .messages {
   overscroll-behavior: contain;
@@ -148,10 +147,6 @@ button.is-pressing-v42,
 }
 @keyframes section-in-v42 {
   from { opacity:0; transform:translate3d(0,-3px,0); }
-  to { opacity:1; transform:none; }
-}
-@keyframes chat-ready-v42 {
-  from { opacity:.78; transform:translate3d(7px,0,0) scale(.997); }
   to { opacity:1; transform:none; }
 }
 @keyframes panel-head-in-v42 {

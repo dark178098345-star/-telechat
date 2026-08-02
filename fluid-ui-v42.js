@@ -71,29 +71,13 @@
     root.querySelectorAll?.('img.avatar-photo,video.avatar-video,video.profile-video').forEach(prepareMediaNodeV42);
   }
 
-  function animateChatReadyV42() {
-    const chat = document.getElementById('active-chat');
-    if (!chat || reducedMotionV42) return;
-    chat.classList.remove('v42-chat-opening','v42-chat-ready');
-    void chat.offsetWidth;
-    chat.classList.add('v42-chat-ready');
-    setTimeout(() => chat.classList.remove('v42-chat-ready'), 420);
-    prepareMediaV42(chat);
-  }
-
   function wrapChatOpenV42(name) {
     const previous = window[name];
     if (typeof previous !== 'function' || previous.__fluidV42) return;
     const wrapped = async function(...args) {
-      const chat = document.getElementById('active-chat');
-      chat?.classList.add('v42-chat-opening');
-      try {
-        const result = await previous.apply(this, args);
-        animateChatReadyV42();
-        return result;
-      } finally {
-        chat?.classList.remove('v42-chat-opening');
-      }
+      const result = await previous.apply(this, args);
+      prepareMediaV42(document.getElementById('active-chat') || document);
+      return result;
     };
     wrapped.__fluidV42 = true;
     window[name] = wrapped;
