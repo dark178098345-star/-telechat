@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v43-no-chat-flash';
+const CACHE_NAME='telechat-shell-v44-chat-loader';
 const APP_SHELL=[
   './',
   './index.html',
@@ -37,7 +37,9 @@ const APP_SHELL=[
   './chat-boot-v41.css?v=41',
   './chat-boot-v41.js?v=41',
   './fluid-ui-v42.css?v=43',
-  './fluid-ui-v42.js?v=43'
+  './fluid-ui-v42.js?v=43',
+  './chat-open-loader-v44.css?v=44',
+  './chat-open-loader-v44.js?v=44'
 ];
 
 self.addEventListener('install',event=>{
