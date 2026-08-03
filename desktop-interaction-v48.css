@@ -1,0 +1,23 @@
+/* TELECHAT DESKTOP INTERACTION GUARD V48 */
+#overlay.panel-overlay,
+#overlay.panel-overlay.show {
+  pointer-events: none !important;
+}
+
+.sidebar {
+  position: relative;
+  z-index: 170;
+}
+
+.side-panel {
+  z-index: 230 !important;
+}
+
+#startup-loader.is-hidden {
+  display: none !important;
+}
+
+@media (max-width:640px) {
+  .sidebar { z-index:180; }
+  .side-panel { z-index:240 !important; }
+}

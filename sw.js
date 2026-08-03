@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v47-nav-unlock-motion';
+const CACHE_NAME='telechat-shell-v48-desktop-interaction';
 const APP_SHELL=[
   './',
   './index.html',
@@ -42,7 +42,9 @@ const APP_SHELL=[
   './chat-open-loader-v44.js?v=44',
   './update-manager-v45.css?v=45',
   './nav-reliability-v47.css?v=47',
+  './desktop-interaction-v48.css?v=48',
   './nav-reliability-v47.js?v=47',
+  './desktop-interaction-v48.js?v=48',
   './update-manager-v46.js?v=46',
   './telechat-release.json'
 ];
