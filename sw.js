@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v44-chat-loader';
+const CACHE_NAME='telechat-shell-v45-updates';
 const APP_SHELL=[
   './',
   './index.html',
@@ -39,7 +39,10 @@ const APP_SHELL=[
   './fluid-ui-v42.css?v=43',
   './fluid-ui-v42.js?v=43',
   './chat-open-loader-v44.css?v=44',
-  './chat-open-loader-v44.js?v=44'
+  './chat-open-loader-v44.js?v=44',
+  './update-manager-v45.css?v=45',
+  './update-manager-v45.js?v=45',
+  './telechat-release.json'
 ];
 
 self.addEventListener('install',event=>{
@@ -54,11 +57,27 @@ self.addEventListener('activate',event=>{
   );
 });
 
+self.addEventListener('message',event=>{
+  if(event.data?.type==='SKIP_WAITING')self.skipWaiting();
+});
+
 self.addEventListener('fetch',event=>{
   const request=event.request;
   if(request.method!=='GET')return;
   const url=new URL(request.url);
   if(url.origin!==self.location.origin)return;
+
+  if(url.pathname.endsWith('/telechat-release.json')){
+    event.respondWith(
+      fetch(request,{cache:'no-store'})
+        .then(response=>{
+          if(response.ok)caches.open(CACHE_NAME).then(cache=>cache.put('./telechat-release.json',response.clone()));
+          return response;
+        })
+        .catch(()=>caches.match('./telechat-release.json'))
+    );
+    return;
+  }
 
   if(request.mode==='navigate'){
     event.respondWith(
