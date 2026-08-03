@@ -1,8 +1,9 @@
 {
-  "version": "1.2.0",
-  "build": 45,
-  "title": "Вышло обновление tele.chat 1.2",
-  "description": "Новая система обновлений, более плавный интерфейс и исправления загрузки чатов и звонков.",
-  "windowsUrl": "https://github.com/dark178098345-star/-telechat/releases/download/v1.2.0/tele.chat-Setup-1.2.0.exe",
-  "publishedAt": "2026-08-03T08:12:37Z"
+  "version": "1.2.1",
+  "build": 46,
+  "title": "Вышло обновление tele.chat 1.2.1",
+  "description": "Исправлено открытие настроек и профиля. Добавлено автоматическое обновление приложения с перезапуском.",
+  "windowsUrl": "https://github.com/dark178098345-star/-telechat/releases/download/v1.2.1/tele.chat-Setup-1.2.1.exe",
+  "sha256": "689ba9ad74c3701e2eca20d7396ac637e10e4b992c94b11ceb5dec5309fff762",
+  "publishedAt": "2026-08-03T10:38:25.608Z"
 }
