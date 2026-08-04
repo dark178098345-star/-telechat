@@ -4,6 +4,7 @@
 
   const MANIFEST_URL_V46 = './telechat-release.json';
   const WEB_BUILD_KEY_V51 = 'telechat-applied-web-build-v51';
+  const DESKTOP_VERSION_KEY_V52 = 'telechat-last-desktop-version-v52';
   const desktopBridgeV46 = window.telechatDesktop;
   const isDesktopV46 = Boolean(desktopBridgeV46?.isDesktop);
   const canInstallV46 = typeof desktopBridgeV46?.installUpdate === 'function';
@@ -179,6 +180,12 @@
         await Promise.allSettled(keys.map(key => caches.delete(key)));
       }
     } catch (error) {}
+    if (isDesktopV46 && typeof desktopBridgeV46?.restartApp === 'function') {
+      try {
+        const result = await desktopBridgeV46.restartApp();
+        if (result?.ok) return;
+      } catch (error) {}
+    }
     const nextUrl = new URL(location.href);
     nextUrl.searchParams.set('webbuild', String(webBuild || Date.now()));
     nextUrl.searchParams.set('updated', String(Date.now()));
@@ -198,6 +205,12 @@
       return;
     }
     const remoteBuild = Number(release.build) || 0;
+    const lastDesktopVersion = localStorage.getItem(DESKTOP_VERSION_KEY_V52);
+    if (lastDesktopVersion !== current) {
+      localStorage.setItem(DESKTOP_VERSION_KEY_V52, current);
+      if (remoteBuild) localStorage.setItem(WEB_BUILD_KEY_V51, String(remoteBuild));
+      return;
+    }
     const appliedBuild = Number(localStorage.getItem(WEB_BUILD_KEY_V51)) || 49;
     if (remoteBuild > appliedBuild) showV46('web', release);
   }
