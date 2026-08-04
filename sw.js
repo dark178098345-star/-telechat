@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v49-boot-failsafe';
+const CACHE_NAME='telechat-shell-v50-login-reliability';
 const APP_SHELL=[
   './',
   './index.html',
@@ -13,7 +13,7 @@ const APP_SHELL=[
   './ui-polish-v16.css',
   './ui-polish-v16.js',
   './moderation-v19.css',
-  './moderation-v19.js',
+  './moderation-v19.js?v=50',
   './moons-v20.css',
   './moons-v20.js',
   './animated-profile-v26.css',
