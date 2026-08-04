@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v50-login-reliability';
+const CACHE_NAME='telechat-shell-v51-web-updates';
 const APP_SHELL=[
   './',
   './index.html',
@@ -47,7 +47,7 @@ const APP_SHELL=[
   './nav-reliability-v47.js?v=47',
   './desktop-interaction-v48.js?v=48',
   './chat-boot-failsafe-v49.js?v=49',
-  './update-manager-v46.js?v=46',
+  './update-manager-v46.js?v=51',
   './telechat-release.json'
 ];
 
