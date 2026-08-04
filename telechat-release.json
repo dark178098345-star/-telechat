@@ -1,9 +1,9 @@
 {
-  "version": "1.2.2",
-  "build": 48,
-  "title": "Вышло обновление tele.chat 1.2.2",
-  "description": "Исправлена блокировка нижнего меню в Windows-приложении. Интерфейс теперь загружается без старого кэша.",
-  "windowsUrl": "https://github.com/dark178098345-star/-telechat/releases/download/v1.2.2/tele.chat-Setup-1.2.2.exe",
-  "sha256": "2568cd5c247485af2cb4b474f8fa14df15f378ad936d143f9cbe73d562a552c3",
-  "publishedAt": "2026-08-03T12:42:04.935Z"
+  "version": "1.2.3",
+  "build": 49,
+  "title": "Вышло обновление tele.chat 1.2.3",
+  "description": "Исправлен зависавший экран загрузки чатов, который блокировал кнопки настроек и профиля.",
+  "windowsUrl": "https://github.com/dark178098345-star/-telechat/releases/download/v1.2.3/tele.chat-Setup-1.2.3.exe",
+  "sha256": "5e06db2ebb12e7a7d4c4b251d70f94d546eb898c668d91a31990b21da3002417",
+  "publishedAt": "2026-08-04T16:21:04.378Z"
 }
