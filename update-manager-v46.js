@@ -3,8 +3,6 @@
   'use strict';
 
   const MANIFEST_URL_V46 = './telechat-release.json';
-  const WEB_BUILD_KEY_V51 = 'telechat-applied-web-build-v51';
-  const DESKTOP_VERSION_KEY_V52 = 'telechat-last-desktop-version-v52';
   const desktopBridgeV46 = window.telechatDesktop;
   const isDesktopV46 = Boolean(desktopBridgeV46?.isDesktop);
   const canInstallV46 = typeof desktopBridgeV46?.installUpdate === 'function';
@@ -13,7 +11,6 @@
   let modeV46 = '';
   let reloadingV46 = false;
   let installingV46 = false;
-  let manualInstallerFallbackV51 = false;
 
   function ensureCardV46() {
     let card = document.getElementById('telechat-update-v45');
@@ -56,11 +53,10 @@
     return false;
   }
 
-  async function loadReleaseV46(force = false) {
-    if (releaseV46 && !force) return releaseV46;
+  async function loadReleaseV46() {
+    if (releaseV46) return releaseV46;
     try {
-      const separator = MANIFEST_URL_V46.includes('?') ? '&' : '?';
-      const response = await fetch(MANIFEST_URL_V46 + separator + 't=' + Date.now(), { cache: 'no-store' });
+      const response = await fetch(MANIFEST_URL_V46, { cache: 'no-store' });
       if (!response.ok) throw new Error('release manifest');
       const data = await response.json();
       if (!data?.version) throw new Error('release version');
@@ -72,8 +68,7 @@
   }
 
   function showV46(mode, release) {
-    const releaseMarker = mode === 'desktop' ? release?.version : (release?.build || release?.version);
-    const dismissKey = `telechat-update-dismissed-v51-${mode}-${releaseMarker || 'next'}`;
+    const dismissKey = `telechat-update-dismissed-v46-${mode}-${release?.version || release?.build || 'next'}`;
     if (sessionStorage.getItem(dismissKey) === '1') return;
     modeV46 = mode;
     releaseV46 = release || releaseV46;
@@ -130,11 +125,6 @@
     if (modeV46 === 'desktop') {
       const url = releaseV46?.windowsUrl;
       if (!url || installingV46) return;
-      if (manualInstallerFallbackV51) {
-        if (typeof desktopBridgeV46?.openExternal === 'function') desktopBridgeV46.openExternal(url);
-        else window.open(url, '_blank', 'noopener,noreferrer');
-        return;
-      }
       if (!canInstallV46) {
         if (typeof desktopBridgeV46?.openExternal === 'function') desktopBridgeV46.openExternal(url);
         else window.open(url, '_blank', 'noopener,noreferrer');
@@ -153,14 +143,7 @@
         });
         if (!result?.ok) throw new Error(result?.error || 'Не удалось установить обновление');
       } catch (error) {
-        manualInstallerFallbackV51 = true;
-        installingV46 = false;
         updateStatusV46({ state: 'error', error: String(error?.message || error) });
-        const description = document.getElementById('telechat-update-description-v45');
-        if (description) description.textContent = 'Автозагрузка не сработала — открыли официальный установщик в браузере.';
-        if (button) { button.disabled = false; button.textContent = 'Открыть ещё раз'; }
-        if (typeof desktopBridgeV46?.openExternal === 'function') desktopBridgeV46.openExternal(url);
-        else window.open(url, '_blank', 'noopener,noreferrer');
       }
       return;
     }
@@ -170,49 +153,22 @@
       button.disabled = true;
       button.textContent = 'Перезапускаем…';
     }
-    const webBuild = Number(releaseV46?.build) || 0;
-    if (webBuild) localStorage.setItem(WEB_BUILD_KEY_V51, String(webBuild));
     try {
       const registration = await navigator.serviceWorker?.getRegistration?.();
       registration?.waiting?.postMessage({ type: 'SKIP_WAITING' });
-      if (typeof caches !== 'undefined') {
-        const keys = await caches.keys();
-        await Promise.allSettled(keys.map(key => caches.delete(key)));
-      }
     } catch (error) {}
-    if (isDesktopV46 && typeof desktopBridgeV46?.restartApp === 'function') {
-      try {
-        const result = await desktopBridgeV46.restartApp();
-        if (result?.ok) return;
-      } catch (error) {}
-    }
-    const nextUrl = new URL(location.href);
-    nextUrl.searchParams.set('webbuild', String(webBuild || Date.now()));
-    nextUrl.searchParams.set('updated', String(Date.now()));
-    setTimeout(() => location.replace(nextUrl.toString()), 180);
+    setTimeout(() => location.reload(), 120);
   }
 
   async function checkDesktopV46() {
     if (!isDesktopV46) return;
-    const release = await loadReleaseV46(true);
-    if (!release) return;
+    const release = await loadReleaseV46();
+    if (!release?.windowsUrl) return;
     let current = '1.1.0';
     try {
       if (typeof desktopBridgeV46.getVersion === 'function') current = await desktopBridgeV46.getVersion() || current;
     } catch (error) {}
-    if (release.windowsUrl && isNewerV46(release.version, current)) {
-      showV46('desktop', release);
-      return;
-    }
-    const remoteBuild = Number(release.build) || 0;
-    const lastDesktopVersion = localStorage.getItem(DESKTOP_VERSION_KEY_V52);
-    if (lastDesktopVersion !== current) {
-      localStorage.setItem(DESKTOP_VERSION_KEY_V52, current);
-      if (remoteBuild) localStorage.setItem(WEB_BUILD_KEY_V51, String(remoteBuild));
-      return;
-    }
-    const appliedBuild = Number(localStorage.getItem(WEB_BUILD_KEY_V51)) || 49;
-    if (remoteBuild > appliedBuild) showV46('web', release);
+    if (isNewerV46(release.version, current)) showV46('desktop', release);
   }
 
   async function showWebV46() {
@@ -246,11 +202,8 @@
 
   ensureCardV46();
   desktopBridgeV46?.onUpdateStatus?.(updateStatusV46);
-  if (isDesktopV46) {
-    checkDesktopV46();
-    addEventListener('focus', () => checkDesktopV46(), { passive: true });
-    setInterval(() => { if (!document.hidden) checkDesktopV46(); }, 90 * 1000);
-  } else initWebV46();
+  if (isDesktopV46) checkDesktopV46();
+  else initWebV46();
 
   window.telechatUpdatesV46 = {
     check: () => isDesktopV46

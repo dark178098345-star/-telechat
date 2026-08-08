@@ -1,9 +1,9 @@
 {
-  "version": "1.2.4",
-  "build": 52,
-  "title": "Вышло обновление tele.chat 1.2.4",
-  "description": "Исправлен вход, добавлены надёжные уведомления об обновлениях и настоящий перезапуск приложения.",
-  "windowsUrl": "https://github.com/dark178098345-star/-telechat/releases/download/v1.2.4/tele.chat-Setup-1.2.4.exe",
-  "sha256": "0b0e2570d9a3d8c56ef8864804b3a0125d74456eb746bad201fa42f3fdb36010",
-  "publishedAt": "2026-08-04T20:19:25.203Z"
+  "version": "1.2.3",
+  "build": 49,
+  "title": "Вышло обновление tele.chat 1.2.3",
+  "description": "Исправлен зависавший экран загрузки чатов, который блокировал кнопки настроек и профиля.",
+  "windowsUrl": "https://github.com/dark178098345-star/-telechat/releases/download/v1.2.3/tele.chat-Setup-1.2.3.exe",
+  "sha256": "5e06db2ebb12e7a7d4c4b251d70f94d546eb898c668d91a31990b21da3002417",
+  "publishedAt": "2026-08-04T16:21:04.378Z"
 }
