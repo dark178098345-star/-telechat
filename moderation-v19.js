@@ -193,17 +193,49 @@
     },8000);
   }
 
+  function withLoginTimeoutV50(task,timeout=12000){
+    let timer;
+    return Promise.race([
+      Promise.resolve(task),
+      new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('TELECHAT_LOGIN_TIMEOUT')),timeout);})
+    ]).finally(()=>clearTimeout(timer));
+  }
+  function resetLoginButtonV50(button){button.disabled=false;button.textContent='Войти';delete button.dataset.busyV50;}
+
   doLogin=async function(){
     const nick=lower(document.getElementById('l-login').value),pass=document.getElementById('l-pass').value,err=document.getElementById('auth-err');
-    if(!nick||!pass){err.textContent='Введи логин и пароль!';return;}
-    const button=document.getElementById('login-btn');button.disabled=true;button.innerHTML='<span class="spinner"></span>Вход...';
-    const result=await sb.from('users').select('*').eq('nick',nick).eq('pass',pass).maybeSingle();
-    if(result.error||!result.data){err.textContent='Неверный логин или пароль';button.disabled=false;button.textContent='Войти';return;}
-    if(bannedV19(result.data)){err.textContent=banMessageV19(result.data);button.disabled=false;button.textContent='Войти';return;}
-    me=result.data;userCache[me.nick]=me;sessionVersionV19=Number(me.session_version||0);await updateOnline();setInterval(updateOnline,25000);
-    document.getElementById('auth-screen').classList.remove('active');document.getElementById('chat-screen').classList.add('active');
-    await renderContacts();buildProfPanel();buildEmojiPicker();button.disabled=false;button.textContent='Войти';
-    await loadModerationDirectoryV19();startWatcherV19();applyComposerModerationV19();
+    if(!nick||!pass){err.textContent='Введи логин и пароль!';return false;}
+    const button=document.getElementById('login-btn');
+    if(button.dataset.busyV50==='1')return false;
+    button.dataset.busyV50='1';button.disabled=true;button.innerHTML='<span class="spinner"></span>Вход...';err.textContent='';
+    try{
+      const result=await withLoginTimeoutV50(sb.from('users').select('*').eq('nick',nick).eq('pass',pass).maybeSingle());
+      if(result.error){err.textContent='Не удалось связаться с сервером. Попробуй ещё раз';return false;}
+      if(!result.data){err.textContent='Неверный логин или пароль';return false;}
+      if(bannedV19(result.data)){err.textContent=banMessageV19(result.data);return false;}
+      me=result.data;userCache[me.nick]=me;sessionVersionV19=Number(me.session_version||0);
+      document.getElementById('auth-screen').classList.remove('active');
+      document.getElementById('chat-screen').classList.add('active');
+      resetLoginButtonV50(button);
+      try{buildProfPanel();buildEmojiPicker();}catch(error){console.warn('tele.chat profile init',error);}
+      Promise.resolve(updateOnline()).catch(()=>{});
+      clearInterval(window.telechatOnlineTimerV50);
+      window.telechatOnlineTimerV50=setInterval(()=>Promise.resolve(updateOnline()).catch(()=>{}),25000);
+      Promise.resolve(renderContacts()).catch(error=>{
+        console.warn('tele.chat contacts init',error);
+        if(typeof showToast==='function')showToast('Чаты пока не загрузились — проверь интернет');
+      });
+      Promise.resolve(loadModerationDirectoryV19()).catch(()=>{});
+      startWatcherV19();applyComposerModerationV19();
+      return true;
+    }catch(error){
+      err.textContent=String(error&&error.message)==='TELECHAT_LOGIN_TIMEOUT'
+        ?'Сервер отвечает слишком долго. Проверь интернет и попробуй снова'
+        :'Не удалось выполнить вход. Попробуй ещё раз';
+      return false;
+    }finally{
+      if(button.dataset.busyV50==='1')resetLoginButtonV50(button);
+    }
   };
 
   const openProfileBeforeV19=openUserProfile;
