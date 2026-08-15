@@ -73,6 +73,8 @@
     const peer = directPeerV37(key, nick);
     if (!peer && (!roomId || !roomIdsV37.has(roomId))) return;
 
+    try { window.telechatPlaySoundV53?.('incoming'); } catch (error) {}
+
     let senderName = String(message.from_nick || 'Новое сообщение');
     try {
       const sender = await getUser(message.from_nick);

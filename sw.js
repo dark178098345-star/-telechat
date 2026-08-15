@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v52-chat-actions';
+const CACHE_NAME='telechat-shell-v53-sound-studio';
 const APP_SHELL=[
   './',
   './index.html',
@@ -25,10 +25,10 @@ const APP_SHELL=[
   './profile-card-v29.css',
   './chat-reliability-v24.css',
   './chat-reliability-v24.js',
-  './message-send-animation-v35.css',
-  './message-send-animation-v35.js',
+  './message-send-animation-v35.css?v=53',
+  './message-send-animation-v35.js?v=53',
   './voice-calls-v32.css?v=33',
-  './voice-calls-v32.js?v=49',
+  './voice-calls-v32.js?v=53',
   './glass-context-v36.css?v=36',
   './message-context-v36.js?v=36',
   './desktop-notifications-v37.js?v=37',
@@ -46,7 +46,9 @@ const APP_SHELL=[
   './chat-speed-v51.css?v=51',
   './chat-speed-v51.js?v=51',
   './chat-actions-v52.css?v=52',
-  './chat-actions-v52.js?v=52'
+  './chat-actions-v52.js?v=52',
+  './sound-studio-v53.css?v=53',
+  './sound-studio-v53.js?v=53'
 ];
 
 self.addEventListener('install',event=>{

@@ -688,6 +688,10 @@
   }
 
   function playRingToneV32(){
+    if(typeof window.telechatPlaySoundV53==='function'){
+      window.telechatPlaySoundV53('call');
+      return;
+    }
     try{
       ringContext=ringContext||new (window.AudioContext||window.webkitAudioContext)();
       if(ringContext.state==='suspended')ringContext.resume().catch(()=>{});
@@ -700,7 +704,7 @@
     }catch(error){}
   }
 
-  function startRingtoneV32(){stopRingtoneV32();playRingToneV32();ringTimer=setInterval(playRingToneV32,850);}
+  function startRingtoneV32(){stopRingtoneV32();playRingToneV32();ringTimer=setInterval(playRingToneV32,1050);}
   function stopRingtoneV32(){clearInterval(ringTimer);ringTimer=null;}
 
 
@@ -725,7 +729,7 @@
     state.members.set(me.nick,{call_id:id,nick:me.nick,invited_by:me.nick,status:'joined',invited_at:created,joined_at:created,user:me});
     let peerUser;try{peerUser=await getUser(peer);}catch(error){}
     state.members.set(peer,{call_id:id,nick:peer,invited_by:me.nick,status:'invited',invited_at:created,user:peerUser||{nick:peer,name:peer,av:0,status:''}});
-    callState=state;updateCallButtonV32();await showCallUiV32('calling','Вызываем…',state);
+    callState=state;updateCallButtonV32();await showCallUiV32('calling','Вызываем…',state);startRingtoneV32();
     try{
       const callRow={id,host_nick:me.nick,origin_peer_nick:peer,status:'active',created_at:created,started_at:null,ended_at:null};
       const callResult=await sb.from('telechat_group_calls').insert(callRow);
@@ -835,6 +839,7 @@
       await finishCallV32('ended',true);return;
     }
     if(row.status==='joined'&&!sameNickV32(row.nick,me.nick)){
+      stopRingtoneV32();
       clearTimeout(noAnswerTimer);noAnswerTimer=null;
       if(state.status==='calling'){
         state.status='active';await showCallUiV32('active','Соединяем участников…',state);
