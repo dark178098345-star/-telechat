@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v53-sound-studio';
+const CACHE_NAME='telechat-shell-v54-soft-send';
 const APP_SHELL=[
   './',
   './index.html',
@@ -25,8 +25,8 @@ const APP_SHELL=[
   './profile-card-v29.css',
   './chat-reliability-v24.css',
   './chat-reliability-v24.js',
-  './message-send-animation-v35.css?v=53',
-  './message-send-animation-v35.js?v=53',
+  './message-send-animation-v35.css?v=54',
+  './message-send-animation-v35.js?v=54',
   './voice-calls-v32.css?v=33',
   './voice-calls-v32.js?v=53',
   './glass-context-v36.css?v=36',
