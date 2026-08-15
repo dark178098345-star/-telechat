@@ -1,0 +1,146 @@
+/* TELECHAT CHAT ACTIONS V52 */
+.contact.has-chat-actions-v52 {
+  position: relative;
+  padding-right: 39px;
+}
+
+.chat-more-v52 {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  right: 7px;
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  padding: 0;
+  transform: translateY(-50%);
+  border: 1px solid transparent;
+  border-radius: 10px;
+  color: var(--text3);
+  background: transparent;
+  opacity: 0;
+  cursor: pointer;
+  font: 900 18px/1 'Nunito',sans-serif;
+  transition: opacity .16s ease,background .16s ease,border-color .16s ease,color .16s ease;
+}
+
+.contact:hover .chat-more-v52,
+.chat-more-v52:focus-visible,
+.chat-more-v52[aria-expanded="true"] { opacity: 1; }
+.chat-more-v52:hover,
+.chat-more-v52[aria-expanded="true"] {
+  border-color: rgba(197,187,255,.18);
+  color: #e4ddff;
+  background: rgba(124,110,247,.16);
+}
+
+.chat-pin-mark-v52,
+.chat-contact-mark-v52 {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 4px;
+  color: #b7a9ff;
+  font-size: 9px;
+  vertical-align: 1px;
+}
+.chat-contact-mark-v52 { color: #63ddb0; }
+
+.list-section-title.v52-custom-section {
+  color: #a99cff;
+}
+
+.chat-actions-v52 {
+  position: fixed;
+  z-index: 10020;
+  display: none;
+  width: min(252px,calc(100vw - 18px));
+  padding: 8px;
+  border: 1px solid rgba(218,211,255,.20);
+  border-radius: 19px;
+  color: var(--text);
+  background:
+    radial-gradient(circle at 14% -20%,rgba(255,255,255,.16),transparent 46%),
+    linear-gradient(150deg,rgba(38,39,69,.88),rgba(10,14,29,.90));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.13),0 22px 62px rgba(0,0,0,.46);
+  -webkit-backdrop-filter: blur(25px) saturate(165%);
+  backdrop-filter: blur(25px) saturate(165%);
+  transform-origin: top right;
+}
+.chat-actions-v52.show { display: block; animation: chat-actions-in-v52 .17s cubic-bezier(.2,.8,.2,1) both; }
+.chat-actions-title-v52 {
+  overflow: hidden;
+  padding: 8px 10px 9px;
+  color: #aaa3be;
+  font-size: 10px;
+  font-weight: 850;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chat-action-v52 {
+  display: flex;
+  width: 100%;
+  min-height: 42px;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 12px;
+  color: #ece9f7;
+  background: transparent;
+  cursor: pointer;
+  font: 750 12px 'Nunito',sans-serif;
+  text-align: left;
+}
+.chat-action-v52:hover { background: rgba(139,122,247,.15); }
+.chat-action-icon-v52 { display: grid;width: 22px;height: 22px;place-items: center;font-size: 15px; }
+.chat-action-v52.is-active { color: #c5b9ff; }
+.chat-action-v52[hidden] { display: none; }
+
+.chat-rename-v52 { display: none;padding: 7px 5px 4px; }
+.chat-rename-v52.show { display: block; }
+.chat-rename-input-v52 {
+  width: 100%;
+  height: 42px;
+  padding: 0 12px;
+  border: 1px solid rgba(183,167,255,.25);
+  border-radius: 12px;
+  outline: 0;
+  color: #fff;
+  background: rgba(8,11,24,.55);
+  font: 700 12px 'Nunito',sans-serif;
+}
+.chat-rename-input-v52:focus { border-color: rgba(146,126,255,.72);box-shadow: 0 0 0 3px rgba(124,110,247,.10); }
+.chat-rename-buttons-v52 { display: grid;grid-template-columns: 1fr 1fr;gap: 6px;margin-top: 7px; }
+.chat-rename-buttons-v52 button {
+  min-height: 36px;
+  border: 1px solid rgba(183,167,255,.14);
+  border-radius: 11px;
+  color: #c9c3dc;
+  background: rgba(124,110,247,.09);
+  cursor: pointer;
+  font: 800 10px 'Nunito',sans-serif;
+}
+.chat-rename-buttons-v52 .save { color: #fff;background: linear-gradient(135deg,#7968ed,#6553dc); }
+
+@keyframes chat-actions-in-v52 {
+  from { opacity: 0;transform: translateY(-5px) scale(.975); }
+  to { opacity: 1;transform: none; }
+}
+
+@media (max-width:640px) {
+  .chat-more-v52 { opacity: .58; }
+  .chat-actions-v52 {
+    top: auto !important;
+    right: 10px !important;
+    bottom: calc(82px + env(safe-area-inset-bottom,0px));
+    left: 10px !important;
+    width: auto;
+    transform-origin: bottom center;
+  }
+}
+
+@media (prefers-reduced-motion:reduce) {
+  .chat-actions-v52.show { animation: none; }
+}

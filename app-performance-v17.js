@@ -145,6 +145,9 @@
         element.className='contact'+(currentRoom&&String(currentRoom.id)===String(room.id)?' active':'');
         element.innerHTML='<div class="room-avatar">'+escHtml(room.icon||'🌌')+'</div><div class="contact-info"><div class="contact-name">'+escHtml(room.name)+'<span class="room-type-badge">'+(room.type==='channel'?'канал':'группа')+'</span>'+roomVisibilityBadge(room)+(room.owner_nick===me.nick?'<span class="room-owner-star">★</span>':'')+'</div><div class="contact-last">'+(last?escHtml(messagePreviewText(last.text).substring(0,38)):escHtml(room.description||'Пока без сообщений'))+'</div></div><div class="contact-time">'+(last?formatMsgTime(last.ts):'')+'</div>';
         element.dataset.chatKey='room_'+room.id;
+        element.dataset.chatKind='room';
+        element.dataset.roomId=String(room.id);
+        element.dataset.originalName=room.name||'Пространство';
         element.onclick=()=>openRoom(room);fragment.appendChild(element);rendered++;
       }
     }
@@ -155,7 +158,9 @@
         const online=isOnline(user.last_seen),element=document.createElement('div');element.className='contact'+(currentChat===chat.nick&&!currentRoom?' active':'');
         element.innerHTML='<div class="av'+(online?' av-online':'')+'">'+avatarMarkup(user)+'</div><div class="contact-info"><div class="contact-name">'+escHtml(user.name)+'</div><div class="contact-last">'+escHtml(messagePreviewText(chat.last).substring(0,38))+'</div></div><div class="contact-time">'+formatMsgTime(chat.ts)+'</div>';
         element.dataset.chatKey=chatKey(me.nick,chat.nick);
+        element.dataset.chatKind='private';
         element.dataset.nick=chat.nick;
+        element.dataset.originalName=user.name||chat.nick;
         element.onclick=()=>openChat(chat.nick);fragment.appendChild(element);rendered++;
       }
     }
@@ -165,6 +170,7 @@
       empty.innerHTML=(sidebarFilter==='all'?'Найди друга или создай первое пространство':'Здесь пока пусто')+setup;fragment.appendChild(empty);
     }
     list.classList.add('tab-swap-v17');list.replaceChildren(fragment);requestAnimationFrame(()=>list.classList.remove('tab-swap-v17'));
+    if(typeof window.telechatApplySidebarCustomV52==='function')window.telechatApplySidebarCustomV52();
     if(typeof enhanceVerifiedBadges==='function')enhanceVerifiedBadges();
     return true;
   }

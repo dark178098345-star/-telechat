@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v51-chat-speed';
+const CACHE_NAME='telechat-shell-v52-chat-actions';
 const APP_SHELL=[
   './',
   './index.html',
@@ -44,7 +44,9 @@ const APP_SHELL=[
   './gpu-safe-panels-v46.css?v=47',
   './liquid-glass-v50.css?v=50',
   './chat-speed-v51.css?v=51',
-  './chat-speed-v51.js?v=51'
+  './chat-speed-v51.js?v=51',
+  './chat-actions-v52.css?v=52',
+  './chat-actions-v52.js?v=52'
 ];
 
 self.addEventListener('install',event=>{
