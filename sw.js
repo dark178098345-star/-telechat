@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v49-call-negotiation';
+const CACHE_NAME='telechat-shell-v50-liquid-glass';
 const APP_SHELL=[
   './',
   './index.html',
@@ -41,7 +41,8 @@ const APP_SHELL=[
   './chat-open-loader-v44.css?v=44',
   './chat-open-loader-v44.js?v=44',
   './desktop-panel-fix-v45.css?v=45',
-  './gpu-safe-panels-v46.css?v=47'
+  './gpu-safe-panels-v46.css?v=47',
+  './liquid-glass-v50.css?v=50'
 ];
 
 self.addEventListener('install',event=>{

@@ -1,0 +1,92 @@
+/* Lightweight iOS-style liquid glass. CSS-only: no timers, observers or canvas. */
+:root {
+  --liquid-glass-fill-v50:
+    radial-gradient(circle at 16% -30%, rgba(255,255,255,.19), transparent 48%),
+    linear-gradient(145deg, rgba(92,91,145,.20), rgba(27,31,58,.43) 44%, rgba(7,12,26,.52));
+  --liquid-glass-line-v50: rgba(226,231,255,.20);
+  --liquid-glass-shadow-v50:
+    inset 0 1px 0 rgba(255,255,255,.18),
+    inset 0 -1px 0 rgba(116,129,210,.08),
+    0 15px 38px rgba(0,3,18,.22);
+}
+
+/* Keep the expensive filter on compact surfaces only. */
+body.telechat-glass-v36 .sidebar-footer.telechat-bottom-nav,
+body.telechat-glass-v36 .sidebar-tabs,
+body.telechat-glass-v36 .composer-shell,
+body.telechat-glass-v36 #settings-panel .panel-section,
+body.telechat-glass-v36 #profile-panel .profile-editor-card,
+body.telechat-glass-v36 #profile-panel .profile-choice-card,
+body.telechat-glass-v36 #profile-panel .profile-fields-card,
+body.telechat-glass-v36 .voice-call-controls,
+body.telechat-glass-v36 .voice-call-incoming-actions,
+body.telechat-glass-v36 .voice-call-sheet {
+  border-color: var(--liquid-glass-line-v50) !important;
+  background: var(--liquid-glass-fill-v50) !important;
+  box-shadow: var(--liquid-glass-shadow-v50) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(165%) contrast(102%) !important;
+  backdrop-filter: blur(22px) saturate(165%) contrast(102%) !important;
+}
+
+body.telechat-glass-v36 .chat-header,
+body.telechat-glass-v36 .input-area,
+body.telechat-glass-v36 .panel-head {
+  border-color: rgba(226,231,255,.15) !important;
+  background:
+    linear-gradient(110deg,rgba(255,255,255,.075),transparent 28%),
+    linear-gradient(145deg,rgba(32,34,62,.51),rgba(8,13,27,.43)) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.12),0 9px 28px rgba(0,3,18,.15) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(150%) !important;
+  backdrop-filter: blur(18px) saturate(150%) !important;
+}
+
+body.telechat-glass-v36 .telechat-nav-btn.active,
+body.telechat-glass-v36 .sidebar-tab.active {
+  border-color: rgba(222,218,255,.23) !important;
+  background: linear-gradient(145deg,rgba(151,132,255,.28),rgba(78,68,164,.18)) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.16),0 8px 22px rgba(57,44,143,.20) !important;
+}
+
+/* Chrome without backdrop-filter still gets a clean, readable panel. */
+@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  body.telechat-glass-v36 .sidebar-footer.telechat-bottom-nav,
+  body.telechat-glass-v36 .sidebar-tabs,
+  body.telechat-glass-v36 .composer-shell,
+  body.telechat-glass-v36 #settings-panel .panel-section,
+  body.telechat-glass-v36 #profile-panel .profile-editor-card,
+  body.telechat-glass-v36 #profile-panel .profile-choice-card,
+  body.telechat-glass-v36 #profile-panel .profile-fields-card,
+  body.telechat-glass-v36 .voice-call-controls,
+  body.telechat-glass-v36 .voice-call-incoming-actions,
+  body.telechat-glass-v36 .voice-call-sheet {
+    background: linear-gradient(145deg,rgba(40,41,70,.96),rgba(10,15,30,.97)) !important;
+  }
+}
+
+/* Smaller blur radius on phones saves battery and avoids frame drops. */
+@media (max-width:640px) {
+  body.telechat-glass-v36 .sidebar-footer.telechat-bottom-nav,
+  body.telechat-glass-v36 .sidebar-tabs,
+  body.telechat-glass-v36 .composer-shell,
+  body.telechat-glass-v36 #settings-panel .panel-section,
+  body.telechat-glass-v36 #profile-panel .profile-editor-card,
+  body.telechat-glass-v36 #profile-panel .profile-choice-card,
+  body.telechat-glass-v36 #profile-panel .profile-fields-card,
+  body.telechat-glass-v36 .voice-call-controls,
+  body.telechat-glass-v36 .voice-call-incoming-actions,
+  body.telechat-glass-v36 .voice-call-sheet {
+    -webkit-backdrop-filter: blur(17px) saturate(150%) !important;
+    backdrop-filter: blur(17px) saturate(150%) !important;
+  }
+}
+
+/* The existing setting remains the master switch for every glass effect. */
+body:not(.telechat-glass-v36) .sidebar-footer.telechat-bottom-nav,
+body:not(.telechat-glass-v36) .sidebar-tabs,
+body:not(.telechat-glass-v36) .composer-shell,
+body:not(.telechat-glass-v36) .voice-call-controls,
+body:not(.telechat-glass-v36) .voice-call-incoming-actions,
+body:not(.telechat-glass-v36) .voice-call-sheet {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
