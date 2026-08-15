@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v50-liquid-glass';
+const CACHE_NAME='telechat-shell-v51-chat-speed';
 const APP_SHELL=[
   './',
   './index.html',
@@ -9,7 +9,7 @@ const APP_SHELL=[
   './apple-touch-icon.png',
   './profile-performance-v11.js',
   './followers-v12.js',
-  './app-performance-v17.js?v=18',
+  './app-performance-v17.js?v=51',
   './ui-polish-v16.css',
   './ui-polish-v16.js',
   './moderation-v19.css',
@@ -34,15 +34,17 @@ const APP_SHELL=[
   './desktop-notifications-v37.js?v=37',
   './voice-send-v38.js?v=39',
   './media-compat-v40.js?v=40',
-  './chat-boot-v41.css?v=41',
-  './chat-boot-v41.js?v=41',
+  './chat-boot-v41.css?v=51',
+  './chat-boot-v41.js?v=51',
   './fluid-ui-v42.css?v=48',
   './fluid-ui-v42.js?v=48',
-  './chat-open-loader-v44.css?v=44',
-  './chat-open-loader-v44.js?v=44',
+  './chat-open-loader-v44.css?v=51',
+  './chat-open-loader-v44.js?v=51',
   './desktop-panel-fix-v45.css?v=45',
   './gpu-safe-panels-v46.css?v=47',
-  './liquid-glass-v50.css?v=50'
+  './liquid-glass-v50.css?v=50',
+  './chat-speed-v51.css?v=51',
+  './chat-speed-v51.js?v=51'
 ];
 
 self.addEventListener('install',event=>{

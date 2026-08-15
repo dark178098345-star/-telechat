@@ -53,7 +53,7 @@
     loader.classList.add('is-visible');
     setProgressV41(18, 'Подключаем чаты…');
     requestAnimationFrame(() => setProgressV41(38, 'Собираем список диалогов…'));
-    fallbackTimerV41 = setTimeout(() => hideLoaderV41(token), 4800);
+    fallbackTimerV41 = setTimeout(() => hideLoaderV41(token), 2600);
   }
 
   function hideLoaderV41(token) {
@@ -91,7 +91,7 @@
     if (!media.length) return;
     await Promise.race([
       Promise.allSettled(media.map(waitForElementV41)),
-      waitV41(1700)
+      waitV41(650)
     ]);
   }
 
@@ -110,10 +110,10 @@
       const value = await renderContactsBeforeV41(...args);
       setProgressV41(76, 'Загружаем аватарки…');
       await waitForVisibleAvatarsV41();
-      const minimum = Math.max(0, 720 - (performance.now() - started));
+      const minimum = Math.max(0, 280 - (performance.now() - started));
       if (minimum) await waitV41(minimum);
       setProgressV41(100, 'Всё готово ✦');
-      await waitV41(230);
+      await waitV41(90);
       return value;
     } finally {
       hideLoaderV41(token);

@@ -1,0 +1,29 @@
+/* Lightweight progressive history loader. */
+.messages.v51-loading-older::before {
+  content: 'Загружаем предыдущие сообщения…';
+  position: sticky;
+  z-index: 3;
+  top: 4px;
+  align-self: center;
+  margin: 2px auto 8px;
+  padding: 7px 12px;
+  border: 1px solid rgba(190,180,255,.16);
+  border-radius: 999px;
+  color: var(--text3);
+  background: rgba(19,20,39,.82);
+  box-shadow: 0 8px 22px rgba(0,0,0,.18);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  font-size: 10px;
+  font-weight: 800;
+  pointer-events: none;
+}
+
+.messages.v51-painting { overflow-anchor: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .messages.v51-loading-older::before {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}

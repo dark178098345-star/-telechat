@@ -28,6 +28,7 @@
   const renderContactsFallbackV17=renderContacts;
   let contactsInFlightV17=null,contactsQueuedV17=false;
   let sidebarMessagesCacheV17=[],sidebarCacheReadyV17=false,sidebarCacheUpdatedAtV17=0,sidebarLocalPaintCreditsV25=0;
+  const sidebarPendingPatchesV51=new Map();
   const SIDEBAR_SNAPSHOT_TTL_V18=7*24*60*60*1000;
   const SIDEBAR_NETWORK_TTL_V18=15000;
   const loadMyRoomsNetworkV18=loadMyRooms;
@@ -143,6 +144,7 @@
         const last=roomLast['room_'+room.id],element=document.createElement('div');
         element.className='contact'+(currentRoom&&String(currentRoom.id)===String(room.id)?' active':'');
         element.innerHTML='<div class="room-avatar">'+escHtml(room.icon||'🌌')+'</div><div class="contact-info"><div class="contact-name">'+escHtml(room.name)+'<span class="room-type-badge">'+(room.type==='channel'?'канал':'группа')+'</span>'+roomVisibilityBadge(room)+(room.owner_nick===me.nick?'<span class="room-owner-star">★</span>':'')+'</div><div class="contact-last">'+(last?escHtml(messagePreviewText(last.text).substring(0,38)):escHtml(room.description||'Пока без сообщений'))+'</div></div><div class="contact-time">'+(last?formatMsgTime(last.ts):'')+'</div>';
+        element.dataset.chatKey='room_'+room.id;
         element.onclick=()=>openRoom(room);fragment.appendChild(element);rendered++;
       }
     }
@@ -152,6 +154,8 @@
         const user=userCache[chat.nick];if(!user)continue;
         const online=isOnline(user.last_seen),element=document.createElement('div');element.className='contact'+(currentChat===chat.nick&&!currentRoom?' active':'');
         element.innerHTML='<div class="av'+(online?' av-online':'')+'">'+avatarMarkup(user)+'</div><div class="contact-info"><div class="contact-name">'+escHtml(user.name)+'</div><div class="contact-last">'+escHtml(messagePreviewText(chat.last).substring(0,38))+'</div></div><div class="contact-time">'+formatMsgTime(chat.ts)+'</div>';
+        element.dataset.chatKey=chatKey(me.nick,chat.nick);
+        element.dataset.nick=chat.nick;
         element.onclick=()=>openChat(chat.nick);fragment.appendChild(element);rendered++;
       }
     }
@@ -172,7 +176,9 @@
       if(compact.id&&item.id)return String(item.id)!==String(compact.id);
       return !(item.chat_key===compact.chat_key&&item.from_nick===compact.from_nick&&Number(item.ts)===Number(compact.ts));
     })].sort((a,b)=>Number(b.ts||0)-Number(a.ts||0)).slice(0,180);
-    sidebarCacheUpdatedAtV17=Date.now();sidebarLocalPaintCreditsV25++;queueSidebarSnapshotV18();return true;
+    sidebarCacheUpdatedAtV17=Date.now();sidebarLocalPaintCreditsV25++;
+    sidebarPendingPatchesV51.set(compact.chat_key,compact);
+    queueSidebarSnapshotV18();return true;
   }
   window.telechatApplySidebarMessageV25=applySidebarMessageV25;
 
@@ -202,7 +208,20 @@
   renderContacts=async function(){
     hydrateSidebarSnapshotV18();
     if(sidebarCacheReadyV17){
-      if(sidebarLocalPaintCreditsV25>0)sidebarLocalPaintCreditsV25--;
+      if(sidebarLocalPaintCreditsV25>0&&sidebarPendingPatchesV51.size){
+        const list=document.getElementById('contacts-list');let missing=false;
+        for(const [key,message] of sidebarPendingPatchesV51){
+          const row=[...(list?.querySelectorAll('.contact[data-chat-key]')||[])].find(element=>element.dataset.chatKey===key);
+          if(!row){missing=true;continue;}
+          const preview=row.querySelector('.contact-last'),time=row.querySelector('.contact-time');
+          if(preview)preview.textContent=messagePreviewText(message.text).substring(0,38);
+          if(time)time.textContent=formatMsgTime(message.ts);
+          sidebarPendingPatchesV51.delete(key);
+        }
+        sidebarLocalPaintCreditsV25=0;
+        if(!missing)return true;
+      }
+      sidebarLocalPaintCreditsV25=0;
       const painted=await paintSidebarV17(sidebarMessagesCacheV17);
       if(Date.now()-sidebarCacheUpdatedAtV17>SIDEBAR_NETWORK_TTL_V18&&!sidebarRefreshTimerV18){
         sidebarRefreshTimerV18=setTimeout(()=>{sidebarRefreshTimerV18=null;requestSidebarRefreshV18();},60);

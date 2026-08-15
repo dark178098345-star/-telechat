@@ -113,11 +113,11 @@
       showLoaderV44(token, kind, value);
       try {
         const result = await previous.call(this, value, ...rest);
-        const minimum = Math.max(0, 460 - (performance.now() - started));
+        const minimum = Math.max(0, 180 - (performance.now() - started));
         if (minimum) await waitV44(minimum);
         if (token === openTokenV44) {
           setStatusV44('Чат готов ✦');
-          await waitV44(110);
+          await waitV44(45);
         }
         return result;
       } catch (error) {
