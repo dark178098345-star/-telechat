@@ -73,7 +73,7 @@
     // builder from the login path: those are opened only when the user asks for them.
     requestAnimationFrame(() => {
       try { buildEmojiPicker?.(); } catch (error) {}
-      Promise.resolve(window.telechatRenderSafeSidebarV61?.()).catch(() => {});
+      Promise.resolve(window.telechatStartV62?.()).catch(() => {});
     });
   }
 

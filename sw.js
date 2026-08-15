@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v61-safe-boot';
+const CACHE_NAME='telechat-shell-v62-direct-startup';
 const APP_SHELL=[
   './',
   './index.html',
@@ -52,7 +52,7 @@ const APP_SHELL=[
   './desktop-restart-updates-v55.js?v=55',
   './auth-core-v57.js?v=57',
   './auth-direct-v58.js?v=58',
-  './sidebar-safe-v61.js?v=61',
+  './startup-stability-v62.js?v=62',
   './telechat-release.json'
 ];
 
