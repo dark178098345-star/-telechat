@@ -1,0 +1,72 @@
+/* GPU-safe side panels for Windows PCs with unstable 3D/backdrop compositing. */
+body.telechat-motion-v42 .side-panel,
+html body .side-panel {
+  transform-style: flat !important;
+  backface-visibility: visible !important;
+  will-change: auto !important;
+  filter: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+html body #settings-panel.side-panel.right,
+html body #profile-panel.side-panel.left {
+  display: none !important;
+  position: fixed !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  width: min(390px, 100vw) !important;
+  max-width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  transform: none !important;
+  translate: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  background: rgba(17, 17, 30, .985) !important;
+}
+
+html body #settings-panel.side-panel.right {
+  right: 0 !important;
+  left: auto !important;
+}
+
+html body #profile-panel.side-panel.left {
+  left: 0 !important;
+  right: auto !important;
+}
+
+html body #settings-panel.side-panel.right.open,
+html body #profile-panel.side-panel.left.open {
+  display: flex !important;
+  transform: none !important;
+  translate: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  animation: none !important;
+}
+
+html body .panel-overlay,
+html body .panel-overlay.show {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  transition: opacity 160ms ease, visibility 160ms ease !important;
+}
+
+html body .side-panel.open.v42-panel-enter .panel-head,
+html body .side-panel.open.v42-panel-enter .panel-section,
+html body .side-panel.open.v42-panel-enter .profile-editor-card,
+html body .side-panel.open.v42-panel-enter .profile-choice-card,
+html body .side-panel.open.v42-panel-enter .profile-fields-card {
+  animation: none !important;
+  transform: none !important;
+}
+
+@media (max-width: 640px) {
+  html body #settings-panel.side-panel.right,
+  html body #profile-panel.side-panel.left {
+    width: 100vw !important;
+  }
+}

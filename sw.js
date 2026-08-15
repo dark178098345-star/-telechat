@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v45-desktop-panel-fix';
+const CACHE_NAME='telechat-shell-v46-gpu-safe-panels';
 const APP_SHELL=[
   './',
   './index.html',
@@ -40,7 +40,8 @@ const APP_SHELL=[
   './fluid-ui-v42.js?v=43',
   './chat-open-loader-v44.css?v=44',
   './chat-open-loader-v44.js?v=44',
-  './desktop-panel-fix-v45.css?v=45'
+  './desktop-panel-fix-v45.css?v=45',
+  './gpu-safe-panels-v46.css?v=46'
 ];
 
 self.addEventListener('install',event=>{
