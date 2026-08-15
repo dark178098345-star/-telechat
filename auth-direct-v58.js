@@ -42,7 +42,7 @@
     const controller = new AbortController();
     const timer = window.setTimeout(() => controller.abort(), MAX_WAIT_V58);
     const query = new URLSearchParams({
-      select: 'nick',
+      select: 'nick,name,av,last_seen',
       nick: `eq.${nick}`,
       pass: `eq.${pass}`,
       limit: '1'
@@ -69,24 +69,11 @@
   function openAppV58(currentNick) {
     nodeV58('auth-screen')?.classList.remove('active');
     nodeV58('chat-screen')?.classList.add('active');
-
-    // Let the first paint happen before optional application work begins.
+    // First paint must stay tiny. Do not run the legacy sidebar or profile-media
+    // builder from the login path: those are opened only when the user asks for them.
     requestAnimationFrame(() => {
-      try { buildProfPanel?.(); buildEmojiPicker?.(); } catch (error) {}
-      Promise.resolve(window.telechatRenderLoginSidebarV60?.() || renderContacts?.()).catch(() => {});
-      Promise.resolve(updateOnline?.()).catch(() => {});
-      clearInterval(onlineTimerV58);
-      onlineTimerV58 = setInterval(() => Promise.resolve(updateOnline?.()).catch(() => {}), 25000);
-
-      // Profile media is useful, but it is never allowed to delay opening chats.
-      Promise.resolve(sb?.from('users').select('*').eq('nick', currentNick).maybeSingle())
-        .then(result => {
-          if (!result?.data || !me || nickV58(me.nick) !== currentNick) return;
-          Object.assign(me, result.data);
-          try { userCache[me.nick] = me; buildProfPanel?.(); } catch (error) {}
-          Promise.resolve(window.loadModerationDirectoryV19?.()).catch(() => {});
-        })
-        .catch(() => {});
+      try { buildEmojiPicker?.(); } catch (error) {}
+      Promise.resolve(window.telechatRenderSafeSidebarV61?.()).catch(() => {});
     });
   }
 
@@ -110,7 +97,7 @@
         restoreV58('Неверный логин или пароль');
         return false;
       }
-      me = { nick: account.nick, name: account.nick, avatar: '🐱' };
+      me = { nick: account.nick, name: account.name || account.nick, av: Number.isFinite(Number(account.av)) ? Number(account.av) : 0, last_seen: Number(account.last_seen) || 0 };
       try { userCache[me.nick] = me; } catch (error) {}
       openAppV58(nickV58(me.nick));
       restoreV58();
