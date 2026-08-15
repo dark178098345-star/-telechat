@@ -73,7 +73,7 @@
     // Let the first paint happen before optional application work begins.
     requestAnimationFrame(() => {
       try { buildProfPanel?.(); buildEmojiPicker?.(); } catch (error) {}
-      Promise.resolve(window.telechatRenderSafeSidebarV59?.() || renderContacts?.()).catch(() => {});
+      Promise.resolve(renderContacts?.()).catch(() => {});
       Promise.resolve(updateOnline?.()).catch(() => {});
       clearInterval(onlineTimerV58);
       onlineTimerV58 = setInterval(() => Promise.resolve(updateOnline?.()).catch(() => {}), 25000);
