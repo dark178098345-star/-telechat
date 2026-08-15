@@ -4,6 +4,7 @@
 
   const reducedMotionV42 = matchMedia('(prefers-reduced-motion: reduce)').matches;
   let lastListSignatureV42 = '';
+  const animatedOpenPanelsV42 = new WeakSet();
 
   function nextFrameV42(callback) {
     requestAnimationFrame(() => requestAnimationFrame(callback));
@@ -123,7 +124,16 @@
     for (const record of records) {
       if (record.type === 'attributes') {
         if (record.target.matches?.('.sidebar-tab')) syncTabs = true;
-        if (record.target.matches?.('.side-panel') && record.target.classList.contains('open')) animatePanelV42(record.target);
+        if (record.target.matches?.('.side-panel')) {
+          if (record.target.classList.contains('open')) {
+            if (!animatedOpenPanelsV42.has(record.target)) {
+              animatedOpenPanelsV42.add(record.target);
+              animatePanelV42(record.target);
+            }
+          } else {
+            animatedOpenPanelsV42.delete(record.target);
+          }
+        }
       }
       record.addedNodes.forEach(node => {
         if (!(node instanceof Element)) return;
