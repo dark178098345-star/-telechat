@@ -20,7 +20,7 @@
   };
 
   let callState=null,incomingInvite=null,lastPersonalPeer='';
-  let inboxRealtime=null,activeRealtime=null,initializedFor='';
+  let inboxRealtime=null,activeRealtime=null,initializedFor='',inboxPollTimer=null,inboxPollBusy=false;
   let ringTimer=null,ringContext=null,ringStep=0,callTimer=null,callPollTimer=null,noAnswerTimer=null;
   let meterContext=null,meterFrame=0,meterSources=[];
   let renderToken=0;
@@ -471,7 +471,17 @@
     callPollTimer=setInterval(async()=>{
       if(callState!==state)return;
       await pollSignalsV32(state);
-      if(++pollStep%4===0)await refreshMembersV32(state);
+      if(++pollStep%2===0){
+        await refreshMembersV32(state);
+        const remoteJoined=[...(state.members?.values()||[])].some(item=>item.status==='joined'&&!sameNickV32(item.nick,me.nick));
+        if(remoteJoined){
+          stopRingtoneV32();clearTimeout(noAnswerTimer);noAnswerTimer=null;
+          if(state.status==='calling'){
+            state.status='active';await showCallUiV32('active','Соединяем участников…',state);
+          }
+          await connectToJoinedMembersV32(state);
+        }
+      }
     },2500);
   }
 
@@ -610,10 +620,12 @@
   async function createOfferV32(state,nick){
     if(!state||sameNickV32(nick,me.nick))return;
     const peer=createPeerV32(state,nick);
+    if(peer.connected||peer.offerSent)return;
     if(peer.pc.signalingState!=='stable')return;
     const offer=await peer.pc.createOffer({offerToReceiveAudio:true});
     await peer.pc.setLocalDescription(offer);
     await sendSignalV32(state,nick,'offer',peer.pc.localDescription);
+    peer.offerSent=true;
     armPeerConnectionTimeoutV42(state,peer);
   }
 
@@ -792,13 +804,20 @@
       startSpeakingMeterV32(stream,memberDomIdV32(me.nick),me.nick);
       noAnswerTimer=setTimeout(async()=>{
         if(callState!==state||state.status!=='calling')return;
+        const latest=await sb.from('telechat_group_call_members').select('*').eq('call_id',state.id).order('invited_at',{ascending:true});
+        if(callState!==state||state.status!=='calling')return;
+        if(!latest.error)await hydrateMembersV32(state,latest.data||[]);
         const joined=[...(state.members?.values()||[])].filter(item=>item.status==='joined');
         if(joined.length<=1){
           await sb.from('telechat_group_call_members').update({status:'missed',left_at:nowV32()}).eq('call_id',state.id).eq('status','invited');
           await sb.from('telechat_group_calls').update({status:'ended',ended_at:nowV32()}).eq('id',state.id);
           await finishCallV32('missed',false);
+        }else{
+          state.status='active';stopRingtoneV32();
+          await showCallUiV32('active','Соединяем участников…',state);
+          await connectToJoinedMembersV32(state);await pollSignalsV32(state);
         }
-      },35000);
+      },45000);
     }catch(error){
       const message=callErrorV32(error);await cleanupCallV32();
       showToast(/telechat_group_calls|telechat_group_call_members|relation|schema cache|permission|policy/i.test(message)?'Сначала выполни SQL групповых звонков V32 в Supabase':'Не удалось начать звонок: '+message.slice(0,80));
@@ -883,11 +902,18 @@
   async function handleActiveMemberV32(payload){
     const row=payload.new||payload.old,state=callState;
     if(!row||!state||row.call_id!==state.id)return;
-    if(MEMBER_FINAL.has(row.status)&&!sameNickV32(row.nick,me.nick))removePeerV32(state,row.nick);
-    await refreshMembersV32(state);
     if(sameNickV32(row.nick,me.nick)&&MEMBER_FINAL.has(row.status)&&!state.closing){
       await finishCallV32('ended',true);return;
     }
+    if(state.role==='host'&&state.status==='calling'&&MEMBER_FINAL.has(row.status)&&sameNickV32(row.nick,state.originPeer)){
+      const waiting=[...state.members.values()].filter(item=>!sameNickV32(item.nick,me.nick)&&MEMBER_ACTIVE.has(item.status)&&!sameNickV32(item.nick,row.nick));
+      if(!waiting.length){
+        await sb.from('telechat_group_calls').update({status:'ended',ended_at:nowV32()}).eq('id',state.id);
+        await finishCallV32(row.status==='rejected'?'rejected':'missed',true);return;
+      }
+    }
+    if(MEMBER_FINAL.has(row.status)&&!sameNickV32(row.nick,me.nick))removePeerV32(state,row.nick);
+    await refreshMembersV32(state);
     if(row.status==='joined'&&!sameNickV32(row.nick,me.nick)){
       stopRingtoneV32();
       clearTimeout(noAnswerTimer);noAnswerTimer=null;
@@ -897,13 +923,6 @@
     }
     if(row.status==='joined'&&!sameNickV32(row.nick,me.nick)&&shouldCreateOfferV49(row.nick)){
       try{await createOfferV32(state,row.nick);}catch(error){}
-    }
-    if(state.role==='host'&&state.status==='calling'&&MEMBER_FINAL.has(row.status)&&sameNickV32(row.nick,state.originPeer)){
-      const waiting=[...state.members.values()].filter(item=>!sameNickV32(item.nick,me.nick)&&MEMBER_ACTIVE.has(item.status));
-      if(!waiting.length){
-        await sb.from('telechat_group_calls').update({status:'ended',ended_at:nowV32()}).eq('id',state.id);
-        await finishCallV32(row.status==='rejected'?'rejected':'missed',true);
-      }
     }
   }
 
@@ -966,15 +985,26 @@
   }
 
 
+  async function checkPendingInviteV56(){
+    if(!me||callState||incomingInvite||inboxPollBusy)return;
+    inboxPollBusy=true;
+    try{
+      const pending=await sb.from('telechat_group_call_members').select('*').eq('nick',me.nick).eq('status','invited').order('invited_at',{ascending:false}).limit(1);
+      if(!pending.error&&pending.data?.[0])await showIncomingCallV32(pending.data[0]);
+    }catch(error){}finally{inboxPollBusy=false;}
+  }
+
   async function initCallsV32(){
     if(!me)return;ensureCallUiV32();
     if(initializedFor===me.nick)return;initializedFor=me.nick;
     if(inboxRealtime)sb.removeChannel(inboxRealtime);
+    clearInterval(inboxPollTimer);inboxPollTimer=null;
     inboxRealtime=sb.channel('group-call-inbox-v32-'+me.nick+'-'+nowV32())
       .on('postgres_changes',{event:'*',schema:'public',table:'telechat_group_call_members',filter:'nick=eq.'+me.nick},handleInboxMemberV32)
       .subscribe();
-    const pending=await sb.from('telechat_group_call_members').select('*').eq('nick',me.nick).eq('status','invited').order('invited_at',{ascending:false}).limit(1);
-    if(!pending.error&&pending.data?.[0])showIncomingCallV32(pending.data[0]);
+    await checkPendingInviteV56();
+    inboxPollTimer=setInterval(checkPendingInviteV56,2200);
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkPendingInviteV56();});
   }
 
   function unpackCallV32(text){
