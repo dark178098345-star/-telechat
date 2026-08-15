@@ -1,9 +1,9 @@
 {
   "version": "1.2.3",
-  "build": 62,
+  "build": 63,
   "title": "Обновление tele.chat готово",
-  "description": "Direct stable startup: chat list and navigation no longer depend on the legacy renderer.",
+  "description": "Fast cached startup with progressive avatars and independent navigation.",
   "windowsUrl": "https://github.com/dark178098345-star/-telechat/releases/download/v1.2.3/tele.chat-Setup-1.2.3.exe",
   "sha256": "5e06db2ebb12e7a7d4c4b251d70f94d546eb898c668d91a31990b21da3002417",
-  "publishedAt": "2026-08-15T14:00:00.000Z"
+  "publishedAt": "2026-08-15T14:30:00.000Z"
 }
