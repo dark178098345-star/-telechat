@@ -6,6 +6,7 @@
   const MAX_PARTICIPANTS=6;
   const MEMBER_ACTIVE=new Set(['invited','joined']);
   const MEMBER_FINAL=new Set(['rejected','left','missed']);
+  const PeerConnectionV55=window.RTCPeerConnection||window.webkitRTCPeerConnection;
   const RTC_CONFIG={
     iceServers:[
       {urls:'stun:stun.l.google.com:19302'},
@@ -140,7 +141,7 @@
   }
 
   function callUnavailableV32(){
-    if(!window.RTCPeerConnection||!navigator.mediaDevices?.getUserMedia){
+    if(!PeerConnectionV55||!navigator.mediaDevices?.getUserMedia){
       showToast('Голосовые звонки не поддерживаются этим браузером');return true;
     }
     if(!window.isSecureContext){
@@ -150,13 +151,54 @@
   }
 
   async function requestMicrophoneV32(){
+    unlockCallAudioV55();
     try{
       return await navigator.mediaDevices.getUserMedia({
         audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:false
       });
-    }catch(error){
-      showToast('Разреши tele.chat доступ к микрофону');throw error;
+    }catch(firstError){
+      const firstName=String(firstError?.name||'');
+      if(!/NotAllowedError|SecurityError|NotFoundError/i.test(firstName)){
+        try{return await navigator.mediaDevices.getUserMedia({audio:true,video:false});}
+        catch(error){throwMicrophoneErrorV55(error);}
+      }
+      throwMicrophoneErrorV55(firstError);
     }
+  }
+
+  function throwMicrophoneErrorV55(error){
+    const name=String(error?.name||'');
+    if(/NotAllowedError|SecurityError/i.test(name))showToast('Разреши микрофон в настройках сайта или приложения');
+    else if(/NotFoundError/i.test(name))showToast('Телефон не нашёл доступный микрофон');
+    else if(/NotReadableError|AbortError/i.test(name))showToast('Микрофон занят другим приложением — закрой его и повтори');
+    else showToast('Не удалось включить микрофон — попробуй открыть tele.chat в Chrome или Safari');
+    throw error;
+  }
+
+  function unlockCallAudioV55(){
+    try{
+      const AudioContextClass=window.AudioContext||window.webkitAudioContext;
+      if(AudioContextClass){
+        ringContext=ringContext||new AudioContextClass();
+        if(ringContext.state==='suspended')ringContext.resume().catch(()=>{});
+        const oscillator=ringContext.createOscillator(),gain=ringContext.createGain();
+        gain.gain.value=.0001;oscillator.connect(gain);gain.connect(ringContext.destination);
+        oscillator.start();oscillator.stop(ringContext.currentTime+.025);
+      }
+      document.querySelectorAll('#voice-call-audio-rack audio').forEach(audio=>audio.play().catch(()=>{}));
+    }catch(error){}
+  }
+
+  function armCallAudioResumeV55(){
+    const overlay=byId('voice-call-overlay');
+    if(!overlay||overlay.dataset.audioResumeV55==='1')return;
+    overlay.dataset.audioResumeV55='1';
+    const resume=()=>{
+      unlockCallAudioV55();
+      delete overlay.dataset.audioResumeV55;
+    };
+    overlay.addEventListener('pointerdown',resume,{once:true,capture:true});
+    overlay.addEventListener('touchend',resume,{once:true,capture:true,passive:true});
   }
 
   function updateCallButtonV32(){
@@ -500,7 +542,7 @@
 
   function createPeerV32(state,nick){
     const existing=state.peers.get(nick);if(existing)return existing;
-    const pc=new RTCPeerConnection(RTC_CONFIG);
+    const pc=new PeerConnectionV55(RTC_CONFIG);
     const peer={nick,pc,pendingCandidates:[],remoteStream:null,audio:null,connected:false,disconnectTimer:null,connectTimer:null,retryCount:0,meterStarted:false};
     state.peers.set(nick,peer);
     for(const track of state.localStream?.getTracks?.()||[])pc.addTrack(track,state.localStream);
@@ -521,9 +563,13 @@
         peer.meterStarted=true;startSpeakingMeterV32(peer.remoteStream,memberDomIdV32(nick),nick);
       }
     };
-    pc.onconnectionstatechange=()=>{
-      const status=pc.connectionState;
-      if(status==='connected'){
+    let lastPeerStateV55='';
+    const handlePeerStateV55=()=>{
+      const connection=String(pc.connectionState||'');
+      const ice=String(pc.iceConnectionState||'');
+      const status=(!connection||connection==='new'||connection==='connecting')&&ice?ice:connection;
+      if(status===lastPeerStateV55)return;lastPeerStateV55=status;
+      if(status==='connected'||status==='completed'){
         peer.connected=true;clearTimeout(peer.disconnectTimer);clearTimeout(peer.connectTimer);
         byId(memberDomIdV32(nick))?.classList.add('connected');
         ensureCallStartedV32(state);
@@ -535,6 +581,8 @@
       }
       if(status==='closed')peer.connected=false;
     };
+    pc.onconnectionstatechange=handlePeerStateV55;
+    pc.oniceconnectionstatechange=handlePeerStateV55;
     return peer;
   }
 
@@ -542,11 +590,11 @@
     let audio=byId('call-audio-'+peer.nick);
     if(!audio){
       audio=document.createElement('audio');audio.id='call-audio-'+peer.nick;
-      audio.autoplay=true;audio.playsInline=true;byId('voice-call-audio-rack').appendChild(audio);
+      audio.autoplay=true;audio.playsInline=true;audio.setAttribute('playsinline','');audio.muted=false;byId('voice-call-audio-rack').appendChild(audio);
     }
     audio.srcObject=peer.remoteStream;
     audio.volume=state.volumes?.get(peer.nick)??1;
-    audio.play().catch(()=>{});
+    audio.play().catch(()=>armCallAudioResumeV55());
     peer.audio=audio;
   }
 
@@ -710,6 +758,7 @@
 
   async function startCallV32(peerOverride){
     ensureCallUiV32();
+    unlockCallAudioV55();
     if(callState){restoreCallV32();return;}
     if(incomingInvite){await showCallUiV32('incoming',incomingInvite.statusText,incomingInvite.view);return;}
     const peer=safeNickV32(peerOverride||currentChat||lastPersonalPeer);
@@ -787,6 +836,7 @@
 
   async function acceptCallV32(){
     if(!incomingInvite||callState)return;
+    unlockCallAudioV55();
     if(callUnavailableV32())return;
     stopRingtoneV32();
     let stream;
