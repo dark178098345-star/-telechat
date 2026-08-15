@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v57-clean-login';
+const CACHE_NAME='telechat-shell-v58-direct-login';
 const APP_SHELL=[
   './',
   './index.html',
@@ -51,6 +51,7 @@ const APP_SHELL=[
   './update-manager-v54.js?v=54',
   './desktop-restart-updates-v55.js?v=55',
   './auth-core-v57.js?v=57',
+  './auth-direct-v58.js?v=58',
   './telechat-release.json'
 ];
 
