@@ -1,9 +1,9 @@
 {
   "version": "1.2.3",
-  "build": 55,
+  "build": 57,
   "title": "Обновление tele.chat готово",
-  "description": "Fixed the endless login. Interface updates now apply after restarting tele.chat, without reinstalling the EXE.",
+  "description": "Clean login: the app opens first, profile media loads in the background.",
   "windowsUrl": "https://github.com/dark178098345-star/-telechat/releases/download/v1.2.3/tele.chat-Setup-1.2.3.exe",
   "sha256": "5e06db2ebb12e7a7d4c4b251d70f94d546eb898c668d91a31990b21da3002417",
-  "publishedAt": "2026-08-12T11:03:05.748Z"
+  "publishedAt": "2026-08-15T12:00:00.000Z"
 }
