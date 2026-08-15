@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v48-panel-loop-fix';
+const CACHE_NAME='telechat-shell-v49-call-negotiation';
 const APP_SHELL=[
   './',
   './index.html',
@@ -28,7 +28,7 @@ const APP_SHELL=[
   './message-send-animation-v35.css',
   './message-send-animation-v35.js',
   './voice-calls-v32.css?v=33',
-  './voice-calls-v32.js?v=42',
+  './voice-calls-v32.js?v=49',
   './glass-context-v36.css?v=36',
   './message-context-v36.js?v=36',
   './desktop-notifications-v37.js?v=37',

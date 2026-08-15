@@ -31,6 +31,11 @@
     return /^[a-z0-9_]{3,20}$/i.test(nick)?nick:'';
   };
   const sameNickV32=(a,b)=>String(a||'').toLowerCase()===String(b||'').toLowerCase();
+  const shouldCreateOfferV49=remoteNick=>{
+    const local=String(me?.nick||'').trim().toLowerCase();
+    const remote=String(remoteNick||'').trim().toLowerCase();
+    return !!local&&!!remote&&local!==remote&&local<remote;
+  };
   const callErrorV32=error=>String(error?.message||error||'').trim();
   const formatCallTimeV32=seconds=>{
     const value=Math.max(0,Math.floor(Number(seconds)||0));
@@ -456,7 +461,7 @@
       setCallNetworkStatusV42('Переподключаем…');
       try{
         if(pc.signalingState==='have-local-offer')await pc.setLocalDescription({type:'rollback'});
-        if(pc.signalingState==='stable'){
+        if(pc.signalingState==='stable'&&shouldCreateOfferV49(peer.nick)){
           const offer=await pc.createOffer({offerToReceiveAudio:true,iceRestart:true});
           await pc.setLocalDescription(offer);
           await sendSignalV32(state,peer.nick,'offer',pc.localDescription);
@@ -482,7 +487,8 @@
       return;
     }
     state.closing=true;
-    setCallNetworkStatusV42('Не удалось соединиться');
+    setCallNetworkStatusV42('Прямое соединение недоступно');
+    showToast('Не удалось соединить сети — для такого звонка нужен TURN');
     try{
       await Promise.allSettled([
         sb.from('telechat_group_call_members').update({status:'left',left_at:nowV32()}).eq('call_id',state.id).eq('nick',me.nick),
@@ -618,6 +624,7 @@
   async function connectToJoinedMembersV32(state){
     const rows=[...(state.members?.values()||[])].filter(item=>item.status==='joined'&&!sameNickV32(item.nick,me.nick));
     for(const item of rows){
+      if(!shouldCreateOfferV49(item.nick))continue;
       try{await createOfferV32(state,item.nick);}catch(error){}
     }
   }
@@ -833,7 +840,9 @@
         state.status='active';await showCallUiV32('active','Соединяем участников…',state);
       }
     }
-    if(row.status==='joined'&&!sameNickV32(row.nick,me.nick)){try{await createOfferV32(state,row.nick);}catch(error){}}
+    if(row.status==='joined'&&!sameNickV32(row.nick,me.nick)&&shouldCreateOfferV49(row.nick)){
+      try{await createOfferV32(state,row.nick);}catch(error){}
+    }
     if(state.role==='host'&&state.status==='calling'&&MEMBER_FINAL.has(row.status)&&sameNickV32(row.nick,state.originPeer)){
       const waiting=[...state.members.values()].filter(item=>!sameNickV32(item.nick,me.nick)&&MEMBER_ACTIVE.has(item.status));
       if(!waiting.length){
