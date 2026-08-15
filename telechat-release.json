@@ -1,9 +1,9 @@
 {
   "version": "1.2.3",
-  "build": 58,
+  "build": 59,
   "title": "Обновление tele.chat готово",
-  "description": "Direct login fix: old wrappers no longer control the login button.",
+  "description": "Login and sidebar now load without downloading media payloads.",
   "windowsUrl": "https://github.com/dark178098345-star/-telechat/releases/download/v1.2.3/tele.chat-Setup-1.2.3.exe",
   "sha256": "5e06db2ebb12e7a7d4c4b251d70f94d546eb898c668d91a31990b21da3002417",
-  "publishedAt": "2026-08-15T12:30:00.000Z"
+  "publishedAt": "2026-08-15T12:45:00.000Z"
 }
