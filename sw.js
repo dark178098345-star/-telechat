@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v61-favicon';
+const CACHE_NAME='telechat-shell-v62-experience';
 const APP_SHELL=[
   './',
   './index.html',
@@ -52,7 +52,9 @@ const APP_SHELL=[
   './chat-actions-v52.css?v=59',
   './chat-actions-v52.js?v=59',
   './sound-studio-v53.css?v=53',
-  './sound-studio-v53.js?v=53'
+  './sound-studio-v53.js?v=53',
+  './chat-experience-v62.css?v=62',
+  './chat-experience-v62.js?v=62'
 ];
 
 self.addEventListener('install',event=>{

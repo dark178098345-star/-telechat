@@ -1,0 +1,190 @@
+/* TELECHAT CHAT EXPERIENCE V62 — cinematic motion, unread badges, drafts and calm media loading. */
+:root {
+  --ease-cinematic-v62: cubic-bezier(.18,.82,.22,1);
+  --ease-spring-v62: cubic-bezier(.2,.92,.24,1.08);
+}
+
+/* The panel itself stays GPU-safe. Only its small inner cards move. */
+html body .side-panel.open.v62-motion-enter {
+  --panel-shift-v62: 16px;
+}
+html body .side-panel.left.open.v62-motion-enter {
+  --panel-shift-v62: -16px;
+}
+html body .side-panel.open.v62-motion-enter .panel-head {
+  animation: panel-head-in-v62 310ms var(--ease-cinematic-v62) both !important;
+}
+html body .side-panel.open.v62-motion-enter .panel-section,
+html body .side-panel.open.v62-motion-enter .profile-editor-card,
+html body .side-panel.open.v62-motion-enter .profile-choice-card,
+html body .side-panel.open.v62-motion-enter .profile-fields-card,
+html body .side-panel.open.v62-motion-enter .profile-preview-btn {
+  animation: panel-card-in-v62 390ms var(--ease-cinematic-v62) both !important;
+  animation-delay: min(calc(var(--motion-order-v62,0) * 38ms),228ms) !important;
+}
+
+/* A chat opens in three calm layers instead of flashing as one large surface. */
+#active-chat.v62-content-enter .chat-header {
+  animation: chat-header-in-v62 310ms var(--ease-cinematic-v62) both;
+}
+#active-chat.v62-content-enter .messages {
+  animation: chat-messages-in-v62 410ms var(--ease-cinematic-v62) 28ms both;
+}
+#active-chat.v62-content-enter .input-area,
+#active-chat.v62-content-enter #channel-readonly {
+  animation: chat-composer-in-v62 390ms var(--ease-cinematic-v62) 70ms both;
+}
+
+/* Modal cards use the same motion language as settings and profiles. */
+.modal-overlay.show.v62-modal-enter .modal {
+  animation: modal-in-v62 330ms var(--ease-spring-v62) both !important;
+}
+.modal-overlay.show.v62-modal-enter .modal > * {
+  animation: modal-child-in-v62 300ms var(--ease-cinematic-v62) both;
+  animation-delay: min(calc(var(--motion-order-v62,0) * 34ms),170ms);
+}
+
+/* Unread and mention badges live inside the time column and do not fight the menu button. */
+.contact .contact-time {
+  display: flex;
+  min-width: 28px;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 4px;
+  line-height: 1;
+}
+.chat-unread-v62 {
+  display: inline-flex;
+  min-width: 19px;
+  height: 19px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  border: 1px solid rgba(202,193,255,.20);
+  border-radius: 999px;
+  color: #fff;
+  background: linear-gradient(145deg,#8d7cff,#6655e7);
+  box-shadow: 0 5px 15px rgba(90,72,218,.25),inset 0 1px 0 rgba(255,255,255,.20);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: -.1px;
+  animation: unread-pop-v62 280ms var(--ease-spring-v62) both;
+}
+.chat-unread-v62.is-mention {
+  border-color: rgba(255,195,226,.34);
+  background: linear-gradient(145deg,#f05ca8,#a743db);
+  box-shadow: 0 5px 16px rgba(207,66,155,.24),0 0 0 3px rgba(225,89,177,.07);
+}
+.contact.has-unread-v62 .contact-name { color: #f3f0ff; }
+.contact.has-unread-v62 .contact-last { color: #aaa3c5; }
+
+/* Draft preview is visible but quieter than a real unread message. */
+.contact-last.has-draft-v62 { color: #b5a5ff !important; }
+.contact-last.has-draft-v62::before {
+  content: 'Черновик: ';
+  color: #8e7cf8;
+  font-weight: 800;
+}
+
+/* Photos reserve space, shimmer softly and decode only near the viewport. */
+.chat-photo.telechat-lazy-media-v62 {
+  width: min(330px,72vw);
+  transition: opacity 300ms ease,filter 360ms ease,transform 390ms var(--ease-cinematic-v62);
+}
+.chat-photo.telechat-lazy-media-v62:not(.is-ready-v62) {
+  aspect-ratio: 4 / 3;
+  max-height: none;
+  opacity: .62;
+  filter: saturate(.55) brightness(.72);
+  transform: scale(.992);
+  background:
+    linear-gradient(105deg,rgba(124,110,247,.055) 15%,rgba(196,187,255,.17) 34%,rgba(124,110,247,.055) 53%) 0 0 / 220% 100%,
+    rgba(17,18,31,.88);
+  animation: media-shimmer-v62 1.45s linear infinite;
+}
+.chat-photo.telechat-lazy-media-v62.is-ready-v62 {
+  width: auto;
+  opacity: 1;
+  filter: none;
+  transform: none;
+  animation: none;
+}
+
+img.avatar-photo.v62-media-pending,
+video.avatar-video.v62-media-pending,
+video.profile-video.v62-media-pending {
+  opacity: 0 !important;
+  transform: scale(1.045) !important;
+}
+img.avatar-photo.v62-media-ready,
+video.avatar-video.v62-media-ready,
+video.profile-video.v62-media-ready {
+  opacity: 1;
+  transform: none;
+  transition: opacity 260ms ease,transform 360ms var(--ease-cinematic-v62) !important;
+}
+
+/* Buttons gain a small physical response without running a permanent animation. */
+body.telechat-experience-v62 button:not(:disabled),
+body.telechat-experience-v62 [role="button"] {
+  transition-property: transform,background-color,border-color,color,box-shadow,opacity,filter;
+  transition-duration: 170ms;
+  transition-timing-function: var(--ease-cinematic-v62);
+}
+body.telechat-experience-v62 button:not(:disabled):active,
+body.telechat-experience-v62 [role="button"]:active {
+  transform: scale(.965);
+}
+
+@keyframes panel-head-in-v62 {
+  from { opacity:0;transform:translate3d(0,-8px,0);filter:blur(2px); }
+  to { opacity:1;transform:none;filter:none; }
+}
+@keyframes panel-card-in-v62 {
+  from { opacity:0;transform:translate3d(var(--panel-shift-v62),7px,0) scale(.985);filter:blur(2px); }
+  to { opacity:1;transform:none;filter:none; }
+}
+@keyframes chat-header-in-v62 {
+  from { opacity:0;transform:translate3d(0,-9px,0); }
+  to { opacity:1;transform:none; }
+}
+@keyframes chat-messages-in-v62 {
+  from { opacity:0;transform:translate3d(12px,0,0) scale(.995); }
+  to { opacity:1;transform:none; }
+}
+@keyframes chat-composer-in-v62 {
+  from { opacity:0;transform:translate3d(0,10px,0) scale(.992); }
+  to { opacity:1;transform:none; }
+}
+@keyframes modal-in-v62 {
+  from { opacity:0;transform:translate3d(0,13px,0) scale(.965);filter:blur(2px); }
+  to { opacity:1;transform:none;filter:none; }
+}
+@keyframes modal-child-in-v62 {
+  from { opacity:0;transform:translate3d(0,7px,0); }
+  to { opacity:1;transform:none; }
+}
+@keyframes unread-pop-v62 {
+  from { opacity:0;transform:scale(.55); }
+  to { opacity:1;transform:scale(1); }
+}
+@keyframes media-shimmer-v62 {
+  to { background-position:-220% 0,0 0; }
+}
+
+@media (max-width:640px) {
+  html body .side-panel.open.v62-motion-enter { --panel-shift-v62: 12px; }
+  html body .side-panel.left.open.v62-motion-enter { --panel-shift-v62: -12px; }
+  #active-chat.v62-content-enter .messages { animation-duration:350ms; }
+  .contact .contact-time { min-width:25px; }
+}
+
+@media (prefers-reduced-motion:reduce) {
+  .v62-motion-enter *,#active-chat.v62-content-enter *,.v62-modal-enter .modal,.v62-modal-enter .modal > *,
+  .chat-unread-v62,.telechat-lazy-media-v62 {
+    animation:none !important;
+    transition-duration:.01ms !important;
+    filter:none !important;
+  }
+}
