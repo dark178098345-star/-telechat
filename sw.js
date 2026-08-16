@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v60-brand-icon';
+const CACHE_NAME='telechat-shell-v61-favicon';
 const APP_SHELL=[
   './',
   './index.html',
@@ -7,6 +7,10 @@ const APP_SHELL=[
   './icon-512.png',
   './icon-maskable-512.png',
   './apple-touch-icon.png',
+  './favicon-16.png',
+  './favicon-32.png',
+  './favicon-48.png',
+  './favicon.ico',
   './profile-performance-v11.js',
   './followers-v12.js',
   './app-performance-v17.js?v=51',
