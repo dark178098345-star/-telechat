@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v59-pin-icons';
+const CACHE_NAME='telechat-shell-v60-brand-icon';
 const APP_SHELL=[
   './',
   './index.html',
