@@ -21,6 +21,13 @@
 
 .messages.v51-painting { overflow-anchor: none; }
 
+/* Cached/history messages are already on screen conceptually. Replaying the
+   entrance animation for all of them made read receipts look like a flash. */
+.msg.v51-hydrated {
+  animation: none !important;
+  will-change: auto;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .messages.v51-loading-older::before {
     -webkit-backdrop-filter: none;

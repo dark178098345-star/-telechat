@@ -21,7 +21,19 @@
   function getStateV51(key) {
     let state = historyCacheV51.get(key);
     if (!state) {
-      state = { key, items: [], cursor: null, hasMore: true, loading: null, painting: null, lastPaintAt: 0, touchedAt: Date.now() };
+      state = {
+        key,
+        items: [],
+        cursor: null,
+        hasMore: true,
+        loading: null,
+        painting: null,
+        refreshTimer: 0,
+        refreshWaiters: [],
+        lastFetchedAt: 0,
+        lastPaintAt: 0,
+        touchedAt: Date.now()
+      };
       historyCacheV51.set(key, state);
     }
     state.touchedAt = Date.now();
@@ -39,10 +51,18 @@
     return `${type}:${item.id ?? `${item.from_nick || item.created_by || ''}:${item.ts || 0}`}`;
   }
 
+  function compareItemsV51(a, b) {
+    const time = Number(a?.ts || 0) - Number(b?.ts || 0);
+    if (time) return time;
+    const aKey = itemKeyV51(a || {});
+    const bKey = itemKeyV51(b || {});
+    return aKey.localeCompare(bKey, 'en', { numeric: true });
+  }
+
   function mergeItemsV51(...groups) {
     const map = new Map();
     groups.flat().forEach(item => { if (item) map.set(itemKeyV51(item), item); });
-    return [...map.values()].sort((a, b) => Number(a.ts || 0) - Number(b.ts || 0));
+    return [...map.values()].sort(compareItemsV51);
   }
 
   function shortContentMarkV51(value) {
@@ -52,10 +72,41 @@
 
   function stateMarkV51(items) {
     return (items || []).map(item => {
-      const read = Array.isArray(item.read_by) ? item.read_by.join(',') : '';
       const poll = item._type === 'poll' ? JSON.stringify(item.votes || {}) : '';
-      return `${itemKeyV51(item)}:${item.ts || 0}:${item.deleted ? 1 : 0}:${read}:${shortContentMarkV51(item.text || item.question || '')}:${poll}`;
+      return `${itemKeyV51(item)}:${item.ts || 0}:${item.deleted ? 1 : 0}:${item.edited_at || 0}:${item.pinned ? 1 : 0}:${shortContentMarkV51(item.text || item.question || '')}:${poll}`;
     }).join('|');
+  }
+
+  function messageElementV51(message) {
+    if (!message?.id) return null;
+    return [...(document.getElementById('messages')?.querySelectorAll('.msg[data-id]') || [])]
+      .find(element => String(element.dataset.id || '') === String(message.id)) || null;
+  }
+
+  function syncReadReceiptsV51(items) {
+    if (!me?.nick) return;
+    (items || []).forEach(item => {
+      if (!item || item._type === 'poll' || item.from_nick !== me.nick) return;
+      const check = messageElementV51(item)?.querySelector('.msg-check');
+      if (!check) return;
+      const readBy = Array.isArray(item.read_by) ? item.read_by : [];
+      const isRead = currentRoom ? readBy.some(nick => nick !== me.nick) : !!currentChat && readBy.includes(currentChat);
+      check.classList.toggle('read', isRead);
+    });
+  }
+
+  function applyRealtimeUpdateV51(message) {
+    const key = String(message?.chat_key || activeKeyV51());
+    const state = key ? historyCacheV51.get(key) : null;
+    if (!state || !message?.id) return true;
+    const index = state.items.findIndex(item => item._type !== 'poll' && String(item.id || '') === String(message.id));
+    if (index < 0) return true;
+    const previous = state.items[index];
+    const next = { ...previous, ...message, chat_key: key, _type: 'msg' };
+    if (stateMarkV51([previous]) !== stateMarkV51([next])) return true;
+    state.items = mergeItemsV51(state.items, next);
+    if (key === activeKeyV51()) syncReadReceiptsV51(state.items);
+    return false;
   }
 
   async function fetchPageV51(key, beforeTs) {
@@ -70,9 +121,9 @@
     const messages = (messagesResult.data || []).map(item => ({ ...item, _type: 'msg' }));
     const polls = (pollsResult.data || []).map(item => ({ ...item, _type: 'poll' }));
     const items = [...messages, ...polls]
-      .sort((a, b) => Number(b.ts || 0) - Number(a.ts || 0))
+      .sort((a, b) => compareItemsV51(b, a))
       .slice(0, PAGE_SIZE_V51)
-      .sort((a, b) => Number(a.ts || 0) - Number(b.ts || 0));
+      .sort(compareItemsV51);
     return {
       items,
       cursor: items.length ? Math.min(...items.map(item => Number(item.ts || 0))) : beforeTs,
@@ -101,15 +152,22 @@
         box.dataset.chatKeyV51 = state.key;
         lastRenderedDate = '';
         if (!state.items.length) {
-          box.innerHTML = '<div style="text-align:center;padding:30px;font-size:13px;color:var(--text3)">Начни первым! 👋</div>';
+          box.innerHTML = '<div class="v51-empty-chat" style="text-align:center;padding:30px;font-size:13px;color:var(--text3)">Начни первым! 👋</div>';
         } else {
           for (const item of state.items) {
             if (token !== renderTokenV51 || state.key !== activeKeyV51()) return false;
             if (item._type === 'poll') renderPoll(item, box);
-            else await appendMessageBeforeV51(item, false);
+            else {
+              const beforeCount = box.children.length;
+              await appendMessageBeforeV51(item, false);
+              [...box.children].slice(beforeCount).forEach(element => {
+                if (element.classList?.contains('msg')) element.classList.add('v51-hydrated');
+              });
+            }
           }
         }
         state.lastPaintAt = Date.now();
+        syncReadReceiptsV51(state.items);
         if (!options.keepScroll) scrollToBottom();
         return true;
       } finally {
@@ -130,14 +188,30 @@
       state.cursor = state.items.length ? Math.min(...state.items.map(item => Number(item.ts || 0))) : null;
       state.hasMore = page.hasMore;
       state.touchedAt = Date.now();
+      state.lastFetchedAt = Date.now();
       if (repaint && state.key === activeKeyV51() && previousMark !== stateMarkV51(state.items)) {
         const box = document.getElementById('messages');
         const nearBottom = box ? box.scrollHeight - box.scrollTop - box.clientHeight < 90 : true;
         await paintStateV51(state, { keepScroll: !nearBottom });
-      }
+      } else if (state.key === activeKeyV51()) syncReadReceiptsV51(state.items);
       return state;
     })().finally(() => { state.loading = null; });
     return state.loading;
+  }
+
+  function scheduleLatestV51(state, delay = 90) {
+    if (!state) return Promise.resolve(null);
+    return new Promise(resolve => {
+      state.refreshWaiters.push(resolve);
+      clearTimeout(state.refreshTimer);
+      state.refreshTimer = setTimeout(() => {
+        state.refreshTimer = 0;
+        const waiters = state.refreshWaiters.splice(0);
+        Promise.resolve(refreshLatestV51(state, true))
+          .catch(() => null)
+          .then(value => waiters.forEach(done => done(value)));
+      }, delay);
+    });
   }
 
   renderMessages = async function() {
@@ -146,9 +220,9 @@
     const state = getStateV51(key);
     if (state.items.length) {
       const box = document.getElementById('messages');
-      const alreadyVisible = box?.dataset.chatKeyV51 === key && Date.now() - state.lastPaintAt < 180;
+      const alreadyVisible = box?.dataset.chatKeyV51 === key;
       if (!alreadyVisible) await paintStateV51(state);
-      refreshLatestV51(state, true).catch(() => {});
+      scheduleLatestV51(state, alreadyVisible ? 90 : 40).catch(() => {});
       return;
     }
     try {
@@ -187,16 +261,29 @@
   }
 
   appendMessage = async function(message, doScroll = true) {
-    const value = await appendMessageBeforeV51(message, doScroll);
-    if (doScroll && message) {
-      const key = String(message.chat_key || activeKeyV51());
-      if (key) {
-        const state = getStateV51(key);
-        state.items = mergeItemsV51(state.items, { ...message, chat_key: key, _type: 'msg' });
-        state.cursor = state.items.length ? Math.min(...state.items.map(item => Number(item.ts || 0))) : state.cursor;
-      }
+    if (!doScroll || !message) return appendMessageBeforeV51(message, doScroll);
+    const key = String(message.chat_key || activeKeyV51());
+    if (!key) return appendMessageBeforeV51(message, doScroll);
+
+    const state = getStateV51(key);
+    const normalized = { ...message, chat_key: key, _type: 'msg' };
+    const normalizedKey = itemKeyV51(normalized);
+    const existed = state.items.some(item => itemKeyV51(item) === normalizedKey) || !!messageElementV51(normalized);
+    const previousLast = state.items[state.items.length - 1] || null;
+    state.items = mergeItemsV51(state.items, normalized);
+    state.cursor = state.items.length ? Math.min(...state.items.map(item => Number(item.ts || 0))) : state.cursor;
+    if (existed) {
+      syncReadReceiptsV51(state.items);
+      return null;
     }
-    return value;
+
+    if (key === activeKeyV51() && previousLast && compareItemsV51(normalized, previousLast) < 0) {
+      await paintStateV51(state, { keepScroll: false });
+      return null;
+    }
+
+    document.getElementById('messages')?.querySelector('.v51-empty-chat')?.remove();
+    return appendMessageBeforeV51(message, doScroll);
   };
 
   avatarMarkup = function(user) {
@@ -268,10 +355,17 @@
       const result = await sb.from('messages').select('id,read_by').eq('chat_key', key).neq('from_nick', me.nick).order('ts', { ascending: false }).limit(80);
       if (result.error) return;
       const pending = (result.data || []).filter(message => !(message.read_by || []).includes(me.nick));
-      for (let start = 0; start < pending.length; start += 12) {
-        await Promise.all(pending.slice(start, start + 12).map(message =>
-          sb.from('messages').update({ read_by: [...(message.read_by || []), me.nick] }).eq('id', message.id)
-        ));
+      const groups = new Map();
+      pending.forEach(message => {
+        const readBy = [...new Set([...(message.read_by || []), me.nick])].sort();
+        const groupKey = JSON.stringify(readBy);
+        if (!groups.has(groupKey)) groups.set(groupKey, { readBy, ids: [] });
+        groups.get(groupKey).ids.push(message.id);
+      });
+      for (const group of groups.values()) {
+        for (let start = 0; start < group.ids.length; start += 50) {
+          await sb.from('messages').update({ read_by: group.readBy }).in('id', group.ids.slice(start, start + 50));
+        }
       }
     })().catch(() => {}).finally(() => markAsReadInFlightV51.delete(key));
     markAsReadInFlightV51.set(key, job);
@@ -295,6 +389,12 @@
 
   window.telechatChatSpeedV51 = {
     loadOlder: loadOlderV51,
+    syncReadReceipts: syncReadReceiptsV51,
+    applyRealtimeUpdate: applyRealtimeUpdateV51,
+    refreshActive: () => {
+      const key = activeKeyV51();
+      return key ? scheduleLatestV51(getStateV51(key), 35) : Promise.resolve(null);
+    },
     info: () => ({
       pageSize: PAGE_SIZE_V51,
       cachedChats: historyCacheV51.size,
