@@ -185,7 +185,7 @@
 
       if (preview) {
         const current = preview.textContent || '';
-        const draft = previewTextV62(draftsV62[key]?.text || '');
+        const draft = key === activeKeyV62() ? '' : previewTextV62(draftsV62[key]?.text || '');
         const paintedDraft = preview.dataset.renderedDraftV62 || '';
         if (!preview.classList.contains('has-draft-v62') || (paintedDraft && current !== paintedDraft)) preview.dataset.remotePreviewV62 = current;
         if (draft) {
@@ -379,7 +379,11 @@
 
     const goBackBeforeV62 = window.goBack;
     if (typeof goBackBeforeV62 === 'function') {
-      window.goBack = function(...args) { const key = activeKeyV62();if (key) saveDraftV62(key);return goBackBeforeV62.apply(this, args); };
+      window.goBack = function(...args) {
+        const key = activeKeyV62();if (key) saveDraftV62(key);
+        const value = goBackBeforeV62.apply(this, args);decorateSidebarV62();
+        return value;
+      };
     }
 
     const sendBeforeV62 = window.sendMsg;
