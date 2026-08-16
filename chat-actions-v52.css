@@ -1,28 +1,36 @@
 /* TELECHAT CHAT ACTIONS V52 */
 .contact.has-chat-actions-v52 {
   position: relative;
-  padding-right: 39px;
+  padding-right: 34px;
 }
 
 .chat-more-v52 {
   position: absolute;
   z-index: 2;
   top: 50%;
-  right: 7px;
-  display: grid;
-  width: 28px;
-  height: 28px;
-  place-items: center;
+  right: 6px;
+  display: flex;
+  width: 25px;
+  height: 25px;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
   padding: 0;
   transform: translateY(-50%);
   border: 1px solid transparent;
-  border-radius: 10px;
+  border-radius: 8px;
   color: var(--text3);
   background: transparent;
   opacity: 0;
   cursor: pointer;
-  font: 900 18px/1 'Nunito',sans-serif;
   transition: opacity .16s ease,background .16s ease,border-color .16s ease,color .16s ease;
+}
+.chat-more-v52 > i {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 5px rgba(183,169,255,.22);
 }
 
 .contact:hover .chat-more-v52,
@@ -44,6 +52,25 @@
   color: #b7a9ff;
   font-size: 9px;
   vertical-align: 1px;
+}
+.chat-pin-mark-v52 {
+  width: 18px;
+  height: 18px;
+  margin-left: 5px;
+  padding: 0;
+  border: 1px solid rgba(175,157,255,.16);
+  border-radius: 7px;
+  color: #d6cdff;
+  background: rgba(124,110,247,.12);
+  cursor: pointer;
+  font-size: 10px;
+  line-height: 1;
+  transition: transform .16s ease,background .16s ease,border-color .16s ease;
+}
+.chat-pin-mark-v52:hover {
+  transform: translateY(-1px) scale(1.06);
+  border-color: rgba(188,174,255,.34);
+  background: rgba(124,110,247,.22);
 }
 .chat-contact-mark-v52 { color: #63ddb0; }
 
@@ -97,6 +124,44 @@
 .chat-action-icon-v52 { display: grid;width: 22px;height: 22px;place-items: center;font-size: 15px; }
 .chat-action-v52.is-active { color: #c5b9ff; }
 .chat-action-v52[hidden] { display: none; }
+
+.chat-pin-icons-v59 { display: none;padding: 4px; }
+.chat-pin-icons-v59.show { display: block;animation: chat-actions-in-v52 .16s cubic-bezier(.2,.8,.2,1) both; }
+.chat-pin-icons-title-v59 {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 3px 2px 9px;
+  color: #d7d1e8;
+  font-size: 11px;
+  font-weight: 850;
+}
+.chat-pin-icons-title-v59 button {
+  display: grid;
+  width: 27px;
+  height: 27px;
+  place-items: center;
+  border: 1px solid rgba(190,177,255,.14);
+  border-radius: 9px;
+  color: #d7ceff;
+  background: rgba(124,110,247,.10);
+  cursor: pointer;
+  font: 800 21px/1 'Nunito',sans-serif;
+}
+.chat-pin-icons-grid-v59 { display: grid;grid-template-columns: repeat(6,1fr);gap: 5px; }
+.chat-pin-icons-grid-v59 button {
+  display: grid;
+  aspect-ratio: 1;
+  place-items: center;
+  border: 1px solid rgba(190,177,255,.10);
+  border-radius: 11px;
+  background: rgba(124,110,247,.07);
+  cursor: pointer;
+  font-size: 17px;
+  transition: transform .14s ease,background .14s ease,border-color .14s ease;
+}
+.chat-pin-icons-grid-v59 button:hover { transform: translateY(-1px);background: rgba(124,110,247,.18); }
+.chat-pin-icons-grid-v59 button.selected { border-color: #8e7cff;background: rgba(124,110,247,.25);box-shadow: 0 0 0 2px rgba(124,110,247,.10); }
 
 .chat-rename-v52 { display: none;padding: 7px 5px 4px; }
 .chat-rename-v52.show { display: block; }

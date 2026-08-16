@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v58-tested-turn';
+const CACHE_NAME='telechat-shell-v59-pin-icons';
 const APP_SHELL=[
   './',
   './index.html',
@@ -45,8 +45,8 @@ const APP_SHELL=[
   './liquid-glass-v50.css?v=50',
   './chat-speed-v51.css?v=51',
   './chat-speed-v51.js?v=51',
-  './chat-actions-v52.css?v=52',
-  './chat-actions-v52.js?v=52',
+  './chat-actions-v52.css?v=59',
+  './chat-actions-v52.js?v=59',
   './sound-studio-v53.css?v=53',
   './sound-studio-v53.js?v=53'
 ];

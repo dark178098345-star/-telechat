@@ -5,6 +5,7 @@
   let activeTargetV52 = null;
   let longPressTimerV52 = 0;
   let menuOpenedAtV52 = 0;
+  const PIN_EMOJIS_V59 = ['📌','⭐','💜','🔥','🌙','⚡','🎮','🎧','🌸','🚀','💎','👑'];
 
   function storageKeyV52() {
     const nick = String(me?.nick || 'guest').toLowerCase();
@@ -17,10 +18,11 @@
       return {
         aliases: parsed.aliases && typeof parsed.aliases === 'object' ? parsed.aliases : {},
         pins: Array.isArray(parsed.pins) ? parsed.pins : [],
-        contacts: Array.isArray(parsed.contacts) ? parsed.contacts : []
+        contacts: Array.isArray(parsed.contacts) ? parsed.contacts : [],
+        pinIcons: parsed.pinIcons && typeof parsed.pinIcons === 'object' ? parsed.pinIcons : {}
       };
     } catch (error) {
-      return { aliases: {}, pins: [], contacts: [] };
+      return { aliases: {}, pins: [], contacts: [], pinIcons: {} };
     }
   }
 
@@ -40,14 +42,17 @@
     text.nodeValue = value;
   }
 
-  function addMarkerV52(name, className, text, title) {
+  function addMarkerV52(name, className, text, title, onClick) {
     if (!name || name.querySelector(`.${className}`)) return;
-    const marker = document.createElement('span');
+    const marker = document.createElement(onClick ? 'button' : 'span');
+    if (onClick) marker.type = 'button';
     marker.className = className;
     marker.textContent = text;
     marker.title = title;
     marker.setAttribute('aria-label', title);
+    if (onClick) marker.addEventListener('click', onClick);
     name.appendChild(marker);
+    return marker;
   }
 
   function createSectionV52(text, className) {
@@ -83,7 +88,7 @@
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'chat-more-v52';
-    button.textContent = '•••';
+    button.innerHTML = '<i></i><i></i><i></i>';
     button.title = 'Действия с чатом';
     button.setAttribute('aria-label', 'Действия с чатом');
     button.setAttribute('aria-expanded', 'false');
@@ -108,7 +113,14 @@
       setRowNameV52(row, state.aliases[key] || original);
       row.querySelectorAll('.chat-pin-mark-v52,.chat-contact-mark-v52').forEach(element => element.remove());
       const name = row.querySelector('.contact-name');
-      if (pins.has(key)) addMarkerV52(name, 'chat-pin-mark-v52', '◆', 'Закреплён');
+      if (pins.has(key)) {
+        const pinIcon = PIN_EMOJIS_V59.includes(state.pinIcons[key]) ? state.pinIcons[key] : '📌';
+        addMarkerV52(name, 'chat-pin-mark-v52', pinIcon, 'Изменить значок закрепа', event => {
+          event.preventDefault();event.stopPropagation();
+          openMenuV52(row, event.currentTarget.getBoundingClientRect());
+          showPinIconPickerV59();
+        });
+      }
       if (row.dataset.chatKind === 'private' && contacts.has(row.dataset.nick)) addMarkerV52(name, 'chat-contact-mark-v52', '●', 'В контактах');
       ensureMoreButtonV52(row);
     });
@@ -133,6 +145,11 @@
         <button class="chat-action-v52" type="button" data-action="rename"><span class="chat-action-icon-v52">✎</span><span>Переименовать</span></button>
         <button class="chat-action-v52" type="button" data-action="contact"><span class="chat-action-icon-v52">♙</span><span>Добавить в контакты</span></button>
         <button class="chat-action-v52" type="button" data-action="pin"><span class="chat-action-icon-v52">◆</span><span>Закрепить сверху</span></button>
+        <button class="chat-action-v52" type="button" data-action="pin-icon"><span class="chat-action-icon-v52" data-pin-icon-preview>📌</span><span>Значок закрепа</span></button>
+      </div>
+      <div class="chat-pin-icons-v59" id="chat-pin-icons-v59">
+        <div class="chat-pin-icons-title-v59"><button type="button" data-pin-icons-back aria-label="Назад">‹</button><span>Значок закрепа</span></div>
+        <div class="chat-pin-icons-grid-v59">${PIN_EMOJIS_V59.map(emoji => `<button type="button" data-pin-emoji="${emoji}" aria-label="Выбрать ${emoji}">${emoji}</button>`).join('')}</div>
       </div>
       <form class="chat-rename-v52" id="chat-rename-v52">
         <input class="chat-rename-input-v52" id="chat-rename-input-v52" maxlength="32" autocomplete="off" placeholder="Как подписать чат?">
@@ -140,6 +157,9 @@
       </form>`;
     document.body.appendChild(menu);
     menu.addEventListener('click', event => {
+      const emojiButton = event.target.closest('[data-pin-emoji]');
+      if (emojiButton) { event.stopPropagation();savePinIconV59(emojiButton.dataset.pinEmoji);return; }
+      if (event.target.closest('[data-pin-icons-back]')) { event.stopPropagation();showMainActionsV59();return; }
       const button = event.target.closest('[data-action]');
       if (!button) return;
       event.stopPropagation();
@@ -178,9 +198,14 @@
     contact.classList.toggle('is-active', state.contacts.includes(activeTargetV52.nick));
     contact.lastElementChild.textContent = state.contacts.includes(activeTargetV52.nick) ? 'Удалить из контактов' : 'Добавить в контакты';
     const pin = menu.querySelector('[data-action="pin"]');
-    pin.classList.toggle('is-active', state.pins.includes(activeTargetV52.key));
-    pin.lastElementChild.textContent = state.pins.includes(activeTargetV52.key) ? 'Открепить' : 'Закрепить сверху';
+    const isPinned = state.pins.includes(activeTargetV52.key);
+    pin.classList.toggle('is-active', isPinned);
+    pin.lastElementChild.textContent = isPinned ? 'Открепить' : 'Закрепить сверху';
+    const pinIcon = menu.querySelector('[data-action="pin-icon"]');
+    pinIcon.hidden = !isPinned;
+    pinIcon.querySelector('[data-pin-icon-preview]').textContent = PIN_EMOJIS_V59.includes(state.pinIcons[activeTargetV52.key]) ? state.pinIcons[activeTargetV52.key] : '📌';
     menu.querySelector('#chat-rename-v52').classList.remove('show');
+    menu.querySelector('#chat-pin-icons-v59').classList.remove('show');
     menu.querySelector('.chat-actions-list-v52').style.display = '';
     positionMenuV52(menu, rect);
     menuOpenedAtV52 = Date.now();
@@ -203,6 +228,7 @@
       const form = menu.querySelector('#chat-rename-v52'), input = menu.querySelector('#chat-rename-input-v52');
       form.classList.add('show');input.value = state.aliases[activeTargetV52.key] || '';input.focus();input.select();return;
     }
+    if (action === 'pin-icon') { showPinIconPickerV59();return; }
     if (action === 'contact' && activeTargetV52.kind === 'private') {
       const values = new Set(state.contacts);
       if (values.has(activeTargetV52.nick)) values.delete(activeTargetV52.nick); else values.add(activeTargetV52.nick);
@@ -211,12 +237,40 @@
     }
     if (action === 'pin') {
       const values = new Set(state.pins);
-      if (values.has(activeTargetV52.key)) values.delete(activeTargetV52.key); else values.add(activeTargetV52.key);
+      if (values.has(activeTargetV52.key)) {
+        values.delete(activeTargetV52.key);delete state.pinIcons[activeTargetV52.key];
+      } else values.add(activeTargetV52.key);
       state.pins = [...values];writeStateV52(state);
       showToast(values.has(activeTargetV52.key) ? 'Чат закреплён' : 'Чат откреплён');
     }
     closeMenuV52();
     Promise.resolve(renderContacts()).catch(() => applySidebarCustomV52());
+  }
+
+  function showMainActionsV59() {
+    const menu = ensureMenuV52();
+    menu.querySelector('#chat-pin-icons-v59').classList.remove('show');
+    menu.querySelector('#chat-rename-v52').classList.remove('show');
+    menu.querySelector('.chat-actions-list-v52').style.display = '';
+  }
+
+  function showPinIconPickerV59() {
+    if (!activeTargetV52) return;
+    const menu = ensureMenuV52(), state = readStateV52();
+    const current = PIN_EMOJIS_V59.includes(state.pinIcons[activeTargetV52.key]) ? state.pinIcons[activeTargetV52.key] : '📌';
+    menu.querySelector('.chat-actions-list-v52').style.display = 'none';
+    menu.querySelector('#chat-rename-v52').classList.remove('show');
+    menu.querySelector('#chat-pin-icons-v59').classList.add('show');
+    menu.querySelectorAll('[data-pin-emoji]').forEach(button => button.classList.toggle('selected', button.dataset.pinEmoji === current));
+  }
+
+  function savePinIconV59(emoji) {
+    if (!activeTargetV52 || !PIN_EMOJIS_V59.includes(emoji)) return;
+    const state = readStateV52();
+    if (!state.pins.includes(activeTargetV52.key)) return;
+    state.pinIcons[activeTargetV52.key] = emoji;writeStateV52(state);
+    showToast(`${emoji} Значок закрепа изменён`);
+    closeMenuV52();applySidebarCustomV52();
   }
 
   function saveAliasV52(reset) {
