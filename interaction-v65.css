@@ -1,0 +1,157 @@
+/* TELECHAT INTERACTION V65 — live activity and full-screen settings/profile. */
+.chat-status-text.activity-v65 {
+  min-height: 23px;
+  padding: 3px 9px 3px 7px;
+  transition: color .22s ease,background .22s ease,box-shadow .22s ease;
+}
+.chat-status-text.activity-voice-v65 {
+  color: #91f6c4;
+  background: rgba(52,211,153,.12);
+  box-shadow: inset 0 0 0 1px rgba(110,231,183,.14),0 0 18px rgba(52,211,153,.06);
+}
+.activity-mic-v65 {
+  display:inline-grid;
+  width:17px;
+  height:17px;
+  place-items:center;
+  border-radius:50%;
+  font-size:10px;
+  background:rgba(52,211,153,.15);
+  animation:activity-mic-pulse-v65 1.15s ease-in-out infinite;
+}
+@keyframes activity-mic-pulse-v65 {
+  0%,100% { transform:scale(.92);box-shadow:0 0 0 0 rgba(52,211,153,.20); }
+  50% { transform:scale(1.05);box-shadow:0 0 0 5px rgba(52,211,153,0); }
+}
+
+html body #settings-panel.side-panel.v65-full-panel,
+html body #profile-panel.side-panel.v65-full-panel {
+  position:fixed !important;
+  inset:0 !important;
+  left:0 !important;
+  right:0 !important;
+  top:0 !important;
+  bottom:0 !important;
+  width:100vw !important;
+  max-width:none !important;
+  height:100vh !important;
+  height:100dvh !important;
+  padding:clamp(14px,2.4vw,34px) clamp(14px,4vw,64px) calc(clamp(16px,2.4vw,34px) + env(safe-area-inset-bottom,0px)) !important;
+  overflow-x:hidden !important;
+  overflow-y:auto !important;
+  overscroll-behavior:contain;
+  border:0 !important;
+  border-radius:0 !important;
+  background:
+    radial-gradient(circle at 12% 8%,rgba(124,110,247,.16),transparent 36%),
+    radial-gradient(circle at 92% 92%,rgba(56,189,248,.09),transparent 34%),
+    color-mix(in srgb,var(--bg) 96%,transparent) !important;
+  box-shadow:none !important;
+  transform:none !important;
+  translate:none !important;
+  transform-style:flat !important;
+  backface-visibility:visible !important;
+  -webkit-backdrop-filter:none !important;
+  backdrop-filter:none !important;
+  z-index:220 !important;
+}
+
+html body #settings-panel.side-panel.v65-full-panel.open,
+html body #profile-panel.side-panel.v65-full-panel.open {
+  visibility:visible !important;
+  pointer-events:auto !important;
+  opacity:1 !important;
+  animation:panel-reveal-v65 .48s cubic-bezier(.22,.78,.18,1) both !important;
+}
+
+html body #settings-panel.side-panel.v65-full-panel.open { display:grid !important;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:min-content;align-content:start;gap:14px 16px !important; }
+html body #profile-panel.side-panel.v65-full-panel.open { display:grid !important;grid-template-columns:minmax(360px,1.18fr) minmax(320px,.82fr);grid-auto-rows:min-content;align-content:start;gap:14px 18px !important; }
+
+html body #settings-panel.v65-full-panel.v65-closing,
+html body #profile-panel.v65-full-panel.v65-closing {
+  animation:panel-hide-v65 .30s cubic-bezier(.55,.06,.72,.2) both !important;
+  pointer-events:none !important;
+}
+
+@keyframes panel-reveal-v65 {
+  0% { opacity:.15;clip-path:circle(0 at var(--panel-origin-x-v65) var(--panel-origin-y-v65)); }
+  55% { opacity:1; }
+  100% { opacity:1;clip-path:circle(150vmax at var(--panel-origin-x-v65) var(--panel-origin-y-v65)); }
+}
+@keyframes panel-hide-v65 {
+  0% { opacity:1;clip-path:circle(150vmax at var(--panel-origin-x-v65) var(--panel-origin-y-v65)); }
+  100% { opacity:.08;clip-path:circle(0 at var(--panel-origin-x-v65) var(--panel-origin-y-v65)); }
+}
+
+body.telechat-full-panel-open-v65 #overlay { opacity:0 !important;visibility:hidden !important;pointer-events:none !important; }
+
+#settings-panel.v65-full-panel .panel-head,
+#profile-panel.v65-full-panel .panel-head {
+  position:sticky;
+  top:0;
+  z-index:5;
+  grid-column:1/-1;
+  min-height:62px;
+  margin:calc(-1 * clamp(14px,2.4vw,34px)) calc(-1 * clamp(14px,4vw,64px)) 2px;
+  padding:clamp(14px,2.4vw,24px) clamp(16px,4vw,64px) 13px;
+  background:linear-gradient(180deg,color-mix(in srgb,var(--bg) 96%,transparent) 66%,transparent);
+}
+#settings-panel.v65-full-panel .panel-head-mark,
+#profile-panel.v65-full-panel .panel-head-mark { width:44px;height:44px;border-radius:15px;font-size:19px; }
+#settings-panel.v65-full-panel .panel-title,
+#profile-panel.v65-full-panel .panel-title { font-size:20px; }
+#settings-panel.v65-full-panel .panel-head-close,
+#profile-panel.v65-full-panel .panel-head-close { width:42px;height:42px;border-radius:14px;font-size:21px; }
+
+#settings-panel.v65-full-panel .panel-section { min-height:150px;margin:0 !important;padding:18px 20px !important; }
+#settings-panel.v65-full-panel > .close-btn { grid-column:1/-1;justify-self:center;width:min(420px,100%);margin:8px 0 0 !important; }
+
+#profile-panel.v65-full-panel .profile-preview-btn { grid-column:1/-1;margin:0 !important; }
+#profile-panel.v65-full-panel .profile-editor-card { grid-column:1;grid-row:3 / span 2;margin:0 !important; }
+#profile-panel.v65-full-panel .profile-choice-card { grid-column:2;grid-row:3;margin:0 !important; }
+#profile-panel.v65-full-panel .profile-fields-card { grid-column:2;grid-row:4;margin:0 !important; }
+#profile-panel.v65-full-panel .profile-action-dock { position:sticky;bottom:0;z-index:4;grid-column:1/-1;width:min(680px,100%);justify-self:center;margin:4px 0 -6px !important;padding:9px;border:1px solid rgba(167,139,250,.14);border-radius:18px;background:color-mix(in srgb,var(--bg2) 88%,transparent);box-shadow:0 16px 38px rgba(0,0,0,.24); }
+#profile-panel.v65-full-panel .profile-banner-preview { height:clamp(150px,24vw,260px); }
+#profile-panel.v65-full-panel .profile-avatar-toolbar { grid-template-columns:110px minmax(0,1fr);margin-top:-38px; }
+#profile-panel.v65-full-panel .profile-avatar-toolbar .av-preview { width:110px;height:110px; }
+
+#settings-panel.v65-full-panel.open:not(.v65-closing) > :not(.panel-head),
+#profile-panel.v65-full-panel.open:not(.v65-closing) > :not(.panel-head) {
+  animation:panel-content-in-v65 .40s .10s cubic-bezier(.22,.78,.18,1) both !important;
+}
+@keyframes panel-content-in-v65 {
+  from { opacity:0;translate:0 14px; }
+  to { opacity:1;translate:0 0; }
+}
+
+@media (max-width:900px) {
+  html body #settings-panel.side-panel.v65-full-panel.open,
+  html body #profile-panel.side-panel.v65-full-panel.open { grid-template-columns:minmax(0,1fr); }
+  #settings-panel.v65-full-panel .panel-head,
+  #settings-panel.v65-full-panel > .close-btn,
+  #profile-panel.v65-full-panel .panel-head,
+  #profile-panel.v65-full-panel .profile-preview-btn,
+  #profile-panel.v65-full-panel .profile-editor-card,
+  #profile-panel.v65-full-panel .profile-choice-card,
+  #profile-panel.v65-full-panel .profile-fields-card,
+  #profile-panel.v65-full-panel .profile-action-dock { grid-column:1;grid-row:auto; }
+  #settings-panel.v65-full-panel .panel-section { min-height:0; }
+}
+
+@media (max-width:640px) {
+  html body #settings-panel.side-panel.v65-full-panel,
+  html body #profile-panel.side-panel.v65-full-panel { padding:12px 11px calc(16px + env(safe-area-inset-bottom,0px)) !important; }
+  #settings-panel.v65-full-panel .panel-head,
+  #profile-panel.v65-full-panel .panel-head { margin:-12px -11px 0;padding:14px 13px 11px; }
+  #profile-panel.v65-full-panel .profile-banner-preview { height:132px; }
+  #profile-panel.v65-full-panel .profile-avatar-toolbar { grid-template-columns:84px minmax(0,1fr);margin-top:-28px; }
+  #profile-panel.v65-full-panel .profile-avatar-toolbar .av-preview { width:84px;height:84px; }
+}
+
+@media (prefers-reduced-motion:reduce) {
+  .activity-mic-v65,
+  html body #settings-panel.side-panel.v65-full-panel.open,
+  html body #profile-panel.side-panel.v65-full-panel.open,
+  #settings-panel.v65-full-panel.open > *,
+  #profile-panel.v65-full-panel.open > * { animation:none !important; }
+}
