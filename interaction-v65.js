@@ -193,8 +193,11 @@
 
   function setPanelOriginV65(panel, trigger) {
     const rect = trigger?.getBoundingClientRect?.();
-    const x = rect ? rect.left + rect.width / 2 : innerWidth / 2;
-    const y = rect ? rect.top + rect.height / 2 : innerHeight;
+    const panelRect = panel.getBoundingClientRect();
+    const screenX = rect ? rect.left + rect.width / 2 : innerWidth / 2;
+    const screenY = rect ? rect.top + rect.height / 2 : innerHeight;
+    const x = Math.max(0, Math.min(panelRect.width, screenX - panelRect.left));
+    const y = Math.max(0, Math.min(panelRect.height, screenY - panelRect.top));
     panel.style.setProperty('--panel-origin-x-v65', `${Math.round(x)}px`);
     panel.style.setProperty('--panel-origin-y-v65', `${Math.round(y)}px`);
   }
@@ -205,9 +208,9 @@
     clearTimeout(closingTimerV65);closingPanelV65 = null;
     document.querySelectorAll('.side-panel.v65-closing').forEach(element => element.classList.remove('v65-closing'));
     if (full && panel) {
-      setPanelOriginV65(panel, panelTriggerV65(id));
       document.body.classList.add('telechat-full-panel-open-v65');
       panel.classList.add('v65-full-panel');
+      setPanelOriginV65(panel, panelTriggerV65(id));
     } else document.body.classList.remove('telechat-full-panel-open-v65');
     return openPanelBeforeV65.apply(this, [id, ...args]);
   };

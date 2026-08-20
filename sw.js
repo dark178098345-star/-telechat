@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v65-interaction';
+const CACHE_NAME='telechat-shell-v66-compact-panels';
 const APP_SHELL=[
   './',
   './index.html',
@@ -56,8 +56,8 @@ const APP_SHELL=[
   './chat-experience-v62.css?v=63',
   './chat-experience-v62.js?v=63',
   './chat-flow-v64.js?v=64',
-  './interaction-v65.css?v=65',
-  './interaction-v65.js?v=65'
+  './interaction-v65.css?v=66',
+  './interaction-v65.js?v=66'
 ];
 
 self.addEventListener('install',event=>{
