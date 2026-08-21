@@ -572,3 +572,158 @@ html body #profile-panel.side-panel.v65-full-panel.open {
   }
   #profile-panel.v65-full-panel .profile-avatar-toolbar .av-preview { width:72px !important;height:72px !important; }
 }
+
+/* V68 — the profile is a compact left sheet again. */
+body.telechat-full-panel-open-v65:has(#profile-panel.open) #overlay.show {
+  opacity:1 !important;
+  visibility:visible !important;
+  pointer-events:auto !important;
+  background:rgba(3,4,13,.64) !important;
+  -webkit-backdrop-filter:blur(7px) saturate(.88) !important;
+  backdrop-filter:blur(7px) saturate(.88) !important;
+}
+
+html body #profile-panel.side-panel.left.v65-full-panel {
+  --profile-side-pad-v68:15px;
+  inset:0 auto 0 0 !important;
+  top:0 !important;
+  left:0 !important;
+  right:auto !important;
+  bottom:0 !important;
+  width:min(400px,100vw) !important;
+  max-width:100vw !important;
+  height:100vh !important;
+  height:100dvh !important;
+  max-height:none !important;
+  padding:var(--profile-side-pad-v68) !important;
+  overflow-x:hidden !important;
+  overflow-y:auto !important;
+  border:0 !important;
+  border-right:1px solid rgba(167,139,250,.20) !important;
+  border-radius:0 22px 22px 0 !important;
+  background:
+    radial-gradient(circle at 0 0,rgba(124,110,247,.16),transparent 34%),
+    color-mix(in srgb,var(--bg2) 96%,transparent) !important;
+  box-shadow:28px 0 70px rgba(0,0,0,.38),inset -1px 0 rgba(255,255,255,.025) !important;
+  transform:none !important;
+  scrollbar-width:thin;
+  scrollbar-color:rgba(124,110,247,.36) transparent;
+}
+html body #profile-panel.side-panel.left.v65-full-panel.open {
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:stretch !important;
+  gap:11px !important;
+  transform:none !important;
+}
+
+#profile-panel.v65-full-panel .panel-head,
+#profile-panel.v65-full-panel .profile-preview-btn,
+#profile-panel.v65-full-panel .profile-editor-card,
+#profile-panel.v65-full-panel .profile-choice-card,
+#profile-panel.v65-full-panel .profile-fields-card,
+#profile-panel.v65-full-panel .profile-action-dock {
+  grid-column:auto !important;
+  grid-row:auto !important;
+  width:100% !important;
+}
+#profile-panel.v65-full-panel .panel-head {
+  top:calc(-1 * var(--profile-side-pad-v68)) !important;
+  flex:0 0 auto !important;
+  min-height:58px !important;
+  margin:calc(-1 * var(--profile-side-pad-v68)) calc(-1 * var(--profile-side-pad-v68)) 1px !important;
+  padding:12px 14px !important;
+  border-bottom:1px solid rgba(167,139,250,.13) !important;
+  background:linear-gradient(180deg,color-mix(in srgb,var(--bg2) 98%,transparent),color-mix(in srgb,var(--bg2) 92%,transparent)) !important;
+}
+#profile-panel.v65-full-panel .panel-head-mark {
+  width:38px !important;
+  height:38px !important;
+  flex-basis:38px !important;
+  border-radius:13px !important;
+  font-size:17px !important;
+}
+#profile-panel.v65-full-panel .panel-title { font-size:18px !important; }
+#profile-panel.v65-full-panel .panel-head-close {
+  width:36px !important;
+  height:36px !important;
+  flex-basis:36px !important;
+  border-radius:12px !important;
+}
+#profile-panel.v65-full-panel .profile-preview-btn {
+  flex:0 0 auto !important;
+  min-height:56px !important;
+  margin:0 !important;
+  padding:9px 11px !important;
+  border-radius:16px !important;
+}
+#profile-panel.v65-full-panel .profile-preview-icon {
+  width:36px !important;
+  height:36px !important;
+  flex-basis:36px !important;
+  border-radius:12px !important;
+  font-size:17px !important;
+}
+#profile-panel.v65-full-panel .profile-editor-card,
+#profile-panel.v65-full-panel .profile-choice-card,
+#profile-panel.v65-full-panel .profile-fields-card {
+  flex:0 0 auto !important;
+  align-self:stretch !important;
+  margin:0 !important;
+  padding:13px !important;
+  border-radius:18px !important;
+}
+#profile-panel.v65-full-panel .profile-card-title { margin-bottom:9px !important; }
+#profile-panel.v65-full-panel .profile-banner-preview {
+  height:108px !important;
+  border-radius:15px !important;
+}
+#profile-panel.v65-full-panel .profile-avatar-toolbar {
+  grid-template-columns:76px minmax(0,1fr) !important;
+  gap:9px !important;
+  margin:-24px 7px 7px !important;
+}
+#profile-panel.v65-full-panel .profile-avatar-toolbar .av-preview {
+  width:76px !important;
+  height:76px !important;
+  border-radius:25px !important;
+}
+#profile-panel.v65-full-panel .profile-avatar-toolbar .avatar-photo { border-radius:21px !important; }
+#profile-panel.v65-full-panel .banner-presets { gap:6px !important;margin-top:7px !important; }
+#profile-panel.v65-full-panel .banner-preset-btn { height:35px !important;border-radius:10px !important; }
+#profile-panel.v65-full-panel .banner-upload-row { margin-top:7px !important; }
+#profile-panel.v65-full-panel .profile-choice-card .av-grid {
+  grid-template-columns:repeat(6,minmax(0,1fr)) !important;
+  gap:7px !important;
+  padding:7px !important;
+}
+#profile-panel.v65-full-panel .profile-choice-card .av-option { font-size:18px !important; }
+#profile-panel.v65-full-panel .profile-fields-card .field-input { min-height:42px !important; }
+#profile-panel.v65-full-panel .profile-fields-card .profile-bio-input {
+  min-height:76px !important;
+  max-height:110px !important;
+}
+#profile-panel.v65-full-panel .profile-action-dock {
+  position:sticky !important;
+  bottom:calc(-1 * var(--profile-side-pad-v68)) !important;
+  z-index:6 !important;
+  flex:0 0 auto !important;
+  margin:auto 0 calc(-1 * var(--profile-side-pad-v68)) !important;
+  padding:8px 0 calc(8px + env(safe-area-inset-bottom,0px)) !important;
+  border:0 !important;
+  border-radius:0 !important;
+  background:linear-gradient(180deg,transparent,color-mix(in srgb,var(--bg2) 98%,transparent) 24%) !important;
+  box-shadow:none !important;
+}
+#profile-panel.v65-full-panel .profile-action-dock .close-btn,
+#profile-panel.v65-full-panel .profile-action-dock .auth-btn { min-height:45px !important; }
+
+@media (max-width:640px) {
+  html body #profile-panel.side-panel.left.v65-full-panel {
+    --profile-side-pad-v68:11px;
+    width:100vw !important;
+    border-right:0 !important;
+    border-radius:0 !important;
+  }
+  #profile-panel.v65-full-panel .profile-banner-preview { height:104px !important; }
+}

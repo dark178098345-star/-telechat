@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v67-profile-studio';
+const CACHE_NAME='telechat-shell-v68-profile-sheet';
 const APP_SHELL=[
   './',
   './index.html',
@@ -56,7 +56,7 @@ const APP_SHELL=[
   './chat-experience-v62.css?v=63',
   './chat-experience-v62.js?v=63',
   './chat-flow-v64.js?v=64',
-  './interaction-v65.css?v=67',
+  './interaction-v65.css?v=68',
   './interaction-v65.js?v=66'
 ];
 
