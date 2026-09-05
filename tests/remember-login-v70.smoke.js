@@ -19,7 +19,7 @@ assert.match(script, /crypto\.subtle\.decrypt/);
 assert.doesNotMatch(script, /localStorage|sessionStorage/);
 assert.match(script, /loginSucceeded/);
 assert.match(style, /remember-switch-v70/);
-assert.match(worker, /telechat-shell-v70-remember-login/);
+assert.match(worker, /telechat-shell-v\d+/);
 assert.match(worker, /remember-login-v70\.js\?v=70/);
 
 console.log('remember-login-v70 smoke: ok');

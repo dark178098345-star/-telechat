@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v70-remember-login';
+const CACHE_NAME='telechat-shell-v71-stable-chat-open';
 const APP_SHELL=[
   './',
   './index.html',
@@ -53,7 +53,7 @@ const APP_SHELL=[
   './chat-actions-v52.js?v=59',
   './sound-studio-v53.css?v=53',
   './sound-studio-v53.js?v=53',
-  './chat-experience-v62.css?v=63',
+  './chat-experience-v62.css?v=71',
   './chat-experience-v62.js?v=63',
   './chat-flow-v64.js?v=64',
   './interaction-v65.css?v=68',

@@ -23,16 +23,15 @@ html body .side-panel.open.v62-motion-enter .profile-preview-btn {
   animation-delay: min(calc(var(--motion-order-v62,0) * 38ms),228ms) !important;
 }
 
-/* A chat opens in three calm layers instead of flashing as one large surface. */
-#active-chat.v62-content-enter .chat-header {
-  animation: chat-header-in-v62 310ms var(--ease-cinematic-v62) both;
-}
-#active-chat.v62-content-enter .messages {
-  animation: chat-messages-in-v62 410ms var(--ease-cinematic-v62) 28ms both;
-}
+/* The loader already crossfades to the ready chat. A second opacity animation
+   here briefly hid every chat layer and looked like a full-screen blink. */
+#active-chat.v62-content-enter .chat-header,
+#active-chat.v62-content-enter .messages,
 #active-chat.v62-content-enter .input-area,
 #active-chat.v62-content-enter #channel-readonly {
-  animation: chat-composer-in-v62 390ms var(--ease-cinematic-v62) 70ms both;
+  opacity: 1;
+  transform: none;
+  animation: none;
 }
 
 /* Modal cards use the same motion language as settings and profiles. */
@@ -176,7 +175,6 @@ body.telechat-experience-v62 [role="button"]:active {
 @media (max-width:640px) {
   html body .side-panel.open.v62-motion-enter { --panel-shift-v62: 12px; }
   html body .side-panel.left.open.v62-motion-enter { --panel-shift-v62: -12px; }
-  #active-chat.v62-content-enter .messages { animation-duration:350ms; }
   .contact .contact-time { min-width:25px; }
 }
 
