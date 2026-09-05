@@ -514,7 +514,7 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
 <link rel="stylesheet" href="./profile-card-v29.css">
 <link rel="stylesheet" href="./chat-reliability-v24.css">
 <link rel="stylesheet" href="./message-send-animation-v35.css?v=54">
-<link rel="stylesheet" href="./voice-calls-v32.css?v=58">
+<link rel="stylesheet" href="./voice-calls-v32.css?v=69">
 <link rel="stylesheet" href="./glass-context-v36.css?v=36">
 <link rel="stylesheet" href="./chat-boot-v41.css?v=51">
 <link rel="stylesheet" href="./fluid-ui-v42.css?v=48">
@@ -2008,7 +2008,10 @@ sendMsg=async function(){
 };
 clearChat=async function(){
   const key=conversationKey();if(!key)return;if(currentRoom&&currentRoom.owner_nick!==me.nick){showToast('Очистить пространство может только владелец');return;}if(!confirm('Очистить все сообщения?'))return;
-  await sb.from('messages').delete().eq('chat_key',key);await sb.from('polls').delete().eq('chat_key',key);document.getElementById('messages').innerHTML='<div style="text-align:center;padding:30px;font-size:13px;color:var(--text3)">Чат очищен 🗑️</div>';lastRenderedDate='';renderContacts();
+  const [messagesResult,pollsResult]=await Promise.all([sb.from('messages').delete().eq('chat_key',key),sb.from('polls').delete().eq('chat_key',key)]);
+  if(messagesResult.error||pollsResult.error){showToast('Не удалось очистить чат');return;}
+  window.telechatChatSpeedV51?.clearConversation?.(key);
+  document.getElementById('messages').innerHTML='<div style="text-align:center;padding:30px;font-size:13px;color:var(--text3)">Чат очищен 🗑️</div>';lastRenderedDate='';renderContacts();
 };
 openPollModal=function(){if(!conversationKey()){showToast('Сначала открой чат');return;}if(!canWriteCurrent()){showToast('В этом канале публикует только владелец');return;}document.getElementById('poll-question').value='';document.getElementById('poll-options-list').innerHTML='<input class="poll-opt-inp" placeholder="Вариант 1"/><input class="poll-opt-inp" placeholder="Вариант 2"/>';document.getElementById('poll-modal').classList.add('show');};
 createPoll=async function(){
@@ -2514,7 +2517,7 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <script src="./profile-details-v22.js"></script>
 <script src="./chat-reliability-v24.js"></script>
 <script src="./message-send-animation-v35.js?v=54"></script>
-<script src="./voice-calls-v32.js?v=58"></script>
+<script src="./voice-calls-v32.js?v=69"></script>
 <script src="./message-context-v36.js?v=36"></script>
 <script src="./desktop-notifications-v37.js?v=37"></script>
 <script src="./voice-send-v38.js?v=39"></script>
@@ -2522,7 +2525,7 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <script src="./chat-boot-v41.js?v=51"></script>
 <script src="./fluid-ui-v42.js?v=48"></script>
 <script src="./chat-open-loader-v44.js?v=51"></script>
-<script src="./chat-speed-v51.js?v=64"></script>
+<script src="./chat-speed-v51.js?v=69"></script>
 <script src="./chat-actions-v52.js?v=59"></script>
 <script src="./sound-studio-v53.js?v=53"></script>
 <script src="./chat-experience-v62.js?v=63"></script>

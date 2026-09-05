@@ -46,6 +46,28 @@
     return state;
   }
 
+  function clearConversationV51(key = activeKeyV51()) {
+    const normalizedKey = String(key || '');
+    if (!normalizedKey) return false;
+    const state = historyCacheV51.get(normalizedKey);
+    if (state) {
+      state.disposed = true;
+      clearTimeout(state.refreshTimer);
+      state.refreshTimer = 0;
+      state.refreshWaiters.splice(0).forEach(done => done(null));
+    }
+    historyCacheV51.delete(normalizedKey);
+    renderTokenV51++;
+    if (normalizedKey === activeKeyV51()) {
+      const box = document.getElementById('messages');
+      if (box) {
+        delete box.dataset.chatKeyV51;
+        box.replaceChildren();
+      }
+    }
+    return true;
+  }
+
   function itemKeyV51(item) {
     const type = item._type === 'poll' ? 'poll' : 'msg';
     return `${type}:${item.id ?? `${item.from_nick || item.created_by || ''}:${item.ts || 0}`}`;
@@ -138,12 +160,12 @@
   }
 
   async function paintStateV51(state, options = {}) {
-    if (!state || state.key !== activeKeyV51()) return false;
+    if (!state || state.disposed || state.key !== activeKeyV51()) return false;
     if (state.painting) return state.painting;
     state.painting = (async () => {
       const token = ++renderTokenV51;
       await warmUsersV51(state.items);
-      if (token !== renderTokenV51 || state.key !== activeKeyV51()) return false;
+      if (state.disposed || token !== renderTokenV51 || state.key !== activeKeyV51()) return false;
       const box = document.getElementById('messages');
       if (!box) return false;
       box.classList.add('v51-painting');
@@ -178,10 +200,11 @@
   }
 
   async function refreshLatestV51(state, repaint = true) {
-    if (!state || state.loading) return state?.loading || null;
+    if (!state || state.disposed || state.loading) return state?.loading || null;
     state.loading = (async () => {
       const previousMark = stateMarkV51(state.items);
       const page = await fetchPageV51(state.key);
+      if (state.disposed) return null;
       const oldestFresh = page.items.length ? page.cursor : Infinity;
       const older = page.items.length ? state.items.filter(item => Number(item.ts || 0) < oldestFresh) : [];
       state.items = mergeItemsV51(older, page.items);
@@ -200,7 +223,7 @@
   }
 
   function scheduleLatestV51(state, delay = 90) {
-    if (!state) return Promise.resolve(null);
+    if (!state || state.disposed) return Promise.resolve(null);
     return new Promise(resolve => {
       state.refreshWaiters.push(resolve);
       clearTimeout(state.refreshTimer);
@@ -389,6 +412,7 @@
 
   window.telechatChatSpeedV51 = {
     loadOlder: loadOlderV51,
+    clearConversation: clearConversationV51,
     syncReadReceipts: syncReadReceiptsV51,
     applyRealtimeUpdate: applyRealtimeUpdateV51,
     refreshActive: () => {

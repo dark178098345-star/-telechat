@@ -6,6 +6,10 @@
   const MAX_PARTICIPANTS=6;
   const MEMBER_ACTIVE=new Set(['invited','joined']);
   const MEMBER_FINAL=new Set(['rejected','left','missed']);
+  const PREFERRED_AUDIO_V69={
+    echoCancellation:{ideal:true},noiseSuppression:{ideal:true},autoGainControl:{ideal:false},
+    channelCount:{ideal:1},sampleRate:{ideal:48000},sampleSize:{ideal:16}
+  };
   const PeerConnectionV55=window.RTCPeerConnection||window.webkitRTCPeerConnection;
   const RTC_CONFIG={
     iceServers:[
@@ -54,6 +58,10 @@
   const callDurationV32=state=>state?.startedAt?Math.max(0,Math.floor((nowV32()-state.startedAt)/1000)):0;
   const memberDomIdV32=nick=>'call-member-'+String(nick||'user').replace(/[^a-z0-9_-]/gi,'-');
   const displayStateV32=()=>callState||incomingInvite?.view||null;
+  const mediaMarkV69=value=>{
+    const text=String(value||'');
+    return text.length+':'+text.slice(0,20)+':'+text.slice(-20);
+  };
 
   function ensureCallUiV32(){
     let button=byId('voice-call-btn');
@@ -161,18 +169,31 @@
 
   async function requestMicrophoneV32(){
     unlockCallAudioV55();
+    let stream;
     try{
-      return await navigator.mediaDevices.getUserMedia({
-        audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:false
-      });
+      stream=await navigator.mediaDevices.getUserMedia({audio:PREFERRED_AUDIO_V69,video:false});
     }catch(firstError){
       const firstName=String(firstError?.name||'');
       if(!/NotAllowedError|SecurityError|NotFoundError/i.test(firstName)){
-        try{return await navigator.mediaDevices.getUserMedia({audio:true,video:false});}
+        try{stream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});}
         catch(error){throwMicrophoneErrorV55(error);}
-      }
-      throwMicrophoneErrorV55(firstError);
+      }else throwMicrophoneErrorV55(firstError);
     }
+    const track=stream?.getAudioTracks?.()[0];
+    if(track){
+      try{track.contentHint='speech';}catch(error){}
+      try{
+        const supported=navigator.mediaDevices.getSupportedConstraints?.()||{};
+        const constraints={};
+        if(supported.echoCancellation)constraints.echoCancellation=true;
+        if(supported.noiseSuppression)constraints.noiseSuppression=true;
+        if(supported.autoGainControl)constraints.autoGainControl=false;
+        if(supported.channelCount)constraints.channelCount=1;
+        if(Object.keys(constraints).length)await track.applyConstraints(constraints);
+      }catch(error){}
+    }
+    try{if(navigator.audioSession)navigator.audioSession.type='play-and-record';}catch(error){}
+    return stream;
   }
 
   function throwMicrophoneErrorV55(error){
@@ -277,6 +298,16 @@
     box.classList.toggle('group-call',visible.length>2);
     const overlay=byId('voice-call-overlay');
     if(overlay){overlay.dataset.people=String(visible.length);overlay.dataset.group=visible.length>2?'true':'false';}
+    const signature=visible.map(item=>{
+      const user=item.user||{};
+      return [String(item.nick).toLowerCase(),item.status,user.name,user.av,mediaMarkV69(user.status),mediaMarkV69(user.avatar_video),user.animated_profile].join(':');
+    }).join('|');
+    const joined=visible.filter(item=>item.status==='joined').length;
+    byId('voice-call-count').textContent=Math.max(1,joined)+'\u0020\u0432\u0020\u0437\u0432\u043e\u043d\u043a\u0435';
+    const remoteJoined=visible.filter(item=>item.status==='joined'&&!sameNickV32(item.nick,me?.nick));
+    byId('call-mixer-btn').disabled=!remoteJoined.length;
+    if(state.peopleSignatureV69===signature&&box.children.length)return;
+    state.peopleSignatureV69=signature;
     box.innerHTML='';
     visible.forEach((item,index)=>{
       const person=document.createElement('article');
@@ -298,10 +329,6 @@
         box.appendChild(connector);
       }
     });
-    const joined=visible.filter(item=>item.status==='joined').length;
-    byId('voice-call-count').textContent=Math.max(1,joined)+'\u0020\u0432\u0020\u0437\u0432\u043e\u043d\u043a\u0435';
-    const remoteJoined=visible.filter(item=>item.status==='joined'&&!sameNickV32(item.nick,me?.nick));
-    byId('call-mixer-btn').disabled=!remoteJoined.length;
     renderMiniCallV32(visible);
     renderCallMixerV32();
   }
@@ -611,9 +638,11 @@
       audio=document.createElement('audio');audio.id='call-audio-'+peer.nick;
       audio.autoplay=true;audio.playsInline=true;audio.setAttribute('playsinline','');audio.muted=false;byId('voice-call-audio-rack').appendChild(audio);
     }
-    audio.srcObject=peer.remoteStream;
+    if(audio.srcObject!==peer.remoteStream)audio.srcObject=peer.remoteStream;
     audio.volume=state.volumes?.get(peer.nick)??1;
-    audio.play().catch(()=>armCallAudioResumeV55());
+    audio.muted=sameNickV32(peer.nick,me?.nick);
+    audio.disableRemotePlayback=true;
+    if(audio.paused)audio.play().catch(()=>armCallAudioResumeV55());
     peer.audio=audio;
   }
 
@@ -978,6 +1007,7 @@
       for(const nick of [...(state.peers?.keys()||[])])removePeerV32(state,nick);
       try{state.localStream?.getTracks().forEach(track=>track.stop());}catch(error){}
     }
+    try{if(navigator.audioSession)navigator.audioSession.type='auto';}catch(error){}
     byId('voice-call-audio-rack')?.replaceChildren();
     incomingInvite=null;byId('call-mic-btn')?.classList.remove('muted');
     if(byId('call-mic-label'))byId('call-mic-label').textContent='Микрофон';

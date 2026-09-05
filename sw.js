@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v68-profile-sheet';
+const CACHE_NAME='telechat-shell-v69-call-message-stability';
 const APP_SHELL=[
   './',
   './index.html',
@@ -31,8 +31,8 @@ const APP_SHELL=[
   './chat-reliability-v24.js',
   './message-send-animation-v35.css?v=54',
   './message-send-animation-v35.js?v=54',
-  './voice-calls-v32.css?v=58',
-  './voice-calls-v32.js?v=58',
+  './voice-calls-v32.css?v=69',
+  './voice-calls-v32.js?v=69',
   './glass-context-v36.css?v=36',
   './message-context-v36.js?v=36',
   './desktop-notifications-v37.js?v=37',
@@ -48,7 +48,7 @@ const APP_SHELL=[
   './gpu-safe-panels-v46.css?v=47',
   './liquid-glass-v50.css?v=50',
   './chat-speed-v51.css?v=64',
-  './chat-speed-v51.js?v=64',
+  './chat-speed-v51.js?v=69',
   './chat-actions-v52.css?v=59',
   './chat-actions-v52.js?v=59',
   './sound-studio-v53.css?v=53',
