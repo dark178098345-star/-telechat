@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v69-call-message-stability';
+const CACHE_NAME='telechat-shell-v70-remember-login';
 const APP_SHELL=[
   './',
   './index.html',
@@ -57,7 +57,9 @@ const APP_SHELL=[
   './chat-experience-v62.js?v=63',
   './chat-flow-v64.js?v=64',
   './interaction-v65.css?v=68',
-  './interaction-v65.js?v=66'
+  './interaction-v65.js?v=66',
+  './remember-login-v70.css?v=70',
+  './remember-login-v70.js?v=70'
 ];
 
 self.addEventListener('install',event=>{

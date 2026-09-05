@@ -1,0 +1,39 @@
+.remember-login-v70{
+  display:flex;align-items:center;gap:12px;width:100%;min-height:48px;
+  margin:0 0 7px;padding:7px 10px;border:1px solid transparent;border-radius:12px;
+  cursor:pointer;user-select:none;transition:background .2s ease,border-color .2s ease,transform .2s ease;
+}
+.remember-login-v70:hover{background:rgba(124,110,247,.07);border-color:rgba(124,110,247,.14)}
+.remember-login-v70:active{transform:scale(.992)}
+.remember-copy-v70{display:flex;flex:1;min-width:0;flex-direction:column;gap:1px}
+.remember-copy-v70 strong{color:var(--text2);font-size:12.5px;font-weight:700;line-height:1.25}
+.remember-copy-v70 small{color:var(--text3);font-size:10px;line-height:1.3;white-space:normal}
+.remember-login-v70>input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.remember-switch-v70{
+  position:relative;flex:0 0 36px;width:36px;height:21px;border-radius:999px;
+  background:rgba(90,90,114,.48);border:1px solid rgba(255,255,255,.08);
+  box-shadow:inset 0 1px 4px rgba(0,0,0,.24);transition:background .22s ease,border-color .22s ease,box-shadow .22s ease;
+}
+.remember-switch-v70 span{
+  position:absolute;left:2px;top:2px;width:15px;height:15px;border-radius:50%;background:#d8d8e8;
+  box-shadow:0 2px 6px rgba(0,0,0,.3);transition:transform .24s cubic-bezier(.2,.8,.2,1),background .2s ease;
+}
+.remember-login-v70>input:checked+.remember-switch-v70{
+  background:linear-gradient(135deg,var(--accent),var(--accent2));border-color:rgba(167,139,250,.58);
+  box-shadow:0 0 0 3px rgba(124,110,247,.1),inset 0 1px 2px rgba(255,255,255,.18);
+}
+.remember-login-v70>input:checked+.remember-switch-v70 span{transform:translateX(15px);background:#fff}
+.remember-login-v70>input:focus-visible+.remember-switch-v70{outline:2px solid var(--accent3);outline-offset:3px}
+.forget-login-v70{
+  display:block;margin:-1px auto 7px;padding:3px 8px;border:0;background:transparent;color:var(--text3);
+  font:600 10.5px/1.3 inherit;cursor:pointer;transition:color .18s ease,opacity .18s ease;
+}
+.forget-login-v70:hover{color:var(--accent3)}
+.forget-login-v70[hidden]{display:none!important}
+@media(max-height:560px){
+  .remember-login-v70{min-height:40px;padding-top:4px;padding-bottom:4px}
+  .remember-copy-v70 small{display:none}
+}
+@media(prefers-reduced-motion:reduce){
+  .remember-login-v70,.remember-switch-v70,.remember-switch-v70 span,.forget-login-v70{transition:none}
+}
