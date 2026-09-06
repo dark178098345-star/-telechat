@@ -868,6 +868,7 @@
     if(currentRoom&&!currentChat&&!peerOverride){showToast('Открой личный чат, чтобы позвонить');return;}
     if(!peer){showToast('Не удалось определить собеседника — открой чат ещё раз');return;}
     if(sameNickV32(peer,me?.nick)){showToast('Нельзя позвонить самому себе');return;}
+    if(window.telechatIsBlockedV74?.(peer)){showToast('Сначала разблокируй пользователя');return;}
     if(callUnavailableV32())return;
     let stream;
     try{stream=await requestMicrophoneV32();}catch(error){return;}
@@ -917,6 +918,10 @@
 
   async function showIncomingCallV32(memberRow){
     if(!me||!sameNickV32(memberRow.nick,me.nick)||memberRow.status!=='invited')return;
+    if(window.telechatIsBlockedV74?.(memberRow.invited_by)){
+      await sb.from('telechat_group_call_members').update({status:'rejected',left_at:nowV32()}).eq('call_id',memberRow.call_id).eq('nick',me.nick);
+      return;
+    }
     if(callState){
       if(callState.id!==memberRow.call_id)await sb.from('telechat_group_call_members').update({status:'rejected',left_at:nowV32()}).eq('call_id',memberRow.call_id).eq('nick',me.nick);
       return;

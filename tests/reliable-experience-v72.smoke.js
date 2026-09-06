@@ -38,14 +38,14 @@ assert.match(device, /__telechat_device_pc_v72__/);
 assert.match(device, /С телефона/);
 assert.match(device, /С компьютера/);
 
-for (const asset of ['delivery-v72.css?v=72', 'device-presence-v72.js?v=72', 'voice-calls-v32.js?v=72']) {
+for (const asset of ['delivery-v72.css?v=72', 'device-presence-v72.js?v=72']) {
   assert(index.includes(asset), `index is missing ${asset}`);
   assert(serviceWorker.includes(asset), `service worker is missing ${asset}`);
 }
-for (const asset of ['chat-reliability-v24.js?v=73', 'chat-speed-v51.js?v=73']) {
+for (const asset of ['chat-reliability-v24.js?v=73', 'chat-speed-v51.js?v=74', 'voice-calls-v32.js?v=74']) {
   assert(index.includes(asset), `index is missing ${asset}`);
   assert(serviceWorker.includes(asset), `service worker is missing ${asset}`);
 }
-assert.match(serviceWorker, /telechat-shell-v73-message-visibility/);
+assert.match(serviceWorker, /telechat-shell-v74-chat-privacy/);
 
 console.log('V72 reliable experience smoke test passed');

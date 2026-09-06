@@ -530,6 +530,7 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
 <link rel="stylesheet" href="./interaction-v65.css?v=68">
 <link rel="stylesheet" href="./remember-login-v70.css?v=70">
 <link rel="stylesheet" href="./device-presence-v72.css?v=72">
+<link rel="stylesheet" href="./chat-privacy-v74.css?v=74">
 </head>
 <body>
 <div id="startup-loader" role="status" aria-live="polite" aria-label="Загрузка tele.chat">
@@ -1866,7 +1867,7 @@ async function loadMyRooms(){
 renderContacts=async function(){
   const list=document.getElementById('contacts-list');
   await loadMyRooms();
-  const {data:msgs}=await sb.from('messages').select('chat_key,text,ts').eq('deleted',false).order('ts',{ascending:false}).limit(500);
+  const {data:msgs}=await sb.from('messages').select('chat_key,from_nick,text,ts').eq('deleted',false).order('ts',{ascending:false}).limit(500);
   const allMsgs=msgs||[],roomLast={};
   for(const m of allMsgs){if(m.chat_key&&m.chat_key.startsWith('room_')&&!roomLast[m.chat_key])roomLast[m.chat_key]=m;}
   list.innerHTML='';let rendered=0;
@@ -1884,13 +1885,14 @@ renderContacts=async function(){
     const seen=new Set(),chats=[];
     for(const m of allMsgs){
       if(!m.chat_key||m.chat_key.startsWith('room_')||!m.chat_key.includes(me.nick))continue;
+      if(window.telechatShouldHideMessageV74?.(m))continue;
       const parts=m.chat_key.split('_'),other=parts[0]===me.nick?parts[1]:parts[0];
       if(other&&!seen.has(other)){seen.add(other);chats.push({nick:other,last:m.text,ts:m.ts});}
     }
     if(chats.length){const title=document.createElement('div');title.className='list-section-title';title.textContent='Личные чаты';list.appendChild(title);}
     for(const c of chats){
       const u=await getUser(c.nick);if(!u)continue;
-      const online=isOnline(u.last_seen),el=document.createElement('div');el.className='contact'+(currentChat===c.nick&&!currentRoom?' active':'');
+      const online=isOnline(u.last_seen),el=document.createElement('div');el.className='contact'+(currentChat===c.nick&&!currentRoom?' active':'');el.dataset.contactNick=c.nick;
       el.innerHTML=`<div class="av${online?' av-online':''}">${avatarMarkup(u)}</div><div class="contact-info"><div class="contact-name">${escHtml(u.name)}</div><div class="contact-last">${escHtml(messagePreviewText(c.last).substring(0,38))}</div></div><div class="contact-time">${formatMsgTime(c.ts)}</div>`;
       el.onclick=()=>openChat(c.nick);list.appendChild(el);rendered++;
     }
@@ -2529,21 +2531,22 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <script src="./profile-details-v22.js"></script>
 <script src="./chat-reliability-v24.js?v=73"></script>
 <script src="./message-send-animation-v35.js?v=54"></script>
-<script src="./voice-calls-v32.js?v=72"></script>
+<script src="./voice-calls-v32.js?v=74"></script>
 <script src="./message-context-v36.js?v=36"></script>
-<script src="./desktop-notifications-v37.js?v=37"></script>
+<script src="./desktop-notifications-v37.js?v=74"></script>
 <script src="./voice-send-v38.js?v=39"></script>
 <script src="./media-compat-v40.js?v=40"></script>
 <script src="./chat-boot-v41.js?v=51"></script>
 <script src="./fluid-ui-v42.js?v=48"></script>
 <script src="./chat-open-loader-v44.js?v=51"></script>
-<script src="./chat-speed-v51.js?v=73"></script>
+<script src="./chat-speed-v51.js?v=74"></script>
 <script src="./chat-actions-v52.js?v=59"></script>
 <script src="./sound-studio-v53.js?v=53"></script>
-<script src="./chat-experience-v62.js?v=63"></script>
-<script src="./chat-flow-v64.js?v=64"></script>
+<script src="./chat-experience-v62.js?v=74"></script>
+<script src="./chat-flow-v64.js?v=74"></script>
 <script src="./interaction-v65.js?v=66"></script>
 <script src="./remember-login-v70.js?v=70"></script>
 <script src="./device-presence-v72.js?v=72"></script>
+<script src="./chat-privacy-v74.js?v=74"></script>
 </body>
 </html>

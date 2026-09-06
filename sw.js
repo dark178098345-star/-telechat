@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v73-message-visibility';
+const CACHE_NAME='telechat-shell-v74-chat-privacy';
 const APP_SHELL=[
   './',
   './index.html',
@@ -33,10 +33,10 @@ const APP_SHELL=[
   './message-send-animation-v35.css?v=54',
   './message-send-animation-v35.js?v=54',
   './voice-calls-v32.css?v=72',
-  './voice-calls-v32.js?v=72',
+  './voice-calls-v32.js?v=74',
   './glass-context-v36.css?v=36',
   './message-context-v36.js?v=36',
-  './desktop-notifications-v37.js?v=37',
+  './desktop-notifications-v37.js?v=74',
   './voice-send-v38.js?v=39',
   './media-compat-v40.js?v=40',
   './chat-boot-v41.css?v=51',
@@ -49,20 +49,22 @@ const APP_SHELL=[
   './gpu-safe-panels-v46.css?v=47',
   './liquid-glass-v50.css?v=50',
   './chat-speed-v51.css?v=64',
-  './chat-speed-v51.js?v=73',
+  './chat-speed-v51.js?v=74',
   './chat-actions-v52.css?v=59',
   './chat-actions-v52.js?v=59',
   './sound-studio-v53.css?v=53',
   './sound-studio-v53.js?v=53',
   './chat-experience-v62.css?v=71',
-  './chat-experience-v62.js?v=63',
-  './chat-flow-v64.js?v=64',
+  './chat-experience-v62.js?v=74',
+  './chat-flow-v64.js?v=74',
   './interaction-v65.css?v=68',
   './interaction-v65.js?v=66',
   './remember-login-v70.css?v=70',
   './remember-login-v70.js?v=70',
   './device-presence-v72.css?v=72',
-  './device-presence-v72.js?v=72'
+  './device-presence-v72.js?v=72',
+  './chat-privacy-v74.css?v=74',
+  './chat-privacy-v74.js?v=74'
 ];
 
 self.addEventListener('install',event=>{

@@ -72,6 +72,8 @@
     const roomId = roomIdFromKeyV37(key);
     const peer = directPeerV37(key, nick);
     if (!peer && (!roomId || !roomIdsV37.has(roomId))) return;
+    if (peer && window.telechatIsBlockedV74?.(peer)) return;
+    if (peer && window.telechatShouldSilenceV74?.(peer)) return;
 
     try { window.telechatPlaySoundV53?.('incoming'); } catch (error) {}
 

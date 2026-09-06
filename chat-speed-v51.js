@@ -289,15 +289,16 @@
       if (state.disposed || token !== renderTokenV51 || state.key !== activeKeyV51()) return false;
       const box = document.getElementById('messages');
       if (!box) return false;
+      const visibleItems = state.items.filter(item => item._type === 'poll' || !window.telechatShouldHideMessageV74?.(item));
       box.classList.add('v51-painting');
       try {
         box.replaceChildren();
         box.dataset.chatKeyV51 = state.key;
         lastRenderedDate = '';
-        if (!state.items.length) {
+        if (!visibleItems.length) {
           box.innerHTML = '<div class="v51-empty-chat" style="text-align:center;padding:30px;font-size:13px;color:var(--text3)">Начни первым! 👋</div>';
         } else {
-          for (const item of state.items) {
+          for (const item of visibleItems) {
             if (token !== renderTokenV51 || state.key !== activeKeyV51()) return false;
             if (item._type === 'poll') renderPoll(item, box);
             else {
@@ -310,7 +311,7 @@
           }
         }
         state.lastPaintAt = Date.now();
-        syncReadReceiptsV51(state.items);
+        syncReadReceiptsV51(visibleItems);
         if (!options.keepScroll) scrollToBottom();
         return true;
       } finally {
@@ -545,6 +546,11 @@
     clearConversation: clearConversationV51,
     syncReadReceipts: syncReadReceiptsV51,
     applyRealtimeUpdate: applyRealtimeUpdateV51,
+    repaintActive: () => {
+      const key = activeKeyV51();
+      const state = key ? historyCacheV51.get(key) : null;
+      return state ? paintStateV51(state) : Promise.resolve(false);
+    },
     acceptSent: message => {
       const key = String(message?.chat_key || '');
       if (!key || !message) return false;

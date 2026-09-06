@@ -151,6 +151,7 @@
   function incrementUnreadV62(message) {
     const key = String(message?.chat_key || '');
     if (!key || !relevantKeyV62(key) || message?.deleted || message?.from_nick === currentNickV62()) return;
+    if (window.telechatShouldHideMessageV74?.(message)) return;
     if (isActuallyVisibleV62(key)) { clearUnreadV62(key);return; }
     const previous = unreadV62.get(key) || { count: 0, mentions: 0, at: 0 };
     setUnreadV62(key, previous.count + 1, previous.mentions + (hasMentionV62(message) ? 1 : 0), Number(message?.ts) || Date.now());
@@ -230,12 +231,12 @@
       ]);
       if (result.error) return;
       const mentionIds = new Set((mentionResult.data || [])
-        .filter(message => !message.deleted && !readByV62(message).includes(nick))
+        .filter(message => !message.deleted && !readByV62(message).includes(nick) && !window.telechatShouldHideMessageV74?.(message))
         .map(message => String(message.id)));
       const next = new Map();
       for (const message of result.data || []) {
         const key = String(message.chat_key || '');
-        if (!relevantKeyV62(key) || message.deleted || readByV62(message).includes(nick) || isActuallyVisibleV62(key)) continue;
+        if (!relevantKeyV62(key) || message.deleted || readByV62(message).includes(nick) || isActuallyVisibleV62(key) || window.telechatShouldHideMessageV74?.(message)) continue;
         const entry = next.get(key) || { count: 0, mentions: 0, at: 0 };
         entry.count++;
         if (mentionIds.has(String(message.id))) entry.mentions++;
@@ -253,6 +254,7 @@
     unreadChannelV62 = sb.channel(`unread-v62-${currentNickV62()}-${Date.now()}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
         const message = payload.new || {};
+        if (window.telechatShouldHideMessageV74?.(message)) return;
         const fingerprint = String(message.id || `${message.chat_key}:${message.from_nick}:${message.ts}`);
         if (seenRealtimeV62.has(fingerprint)) return;
         seenRealtimeV62.add(fingerprint);

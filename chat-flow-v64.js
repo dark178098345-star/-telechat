@@ -36,14 +36,18 @@
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `chat_key=eq.${key}` }, async payload => {
         const message = payload.new || {};
         if (key !== activeKeyV64() || message.from_nick === me.nick || message.deleted) return;
+        if (!currentRoom && window.telechatIsBlockedV74?.(message.from_nick)) return;
         await appendMessage(message);
         Promise.resolve(renderContacts()).catch(() => {});
-        playPing();
+        const silenced = !currentRoom && window.telechatShouldSilenceV74?.(message.from_nick);
+        if (!silenced) playPing();
         const user = await getUser(message.from_nick);
-        sendPushNotification(
-          currentRoom ? currentRoom.name : (user?.name || 'Новое сообщение'),
-          messagePreviewText(message.text).substring(0, 80)
-        );
+        if (!silenced) {
+          sendPushNotification(
+            currentRoom ? currentRoom.name : (user?.name || 'Новое сообщение'),
+            messagePreviewText(message.text).substring(0, 80)
+          );
+        }
         scheduleReadV64(key);
       })
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages', filter: `chat_key=eq.${key}` }, payload => {
