@@ -531,6 +531,7 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
 <link rel="stylesheet" href="./saved-accounts-v75.css?v=75">
 <link rel="stylesheet" href="./device-presence-v72.css?v=72">
 <link rel="stylesheet" href="./chat-privacy-v74.css?v=75">
+<link rel="stylesheet" href="./smooth-ui-v76.css?v=76">
 </head>
 <body>
 <div id="startup-loader" role="status" aria-live="polite" aria-label="Загрузка tele.chat">
@@ -873,6 +874,20 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
       <button class="install-app-btn" id="install-app-btn" onclick="installTelechat()">Установить tele.chat</button>
       <div class="install-app-hint" id="install-app-hint">Откроется отдельным приложением без адресной строки</div>
     </div>
+  </div>
+  <div class="panel-section account-session-v76" id="account-session-v76">
+    <div class="panel-section-title">Аккаунт</div>
+    <div class="account-session-row-v76">
+      <div class="account-session-avatar-v76" id="account-session-avatar-v76" aria-hidden="true">👤</div>
+      <div class="account-session-copy-v76">
+        <strong id="account-session-name-v76">Текущий аккаунт</strong>
+        <span id="account-session-nick-v76">Активный сеанс</span>
+      </div>
+      <button class="account-logout-btn-v76" type="button" onclick="openLogoutDialogV76()">
+        <span aria-hidden="true">↪</span><b>Выйти</b>
+      </button>
+    </div>
+    <div class="account-session-note-v76">Сохранённая карточка останется в списке быстрого входа</div>
   </div>
   <button class="close-btn" onclick="closeAllPanels()">Закрыть настройки</button>
 </div>
@@ -2551,5 +2566,6 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <script src="./saved-accounts-v75.js?v=75"></script>
 <script src="./device-presence-v72.js?v=72"></script>
 <script src="./chat-privacy-v74.js?v=74"></script>
+<script src="./smooth-ui-v76.js?v=76"></script>
 </body>
 </html>
