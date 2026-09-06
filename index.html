@@ -528,9 +528,9 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
 <link rel="stylesheet" href="./sound-studio-v53.css?v=53">
 <link rel="stylesheet" href="./chat-experience-v62.css?v=71">
 <link rel="stylesheet" href="./interaction-v65.css?v=68">
-<link rel="stylesheet" href="./remember-login-v70.css?v=70">
+<link rel="stylesheet" href="./saved-accounts-v75.css?v=75">
 <link rel="stylesheet" href="./device-presence-v72.css?v=72">
-<link rel="stylesheet" href="./chat-privacy-v74.css?v=74">
+<link rel="stylesheet" href="./chat-privacy-v74.css?v=75">
 </head>
 <body>
 <div id="startup-loader" role="status" aria-live="polite" aria-label="Загрузка tele.chat">
@@ -644,19 +644,22 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
       <div class="auth-tab" onclick="switchTab('register')">Регистрация</div>
     </div>
     <div id="login-form">
+      <section class="saved-accounts-v75" id="saved-accounts-v75" aria-label="Сохранённые аккаунты">
+        <div class="saved-accounts-head-v75">
+          <span class="saved-accounts-symbol-v75" aria-hidden="true">✦</span>
+          <div><strong>Твои аккаунты</strong><small>быстрый вход на этом устройстве</small></div>
+        </div>
+        <div class="saved-account-list-v75" id="saved-account-list-v75"></div>
+        <div class="saved-account-empty-v75" id="saved-account-empty-v75">
+          <span aria-hidden="true">👤</span>
+          <div><strong>Здесь появятся аккаунты</strong><small>Введи ник и пароль — после входа карточка сохранится автоматически</small></div>
+        </div>
+      </section>
+      <div class="saved-account-divider-v75" id="saved-account-divider-v75" hidden><span>или войди вручную</span></div>
       <div class="field-label">Ник</div>
       <input class="field-input" id="l-login" name="username" placeholder="твой ник" autocomplete="username" autocorrect="off" autocapitalize="none" spellcheck="false" onkeydown="if(event.key==='Enter')doLogin()"/>
       <div class="field-label">Пароль</div>
       <input class="field-input" id="l-pass" name="password" type="password" placeholder="пароль" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"/>
-      <label class="remember-login-v70" for="remember-login-v70">
-        <span class="remember-copy-v70">
-          <strong>Запомнить меня</strong>
-          <small>Ник и пароль только на этом устройстве</small>
-        </span>
-        <input type="checkbox" id="remember-login-v70" aria-label="Запомнить меня на этом устройстве"/>
-        <span class="remember-switch-v70" aria-hidden="true"><span></span></span>
-      </label>
-      <button class="forget-login-v70" id="forget-login-v70" type="button" hidden>Забыть сохранённый вход</button>
       <button class="auth-btn" id="login-btn" onclick="doLogin()">Войти</button>
     </div>
     <div id="reg-form" style="display:none">
@@ -2545,7 +2548,7 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <script src="./chat-experience-v62.js?v=74"></script>
 <script src="./chat-flow-v64.js?v=74"></script>
 <script src="./interaction-v65.js?v=66"></script>
-<script src="./remember-login-v70.js?v=70"></script>
+<script src="./saved-accounts-v75.js?v=75"></script>
 <script src="./device-presence-v72.js?v=72"></script>
 <script src="./chat-privacy-v74.js?v=74"></script>
 </body>

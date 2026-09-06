@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v74-chat-privacy';
+const CACHE_NAME='telechat-shell-v75-saved-accounts';
 const APP_SHELL=[
   './',
   './index.html',
@@ -59,11 +59,11 @@ const APP_SHELL=[
   './chat-flow-v64.js?v=74',
   './interaction-v65.css?v=68',
   './interaction-v65.js?v=66',
-  './remember-login-v70.css?v=70',
-  './remember-login-v70.js?v=70',
+  './saved-accounts-v75.css?v=75',
+  './saved-accounts-v75.js?v=75',
   './device-presence-v72.css?v=72',
   './device-presence-v72.js?v=72',
-  './chat-privacy-v74.css?v=74',
+  './chat-privacy-v74.css?v=75',
   './chat-privacy-v74.js?v=74'
 ];
 

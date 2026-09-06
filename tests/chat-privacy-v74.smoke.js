@@ -38,7 +38,7 @@ assert.match(calls, /telechatIsBlockedV74/);
 assert.match(index, /el\.dataset\.contactNick=c\.nick/);
 
 for (const asset of [
-  'chat-privacy-v74.css?v=74',
+  'chat-privacy-v74.css?v=75',
   'chat-privacy-v74.js?v=74',
   'chat-speed-v51.js?v=74',
   'chat-flow-v64.js?v=74',
@@ -49,6 +49,6 @@ for (const asset of [
   assert(index.includes(asset), `index is missing ${asset}`);
   assert(serviceWorker.includes(asset), `service worker is missing ${asset}`);
 }
-assert.match(serviceWorker, /telechat-shell-v74-chat-privacy/);
+assert.match(serviceWorker, /telechat-shell-v75-saved-accounts/);
 
 console.log('chat privacy V74 smoke: ok');

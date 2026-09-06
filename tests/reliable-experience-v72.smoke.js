@@ -46,6 +46,6 @@ for (const asset of ['chat-reliability-v24.js?v=73', 'chat-speed-v51.js?v=74', '
   assert(index.includes(asset), `index is missing ${asset}`);
   assert(serviceWorker.includes(asset), `service worker is missing ${asset}`);
 }
-assert.match(serviceWorker, /telechat-shell-v74-chat-privacy/);
+assert.match(serviceWorker, /telechat-shell-v75-saved-accounts/);
 
 console.log('V72 reliable experience smoke test passed');
