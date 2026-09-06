@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v76-smooth-ui';
+const CACHE_NAME='telechat-shell-v77-full-redesign';
 const APP_SHELL=[
   './',
   './index.html',
@@ -66,7 +66,8 @@ const APP_SHELL=[
   './chat-privacy-v74.css?v=75',
   './chat-privacy-v74.js?v=74',
   './smooth-ui-v76.css?v=76',
-  './smooth-ui-v76.js?v=76'
+  './smooth-ui-v76.js?v=76',
+  './full-redesign-v77.css?v=77'
 ];
 
 self.addEventListener('install',event=>{

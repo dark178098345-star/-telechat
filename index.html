@@ -532,6 +532,7 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
 <link rel="stylesheet" href="./device-presence-v72.css?v=72">
 <link rel="stylesheet" href="./chat-privacy-v74.css?v=75">
 <link rel="stylesheet" href="./smooth-ui-v76.css?v=76">
+<link rel="stylesheet" href="./full-redesign-v77.css?v=77">
 </head>
 <body>
 <div id="startup-loader" role="status" aria-live="polite" aria-label="Загрузка tele.chat">
@@ -683,7 +684,10 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
   <div class="sidebar" id="sidebar">
     <div class="sidebar-top">
       <div class="sidebar-brand-row">
-        <div class="sidebar-logo">tele<span>.</span>chat</div>
+        <div class="sidebar-brand-copy-v77">
+          <div class="sidebar-logo">tele<span>.</span>chat</div>
+          <div class="sidebar-tagline-v77">твой круг общения</div>
+        </div>
         <button class="create-room-btn" onclick="openCreateRoomModal()" title="Создать группу или канал" aria-label="Создать группу или канал">+</button>
       </div>
       <div class="search-wrap">
@@ -713,9 +717,16 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
 
   <div class="chat-main">
     <div class="empty-state" id="empty-state">
-      <div class="big-emoji">&#128172;</div>
-      <p>Выбери чат или найди друга</p>
-      <span style="font-size:12px">поиск по нику выше</span>
+      <div class="empty-card-v77">
+        <div class="empty-mark-v77" aria-hidden="true"><span>●</span><i></i><b></b></div>
+        <div class="empty-kicker-v77">tele.chat</div>
+        <h1>Твои разговоры рядом</h1>
+        <p>Выбери чат слева или найди человека, чтобы начать общение.</p>
+        <button type="button" class="empty-search-btn-v77" onclick="document.getElementById('search-inp').focus()">
+          <span aria-hidden="true">⌕</span> Найти собеседника
+        </button>
+        <div class="empty-features-v77" aria-hidden="true"><span>мгновенно</span><i></i><span>лично</span><i></i><span>по‑своему</span></div>
+      </div>
     </div>
     <div id="active-chat" style="display:none;flex-direction:column;flex:1;min-height:0;">
       <div class="chat-header">
