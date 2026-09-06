@@ -17,12 +17,14 @@ assert.match(reliability, /Повторить/);
 assert.match(reliability, /messageExists/);
 assert.match(reliability, /lastTimestamp=Math\.max\(now,lastTimestamp\+1\)/);
 assert.match(reliability, /optimisticQueue=optimisticQueue\.then/);
+assert.doesNotMatch(reliability, /appendMessage\(\{\.\.\.item\.row,id:''\}\)/);
 assert.doesNotMatch(reliability, /localStorage/);
 
 assert.match(speed, /telechat-history-v72/);
 assert.match(speed, /hydratePersistentV72/);
 assert.match(speed, /deletePersistentV72/);
 assert.match(speed, /acceptSent/);
+assert.match(speed, /!item\?\.id/);
 
 assert.match(calls, /getStats\(\)/);
 assert.match(calls, /restart-request/);
@@ -40,6 +42,10 @@ for (const asset of ['delivery-v72.css?v=72', 'device-presence-v72.js?v=72', 'vo
   assert(index.includes(asset), `index is missing ${asset}`);
   assert(serviceWorker.includes(asset), `service worker is missing ${asset}`);
 }
-assert.match(serviceWorker, /telechat-shell-v72-reliable-chat-calls/);
+for (const asset of ['chat-reliability-v24.js?v=73', 'chat-speed-v51.js?v=73']) {
+  assert(index.includes(asset), `index is missing ${asset}`);
+  assert(serviceWorker.includes(asset), `service worker is missing ${asset}`);
+}
+assert.match(serviceWorker, /telechat-shell-v73-message-visibility/);
 
 console.log('V72 reliable experience smoke test passed');

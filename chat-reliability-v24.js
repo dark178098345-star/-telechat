@@ -70,7 +70,7 @@
   }
   async function renderOptimistic(item){
     const box=document.getElementById('messages');box?.querySelector('.v51-empty-chat')?.remove();
-    const before=box?.querySelectorAll('.msg').length||0;await appendMessage({...item.row,id:''});
+    const before=box?.querySelectorAll('.msg').length||0;await appendMessage({...item.row});
     const rows=box?.querySelectorAll('.msg')||[],element=rows.length>before?rows[rows.length-1]:null;if(!element)return;
     item.element=element;element.dataset.clientId=item.clientId;element.classList.add('v72-pending-message');element.querySelector('.msg-check')?.remove();
     element.querySelector('.msg-meta')?.insertAdjacentHTML('beforeend',deliveryMarkup('sending'));liveRows.set(item.clientId,item);

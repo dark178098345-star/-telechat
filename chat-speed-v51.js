@@ -549,6 +549,11 @@
       const key = String(message?.chat_key || '');
       if (!key || !message) return false;
       const state = getStateV51(key);
+      state.items = state.items.filter(item => !(
+        item?._type !== 'poll' && !item?.id &&
+        String(item?.from_nick || '').toLowerCase() === String(message.from_nick || '').toLowerCase() &&
+        Number(item?.ts || 0) === Number(message.ts || 0)
+      ));
       state.items = mergeItemsV51(state.items, { ...message, chat_key: key, _type: 'msg' });
       state.cursor = state.items.length ? Math.min(...state.items.map(item => Number(item.ts || 0))) : state.cursor;
       schedulePersistentV72(state, 20);
