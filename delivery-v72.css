@@ -1,0 +1,8 @@
+/* TELECHAT DELIVERY V72 */
+.msg.v72-pending-message{opacity:.86}
+.v72-delivery{display:inline-flex;align-items:center;gap:4px;margin-left:5px;border:0;background:none;color:var(--text3);font:inherit;font-size:10px;white-space:nowrap}
+.v72-sending i{width:8px;height:8px;border:1.5px solid rgba(255,255,255,.25);border-top-color:#a995ff;border-radius:50%;animation:v72-delivery-spin .75s linear infinite}
+.v72-sent{color:#92d5b0}.v72-failed{cursor:pointer;color:#ff8094;padding:2px 5px;border-radius:7px;background:rgba(244,63,94,.1)}
+.v72-failed:hover{background:rgba(244,63,94,.18)}
+@keyframes v72-delivery-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.v72-sending i{animation-duration:1.5s}}

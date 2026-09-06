@@ -4,8 +4,13 @@
 
   const PAGE_SIZE_V51 = 30;
   const MAX_CACHED_CHATS_V51 = 8;
+  const PERSISTENT_DB_V72 = 'telechat-history-v72';
+  const PERSISTENT_STORE_V72 = 'chats';
+  const PERSISTENT_MAX_AGE_V72 = 21 * 24 * 60 * 60 * 1000;
+  const PERSISTENT_MAX_BYTES_V72 = 3_000_000;
   const historyCacheV51 = new Map();
   const avatarMarkupCacheV51 = new WeakMap();
+  let persistentDbV72 = null;
   let renderTokenV51 = 0;
 
   const appendMessageBeforeV51 = appendMessage;
@@ -16,6 +21,117 @@
 
   function activeKeyV51() {
     try { return conversationKey() || ''; } catch (error) { return ''; }
+  }
+
+  function persistentKeyV72(key) {
+    const nick = String(me?.nick || '').trim().toLowerCase();
+    return nick && key ? `${nick}:${key}` : '';
+  }
+
+  function openPersistentDbV72() {
+    if (!('indexedDB' in window)) return Promise.resolve(null);
+    if (persistentDbV72) return persistentDbV72;
+    persistentDbV72 = new Promise(resolve => {
+      const request = indexedDB.open(PERSISTENT_DB_V72, 1);
+      request.onupgradeneeded = () => {
+        if (!request.result.objectStoreNames.contains(PERSISTENT_STORE_V72)) {
+          request.result.createObjectStore(PERSISTENT_STORE_V72, { keyPath: 'id' });
+        }
+      };
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => resolve(null);
+      request.onblocked = () => resolve(null);
+    });
+    return persistentDbV72;
+  }
+
+  async function readPersistentV72(key) {
+    const id = persistentKeyV72(key);
+    const database = id ? await openPersistentDbV72() : null;
+    if (!database) return null;
+    return new Promise(resolve => {
+      const request = database.transaction(PERSISTENT_STORE_V72, 'readonly').objectStore(PERSISTENT_STORE_V72).get(id);
+      request.onsuccess = () => {
+        const record = request.result;
+        if (!record || Date.now() - Number(record.updatedAt || 0) > PERSISTENT_MAX_AGE_V72) resolve(null);
+        else resolve(record);
+      };
+      request.onerror = () => resolve(null);
+    });
+  }
+
+  function compactPersistentItemsV72(items) {
+    const result = [];
+    let bytes = 0;
+    for (let index = Math.max(0, (items || []).length - PAGE_SIZE_V51); index < (items || []).length; index++) {
+      const item = items[index];
+      if (!item) continue;
+      let size = 0;
+      try { size = JSON.stringify(item).length; } catch (error) { continue; }
+      if (size > 900_000 || bytes + size > PERSISTENT_MAX_BYTES_V72) continue;
+      bytes += size;result.push({ ...item });
+    }
+    return result;
+  }
+
+  async function writePersistentV72(state) {
+    const id = persistentKeyV72(state?.key);
+    const database = id ? await openPersistentDbV72() : null;
+    if (!database || state?.disposed) return;
+    const items = compactPersistentItemsV72(state.items);
+    const record = {
+      id,
+      key: state.key,
+      updatedAt: Date.now(),
+      items,
+      cursor: items.length ? Math.min(...items.map(item => Number(item.ts || 0))) : state.cursor,
+      hasMore: Boolean(state.hasMore || state.items.length > items.length)
+    };
+    await new Promise(resolve => {
+      const transaction = database.transaction(PERSISTENT_STORE_V72, 'readwrite');
+      transaction.objectStore(PERSISTENT_STORE_V72).put(record);
+      transaction.oncomplete = resolve;
+      transaction.onerror = resolve;
+      transaction.onabort = resolve;
+    });
+  }
+
+  async function deletePersistentV72(key) {
+    const id = persistentKeyV72(key);
+    const database = id ? await openPersistentDbV72() : null;
+    if (!database) return;
+    await new Promise(resolve => {
+      const transaction = database.transaction(PERSISTENT_STORE_V72, 'readwrite');
+      transaction.objectStore(PERSISTENT_STORE_V72).delete(id);
+      transaction.oncomplete = resolve;
+      transaction.onerror = resolve;
+      transaction.onabort = resolve;
+    });
+  }
+
+  function schedulePersistentV72(state, delay = 100) {
+    if (!state || state.disposed) return;
+    clearTimeout(state.persistTimer);
+    state.persistTimer = setTimeout(() => {
+      state.persistTimer = 0;
+      writePersistentV72(state).catch(() => {});
+    }, delay);
+  }
+
+  async function hydratePersistentV72(state) {
+    if (!state || state.disposed || state.persistentChecked) return false;
+    if (state.persistentLoading) return state.persistentLoading;
+    state.persistentLoading = (async () => {
+      const record = await readPersistentV72(state.key);
+      state.persistentChecked = true;
+      if (!record || state.disposed || state.key !== activeKeyV51()) return false;
+      state.items = mergeItemsV51(record.items || [], state.items || []);
+      state.cursor = Number.isFinite(Number(record.cursor)) ? Number(record.cursor) : (state.items.length ? Math.min(...state.items.map(item => Number(item.ts || 0))) : null);
+      state.hasMore = Boolean(record.hasMore);
+      state.touchedAt = Date.now();
+      return true;
+    })().catch(() => false).finally(() => { state.persistentLoading = null; });
+    return state.persistentLoading;
   }
 
   function getStateV51(key) {
@@ -32,6 +148,9 @@
         refreshWaiters: [],
         lastFetchedAt: 0,
         lastPaintAt: 0,
+        persistentChecked: false,
+        persistentLoading: null,
+        persistTimer: 0,
         touchedAt: Date.now()
       };
       historyCacheV51.set(key, state);
@@ -53,10 +172,12 @@
     if (state) {
       state.disposed = true;
       clearTimeout(state.refreshTimer);
+      clearTimeout(state.persistTimer);
       state.refreshTimer = 0;
       state.refreshWaiters.splice(0).forEach(done => done(null));
     }
     historyCacheV51.delete(normalizedKey);
+    deletePersistentV72(normalizedKey).catch(() => {});
     renderTokenV51++;
     if (normalizedKey === activeKeyV51()) {
       const box = document.getElementById('messages');
@@ -212,6 +333,7 @@
       state.hasMore = page.hasMore;
       state.touchedAt = Date.now();
       state.lastFetchedAt = Date.now();
+      schedulePersistentV72(state);
       if (repaint && state.key === activeKeyV51() && previousMark !== stateMarkV51(state.items)) {
         const box = document.getElementById('messages');
         const nearBottom = box ? box.scrollHeight - box.scrollTop - box.clientHeight < 90 : true;
@@ -248,6 +370,12 @@
       scheduleLatestV51(state, alreadyVisible ? 90 : 40).catch(() => {});
       return;
     }
+    const restored = await hydratePersistentV72(state);
+    if (restored && state.key === activeKeyV51()) {
+      await paintStateV51(state);
+      scheduleLatestV51(state, 45).catch(() => {});
+      return;
+    }
     try {
       await refreshLatestV51(state, false);
       await paintStateV51(state);
@@ -272,6 +400,7 @@
       state.cursor = state.items.length ? Math.min(...state.items.map(item => Number(item.ts || 0))) : state.cursor;
       state.hasMore = page.hasMore;
       await paintStateV51(state, { keepScroll: true });
+      schedulePersistentV72(state);
       await new Promise(resolve => requestAnimationFrame(resolve));
       box.scrollTop = oldTop + Math.max(0, box.scrollHeight - oldHeight);
     })().catch(() => {
@@ -295,6 +424,7 @@
     const previousLast = state.items[state.items.length - 1] || null;
     state.items = mergeItemsV51(state.items, normalized);
     state.cursor = state.items.length ? Math.min(...state.items.map(item => Number(item.ts || 0))) : state.cursor;
+    schedulePersistentV72(state);
     if (existed) {
       syncReadReceiptsV51(state.items);
       return null;
@@ -415,6 +545,15 @@
     clearConversation: clearConversationV51,
     syncReadReceipts: syncReadReceiptsV51,
     applyRealtimeUpdate: applyRealtimeUpdateV51,
+    acceptSent: message => {
+      const key = String(message?.chat_key || '');
+      if (!key || !message) return false;
+      const state = getStateV51(key);
+      state.items = mergeItemsV51(state.items, { ...message, chat_key: key, _type: 'msg' });
+      state.cursor = state.items.length ? Math.min(...state.items.map(item => Number(item.ts || 0))) : state.cursor;
+      schedulePersistentV72(state, 20);
+      return true;
+    },
     refreshActive: () => {
       const key = activeKeyV51();
       return key ? scheduleLatestV51(getStateV51(key), 35) : Promise.resolve(null);
@@ -422,6 +561,7 @@
     info: () => ({
       pageSize: PAGE_SIZE_V51,
       cachedChats: historyCacheV51.size,
+      persistent: 'indexedDB' in window,
       chats: [...historyCacheV51.values()].map(state => ({ key: state.key, items: state.items.length, hasMore: state.hasMore }))
     })
   };

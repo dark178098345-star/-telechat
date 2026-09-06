@@ -376,3 +376,16 @@
 @media(prefers-reduced-motion:reduce){
   .voice-call-person.pending .voice-call-avatar,.voice-call-status::before{animation:none}
 }
+
+/* V72: microphone presence and compact connection quality. */
+.voice-call-status-row{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:7px}
+.voice-call-status-row .voice-call-status{margin-top:0}
+.voice-call-quality-v72{display:inline-flex;align-items:flex-end;gap:2px;padding:4px 7px;border:1px solid rgba(82,226,151,.18);border-radius:999px;background:rgba(44,203,123,.09);color:#6fe3a4;font-size:8px;font-weight:900;line-height:1}
+.voice-call-quality-v72[hidden]{display:none!important}
+.voice-call-quality-v72 i{display:block;width:2px;border-radius:2px;background:currentColor}.voice-call-quality-v72 i:nth-child(1){height:4px}.voice-call-quality-v72 i:nth-child(2){height:7px}.voice-call-quality-v72 i:nth-child(3){height:10px}.voice-call-quality-v72 b{margin-left:3px;font:inherit}
+.voice-call-quality-v72[data-level="medium"]{border-color:rgba(250,192,72,.22);background:rgba(250,192,72,.09);color:#f4bd59}.voice-call-quality-v72[data-level="medium"] i:nth-child(3){opacity:.18}
+.voice-call-quality-v72[data-level="poor"]{border-color:rgba(255,100,126,.22);background:rgba(255,75,105,.09);color:#ff7891}.voice-call-quality-v72[data-level="poor"] i:nth-child(n+2){opacity:.18}
+.voice-call-muted-v72{position:absolute;right:4px;bottom:4px;z-index:4;display:grid;width:30px;height:30px;place-items:center;border:3px solid #0e1022;border-radius:50%;background:#e83e5d;color:#fff;box-shadow:0 5px 14px rgba(0,0,0,.35)}
+.voice-call-muted-v72 svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.voice-call-parties.group-call .voice-call-muted-v72{right:1px;bottom:1px;width:25px;height:25px;border-width:2px}.voice-call-parties.group-call .voice-call-muted-v72 svg{width:13px;height:13px}
+@media(max-width:640px){.voice-call-status-row{margin-top:5px;gap:5px}.voice-call-quality-v72 b{display:none}.voice-call-quality-v72{padding:3px 5px}.voice-call-muted-v72{width:27px;height:27px;border-width:2px}}
