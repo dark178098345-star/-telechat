@@ -1,0 +1,95 @@
+/* tele.chat V80 — shared button motion and searchable emoji studio */
+body.telechat-motion-v80 button.v80-motion-ready{
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+  transform-origin:center;
+  transition:transform .24s cubic-bezier(.2,.8,.2,1),filter .2s ease,box-shadow .24s ease,border-color .2s ease,background-color .2s ease!important;
+}
+body.telechat-motion-v80 button.v80-motion-ready:not(:disabled):focus-visible{
+  outline:2px solid rgba(170,153,255,.86)!important;
+  outline-offset:3px;
+  box-shadow:0 0 0 5px rgba(124,110,247,.13)!important;
+}
+body.telechat-motion-v80 button.v80-motion-ready:not(:disabled).v80-pressing{
+  transform:translateY(1px) scale(.955)!important;
+  filter:brightness(.96)!important;
+  transition-duration:.09s!important;
+}
+body.telechat-motion-v80 .v80-button-ripple{
+  position:absolute;
+  z-index:-1;
+  width:12px;
+  height:12px;
+  margin:-6px 0 0 -6px;
+  pointer-events:none;
+  border-radius:50%;
+  background:rgba(255,255,255,.28);
+  transform:scale(0);
+  animation:v80-ripple .52s cubic-bezier(.2,.75,.2,1) forwards;
+}
+
+@media(hover:hover){
+  body.telechat-motion-v80 button.v80-motion-ready:not(:disabled):hover{
+    transform:translateY(-2px) scale(1.015);
+    filter:brightness(1.08);
+    box-shadow:0 9px 24px rgba(8,6,28,.22);
+  }
+}
+
+body.telechat-motion-v80 .send-btn.v80-motion-ready:not(:disabled):hover{transform:translateY(-2px) scale(1.045)}
+body.telechat-motion-v80 .send-btn.v80-motion-ready:not(:disabled).v80-pressing{transform:translateY(1px) scale(.91)!important}
+body.telechat-motion-v80 .telechat-nav-btn.v80-motion-ready:not(:disabled).v80-pressing,
+body.telechat-motion-v80 .sidebar-tab.v80-motion-ready:not(:disabled).v80-pressing{transform:scale(.97)!important}
+body.telechat-motion-v80 .voice-call-control.v80-motion-ready:not(:disabled).v80-pressing{transform:translateY(2px) scale(.91)!important}
+
+.emoji-picker.emoji-studio-v80{
+  --emoji-v80-surface:rgba(20,22,40,.985);
+  display:flex!important;
+  flex-flow:column nowrap!important;
+  gap:0!important;
+  padding:0!important;
+  overflow:hidden!important;
+  min-height:280px;
+  max-height:min(510px,70vh)!important;
+  border-radius:22px!important;
+  background:var(--emoji-v80-surface)!important;
+}
+.emoji-studio-head-v80{display:flex;align-items:center;gap:8px;padding:10px 10px 8px;border-bottom:1px solid rgba(166,149,255,.12)}
+.emoji-search-wrap-v80{display:flex;min-width:0;flex:1;align-items:center;gap:8px;height:42px;padding:0 12px;border:1px solid rgba(166,149,255,.13);border-radius:13px;background:rgba(6,8,19,.45);color:var(--text3)}
+.emoji-search-v80{min-width:0;flex:1;border:0;outline:0;background:transparent;color:var(--text);font:inherit;font-size:14px}
+.emoji-search-v80::placeholder{color:var(--text3)}
+.emoji-close-v80{display:grid;width:42px;height:42px;flex:0 0 42px;place-items:center;border:1px solid rgba(166,149,255,.13);border-radius:13px;background:rgba(124,110,247,.08);color:var(--text2);cursor:pointer;font-size:19px}
+.emoji-category-tabs-v80{display:flex;flex:0 0 auto;gap:3px;padding:7px 8px;overflow-x:auto;border-bottom:1px solid rgba(166,149,255,.10);scrollbar-width:none}
+.emoji-category-tabs-v80::-webkit-scrollbar{display:none}
+.emoji-category-v80{display:grid;width:38px;height:38px;flex:0 0 38px;place-items:center;border:0;border-radius:12px;background:transparent;color:var(--text2);cursor:pointer;font-size:18px}
+.emoji-category-v80.active{background:linear-gradient(145deg,rgba(134,111,255,.3),rgba(75,62,160,.18));box-shadow:inset 0 0 0 1px rgba(172,155,255,.18)}
+.emoji-grid-v80{display:grid;grid-template-columns:repeat(9,minmax(38px,1fr));align-content:start;gap:2px;min-height:190px;padding:8px 9px 10px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:rgba(139,124,255,.35) transparent}
+.emoji-item-v80{display:grid;aspect-ratio:1;min-height:39px;place-items:center;border:0;border-radius:11px;background:transparent;cursor:pointer;font-size:25px;line-height:1}
+.emoji-item-v80:hover{background:rgba(139,124,255,.11)!important}
+.emoji-empty-v80{grid-column:1/-1;display:grid;min-height:180px;place-items:center;color:var(--text3);font-size:13px;text-align:center}
+.emoji-studio-foot-v80{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 12px 9px;border-top:1px solid rgba(166,149,255,.10);color:var(--text3);font-size:10px}
+.emoji-studio-foot-v80 strong{overflow:hidden;color:var(--text2);font-size:11px;text-overflow:ellipsis;white-space:nowrap}
+
+body.theme-light .emoji-picker.emoji-studio-v80{--emoji-v80-surface:rgba(250,250,255,.99)}
+body.theme-light .emoji-search-wrap-v80{background:rgba(238,238,249,.88)}
+
+@media(max-width:720px),((max-width:900px) and (pointer:coarse)){
+  .emoji-picker.emoji-studio-v80{left:5px!important;right:5px!important;bottom:calc(5px + env(safe-area-inset-bottom,0px))!important;min-height:330px!important;max-height:min(62vh,510px)!important;border-radius:24px!important;background:#171a2d!important}
+  .emoji-studio-head-v80{padding:10px 9px 8px}
+  .emoji-search-wrap-v80,.emoji-close-v80{height:44px}
+  .emoji-category-tabs-v80{padding:6px 7px}.emoji-category-v80{width:41px;height:41px;flex-basis:41px;font-size:19px}
+  .emoji-grid-v80{grid-template-columns:repeat(7,minmax(39px,1fr));gap:2px;padding:8px}
+  .emoji-item-v80{min-height:42px;font-size:26px}
+  body.telechat-motion-v80 button.v80-motion-ready:not(:disabled):hover{transform:none;filter:none;box-shadow:none}
+  body.telechat-motion-v80 button.v80-motion-ready:not(:disabled).v80-pressing{transform:translateY(1px) scale(.95)!important;filter:brightness(.96)!important}
+}
+
+@media(max-width:370px){.emoji-grid-v80{grid-template-columns:repeat(6,minmax(40px,1fr))}}
+
+@keyframes v80-ripple{0%{opacity:.6;transform:scale(0)}100%{opacity:0;transform:scale(18)}}
+
+@media(prefers-reduced-motion:reduce){
+  body.telechat-motion-v80 button.v80-motion-ready,.v80-button-ripple{animation:none!important;transition:none!important}
+  body.telechat-motion-v80 button.v80-motion-ready:not(:disabled).v80-pressing{transform:none!important}
+}

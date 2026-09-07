@@ -49,6 +49,6 @@ for (const asset of [
   assert(index.includes(asset), `index is missing ${asset}`);
   assert(serviceWorker.includes(asset), `service worker is missing ${asset}`);
 }
-assert.match(serviceWorker, /telechat-shell-v79-mobile/);
+assert.match(serviceWorker, /telechat-shell-v80-emoji-motion/);
 
 console.log('chat privacy V74 smoke: ok');

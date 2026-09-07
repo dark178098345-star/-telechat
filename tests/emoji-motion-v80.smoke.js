@@ -1,0 +1,36 @@
+const assert=require('assert');
+const fs=require('fs');
+const path=require('path');
+const root=path.resolve(__dirname,'..');
+const read=file=>fs.readFileSync(path.join(root,file),'utf8');
+
+const html=read('index.html');
+const css=read('emoji-motion-v80.css');
+const js=read('emoji-motion-v80.js');
+const worker=read('sw.js');
+const activity=read('android-app/app/src/main/java/chat/tele/app/MainActivity.java');
+const gradle=read('android-app/app/build.gradle');
+const workflow=read('.github/workflows/build-android-apk.yml');
+
+assert.match(html,/emoji-motion-v80\.css\?v=80/);
+assert.match(html,/emoji-motion-v80\.js\?v=80/);
+assert.ok(html.indexOf('emoji-motion-v80.css?v=80')>html.indexOf('mobile-experience-v79.css?v=79'));
+assert.ok(html.indexOf('emoji-motion-v80.js?v=80')>html.indexOf('mobile-experience-v79.js?v=79'));
+assert.match(css,/v80-button-ripple/);
+assert.match(css,/emoji-grid-v80/);
+assert.match(js,/const CATEGORIES=/);
+assert.match(js,/\(min-width:721px\) and \(pointer:fine\)/);
+assert.match(js,/if\(!desktopQuery\.matches\)return/);
+assert.match(js,/MutationObserver/);
+assert.match(js,/setRangeText/);
+assert.match(js,/telechat-emoji-recent-v80/);
+assert.ok((js.match(/id:'/g)||[]).length>=11,'expected at least 11 emoji categories');
+assert.ok((js.match(/[\u{1F300}-\u{1FAFF}]/gu)||[]).length>=500,'expected a large emoji library');
+assert.match(worker,/telechat-shell-v80-emoji-motion/);
+assert.match(activity,/\?app=android&v=79/);
+assert.match(activity,/telechat-android\/1\.2\.1/);
+assert.match(gradle,/versionCode 4/);
+assert.match(gradle,/versionName '1\.2\.1'/);
+assert.match(workflow,/tele\.chat-Android-1\.2\.1\.apk/);
+
+console.log('emoji motion V80 smoke: ok');
