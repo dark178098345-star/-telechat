@@ -82,7 +82,11 @@
   window.buildEmojiPicker=mountPicker;
   window.toggleEmojiPicker=function(event){event?.stopPropagation();mountPicker();document.getElementById('emoji-picker')?.classList.toggle('open');};
 
-  function prepareButton(button){if(button instanceof HTMLButtonElement)button.classList.add('v80-motion-ready');}
+  function prepareButton(button){
+    if(!(button instanceof HTMLButtonElement))return;
+    button.classList.add('v80-motion-ready','v80-ripple-clip');
+    if(getComputedStyle(button).position==='static')button.classList.add('v80-ripple-host');
+  }
   function prepareButtons(root=document){root.querySelectorAll?.('button').forEach(prepareButton);}
   prepareButtons();
   document.body.classList.add('telechat-motion-v80');
@@ -92,6 +96,7 @@
     if(!button||button.disabled)return;
     button.classList.add('v80-pressing');
     const rect=button.getBoundingClientRect();
+    if(rect.width<38||rect.height<30)return;
     const ripple=document.createElement('span');ripple.className='v80-button-ripple';ripple.style.left=(event.clientX-rect.left)+'px';ripple.style.top=(event.clientY-rect.top)+'px';button.appendChild(ripple);
     ripple.addEventListener('animationend',()=>ripple.remove(),{once:true});
   },{passive:true});

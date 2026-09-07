@@ -35,6 +35,6 @@ for(const asset of [
   assert.ok(index.includes(asset),`index is missing ${asset}`);
   assert.ok(worker.includes(asset),`service worker is missing ${asset}`);
 }
-assert.match(worker,/telechat-shell-v80-emoji-motion/);
+assert.match(worker,/telechat-shell-v81-motion-layout-fix/);
 
 console.log('chat stability V78 smoke: ok');

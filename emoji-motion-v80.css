@@ -1,47 +1,47 @@
 /* tele.chat V80 — shared button motion and searchable emoji studio */
 body.telechat-motion-v80 button.v80-motion-ready{
-  position:relative;
-  isolation:isolate;
-  overflow:hidden;
   transform-origin:center;
-  transition:transform .24s cubic-bezier(.2,.8,.2,1),filter .2s ease,box-shadow .24s ease,border-color .2s ease,background-color .2s ease!important;
+  transition:translate .24s cubic-bezier(.2,.8,.2,1),scale .24s cubic-bezier(.2,.8,.2,1),box-shadow .24s ease,border-color .2s ease,background-color .2s ease!important;
 }
+body.telechat-motion-v80 button.v80-ripple-host{position:relative}
+body.telechat-motion-v80 button.v80-ripple-clip{isolation:isolate;overflow:hidden}
 body.telechat-motion-v80 button.v80-motion-ready:not(:disabled):focus-visible{
   outline:2px solid rgba(170,153,255,.86)!important;
   outline-offset:3px;
   box-shadow:0 0 0 5px rgba(124,110,247,.13)!important;
 }
 body.telechat-motion-v80 button.v80-motion-ready:not(:disabled).v80-pressing{
-  transform:translateY(1px) scale(.955)!important;
-  filter:brightness(.96)!important;
+  translate:0 1px!important;
+  scale:.955!important;
   transition-duration:.09s!important;
 }
 body.telechat-motion-v80 .v80-button-ripple{
   position:absolute;
-  z-index:-1;
+  z-index:0;
   width:12px;
   height:12px;
   margin:-6px 0 0 -6px;
   pointer-events:none;
   border-radius:50%;
-  background:rgba(255,255,255,.28);
+  background:rgba(255,255,255,.18);
   transform:scale(0);
   animation:v80-ripple .52s cubic-bezier(.2,.75,.2,1) forwards;
 }
 
 @media(hover:hover){
   body.telechat-motion-v80 button.v80-motion-ready:not(:disabled):hover{
-    transform:translateY(-2px) scale(1.015);
-    filter:brightness(1.08);
+    translate:0 -2px;
+    scale:1.015;
     box-shadow:0 9px 24px rgba(8,6,28,.22);
   }
 }
 
-body.telechat-motion-v80 .send-btn.v80-motion-ready:not(:disabled):hover{transform:translateY(-2px) scale(1.045)}
-body.telechat-motion-v80 .send-btn.v80-motion-ready:not(:disabled).v80-pressing{transform:translateY(1px) scale(.91)!important}
+body.telechat-motion-v80 .send-btn.v80-motion-ready:not(:disabled):hover{translate:0 -2px;scale:1.045}
+body.telechat-motion-v80 .send-btn.v80-motion-ready:not(:disabled).v80-pressing{translate:0 1px!important;scale:.91!important}
 body.telechat-motion-v80 .telechat-nav-btn.v80-motion-ready:not(:disabled).v80-pressing,
-body.telechat-motion-v80 .sidebar-tab.v80-motion-ready:not(:disabled).v80-pressing{transform:scale(.97)!important}
-body.telechat-motion-v80 .voice-call-control.v80-motion-ready:not(:disabled).v80-pressing{transform:translateY(2px) scale(.91)!important}
+body.telechat-motion-v80 .sidebar-tab.v80-motion-ready:not(:disabled).v80-pressing{translate:0!important;scale:.97!important}
+body.telechat-motion-v80 .voice-call-control.v80-motion-ready:not(:disabled).v80-pressing{translate:0 2px!important;scale:.91!important}
+body.telechat-motion-v80 .chat-more-v52.v80-motion-ready{translate:0!important;scale:1!important;box-shadow:none!important}
 
 .emoji-picker.emoji-studio-v80{
   --emoji-v80-surface:rgba(20,22,40,.985);
@@ -81,8 +81,8 @@ body.theme-light .emoji-search-wrap-v80{background:rgba(238,238,249,.88)}
   .emoji-category-tabs-v80{padding:6px 7px}.emoji-category-v80{width:41px;height:41px;flex-basis:41px;font-size:19px}
   .emoji-grid-v80{grid-template-columns:repeat(7,minmax(39px,1fr));gap:2px;padding:8px}
   .emoji-item-v80{min-height:42px;font-size:26px}
-  body.telechat-motion-v80 button.v80-motion-ready:not(:disabled):hover{transform:none;filter:none;box-shadow:none}
-  body.telechat-motion-v80 button.v80-motion-ready:not(:disabled).v80-pressing{transform:translateY(1px) scale(.95)!important;filter:brightness(.96)!important}
+  body.telechat-motion-v80 button.v80-motion-ready:not(:disabled):hover{translate:0;scale:1;box-shadow:none}
+  body.telechat-motion-v80 button.v80-motion-ready:not(:disabled).v80-pressing{translate:0 1px!important;scale:.95!important}
 }
 
 @media(max-width:370px){.emoji-grid-v80{grid-template-columns:repeat(6,minmax(40px,1fr))}}
@@ -91,5 +91,5 @@ body.theme-light .emoji-search-wrap-v80{background:rgba(238,238,249,.88)}
 
 @media(prefers-reduced-motion:reduce){
   body.telechat-motion-v80 button.v80-motion-ready,.v80-button-ripple{animation:none!important;transition:none!important}
-  body.telechat-motion-v80 button.v80-motion-ready:not(:disabled).v80-pressing{transform:none!important}
+  body.telechat-motion-v80 button.v80-motion-ready:not(:disabled).v80-pressing{translate:0!important;scale:1!important}
 }
