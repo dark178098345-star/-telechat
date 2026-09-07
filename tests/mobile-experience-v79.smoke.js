@@ -24,7 +24,7 @@ assert.match(script,/visualViewport/);
 assert.match(script,/trimDecorations/);
 assert.match(script,/deviceMemory/);
 
-assert.match(worker,/telechat-shell-v81-motion-layout-fix/);
+assert.match(worker,/telechat-shell-v82-clean-motion/);
 assert.match(worker,/mobile-experience-v79\.css\?v=79/);
 assert.match(worker,/mobile-experience-v79\.js\?v=79/);
 assert.match(activity,/\?app=android&v=79/);

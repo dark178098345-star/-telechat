@@ -84,22 +84,27 @@
 
   function prepareButton(button){
     if(!(button instanceof HTMLButtonElement))return;
-    button.classList.add('v80-motion-ready','v80-ripple-clip');
-    if(getComputedStyle(button).position==='static')button.classList.add('v80-ripple-host');
+    button.classList.add('v80-motion-ready');
   }
   function prepareButtons(root=document){root.querySelectorAll?.('button').forEach(prepareButton);}
   prepareButtons();
   document.body.classList.add('telechat-motion-v80');
 
+  let pressedButton=null;
+  const releaseButton=()=>{
+    pressedButton?.classList.remove('v80-pressing');
+    pressedButton=null;
+  };
   document.addEventListener('pointerdown',event=>{
     const button=event.target.closest('button.v80-motion-ready');
     if(!button||button.disabled)return;
+    releaseButton();
+    pressedButton=button;
     button.classList.add('v80-pressing');
-    const rect=button.getBoundingClientRect();
-    if(rect.width<38||rect.height<30)return;
-    const ripple=document.createElement('span');ripple.className='v80-button-ripple';ripple.style.left=(event.clientX-rect.left)+'px';ripple.style.top=(event.clientY-rect.top)+'px';button.appendChild(ripple);
-    ripple.addEventListener('animationend',()=>ripple.remove(),{once:true});
   },{passive:true});
-  ['pointerup','pointercancel','pointerleave'].forEach(type=>document.addEventListener(type,event=>event.target.closest?.('button.v80-motion-ready')?.classList.remove('v80-pressing'),{passive:true,capture:true}));
+  window.addEventListener('pointerup',releaseButton,{passive:true,capture:true});
+  window.addEventListener('pointercancel',releaseButton,{passive:true,capture:true});
+  window.addEventListener('blur',releaseButton);
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)releaseButton();});
   new MutationObserver(records=>records.forEach(record=>record.addedNodes.forEach(node=>{if(node.nodeType!==1)return;prepareButton(node);prepareButtons(node);}))).observe(document.body,{childList:true,subtree:true});
 })();

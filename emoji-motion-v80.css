@@ -1,47 +1,29 @@
 /* tele.chat V80 — shared button motion and searchable emoji studio */
 body.telechat-motion-v80 button.v80-motion-ready{
   transform-origin:center;
-  transition:translate .24s cubic-bezier(.2,.8,.2,1),scale .24s cubic-bezier(.2,.8,.2,1),box-shadow .24s ease,border-color .2s ease,background-color .2s ease!important;
+  transition:scale .2s cubic-bezier(.2,.8,.2,1),border-color .18s ease,background-color .18s ease,color .18s ease,opacity .18s ease!important;
 }
-body.telechat-motion-v80 button.v80-ripple-host{position:relative}
-body.telechat-motion-v80 button.v80-ripple-clip{isolation:isolate;overflow:hidden}
 body.telechat-motion-v80 button.v80-motion-ready:not(:disabled):focus-visible{
-  outline:2px solid rgba(170,153,255,.86)!important;
-  outline-offset:3px;
-  box-shadow:0 0 0 5px rgba(124,110,247,.13)!important;
+  outline:0!important;
+  box-shadow:0 0 0 2px rgba(156,138,255,.5)!important;
 }
 body.telechat-motion-v80 button.v80-motion-ready:not(:disabled).v80-pressing{
-  translate:0 1px!important;
-  scale:.955!important;
-  transition-duration:.09s!important;
-}
-body.telechat-motion-v80 .v80-button-ripple{
-  position:absolute;
-  z-index:0;
-  width:12px;
-  height:12px;
-  margin:-6px 0 0 -6px;
-  pointer-events:none;
-  border-radius:50%;
-  background:rgba(255,255,255,.18);
-  transform:scale(0);
-  animation:v80-ripple .52s cubic-bezier(.2,.75,.2,1) forwards;
+  scale:.965!important;
+  transition-duration:.075s!important;
 }
 
 @media(hover:hover){
   body.telechat-motion-v80 button.v80-motion-ready:not(:disabled):hover{
-    translate:0 -2px;
-    scale:1.015;
-    box-shadow:0 9px 24px rgba(8,6,28,.22);
+    scale:1.012;
   }
 }
 
-body.telechat-motion-v80 .send-btn.v80-motion-ready:not(:disabled):hover{translate:0 -2px;scale:1.045}
-body.telechat-motion-v80 .send-btn.v80-motion-ready:not(:disabled).v80-pressing{translate:0 1px!important;scale:.91!important}
+body.telechat-motion-v80 .send-btn.v80-motion-ready:not(:disabled):hover{scale:1.04}
+body.telechat-motion-v80 .send-btn.v80-motion-ready:not(:disabled).v80-pressing{scale:.92!important}
 body.telechat-motion-v80 .telechat-nav-btn.v80-motion-ready:not(:disabled).v80-pressing,
-body.telechat-motion-v80 .sidebar-tab.v80-motion-ready:not(:disabled).v80-pressing{translate:0!important;scale:.97!important}
-body.telechat-motion-v80 .voice-call-control.v80-motion-ready:not(:disabled).v80-pressing{translate:0 2px!important;scale:.91!important}
-body.telechat-motion-v80 .chat-more-v52.v80-motion-ready{translate:0!important;scale:1!important;box-shadow:none!important}
+body.telechat-motion-v80 .sidebar-tab.v80-motion-ready:not(:disabled).v80-pressing{scale:.98!important}
+body.telechat-motion-v80 .voice-call-control.v80-motion-ready:not(:disabled).v80-pressing{scale:.92!important}
+body.telechat-motion-v80 .chat-more-v52.v80-motion-ready{scale:1!important;box-shadow:none!important}
 
 .emoji-picker.emoji-studio-v80{
   --emoji-v80-surface:rgba(20,22,40,.985);
@@ -55,20 +37,21 @@ body.telechat-motion-v80 .chat-more-v52.v80-motion-ready{translate:0!important;s
   border-radius:22px!important;
   background:var(--emoji-v80-surface)!important;
 }
-.emoji-studio-head-v80{display:flex;align-items:center;gap:8px;padding:10px 10px 8px;border-bottom:1px solid rgba(166,149,255,.12)}
+.emoji-studio-head-v80{display:flex;align-items:center;gap:8px;padding:10px 10px 7px;background:rgba(255,255,255,.012)}
 .emoji-search-wrap-v80{display:flex;min-width:0;flex:1;align-items:center;gap:8px;height:42px;padding:0 12px;border:1px solid rgba(166,149,255,.13);border-radius:13px;background:rgba(6,8,19,.45);color:var(--text3)}
 .emoji-search-v80{min-width:0;flex:1;border:0;outline:0;background:transparent;color:var(--text);font:inherit;font-size:14px}
 .emoji-search-v80::placeholder{color:var(--text3)}
 .emoji-close-v80{display:grid;width:42px;height:42px;flex:0 0 42px;place-items:center;border:1px solid rgba(166,149,255,.13);border-radius:13px;background:rgba(124,110,247,.08);color:var(--text2);cursor:pointer;font-size:19px}
-.emoji-category-tabs-v80{display:flex;flex:0 0 auto;gap:3px;padding:7px 8px;overflow-x:auto;border-bottom:1px solid rgba(166,149,255,.10);scrollbar-width:none}
+.emoji-category-tabs-v80{display:flex;flex:0 0 auto;gap:3px;padding:5px 8px 7px;overflow-x:auto;background:rgba(255,255,255,.012);scrollbar-width:none}
 .emoji-category-tabs-v80::-webkit-scrollbar{display:none}
 .emoji-category-v80{display:grid;width:38px;height:38px;flex:0 0 38px;place-items:center;border:0;border-radius:12px;background:transparent;color:var(--text2);cursor:pointer;font-size:18px}
-.emoji-category-v80.active{background:linear-gradient(145deg,rgba(134,111,255,.3),rgba(75,62,160,.18));box-shadow:inset 0 0 0 1px rgba(172,155,255,.18)}
-.emoji-grid-v80{display:grid;grid-template-columns:repeat(9,minmax(38px,1fr));align-content:start;gap:2px;min-height:190px;padding:8px 9px 10px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:rgba(139,124,255,.35) transparent}
-.emoji-item-v80{display:grid;aspect-ratio:1;min-height:39px;place-items:center;border:0;border-radius:11px;background:transparent;cursor:pointer;font-size:25px;line-height:1}
-.emoji-item-v80:hover{background:rgba(139,124,255,.11)!important}
+.emoji-category-v80.active{background:rgba(126,108,236,.2);box-shadow:none}
+.emoji-grid-v80{display:grid;grid-template-columns:repeat(auto-fill,42px);grid-auto-rows:42px;justify-content:start;align-content:start;gap:3px;min-height:190px;padding:9px 11px 11px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none}
+.emoji-grid-v80::-webkit-scrollbar{display:none}
+.emoji-item-v80{display:grid;width:42px;height:42px;place-items:center;border:0;border-radius:11px;background:transparent;cursor:pointer;font-size:25px;line-height:1}
+.emoji-item-v80:hover{background:rgba(139,124,255,.09)!important;box-shadow:none!important}
 .emoji-empty-v80{grid-column:1/-1;display:grid;min-height:180px;place-items:center;color:var(--text3);font-size:13px;text-align:center}
-.emoji-studio-foot-v80{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 12px 9px;border-top:1px solid rgba(166,149,255,.10);color:var(--text3);font-size:10px}
+.emoji-studio-foot-v80{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 12px 9px;background:rgba(255,255,255,.012);color:var(--text3);font-size:10px}
 .emoji-studio-foot-v80 strong{overflow:hidden;color:var(--text2);font-size:11px;text-overflow:ellipsis;white-space:nowrap}
 
 body.theme-light .emoji-picker.emoji-studio-v80{--emoji-v80-surface:rgba(250,250,255,.99)}
@@ -79,17 +62,15 @@ body.theme-light .emoji-search-wrap-v80{background:rgba(238,238,249,.88)}
   .emoji-studio-head-v80{padding:10px 9px 8px}
   .emoji-search-wrap-v80,.emoji-close-v80{height:44px}
   .emoji-category-tabs-v80{padding:6px 7px}.emoji-category-v80{width:41px;height:41px;flex-basis:41px;font-size:19px}
-  .emoji-grid-v80{grid-template-columns:repeat(7,minmax(39px,1fr));gap:2px;padding:8px}
+  .emoji-grid-v80{grid-template-columns:repeat(7,minmax(39px,1fr));grid-auto-rows:auto;gap:2px;padding:8px}
   .emoji-item-v80{min-height:42px;font-size:26px}
-  body.telechat-motion-v80 button.v80-motion-ready:not(:disabled):hover{translate:0;scale:1;box-shadow:none}
-  body.telechat-motion-v80 button.v80-motion-ready:not(:disabled).v80-pressing{translate:0 1px!important;scale:.95!important}
+  body.telechat-motion-v80 button.v80-motion-ready:not(:disabled):hover{scale:1;box-shadow:none}
+  body.telechat-motion-v80 button.v80-motion-ready:not(:disabled).v80-pressing{scale:.96!important}
 }
 
 @media(max-width:370px){.emoji-grid-v80{grid-template-columns:repeat(6,minmax(40px,1fr))}}
 
-@keyframes v80-ripple{0%{opacity:.6;transform:scale(0)}100%{opacity:0;transform:scale(18)}}
-
 @media(prefers-reduced-motion:reduce){
-  body.telechat-motion-v80 button.v80-motion-ready,.v80-button-ripple{animation:none!important;transition:none!important}
-  body.telechat-motion-v80 button.v80-motion-ready:not(:disabled).v80-pressing{translate:0!important;scale:1!important}
+  body.telechat-motion-v80 button.v80-motion-ready{animation:none!important;transition:none!important}
+  body.telechat-motion-v80 button.v80-motion-ready:not(:disabled).v80-pressing{scale:1!important}
 }

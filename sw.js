@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v81-motion-layout-fix';
+const CACHE_NAME='telechat-shell-v82-clean-motion';
 const APP_SHELL=[
   './',
   './index.html',
@@ -71,8 +71,8 @@ const APP_SHELL=[
   './chat-stability-v78.css?v=78',
   './mobile-experience-v79.css?v=79',
   './mobile-experience-v79.js?v=79',
-  './emoji-motion-v80.css?v=81',
-  './emoji-motion-v80.js?v=81'
+  './emoji-motion-v80.css?v=82',
+  './emoji-motion-v80.js?v=82'
 ];
 
 self.addEventListener('install',event=>{
