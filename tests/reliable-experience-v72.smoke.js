@@ -46,6 +46,6 @@ for (const asset of ['chat-reliability-v24.js?v=78', 'chat-speed-v51.js?v=74', '
   assert(index.includes(asset), `index is missing ${asset}`);
   assert(serviceWorker.includes(asset), `service worker is missing ${asset}`);
 }
-assert.match(serviceWorker, /telechat-shell-v82-clean-motion/);
+assert.match(serviceWorker, /telechat-shell-v83-profile-background/);
 
 console.log('V72 reliable experience smoke test passed');

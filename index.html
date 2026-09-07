@@ -536,6 +536,7 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
 <link rel="stylesheet" href="./chat-stability-v78.css?v=78">
 <link rel="stylesheet" href="./mobile-experience-v79.css?v=79">
 <link rel="stylesheet" href="./emoji-motion-v80.css?v=82">
+<link rel="stylesheet" href="./profile-background-v83.css?v=83">
 </head>
 <body>
 <div id="startup-loader" role="status" aria-live="polite" aria-label="Загрузка tele.chat">
@@ -934,11 +935,11 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
       </div>
       <div class="banner-presets" id="profile-banner-presets"></div>
       <div class="banner-upload-row">
-        <button type="button" class="banner-upload-btn" onclick="document.getElementById('banner-file-input').click()">🖼️ Загрузить баннер</button>
+        <button type="button" class="banner-upload-btn" onclick="document.getElementById('banner-file-input').click()">🖼️ Фото на фон</button>
         <button type="button" class="banner-upload-btn privileged-media-only" id="banner-video-btn" onclick="document.getElementById('banner-video-input').click()" hidden>🎬 Видео</button>
         <button type="button" class="banner-reset-btn" onclick="selectProfileBanner('cosmos')" title="Вернуть стандартный баннер">↺</button>
       </div>
-      <div class="banner-upload-hint">Выбери готовый стиль или загрузи свою широкую обложку</div>
+      <div class="banner-upload-hint">Загруженное фото станет обложкой и мягким фоном всей карточки</div>
     </div>
     <input type="file" id="avatar-file-input" accept="image/*" onchange="handleAvatarFile(this)" hidden>
     <input type="file" id="avatar-video-input" accept="video/mp4,video/webm,video/quicktime" onchange="handleProfileAvatarVideo(this)" hidden>
@@ -2583,5 +2584,6 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <script src="./smooth-ui-v76.js?v=76"></script>
 <script src="./mobile-experience-v79.js?v=79"></script>
 <script src="./emoji-motion-v80.js?v=82"></script>
+<script src="./profile-background-v83.js?v=83"></script>
 </body>
 </html>
