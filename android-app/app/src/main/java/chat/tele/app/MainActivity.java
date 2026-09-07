@@ -21,7 +21,7 @@ import android.webkit.WebViewClient;
 import android.widget.Toast;
 
 public class MainActivity extends Activity {
-    private static final String TELECHAT_URL = "https://dark178098345-star.github.io/-telechat/?app=android&v=78";
+    private static final String TELECHAT_URL = "https://dark178098345-star.github.io/-telechat/?app=android&v=79";
     private static final String TELECHAT_HOST = "dark178098345-star.github.io";
     private static final int FILE_CHOOSER_REQUEST = 401;
     private static final int MICROPHONE_PERMISSION_REQUEST = 402;
