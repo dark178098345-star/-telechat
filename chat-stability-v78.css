@@ -1,0 +1,91 @@
+/* TELECHAT CHAT STABILITY V78 — quiet updates and compact call history. */
+
+.contacts-list.tab-swap-v17 .contact,
+.contacts-list.tab-swap-v17 .list-section-title{
+  animation:none!important;
+}
+
+.message-reaction-v36{
+  transition:background-color 150ms ease,border-color 150ms ease,color 150ms ease,transform 150ms cubic-bezier(.2,.8,.2,1)!important;
+}
+.message-reaction-v36:active{transform:scale(.94)}
+.ctx-reaction-v36:disabled{opacity:.62;transform:scale(.92)}
+
+.msg.message-call-v78 .msg-bubble,
+.msg-bubble:has(> .call-history-card){
+  min-width:min(304px,70vw);
+  padding:7px!important;
+  border-color:rgba(189,180,255,.14)!important;
+  background:linear-gradient(145deg,rgba(44,41,91,.96),rgba(29,31,57,.96))!important;
+  box-shadow:0 8px 22px rgba(8,8,25,.17),inset 0 1px rgba(255,255,255,.04)!important;
+}
+.call-history-card{
+  display:grid;
+  min-width:0;
+  grid-template-columns:40px minmax(0,1fr) auto;
+  align-items:center;
+  gap:10px;
+  padding:2px;
+}
+.call-history-icon{
+  display:grid;
+  width:40px;
+  height:40px;
+  place-items:center;
+  border:1px solid rgba(190,181,255,.16);
+  border-radius:13px;
+  background:linear-gradient(145deg,rgba(137,122,255,.25),rgba(101,84,220,.11));
+  color:#d9d3ff;
+  box-shadow:inset 0 1px rgba(255,255,255,.055);
+  font-size:18px;
+  font-weight:900;
+}
+.call-history-card.is-unsuccessful .call-history-icon{
+  border-color:rgba(255,123,148,.15);
+  background:linear-gradient(145deg,rgba(225,67,97,.20),rgba(122,37,60,.09));
+  color:#ff9caf;
+}
+.call-history-copy{min-width:0;padding-right:4px}
+.call-history-title{
+  overflow:hidden;
+  color:#f2efff;
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:-.01em;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.call-history-meta{margin-top:3px;color:#9b94b2;font-size:9px;font-weight:750;line-height:1.3}
+.call-history-redial{
+  display:inline-flex;
+  min-height:36px;
+  align-items:center;
+  justify-content:center;
+  gap:5px;
+  padding:0 10px;
+  border:1px solid rgba(193,184,255,.15);
+  border-radius:11px;
+  background:rgba(139,124,255,.11);
+  color:#d8d1ff;
+  cursor:pointer;
+  font-family:inherit;
+  font-size:10px;
+  font-weight:850;
+  transition:transform 160ms cubic-bezier(.2,.8,.2,1),background-color 160ms ease,border-color 160ms ease;
+}
+.call-history-redial:hover{border-color:rgba(193,184,255,.28);background:rgba(139,124,255,.18)}
+.call-history-redial:active{transform:scale(.96)}
+.call-history-redial span{font-size:14px;line-height:1}
+.call-history-redial b{font:inherit}
+
+@media(max-width:640px){
+  .msg.message-call-v78 .msg-bubble,.msg-bubble:has(> .call-history-card){min-width:min(278px,78vw)}
+  .call-history-card{grid-template-columns:38px minmax(0,1fr) auto;gap:8px}
+  .call-history-icon{width:38px;height:38px;border-radius:12px}
+  .call-history-redial{min-width:36px;padding:0 9px}
+  .call-history-redial b{display:none}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .message-reaction-v36,.call-history-redial{transition:none!important}
+}

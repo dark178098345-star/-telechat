@@ -17,6 +17,8 @@
   let reactionRowsV36 = new Map();
   let reactionSubscriptionV36 = null;
   let reactionRefreshTimerV36 = 0;
+  let contextOpenedAtV36 = 0;
+  let manualMessageScrollAtV36 = 0;
   let selectionModeV36 = false;
   const selectedMessagesV36 = new Map();
   const visibleMessagesV36 = new Map();
@@ -107,8 +109,11 @@
       const reaction = event.target.closest('[data-reaction-v36]');
       if (reaction) {
         const message = ctxMsg;
-        closeContextMenuV36();
-        if (message?.id) toggleMessageReactionV36(message.id, reaction.dataset.reactionV36);
+        if (message?.id && !reaction.disabled) {
+          reaction.disabled = true;
+          Promise.resolve(toggleMessageReactionV36(message.id, reaction.dataset.reactionV36))
+            .finally(() => { reaction.disabled = false; });
+        }
         return;
       }
       const action = event.target.closest('[data-action-v36]')?.dataset.actionV36;
@@ -163,6 +168,7 @@
     event?.preventDefault?.();
     event?.stopPropagation?.();
     ctxMsg = message;
+    contextOpenedAtV36 = Date.now();
     const menu = document.getElementById('ctx-menu');
     if (!menu) return;
     const own = message.from_nick === me?.nick;
@@ -550,25 +556,33 @@
       const meta = element.querySelector('.msg-meta');
       element.insertBefore(container, meta || null);
     }
-    container.innerHTML = '';
+    const remaining = new Map([...container.querySelectorAll('.message-reaction-v36')]
+      .map(button => [button.dataset.emojiV36 || '', button]));
     groups.forEach((nicks, emoji) => {
-      const button = document.createElement('button');
-      button.type = 'button';
+      let button = remaining.get(emoji);
+      if (!button) {
+        button = document.createElement('button');
+        button.type = 'button';
+        button.dataset.emojiV36 = emoji;
+        button.addEventListener('click', event => {
+          event.stopPropagation();
+          toggleMessageReactionV36(message.id, emoji);
+        });
+        container.appendChild(button);
+      }
+      remaining.delete(emoji);
       button.className = 'message-reaction-v36' + (nicks.includes(me?.nick) ? ' mine' : '');
       button.title = nicks.map(nick => '@' + nick).join(', ');
       button.innerHTML = `<span>${emoji}</span><span>${nicks.length}</span>`;
-      button.addEventListener('click', event => {
-        event.stopPropagation();
-        toggleMessageReactionV36(message.id, emoji);
-      });
-      container.appendChild(button);
     });
+    remaining.forEach(button => button.remove());
   }
 
   function decorateMessageV36(message, element) {
     if (!message || !element) return;
     const key = messageKeyV36(message);
     element.dataset.contextKeyV36 = key;
+    element.classList.toggle('message-call-v78', !!window.telechatCallsV32?.unpack?.(message.text));
     visibleMessagesV36.set(key, message);
     const meta = element.querySelector('.msg-meta');
     if (message.edited_at && meta && !meta.querySelector('.message-edited-v36')) {
@@ -584,17 +598,17 @@
   async function refreshVisibleReactionsV36() {
     const messages = Array.from(visibleMessagesV36.values()).filter(message => message.id && !message.deleted);
     const ids = Array.from(new Set(messages.map(message => message.id)));
-    reactionRowsV36 = new Map();
+    const nextRows = new Map();
     if (ids.length) {
       const result = await sb.from('message_reactions').select('*').in('message_id', ids);
-      if (!result.error) {
-        (result.data || []).forEach(row => {
-          const key = String(row.message_id);
-          if (!reactionRowsV36.has(key)) reactionRowsV36.set(key, []);
-          reactionRowsV36.get(key).push(row);
-        });
-      }
+      if (result.error) return;
+      (result.data || []).forEach(row => {
+        const key = String(row.message_id);
+        if (!nextRows.has(key)) nextRows.set(key, []);
+        nextRows.get(key).push(row);
+      });
     }
+    reactionRowsV36 = nextRows;
     visibleMessagesV36.forEach((message, key) => {
       const element = Array.from(document.querySelectorAll('#messages .msg')).find(item => item.dataset.contextKeyV36 === key);
       if (element) renderMessageReactionsV36(message, element);
@@ -643,6 +657,7 @@
   };
 
   function closeTransientUiV36(event) {
+    if (Date.now() - contextOpenedAtV36 < 280) return;
     if (!event.target.closest('#ctx-menu')) closeContextMenuV36();
   }
 
@@ -659,6 +674,10 @@
     closeForwardModalV36();
     exitSelectionModeV36();
   });
-  document.getElementById('messages')?.addEventListener('scroll', closeContextMenuV36, { passive: true });
+  const messagesV36 = document.getElementById('messages');
+  ['pointerdown', 'wheel', 'touchmove'].forEach(type => messagesV36?.addEventListener(type, () => { manualMessageScrollAtV36 = Date.now(); }, { passive: true }));
+  messagesV36?.addEventListener('scroll', () => {
+    if (Date.now() - manualMessageScrollAtV36 < 900) closeContextMenuV36();
+  }, { passive: true });
   window.addEventListener('resize', closeContextMenuV36, { passive: true });
 })();

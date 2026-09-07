@@ -80,7 +80,10 @@
     const saved=await persistMessage(item.row);
     if(!saved.ok){setDeliveryState(item,'failed');await outboxWrite({...item,state:'failed'});if(!silent)showToast(friendlyError(saved.error));return false;}
     await outboxDelete(item.clientId);setDeliveryState(item,'sent');item.element?.classList.remove('v72-pending-message');
-    window.telechatChatSpeedV51?.acceptSent?.(saved.row||item.row);renderContacts();if(!silent)playSendSound();
+    window.telechatChatSpeedV51?.acceptSent?.(saved.row||item.row);
+    window.telechatApplySidebarMessageV25?.(saved.row||item.row);
+    Promise.resolve(renderContacts()).catch(()=>{});
+    if(!silent)playSendSound();
     setTimeout(()=>{const status=item.element?.querySelector('.v72-delivery');if(status){status.textContent='✓✓';status.className='msg-check';}liveRows.delete(item.clientId);},1800);
     return true;
   }

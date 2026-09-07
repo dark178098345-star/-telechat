@@ -1127,7 +1127,7 @@
   function packCallV32(data){return CALL_PREFIX+JSON.stringify({...data,v:1});}
 
   function callStatusTextV32(data){
-    if(data.status==='ended')return data.duration?'Завершён · '+formatCallTimeV32(data.duration):'Завершён';
+    if(data.status==='ended')return data.duration?'Длился '+formatCallTimeV32(data.duration):'Завершён';
     if(data.status==='missed')return 'Без ответа';
     if(data.status==='rejected')return 'Отклонён';
     if(data.status==='cancelled')return 'Отменён';
@@ -1139,12 +1139,13 @@
     const peer=safeNickV32(data.peer);if(!peer)return '<div class="call-history-card failed">Некорректный звонок</div>';
     const bad=data.status!=='ended';
     const group=!!data.group||Number(data.participantCount||0)>2;
-    const title=data.status==='missed'?'Пропущенный звонок':group?'Групповой звонок':'Голосовой звонок';
-    const count=group?' · '+Math.max(2,Number(data.participantCount)||2)+' участника':'';
-    return `<div class="call-history-card ${bad?escHtml(data.status):''}">
-      <div class="call-history-icon">${group?'👥':'☎'}</div>
-      <div><div class="call-history-title">${title}</div><div class="call-history-meta">${callStatusTextV32(data)}${count}</div></div>
-      <button class="call-history-redial" type="button" data-call-peer="${escHtml(peer)}" onclick="startCallV32(this.dataset.callPeer)">Позвонить</button>
+    const title=data.status==='missed'?(group?'Пропущенный групповой звонок':'Пропущенный звонок'):data.status==='ended'?(group?'Групповой звонок завершён':'Звонок завершён'):group?'Групповой звонок':'Голосовой звонок';
+    const participantCount=Math.max(2,Number(data.participantCount)||2);
+    const count=group?' · '+participantCount+' '+(participantCount===2?'участника':participantCount<5?'участника':'участников'):'';
+    return `<div class="call-history-card status-${escHtml(data.status||'failed')} ${bad?'is-unsuccessful':''}">
+      <div class="call-history-icon" aria-hidden="true"><span>${group?'👥':bad?'↙':'↗'}</span></div>
+      <div class="call-history-copy"><div class="call-history-title">${title}</div><div class="call-history-meta">${callStatusTextV32(data)}${count}</div></div>
+      <button class="call-history-redial" type="button" data-call-peer="${escHtml(peer)}" onclick="startCallV32(this.dataset.callPeer)" aria-label="Позвонить снова"><span aria-hidden="true">↻</span><b>Снова</b></button>
     </div>`;
   }
 

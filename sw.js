@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v77-full-redesign';
+const CACHE_NAME='telechat-shell-v78-chat-stability';
 const APP_SHELL=[
   './',
   './index.html',
@@ -28,14 +28,14 @@ const APP_SHELL=[
   './profile-details-v22.js',
   './profile-card-v29.css',
   './chat-reliability-v24.css',
-  './chat-reliability-v24.js?v=73',
+  './chat-reliability-v24.js?v=78',
   './delivery-v72.css?v=72',
   './message-send-animation-v35.css?v=54',
   './message-send-animation-v35.js?v=54',
   './voice-calls-v32.css?v=72',
-  './voice-calls-v32.js?v=74',
+  './voice-calls-v32.js?v=78',
   './glass-context-v36.css?v=36',
-  './message-context-v36.js?v=36',
+  './message-context-v36.js?v=78',
   './desktop-notifications-v37.js?v=74',
   './voice-send-v38.js?v=39',
   './media-compat-v40.js?v=40',
@@ -67,7 +67,8 @@ const APP_SHELL=[
   './chat-privacy-v74.js?v=74',
   './smooth-ui-v76.css?v=76',
   './smooth-ui-v76.js?v=76',
-  './full-redesign-v77.css?v=77'
+  './full-redesign-v77.css?v=77',
+  './chat-stability-v78.css?v=78'
 ];
 
 self.addEventListener('install',event=>{

@@ -44,11 +44,11 @@ for (const asset of [
   'chat-flow-v64.js?v=74',
   'chat-experience-v62.js?v=74',
   'desktop-notifications-v37.js?v=74',
-  'voice-calls-v32.js?v=74'
+  'voice-calls-v32.js?v=78'
 ]) {
   assert(index.includes(asset), `index is missing ${asset}`);
   assert(serviceWorker.includes(asset), `service worker is missing ${asset}`);
 }
-assert.match(serviceWorker, /telechat-shell-v77-full-redesign/);
+assert.match(serviceWorker, /telechat-shell-v78-chat-stability/);
 
 console.log('chat privacy V74 smoke: ok');
