@@ -58,7 +58,7 @@
 .profile-background-pick-v84:active,.profile-background-remove-v84:active{transform:scale(.98)}
 .profile-background-remove-v84:disabled{opacity:.42;cursor:default;transform:none}
 
-.user-profile-card.profile-photo-background-v84{
+#user-profile-modal .user-profile-card.profile-photo-background-v84{
   --profile-card-photo-v84:none;
   background-image:
     linear-gradient(180deg,rgba(6,7,20,.14) 0%,rgba(8,9,24,.28) 31%,rgba(7,9,22,.52) 68%,rgba(5,7,17,.7) 100%),

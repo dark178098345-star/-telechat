@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v85-visible-profile-background';
+const CACHE_NAME='telechat-shell-v86-profile-background-layer';
 const APP_SHELL=[
   './',
   './index.html',
@@ -73,8 +73,8 @@ const APP_SHELL=[
   './mobile-experience-v79.js?v=79',
   './emoji-motion-v80.css?v=82',
   './emoji-motion-v80.js?v=82',
-  './profile-background-v84.css?v=85',
-  './profile-background-v84.js?v=85'
+  './profile-background-v84.css?v=86',
+  './profile-background-v84.js?v=86'
 ];
 
 self.addEventListener('install',event=>{
