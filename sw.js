@@ -1,7 +1,7 @@
-const CACHE_NAME='telechat-shell-v89-profile-previews';
+const CACHE_NAME='telechat-shell-v90-profile-video-frame';
 const APP_SHELL=[
-  './profile-editor-v88.css?v=89',
-  './profile-editor-v88.js?v=89',
+  './profile-editor-v88.css?v=90',
+  './profile-editor-v88.js?v=90',
   './profile-editor-v87.css?v=87',
   './',
   './index.html',

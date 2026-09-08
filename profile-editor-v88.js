@@ -52,6 +52,7 @@
   const avatarHeader=document.createElement('div');
   avatarHeader.className='profile-control-header-v89';
   avatarHeading.before(avatarHeader);avatarHeader.append(avatarThumb,avatarHeading);
+  avatarHeading.append(avatarControls);
   const bannerThumb=document.createElement('div');
   bannerThumb.setAttribute('aria-label','Текущий баннер');
   const bannerHeading=editor.querySelector('.profile-card-title');
@@ -59,12 +60,28 @@
   bannerHeader.className='profile-control-header-v89';
   bannerHeading.before(bannerHeader);bannerHeader.append(bannerThumb,bannerHeading);
   function copyPreview(source,target){
+    if(target.previewCleanupV90)target.previewCleanupV90();
+    target.previewCleanupV90=null;
     target.replaceChildren();
     for(const child of source.childNodes){
       if(child.nodeType===1&&child.tagName==='VIDEO'){
-        const play=document.createElement('span');play.className='profile-video-thumb-v89';play.textContent='▶';
-        if(child.poster){const poster=document.createElement('img');poster.src=child.poster;poster.alt='';target.append(poster);}
-        target.append(play);continue;
+        const frame=document.createElement('canvas');frame.width=320;frame.height=160;
+        frame.setAttribute('aria-label','Кадр видео');
+        target.append(frame);
+        const badge=document.createElement('span');badge.className='profile-video-thumb-v89';badge.textContent='Видео';target.append(badge);
+        const events=['loadeddata','seeked','timeupdate'];
+        const cleanup=()=>events.forEach(event=>child.removeEventListener(event,draw));
+        function draw(){
+          if(child.readyState<2||!child.videoWidth||!child.videoHeight)return;
+          try{
+            const ratio=Math.max(frame.width/child.videoWidth,frame.height/child.videoHeight);
+            const width=child.videoWidth*ratio,height=child.videoHeight*ratio;
+            frame.getContext('2d').drawImage(child,(frame.width-width)/2,(frame.height-height)/2,width,height);
+            cleanup();
+          }catch(error){/* The next decoded-frame event retries without another video. */}
+        }
+        events.forEach(event=>child.addEventListener(event,draw));
+        target.previewCleanupV90=cleanup;draw();continue;
       }
       const clone=child.cloneNode(true);
       if(clone.nodeType===1){clone.removeAttribute('id');clone.querySelectorAll('[id]').forEach(el=>el.removeAttribute('id'));}

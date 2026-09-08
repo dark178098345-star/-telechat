@@ -37,6 +37,19 @@ const root=path.resolve(__dirname,'..');
       await page.evaluate(()=>{window.renderProfileAvatar();window.renderProfileBannerEditor();});
       assert.equal(await page.locator('.profile-avatar-thumb-v89').textContent(),'🌙');
       assert(await page.locator('.profile-banner-thumb-v89').evaluate(el=>el.classList.contains('banner-preset-ocean')));
+      await page.evaluate(async()=>{
+        const source=document.createElement('canvas');source.width=160;source.height=80;
+        const context=source.getContext('2d');context.fillStyle='#ff0000';context.fillRect(0,0,160,80);
+        const video=document.createElement('video');video.muted=true;video.srcObject=source.captureStream(10);
+        document.getElementById('profile-banner-preview').append(video);
+        const started=video.play();context.fillRect(0,0,160,80);await started;
+        window.renderProfileBannerEditor();
+      });
+      await page.waitForFunction(()=>{
+        const canvas=document.querySelector('.profile-banner-thumb-v89 canvas');
+        return canvas&&canvas.getContext('2d').getImageData(20,20,1,1).data[0]>200;
+      });
+      assert.equal(await page.locator('.profile-banner-thumb-v89 video').count(),0);
       await page.locator('.profile-choice-card summary').click();
       assert(await page.locator('.profile-choice-card').evaluate(el=>el.open));
       await page.getByRole('tab',{name:'О себе',exact:true}).click();

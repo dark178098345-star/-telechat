@@ -27,17 +27,24 @@ html body #profile-panel.v65-full-panel .profile-pane-v88 .profile-card-title{fo
 #profile-panel .profile-section-heading-v88{display:flex;flex-direction:column;gap:5px;margin-bottom:15px}
 #profile-panel .profile-section-heading-v88 strong{font-size:14px;color:#e4e0f5}
 #profile-panel .profile-section-heading-v88 span{font-size:11px;color:#9693af;line-height:1.5}
-#profile-panel .profile-control-header-v89{display:flex;align-items:center;gap:13px;margin-bottom:16px;min-width:0}
+#profile-panel .profile-control-header-v89{display:flex;align-items:center;gap:13px;margin-bottom:12px;min-width:0}
 #profile-panel .profile-control-header-v89 .profile-section-heading-v88{margin:0;min-width:0}
 html body #profile-panel.v65-full-panel .profile-control-header-v89 .profile-card-title{margin:0!important}
-#profile-panel .profile-avatar-thumb-v89{position:relative;width:58px;height:58px;flex:0 0 58px;display:grid;place-items:center;overflow:hidden;border-radius:18px;border:1px solid rgba(181,168,249,.28);background:#24243e;font-size:27px}
-#profile-panel .profile-banner-thumb-v89{position:relative;width:106px;height:54px;flex:0 0 106px;overflow:hidden;border-radius:11px;border:1px solid rgba(181,168,249,.20);background-size:cover;background-position:center;display:grid;place-items:center}
+#profile-panel .profile-avatar-thumb-v89{position:relative;width:72px;height:72px;flex:0 0 72px;display:grid;place-items:center;overflow:hidden;border-radius:21px;border:1px solid rgba(181,168,249,.28);background:#24243e;font-size:29px}
+#profile-panel .profile-banner-thumb-v89{position:relative;width:156px;height:72px;flex:0 0 156px;overflow:hidden;border-radius:12px;border:1px solid rgba(181,168,249,.20);background-size:cover;background-position:center;display:grid;place-items:center}
 #profile-panel .profile-avatar-thumb-v89 img,#profile-panel .profile-banner-thumb-v89 img{width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block}
-#profile-panel .profile-video-thumb-v89{position:absolute;inset:0;display:grid;place-items:center;background:rgba(19,20,40,.2);color:#e4dfff;font-size:20px}
+#profile-panel .profile-avatar-thumb-v89 canvas,#profile-panel .profile-banner-thumb-v89 canvas{width:100%;height:100%;object-fit:cover;display:block}
+#profile-panel .profile-video-thumb-v89{position:absolute;bottom:5px;right:5px;padding:2px 5px;border-radius:5px;background:rgba(10,11,22,.65);color:#eeeaff;font-size:8px;font-weight:700}
+#profile-panel .profile-avatar-card-v88 .profile-section-heading-v88{flex:1;gap:7px}
+#profile-panel .profile-avatar-card-v88 .profile-section-heading-v88>span,#profile-panel .profile-avatar-card-v88 .avatar-upload-hint{display:none}
+#profile-panel .profile-avatar-card-v88 .profile-avatar-upload-copy{padding:0}
+html body #profile-panel.v65-full-panel .profile-avatar-card-v88 .avatar-upload-btn,
+html body #profile-panel.v65-full-panel .profile-avatar-card-v88 .avatar-remove-btn{min-height:34px;padding:7px 9px;font-size:11px;border-radius:10px}
 #profile-panel .profile-avatar-card-v88 .profile-control-title-v87{display:none}
 #profile-panel .profile-avatar-card-v88 .avatar-upload-actions{display:flex;gap:8px}
 #profile-panel .profile-avatar-card-v88 .avatar-upload-btn{flex:1}
-html body #profile-panel.v65-full-panel .profile-avatar-card-v88 .profile-choice-card{padding:14px 0 0!important;margin:14px 0 0!important;border:0!important;border-top:1px solid rgba(179,169,223,.10)!important;border-radius:0!important;background:none!important;box-shadow:none!important}
+html body #profile-panel.v65-full-panel .profile-avatar-card-v88 .profile-choice-card{padding:10px 0 0!important;margin:8px 0 0!important;border:0!important;border-top:1px solid rgba(179,169,223,.10)!important;border-radius:0!important;background:none!important;box-shadow:none!important}
+html body #profile-panel.v65-full-panel .profile-avatar-card-v88 .profile-choice-card summary{padding:3px 0!important;background:transparent!important}
 html body #profile-panel.v65-full-panel .profile-avatar-card-v88 .profile-choice-card summary{font-size:12px!important}
 #profile-panel .profile-collection-note-v87{display:none}
 #profile-panel .profile-pane-v88 .profile-banner-editor{margin:0}
