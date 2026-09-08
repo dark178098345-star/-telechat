@@ -1,0 +1,73 @@
+/* Spacious profile editor; keep the cover above the avatar. */
+html body #profile-panel.side-panel.left.v65-full-panel{
+  --profile-side-pad-v68:22px;
+  width:min(520px,100vw)!important;
+  padding:22px!important;
+  scroll-padding-top:82px;
+  scroll-padding-bottom:90px;
+}
+html body #profile-panel.side-panel.left.v65-full-panel.open{gap:18px!important}
+html body #profile-panel.v65-full-panel .panel-head{
+  width:calc(100% + 44px)!important;
+  margin:-22px -22px 0!important;
+  padding:18px 22px!important;
+  top:-22px!important;
+  min-height:74px!important;
+}
+html body #profile-panel.v65-full-panel .profile-editor-card,
+html body #profile-panel.v65-full-panel .profile-choice-card,
+html body #profile-panel.v65-full-panel .profile-fields-card{
+  padding:20px!important;
+  border-radius:20px!important;
+  background:rgba(23,25,43,.76)!important;
+  box-shadow:inset 0 1px rgba(255,255,255,.035)!important;
+}
+html body #profile-panel.v65-full-panel .profile-card-title{
+  font-size:12px!important;letter-spacing:.5px!important;margin-bottom:16px!important;
+}
+html body #profile-panel.v65-full-panel .profile-banner-preview{height:132px!important;border-radius:16px!important}
+html body #profile-panel.v65-full-panel .profile-avatar-toolbar{
+  grid-template-columns:88px minmax(0,1fr)!important;
+  gap:16px!important;margin:-24px 10px 18px!important;align-items:end!important;
+}
+html body #profile-panel.v65-full-panel .profile-avatar-toolbar .av-preview{width:88px!important;height:88px!important;margin:0!important;animation:none!important}
+#profile-panel .profile-control-title-v87{font-size:13px;font-weight:800;color:var(--text);margin-bottom:9px}
+#profile-panel .profile-banner-label-v87{padding-top:17px;border-top:1px solid rgba(167,139,250,.12);margin-top:8px}
+#profile-panel .avatar-upload-actions{display:flex;flex-wrap:wrap;gap:7px}
+html body #profile-panel.v65-full-panel .avatar-upload-btn,
+html body #profile-panel.v65-full-panel .avatar-remove-btn,
+html body #profile-panel.v65-full-panel .banner-upload-btn,
+html body #profile-panel.v65-full-panel .banner-reset-btn,
+html body #profile-panel.v65-full-panel .profile-background-pick-v84,
+html body #profile-panel.v65-full-panel .profile-background-remove-v84{
+  min-height:40px;font-size:12px;padding:9px 12px;border-radius:12px;
+}
+html body #profile-panel.v65-full-panel .banner-presets{gap:9px!important;margin:10px 0 12px!important}
+html body #profile-panel.v65-full-panel .banner-preset-btn{height:44px!important}
+#profile-panel .banner-upload-row{gap:8px}
+#profile-panel .avatar-upload-hint,#profile-panel .banner-upload-hint{font-size:10px;line-height:1.5;margin-top:9px}
+#profile-panel .profile-background-editor-v84{border:0;background:none;padding:0;margin:0}
+#profile-panel .profile-background-head-v84 b{font-size:14px}
+#profile-panel .profile-background-head-v84 span{font-size:11px;line-height:1.5;margin-top:5px}
+#profile-panel .profile-background-preview-v84{height:110px;margin-top:15px;border-radius:14px}
+#profile-panel .profile-background-actions-v84{margin-top:12px;gap:9px}
+html body #profile-panel.v65-full-panel .profile-choice-card summary{cursor:pointer;margin:0!important;line-height:1.6;list-style:disclosure-closed}
+html body #profile-panel.v65-full-panel .profile-choice-card[open] summary{list-style:disclosure-open;margin-bottom:16px!important}
+#profile-panel .profile-collection-note-v87{display:block;font-size:11px;font-weight:500;letter-spacing:0;color:var(--text3);margin-top:4px}
+html body #profile-panel.v65-full-panel .profile-choice-card .av-grid{gap:9px!important;padding:8px!important}
+html body #profile-panel.v65-full-panel .profile-fields-card .field-label{font-size:12px;margin:12px 0 7px!important}
+html body #profile-panel.v65-full-panel .profile-fields-card .field-input{min-height:46px!important;margin-bottom:4px!important}
+html body #profile-panel.v65-full-panel .profile-fields-card .profile-bio-input{min-height:100px!important;max-height:200px!important}
+html body #profile-panel.v65-full-panel .profile-action-dock{padding:14px 0 calc(12px + env(safe-area-inset-bottom,0px))!important;bottom:-22px!important;margin:0 0 -22px!important;gap:10px}
+html body #profile-panel.v65-full-panel .profile-action-dock .auth-btn,
+html body #profile-panel.v65-full-panel .profile-action-dock .close-btn{min-height:48px!important}
+@media(max-width:640px){
+  html body #profile-panel.side-panel.left.v65-full-panel{--profile-side-pad-v68:14px;padding:14px 14px 90px!important;width:100vw!important}
+  html body #profile-panel.v65-full-panel .panel-head{width:calc(100% + 28px)!important;margin:-14px -14px 0!important;top:-14px!important;padding:14px!important}
+  html body #profile-panel.v65-full-panel .profile-editor-card,
+  html body #profile-panel.v65-full-panel .profile-choice-card,
+  html body #profile-panel.v65-full-panel .profile-fields-card{padding:15px!important}
+  html body #profile-panel.v65-full-panel .profile-avatar-toolbar{grid-template-columns:72px minmax(0,1fr)!important;gap:10px!important;margin:-20px 4px 16px!important}
+  html body #profile-panel.v65-full-panel .profile-avatar-toolbar .av-preview{width:72px!important;height:72px!important}
+  html body #profile-panel.v65-full-panel .profile-action-dock{bottom:calc(7px + env(safe-area-inset-bottom,0px))!important;padding:7px!important;margin:0!important}
+}

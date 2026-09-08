@@ -1,5 +1,6 @@
-const CACHE_NAME='telechat-shell-v86-profile-background-layer';
+const CACHE_NAME='telechat-shell-v87-profile-editor';
 const APP_SHELL=[
+  './profile-editor-v87.css?v=87',
   './',
   './index.html',
   './manifest.webmanifest',

@@ -537,6 +537,7 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
 <link rel="stylesheet" href="./mobile-experience-v79.css?v=79">
 <link rel="stylesheet" href="./emoji-motion-v80.css?v=82">
 <link rel="stylesheet" href="./profile-background-v84.css?v=86">
+<link rel="stylesheet" href="./profile-editor-v87.css?v=87">
 </head>
 <body>
 <div id="startup-loader" role="status" aria-live="polite" aria-label="Загрузка tele.chat">
@@ -919,12 +920,13 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
     <span class="profile-preview-arrow" aria-hidden="true">›</span>
   </button>
   <section class="profile-editor-card">
-    <div class="profile-card-title">✨ Оформление</div>
+    <div class="profile-card-title">✨ Аватарка и баннер</div>
     <div class="profile-banner-editor">
       <div class="profile-banner-preview banner-preset-cosmos" id="profile-banner-preview"></div>
       <div class="profile-avatar-toolbar">
         <div class="av-preview" id="prof-av-prev"></div>
         <div class="profile-avatar-upload-copy">
+          <div class="profile-control-title-v87">Твоя аватарка</div>
           <div class="avatar-upload-actions">
             <button type="button" class="avatar-upload-btn" onclick="document.getElementById('avatar-file-input').click()">🖼️ Фото</button>
             <button type="button" class="avatar-upload-btn privileged-media-only" id="avatar-video-btn" onclick="document.getElementById('avatar-video-input').click()" hidden>🎬 Видео</button>
@@ -933,6 +935,7 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
           <div class="avatar-upload-hint">Фото обрежется и сожмётся автоматически</div>
         </div>
       </div>
+      <div class="profile-control-title-v87 profile-banner-label-v87">Баннер над аватаркой</div>
       <div class="banner-presets" id="profile-banner-presets"></div>
       <div class="banner-upload-row">
         <button type="button" class="banner-upload-btn" onclick="document.getElementById('banner-file-input').click()">🖼️ Загрузить баннер</button>
@@ -941,6 +944,8 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
       </div>
       <div class="banner-upload-hint">Баннер отображается только в верхней части профиля</div>
     </div>
+  </section>
+  <section class="profile-editor-card profile-background-card-v87">
     <div class="profile-background-editor-v84">
       <div class="profile-background-head-v84">
         <div><b>🌌 Фон карточки профиля</b><span>Отдельное фото за блоками профиля — его увидят другие</span></div>
@@ -959,10 +964,10 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
     <input type="file" id="banner-video-input" accept="video/mp4,video/webm,video/quicktime" onchange="handleProfileBannerVideo(this)" hidden>
     <input type="file" id="profile-background-file-v84" accept="image/jpeg,image/png,image/webp" onchange="handleProfileBackgroundV84(this)" hidden>
   </section>
-  <section class="profile-choice-card">
-    <div class="profile-card-title">🎭 Аватар из коллекции</div>
+  <details class="profile-choice-card">
+    <summary class="profile-card-title">🎭 Аватар из коллекции <span class="profile-collection-note-v87">Выбрать смайлик</span></summary>
     <div class="av-grid" id="av-grid-prof"></div>
-  </section>
+  </details>
   <section class="profile-fields-card">
     <div class="profile-card-title">✍️ Информация</div>
     <div class="field-label">Имя</div>
