@@ -61,12 +61,13 @@
 .user-profile-card.profile-photo-background-v84{
   --profile-card-photo-v84:none;
   background-image:
-    linear-gradient(180deg,rgba(6,7,20,.34) 0%,rgba(8,9,24,.67) 31%,rgba(7,9,22,.9) 66%,rgba(5,7,17,.97) 100%),
-    radial-gradient(circle at 78% 12%,rgba(105,91,231,.2),transparent 42%),
+    linear-gradient(180deg,rgba(6,7,20,.14) 0%,rgba(8,9,24,.28) 31%,rgba(7,9,22,.52) 68%,rgba(5,7,17,.7) 100%),
+    radial-gradient(circle at 78% 12%,rgba(105,91,231,.1),transparent 42%),
     var(--profile-card-photo-v84)!important;
   background-position:center,center,center!important;
   background-repeat:no-repeat!important;
   background-size:cover,cover,cover!important;
+  background-color:#070916!important;
   border-color:rgba(200,191,255,.32)!important;
   box-shadow:0 38px 120px rgba(0,0,0,.72),inset 0 1px rgba(255,255,255,.08)!important;
 }
@@ -77,7 +78,7 @@
 .user-profile-card.profile-photo-background-v84 .profile-details-toggle,
 .user-profile-card.profile-photo-background-v84 .profile-details-shell,
 .user-profile-card.profile-photo-background-v84 #moon-profile-showcase-v29{
-  background:linear-gradient(145deg,rgba(17,18,38,.82),rgba(7,9,22,.74))!important;
+  background:linear-gradient(145deg,rgba(17,18,38,.72),rgba(7,9,22,.63))!important;
   border-color:rgba(199,190,255,.17)!important;
   box-shadow:inset 0 1px rgba(255,255,255,.035),0 12px 28px rgba(0,0,0,.16);
   backdrop-filter:blur(9px) saturate(112%);
@@ -97,7 +98,7 @@
   .user-profile-card.profile-photo-background-v84 #moon-profile-showcase-v29{
     backdrop-filter:none;
     -webkit-backdrop-filter:none;
-    background:linear-gradient(145deg,rgba(17,18,38,.91),rgba(7,9,22,.86))!important;
+    background:linear-gradient(145deg,rgba(17,18,38,.82),rgba(7,9,22,.75))!important;
   }
 }
 @media(prefers-reduced-motion:reduce){

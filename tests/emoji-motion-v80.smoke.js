@@ -32,7 +32,7 @@ assert.match(js,/setRangeText/);
 assert.match(js,/telechat-emoji-recent-v80/);
 assert.ok((js.match(/id:'/g)||[]).length>=11,'expected at least 11 emoji categories');
 assert.ok((js.match(/[\u{1F300}-\u{1FAFF}]/gu)||[]).length>=500,'expected a large emoji library');
-assert.match(worker,/telechat-shell-v84-separate-profile-background/);
+assert.match(worker,/telechat-shell-v85-visible-profile-background/);
 assert.match(activity,/\?app=android&v=79/);
 assert.match(activity,/telechat-android\/1\.2\.1/);
 assert.match(gradle,/versionCode 4/);

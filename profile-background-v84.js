@@ -128,6 +128,21 @@
     };
   }
 
+  const openBefore=window.openUserProfile;
+  if(typeof openBefore==='function'){
+    window.openUserProfile=async function(nick){
+      const args=Array.prototype.slice.call(arguments,1);
+      const result=await openBefore.apply(this,[nick].concat(args));
+      const key=String(nick||'').toLowerCase();
+      const currentUser=typeof me!=='undefined'&&me?me:(window.me||null);
+      const isOwn=currentUser&&String(currentUser.nick||'').toLowerCase()===key;
+      const cached=(typeof userCache!=='undefined'&&(userCache[key]||userCache[nick]))||null;
+      const user=isOwn?currentUser:cached;
+      paintCard(decode(user&&user.banner).background);
+      return result;
+    };
+  }
+
   window.telechatProfileAppearanceV84={
     decode,
     encode,
