@@ -21,7 +21,7 @@ import android.webkit.WebViewClient;
 import android.widget.Toast;
 
 public class MainActivity extends Activity {
-    private static final String TELECHAT_URL = "https://dark178098345-star.github.io/-telechat/?app=android&v=79";
+    private static final String TELECHAT_URL = "https://dark178098345-star.github.io/-telechat/?app=android&v=85";
     private static final String TELECHAT_HOST = "dark178098345-star.github.io";
     private static final int FILE_CHOOSER_REQUEST = 401;
     private static final int MICROPHONE_PERMISSION_REQUEST = 402;
@@ -57,7 +57,7 @@ public class MainActivity extends Activity {
         settings.setAllowContentAccess(true);
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
         settings.setCacheMode(WebSettings.LOAD_DEFAULT);
-        settings.setUserAgentString(settings.getUserAgentString() + " telechat-android/1.2.1");
+        settings.setUserAgentString(settings.getUserAgentString() + " telechat-android/1.2.2");
 
         CookieManager.getInstance().setAcceptCookie(true);
         CookieManager.getInstance().setAcceptThirdPartyCookies(webView, false);

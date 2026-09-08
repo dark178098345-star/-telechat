@@ -33,10 +33,10 @@ assert.match(js,/telechat-emoji-recent-v80/);
 assert.ok((js.match(/id:'/g)||[]).length>=11,'expected at least 11 emoji categories');
 assert.ok((js.match(/[\u{1F300}-\u{1FAFF}]/gu)||[]).length>=500,'expected a large emoji library');
 assert.match(worker,/telechat-shell-v85-visible-profile-background/);
-assert.match(activity,/\?app=android&v=79/);
-assert.match(activity,/telechat-android\/1\.2\.1/);
-assert.match(gradle,/versionCode 4/);
-assert.match(gradle,/versionName '1\.2\.1'/);
-assert.match(workflow,/tele\.chat-Android-1\.2\.1\.apk/);
+assert.match(activity,/\?app=android&v=85/);
+assert.match(activity,/telechat-android\/1\.2\.2/);
+assert.match(gradle,/versionCode 5/);
+assert.match(gradle,/versionName '1\.2\.2'/);
+assert.match(workflow,/tele\.chat-Android-1\.2\.2\.apk/);
 
 console.log('emoji motion V80 smoke: ok');

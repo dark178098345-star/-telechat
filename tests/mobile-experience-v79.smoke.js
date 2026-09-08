@@ -27,9 +27,9 @@ assert.match(script,/deviceMemory/);
 assert.match(worker,/telechat-shell-v85-visible-profile-background/);
 assert.match(worker,/mobile-experience-v79\.css\?v=79/);
 assert.match(worker,/mobile-experience-v79\.js\?v=79/);
-assert.match(activity,/\?app=android&v=79/);
-assert.match(activity,/telechat-android\/1\.2\.1/);
-assert.match(gradle,/versionCode 4/);
-assert.match(gradle,/versionName '1\.2\.1'/);
+assert.match(activity,/\?app=android&v=85/);
+assert.match(activity,/telechat-android\/1\.2\.2/);
+assert.match(gradle,/versionCode 5/);
+assert.match(gradle,/versionName '1\.2\.2'/);
 
 console.log('mobile-experience-v79 smoke ok');
