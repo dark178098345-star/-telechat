@@ -1,0 +1,49 @@
+/* Profile-first layout with two focused editing pages. */
+html body #profile-panel.side-panel.left.v65-full-panel{padding:20px!important;--profile-side-pad-v68:20px;background:linear-gradient(165deg,#17192d,#10121f 65%)!important}
+html body #profile-panel.side-panel.left.v65-full-panel.open{gap:16px!important}
+html body #profile-panel.v65-full-panel .panel-head{width:calc(100% + 40px)!important;margin:-20px -20px 0!important;top:-20px!important;padding:16px 20px!important}
+#profile-panel .profile-hero-v88{flex:none;overflow:hidden;border:1px solid rgba(177,164,232,.17);border-radius:22px;background:linear-gradient(145deg,#24253d,#191c2e);padding-bottom:4px}
+html body #profile-panel.v65-full-panel .profile-hero-v88 .profile-banner-preview{height:138px!important;border:0!important;border-radius:0!important;box-shadow:none!important}
+#profile-panel .profile-hero-v88 .profile-banner-preview::after{display:none}
+html body #profile-panel.v65-full-panel .profile-hero-v88 .profile-avatar-toolbar{margin:-30px 20px 16px!important;grid-template-columns:86px minmax(0,1fr)!important;gap:16px!important;align-items:end!important}
+html body #profile-panel.v65-full-panel .profile-hero-v88 .av-preview{width:86px!important;height:86px!important;border:4px solid #22243b!important;box-shadow:0 6px 18px #090b1833!important}
+#profile-panel .profile-identity-v88{display:flex;flex-direction:column;gap:4px;min-width:0;padding:0 0 7px}
+#profile-panel .profile-identity-v88 strong{font-size:21px;line-height:1.25;overflow-wrap:anywhere;color:#f3f1ff}
+#profile-panel .profile-identity-v88 span{font-size:12px;color:#aba7cb}
+html body #profile-panel.v65-full-panel .profile-hero-v88 .profile-preview-btn{width:calc(100% - 24px)!important;margin:0 12px 9px!important;min-height:46px!important;padding:8px 10px!important;background:rgba(255,255,255,.035)!important;border:0!important;box-shadow:none!important;border-radius:12px!important}
+#profile-panel .profile-hero-v88 .profile-preview-note{display:none}
+html body #profile-panel.v65-full-panel .profile-hero-v88 .profile-preview-icon{width:29px!important;height:29px!important;flex-basis:29px!important;font-size:15px!important;background:transparent}
+#profile-panel #animated-profile-card{width:100%;margin:0!important;padding:13px 15px;border-radius:16px;box-shadow:none}
+#profile-panel .profile-tabs-v88{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:5px;flex:none;border-radius:15px;background:#0d1020;border:1px solid rgba(171,164,218,.10)}
+#profile-panel .profile-tabs-v88 button{font:800 13px 'Nunito',sans-serif;border:0;border-radius:11px;background:transparent;color:#9897b0;min-height:42px;cursor:pointer;transition:background .18s ease,color .18s ease}
+#profile-panel .profile-tabs-v88 button[aria-selected=true]{background:#33314e;color:#eeebff;box-shadow:inset 0 1px rgba(255,255,255,.07)}
+#profile-panel .profile-tabs-v88 button:focus-visible{outline:2px solid #a99aff;outline-offset:2px}
+#profile-panel .profile-pane-v88{display:flex;flex-direction:column;gap:14px;flex:none;min-width:0}
+html body #profile-panel .profile-pane-v88[hidden]{display:none!important}
+html body #profile-panel.v65-full-panel .profile-pane-v88 .profile-editor-card,
+html body #profile-panel.v65-full-panel .profile-pane-v88 .profile-fields-card,
+#profile-panel .profile-avatar-card-v88{padding:18px!important;border:1px solid rgba(179,169,223,.12);border-radius:17px!important;background:rgba(255,255,255,.025)!important;box-shadow:none!important}
+html body #profile-panel.v65-full-panel .profile-pane-v88 .profile-card-title{font-size:14px!important;text-transform:none!important;letter-spacing:0!important;color:#e4e0f5!important;margin-bottom:13px!important}
+#profile-panel .profile-section-heading-v88{display:flex;flex-direction:column;gap:5px;margin-bottom:15px}
+#profile-panel .profile-section-heading-v88 strong{font-size:14px;color:#e4e0f5}
+#profile-panel .profile-section-heading-v88 span{font-size:11px;color:#9693af;line-height:1.5}
+#profile-panel .profile-avatar-card-v88 .profile-control-title-v87{display:none}
+#profile-panel .profile-avatar-card-v88 .avatar-upload-actions{display:flex;gap:8px}
+#profile-panel .profile-avatar-card-v88 .avatar-upload-btn{flex:1}
+html body #profile-panel.v65-full-panel .profile-avatar-card-v88 .profile-choice-card{padding:14px 0 0!important;margin:14px 0 0!important;border:0!important;border-top:1px solid rgba(179,169,223,.10)!important;border-radius:0!important;background:none!important;box-shadow:none!important}
+html body #profile-panel.v65-full-panel .profile-avatar-card-v88 .profile-choice-card summary{font-size:12px!important}
+#profile-panel .profile-collection-note-v87{display:none}
+#profile-panel .profile-pane-v88 .profile-banner-editor{margin:0}
+html body #profile-panel.v65-full-panel .profile-pane-v88 .banner-presets{margin-top:0!important}
+html body #profile-panel.v65-full-panel .profile-pane-v88 .profile-background-editor-v84{border:0!important;background:none!important;padding:0!important}
+html body #profile-panel.v65-full-panel .profile-pane-v88 .profile-fields-card>.profile-card-title{display:none}
+html body #profile-panel.v65-full-panel .profile-pane-v88 .profile-fields-card .field-label:first-of-type{margin-top:0!important}
+html body #profile-panel.v65-full-panel .profile-action-dock{bottom:-20px!important;margin:0 0 -20px!important;padding-top:12px!important;background:linear-gradient(180deg,transparent,#10121f 20%)!important}
+@media(max-width:640px){
+  html body #profile-panel.side-panel.left.v65-full-panel{padding:14px 14px 92px!important;--profile-side-pad-v68:14px}
+  html body #profile-panel.v65-full-panel .panel-head{width:calc(100% + 28px)!important;margin:-14px -14px 0!important;top:-14px!important;padding:14px!important}
+  html body #profile-panel.v65-full-panel .profile-hero-v88 .profile-banner-preview{height:120px!important}
+  html body #profile-panel.v65-full-panel .profile-hero-v88 .profile-avatar-toolbar{margin:-24px 15px 14px!important;grid-template-columns:76px minmax(0,1fr)!important}
+  html body #profile-panel.v65-full-panel .profile-hero-v88 .av-preview{width:76px!important;height:76px!important}
+  html body #profile-panel.v65-full-panel .profile-action-dock{bottom:calc(7px + env(safe-area-inset-bottom,0px))!important;margin:0!important;background:#171a2d!important;padding:7px!important}
+}
