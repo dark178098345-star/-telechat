@@ -19,6 +19,8 @@ const root=path.resolve(__dirname,'..');
       await page.evaluate(()=>{
         window.me={nick:'tester',name:'Test profile'};
         window.buildProfPanel=()=>{};
+        window.renderProfileAvatar=()=>{document.getElementById('prof-av-prev').textContent='🌙';};
+        window.renderProfileBannerEditor=()=>{document.getElementById('profile-banner-preview').className='profile-banner-preview banner-preset-ocean';};
         document.getElementById('startup-loader')?.remove();
         document.getElementById('profile-panel').classList.add('v65-full-panel','open');
         document.getElementById('prof-av-prev').textContent='T';
@@ -32,6 +34,9 @@ const root=path.resolve(__dirname,'..');
       await page.locator('#prof-name-inp').fill('Unsaved name');
       await page.getByRole('tab',{name:'Оформление',exact:true}).click();
       assert(await page.locator('#profile-pane-style-v88').isVisible());
+      await page.evaluate(()=>{window.renderProfileAvatar();window.renderProfileBannerEditor();});
+      assert.equal(await page.locator('.profile-avatar-thumb-v89').textContent(),'🌙');
+      assert(await page.locator('.profile-banner-thumb-v89').evaluate(el=>el.classList.contains('banner-preset-ocean')));
       await page.locator('.profile-choice-card summary').click();
       assert(await page.locator('.profile-choice-card').evaluate(el=>el.open));
       await page.getByRole('tab',{name:'О себе',exact:true}).click();

@@ -45,6 +45,42 @@
   editor.querySelector('.profile-card-title').textContent='Баннер';
   editor.querySelector('.profile-banner-label-v87').remove();
   style.append(avatarCard,editor,background);
+  const avatarThumb=document.createElement('div');
+  avatarThumb.className='profile-avatar-thumb-v89';
+  avatarThumb.setAttribute('aria-label','Текущая аватарка');
+  const avatarHeading=avatarCard.querySelector('.profile-section-heading-v88');
+  const avatarHeader=document.createElement('div');
+  avatarHeader.className='profile-control-header-v89';
+  avatarHeading.before(avatarHeader);avatarHeader.append(avatarThumb,avatarHeading);
+  const bannerThumb=document.createElement('div');
+  bannerThumb.setAttribute('aria-label','Текущий баннер');
+  const bannerHeading=editor.querySelector('.profile-card-title');
+  const bannerHeader=document.createElement('div');
+  bannerHeader.className='profile-control-header-v89';
+  bannerHeading.before(bannerHeader);bannerHeader.append(bannerThumb,bannerHeading);
+  function copyPreview(source,target){
+    target.replaceChildren();
+    for(const child of source.childNodes){
+      if(child.nodeType===1&&child.tagName==='VIDEO'){
+        const play=document.createElement('span');play.className='profile-video-thumb-v89';play.textContent='▶';
+        if(child.poster){const poster=document.createElement('img');poster.src=child.poster;poster.alt='';target.append(poster);}
+        target.append(play);continue;
+      }
+      const clone=child.cloneNode(true);
+      if(clone.nodeType===1){clone.removeAttribute('id');clone.querySelectorAll('[id]').forEach(el=>el.removeAttribute('id'));}
+      target.append(clone);
+    }
+  }
+  function refreshThumbnails(){
+    copyPreview(document.getElementById('prof-av-prev'),avatarThumb);
+    bannerThumb.className='profile-banner-thumb-v89 '+[...cover.classList].filter(name=>name.startsWith('banner-preset-')||name==='banner-photo').join(' ');
+    bannerThumb.style.backgroundImage=cover.style.backgroundImage;
+    copyPreview(cover,bannerThumb);
+  }
+  for(const name of ['renderProfileAvatar','renderProfileBannerEditor']){
+    const original=window[name];
+    if(typeof original==='function')window[name]=function(){const result=original.apply(this,arguments);refreshThumbnails();return result;};
+  }
   const buttons=[...tabs.querySelectorAll('button')];
   function select(index){
     buttons.forEach((button,i)=>{button.setAttribute('aria-selected',String(i===index));button.tabIndex=i===index?0:-1;});
@@ -64,9 +100,10 @@
     document.getElementById('profile-editor-nick-v88').textContent=user?.nick?'@'+user.nick:'';
   }
   const build=window.buildProfPanel;
-  window.buildProfPanel=function(){const result=build.apply(this,arguments);refreshIdentity();return result;};
+  window.buildProfPanel=function(){const result=build.apply(this,arguments);refreshIdentity();refreshThumbnails();return result;};
   panel.querySelector('#prof-name-inp').addEventListener('input',event=>{
     document.getElementById('profile-editor-name-v88').textContent=event.target.value.trim()||'Твой профиль';
   });
   refreshIdentity();
+  refreshThumbnails();
 })();
