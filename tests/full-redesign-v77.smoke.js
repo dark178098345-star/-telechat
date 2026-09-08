@@ -26,7 +26,7 @@ for(const selector of [
 assert.match(style,/@media\(max-width:640px\)/);
 assert.match(style,/@media\(prefers-reduced-motion:reduce\)/);
 assert.doesNotMatch(style,/transition\s*:\s*all/i);
-assert.match(worker,/telechat-shell-v83-profile-background/);
+assert.match(worker,/telechat-shell-v84-separate-profile-background/);
 assert.match(worker,/full-redesign-v77\.css\?v=77/);
 
 console.log('full redesign V77 smoke: ok');

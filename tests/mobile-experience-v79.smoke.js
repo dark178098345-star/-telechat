@@ -24,7 +24,7 @@ assert.match(script,/visualViewport/);
 assert.match(script,/trimDecorations/);
 assert.match(script,/deviceMemory/);
 
-assert.match(worker,/telechat-shell-v83-profile-background/);
+assert.match(worker,/telechat-shell-v84-separate-profile-background/);
 assert.match(worker,/mobile-experience-v79\.css\?v=79/);
 assert.match(worker,/mobile-experience-v79\.js\?v=79/);
 assert.match(activity,/\?app=android&v=79/);

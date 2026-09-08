@@ -536,7 +536,7 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
 <link rel="stylesheet" href="./chat-stability-v78.css?v=78">
 <link rel="stylesheet" href="./mobile-experience-v79.css?v=79">
 <link rel="stylesheet" href="./emoji-motion-v80.css?v=82">
-<link rel="stylesheet" href="./profile-background-v83.css?v=83">
+<link rel="stylesheet" href="./profile-background-v84.css?v=84">
 </head>
 <body>
 <div id="startup-loader" role="status" aria-live="polite" aria-label="Загрузка tele.chat">
@@ -935,16 +935,29 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
       </div>
       <div class="banner-presets" id="profile-banner-presets"></div>
       <div class="banner-upload-row">
-        <button type="button" class="banner-upload-btn" onclick="document.getElementById('banner-file-input').click()">🖼️ Фото на фон</button>
+        <button type="button" class="banner-upload-btn" onclick="document.getElementById('banner-file-input').click()">🖼️ Загрузить баннер</button>
         <button type="button" class="banner-upload-btn privileged-media-only" id="banner-video-btn" onclick="document.getElementById('banner-video-input').click()" hidden>🎬 Видео</button>
         <button type="button" class="banner-reset-btn" onclick="selectProfileBanner('cosmos')" title="Вернуть стандартный баннер">↺</button>
       </div>
-      <div class="banner-upload-hint">Загруженное фото станет обложкой и мягким фоном всей карточки</div>
+      <div class="banner-upload-hint">Баннер отображается только в верхней части профиля</div>
+    </div>
+    <div class="profile-background-editor-v84">
+      <div class="profile-background-head-v84">
+        <div><b>🌌 Фон карточки профиля</b><span>Отдельное фото за блоками профиля — его увидят другие</span></div>
+      </div>
+      <div class="profile-background-preview-v84" id="profile-background-preview-v84">
+        <span id="profile-background-preview-label-v84">Стандартный фон</span>
+      </div>
+      <div class="profile-background-actions-v84">
+        <button type="button" class="profile-background-pick-v84" onclick="document.getElementById('profile-background-file-v84').click()">🖼️ Установить фото</button>
+        <button type="button" class="profile-background-remove-v84" id="profile-background-remove-v84" onclick="removeProfileBackgroundV84()">Убрать фон</button>
+      </div>
     </div>
     <input type="file" id="avatar-file-input" accept="image/*" onchange="handleAvatarFile(this)" hidden>
     <input type="file" id="avatar-video-input" accept="video/mp4,video/webm,video/quicktime" onchange="handleProfileAvatarVideo(this)" hidden>
     <input type="file" id="banner-file-input" accept="image/*" onchange="handleProfileBannerFile(this)" hidden>
     <input type="file" id="banner-video-input" accept="video/mp4,video/webm,video/quicktime" onchange="handleProfileBannerVideo(this)" hidden>
+    <input type="file" id="profile-background-file-v84" accept="image/jpeg,image/png,image/webp" onchange="handleProfileBackgroundV84(this)" hidden>
   </section>
   <section class="profile-choice-card">
     <div class="profile-card-title">🎭 Аватар из коллекции</div>
@@ -2489,7 +2502,8 @@ saveProfile=async function(){
   try{
     const allowed=canUseProfileVideo(me);
     const oldAvatarVideo=me.avatar_video||'';
-    const oldBanner=String(me.banner||'');
+    const oldAppearance=window.telechatProfileAppearanceV84?window.telechatProfileAppearanceV84.decode(me.banner):{banner:String(me.banner||'')};
+    const oldBanner=oldAppearance.banner;
     let nextAvatarVideo=allowed?safeMediaUrl(selectedAvatarVideo):'';
     let nextBanner=normalizeProfileBanner(selectedProfileBanner);
     if(pendingAvatarVideoFile)nextAvatarVideo=await uploadProfileVideo(pendingAvatarVideoFile,'avatar');
@@ -2501,9 +2515,10 @@ saveProfile=async function(){
     const nextName=document.getElementById('prof-name-inp').value.trim()||me.name;
     const nextStatus=packProfileData(document.getElementById('prof-status-inp').value.trim(),profAvatarPhoto);
     const nextBio=document.getElementById('prof-bio-inp').value.trim().slice(0,220);
-    const result=await sb.from('users').update({av:profAvIdx,name:nextName,status:nextStatus,bio:nextBio,banner:nextBanner,avatar_video:nextAvatarVideo}).eq('nick',me.nick);
+    const storedBanner=window.telechatProfileAppearanceV84?window.telechatProfileAppearanceV84.encode(nextBanner,window.telechatProfileAppearanceV84.getSelected()):nextBanner;
+    const result=await sb.from('users').update({av:profAvIdx,name:nextName,status:nextStatus,bio:nextBio,banner:storedBanner,avatar_video:nextAvatarVideo}).eq('nick',me.nick);
     if(result.error)throw result.error;
-    me.av=profAvIdx;me.name=nextName;me.status=nextStatus;me.bio=nextBio;me.banner=nextBanner;me.avatar_video=nextAvatarVideo;
+    me.av=profAvIdx;me.name=nextName;me.status=nextStatus;me.bio=nextBio;me.banner=storedBanner;me.avatar_video=nextAvatarVideo;
     userCache[me.nick]=me;
     if(oldAvatarVideo&&oldAvatarVideo!==nextAvatarVideo)removeOldProfileVideo(oldAvatarVideo);
     if(oldBanner.startsWith('video:')&&oldBanner!==nextBanner)removeOldProfileVideo(oldBanner.slice(6));
@@ -2514,7 +2529,7 @@ saveProfile=async function(){
     renderContacts();
   }catch(error){
     const message=String(error&&error.message||'');
-    showToast(message.includes('avatar_video')||message.includes('Bucket')||message.includes('bucket')?'Сначала выполни SQL для видео профиля':'Не удалось сохранить видео профиля');
+    showToast(message.includes('avatar_video')||message.includes('Bucket')||message.includes('bucket')?'Сначала выполни SQL для видео профиля':'Не удалось сохранить профиль');
   }finally{
     button.disabled=false;button.textContent=originalText;
   }
@@ -2584,6 +2599,6 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <script src="./smooth-ui-v76.js?v=76"></script>
 <script src="./mobile-experience-v79.js?v=79"></script>
 <script src="./emoji-motion-v80.js?v=82"></script>
-<script src="./profile-background-v83.js?v=83"></script>
+<script src="./profile-background-v84.js?v=84"></script>
 </body>
 </html>
