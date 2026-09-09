@@ -1,5 +1,7 @@
-const CACHE_NAME='telechat-shell-v95-appearance-mode';
+const CACHE_NAME='telechat-shell-v96-music-library';
 const APP_SHELL=[
+  './music-library-v96.js?v=96',
+  './music-library-v96.css?v=96',
   './appearance-mode-v95.js?v=95',
   './chat-foundation-v94.css?v=94',
   './profile-studio-v92.css?v=92',

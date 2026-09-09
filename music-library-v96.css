@@ -1,0 +1,88 @@
+.music-entry-v96 {
+  display:flex;align-items:center;gap:10px;width:100%;min-height:38px;margin-top:10px;padding:7px 11px;
+  border:1px solid rgba(180,170,255,.12);border-radius:12px;background:rgba(124,110,247,.065);
+  color:var(--text2);font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:background-color .18s ease,color .18s ease;
+}
+.music-entry-v96:hover{background:rgba(124,110,247,.13);color:var(--text)}
+.music-entry-v96 b{margin-left:auto;font-size:18px;font-weight:400}
+.music-entry-v96 svg,.music-player-v96 svg,#music-dialog-v96 svg{width:20px;height:20px;flex-shrink:0;pointer-events:none}
+#music-dialog-v96 {
+  --music-line:rgba(188,178,255,.16);--music-fill:rgba(128,114,237,.075);
+  width:min(590px,calc(100vw - 24px));max-height:calc(100dvh - 40px);padding:0;margin:auto;
+  border:1px solid var(--music-line);border-radius:24px;background:linear-gradient(145deg,#202039,#111526);
+  color:var(--text);box-shadow:0 28px 90px rgba(0,0,0,.45);overflow:hidden;
+}
+#music-dialog-v96[open]{display:flex;flex-direction:column;animation:music-open-v96 .2s ease-out}
+#music-dialog-v96::backdrop{background:rgba(4,5,13,.65)}
+body.telechat-glass-v36 #music-dialog-v96{background:linear-gradient(145deg,rgba(47,44,75,.96),rgba(17,21,38,.97));backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+#music-dialog-v96 button,#music-dialog-v96 input{font-family:inherit}
+#music-dialog-v96 button{cursor:pointer}
+#music-dialog-v96 button:disabled{opacity:.45;cursor:default}
+.music-head-v96{display:flex;align-items:center;gap:12px;flex-shrink:0;padding:22px;border-bottom:1px solid var(--music-line)}
+.music-heading-icon{display:grid;place-items:center;width:44px;height:44px;border:1px solid var(--music-line);border-radius:14px;background:rgba(151,133,255,.16);color:#c7bcff}
+.music-head-v96 h2{font-size:20px;line-height:1.4;font-weight:700}
+.music-head-v96 p{margin-top:2px;color:#a6a0ba;font-size:12px}
+.music-close-v96{display:grid;place-items:center;flex:0 0 36px;width:36px;height:36px;margin-left:auto;border:1px solid var(--music-line);border-radius:12px;background:var(--music-fill);color:var(--text2)}
+.music-body-v96{min-height:0;overflow:auto;padding:20px 22px;overscroll-behavior:contain}
+.music-upload-v96{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;padding:17px;border:1px dashed rgba(177,160,255,.4);border-radius:16px;background:linear-gradient(125deg,rgba(149,129,249,.15),rgba(84,136,186,.07));color:#e1d9ff;font-size:14px;font-weight:700}
+.music-upload-v96 small{display:block;margin-top:4px;color:#a69dbf;font-size:11px;font-weight:500}
+.music-link-details-v96{margin-top:10px;border:1px solid var(--music-line);border-radius:13px;background:rgba(9,12,26,.16)}
+.music-link-details-v96 summary{padding:12px 14px;cursor:pointer;color:#c4b8f4;font-size:12px}
+#music-link-form-v96{display:grid;gap:12px;padding:0 14px 14px}
+#music-link-form-v96 label{display:grid;gap:6px;color:var(--text2);font-size:11px}
+#music-dialog-v96 input:not([type=range]):not([type=file]){width:100%;min-width:0;padding:11px 12px;border:1px solid var(--music-line);border-radius:11px;background:rgba(6,9,22,.3);color:var(--text);font-size:13px;outline-offset:2px}
+#music-dialog-v96 input::placeholder{color:#8b86a0}
+#music-link-form-v96 button{min-height:38px;border:0;border-radius:11px;background:var(--accent);color:white;font-weight:700}
+.music-storage-note-v96{margin:12px 0;color:#a39db6;font-size:11px;line-height:1.6}
+#music-status-v96{min-height:18px;color:#96d9b3;font-size:12px;line-height:1.5;overflow-wrap:anywhere}
+#music-status-v96.is-error{color:#ffa6b4}
+.music-library-head-v96{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:20px 0 12px}
+.music-library-head-v96 h3{font-size:14px;font-weight:700}
+#music-count-v96{color:#9d96b1;font-size:10px;font-variant-numeric:tabular-nums}
+#music-list-v96{margin-top:10px}
+.music-empty-v96{padding:26px 20px;color:#a7a0ba;font-size:13px;line-height:1.6;text-align:center}
+.music-track-v96{display:flex;align-items:center;gap:11px;padding:10px 6px;border-radius:13px;transition:background-color .16s ease}
+.music-track-v96:hover,.music-track-v96.is-current{background:rgba(139,124,255,.09)}
+.music-track-play{display:grid;place-items:center;width:39px;height:39px;flex:0 0 39px;border:1px solid var(--music-line);border-radius:12px;background:var(--music-fill);color:#c4b9fb}
+.music-track-copy{min-width:0;flex:1}
+.music-track-copy strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;font-weight:700}
+.music-track-copy small{display:block;margin-top:4px;color:#9690aa;font-size:10px}
+.music-track-duration{flex-shrink:0;color:#a9a2bb;font-size:11px;font-variant-numeric:tabular-nums}
+.music-track-remove{display:grid;place-items:center;flex:0 0 32px;width:32px;height:36px;border:0;border-radius:10px;background:transparent;color:#8d849f}
+.music-track-remove:hover{color:#ffa6b4;background:rgba(230,90,120,.09)}
+.music-player-v96{flex-shrink:0;margin:8px 12px 0;padding:10px 10px 5px;border:1px solid rgba(183,165,249,.2);border-radius:15px;background:linear-gradient(130deg,rgba(74,62,121,.45),rgba(27,37,66,.75));color:var(--text)}
+.music-player-v96[hidden]{display:none!important}
+.music-player-top{display:flex;align-items:center;gap:4px}
+.music-player-copy{min-width:0;flex:1;padding:0 4px}
+.music-player-title{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;font-weight:700}
+.music-time{display:block;margin-top:3px;font-size:9px;color:var(--text2);font-variant-numeric:tabular-nums}
+.music-player-v96 button{display:grid;place-items:center;flex:0 0 27px;width:27px;height:30px;border:0;border-radius:9px;background:transparent;color:#bfb3f1;cursor:pointer}
+.music-player-v96 button:hover{background:rgba(164,145,255,.13)}
+.music-player-v96 button:disabled{opacity:.35;cursor:default}
+.music-player-v96 svg{width:16px;height:16px}
+.music-player-v96 [data-music=toggle]{background:rgba(171,146,255,.17);color:#eee7ff}
+.music-seek{display:block;width:100%;height:18px;margin:3px 0 0;accent-color:#a494f7;cursor:pointer}
+.music-chat-player{display:none}
+#music-dialog-v96 .music-dialog-player{margin:0;border-width:1px 0 0;border-radius:0;padding:12px 22px 8px;background:rgba(117,98,210,.11)}
+#music-dialog-v96 .music-dialog-player button{width:36px;height:36px;flex-basis:36px}
+#music-dialog-v96 .music-dialog-player .music-player-title{font-size:13px}
+body.theme-light #music-dialog-v96{background:#f5f4fc;color:#292738;--music-line:rgba(77,61,133,.16);--music-fill:rgba(110,87,189,.075)}
+body.theme-light #music-dialog-v96 input:not([type=range]):not([type=file]){background:#fff;color:#292738}
+body.theme-light .music-head-v96 p,body.theme-light .music-storage-note-v96,body.theme-light .music-track-copy small{color:#716881}
+body.theme-light .music-upload-v96,body.theme-light .music-link-details-v96 summary,body.theme-light .music-track-play{color:#68529b}
+body.theme-light .music-player-v96{background:#e8e4f5;color:#302942}
+body.theme-light .music-player-v96 button{color:#7053ab}
+body.theme-green .music-entry-v96,body.theme-green .music-player-v96{border-color:rgba(91,204,144,.2);background:rgba(41,95,66,.24)}
+@media(max-width:720px),((max-width:900px) and (pointer:coarse)){
+  #music-dialog-v96{width:calc(100vw - 16px);max-height:calc(100dvh - 16px);border-radius:20px}
+  .music-head-v96{padding:16px;gap:10px}.music-head-v96 h2{font-size:18px}.music-head-v96 p{font-size:10px}
+  .music-body-v96{padding:16px}.music-track-v96{gap:8px}.music-track-remove{flex-basis:36px;width:36px;height:42px}
+  #music-dialog-v96 input:not([type=range]):not([type=file]){font-size:16px}
+  .music-chat-player{display:block;margin:6px 8px;position:relative;z-index:2}
+  #chat-screen .chat-main:has(>.music-chat-player:not([hidden])) #active-chat{height:auto!important;flex:1!important;min-height:0!important}
+  .music-player-v96 button{height:36px;flex-basis:30px;width:30px}
+  .music-player-open{display:none!important}
+  #music-dialog-v96 .music-dialog-player{padding:10px 16px calc(8px + env(safe-area-inset-bottom,0px))}
+}
+@keyframes music-open-v96{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){#music-dialog-v96[open]{animation:none}.music-entry-v96,.music-track-v96{transition:none}}
