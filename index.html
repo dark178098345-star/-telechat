@@ -541,7 +541,8 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
 <link rel="stylesheet" href="./profile-editor-v88.css?v=90">
 <link rel="stylesheet" href="./profile-quick-v91.css?v=91">
 <link rel="stylesheet" href="./profile-studio-v92.css?v=92">
-<link rel="stylesheet" href="./chat-foundation-v94.css?v=94">
+<link id="calm-style-v95" rel="stylesheet" href="./chat-foundation-v94.css?v=94" media="not all">
+<script src="./appearance-mode-v95.js?v=95"></script>
 </head>
 <body>
 <div id="startup-loader" role="status" aria-live="polite" aria-label="Загрузка tele.chat">
@@ -856,6 +857,10 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
         <button class="theme-btn t-light" type="button" data-theme="light" onclick="setTheme('light')" aria-label="Светлая тема" title="Светлая"></button>
         <button class="theme-btn t-green" type="button" data-theme="green" onclick="setTheme('green')" aria-label="Зелёная тема" title="Зелёная"></button>
       </div>
+    </div>
+    <div class="setting-row">
+      <div class="setting-copy"><div class="setting-label">Спокойный режим</div><div class="setting-note" id="calm-mode-note-v95">Мягкие сплошные панели и приглушённый фон. Выключи, чтобы вернуться к привычному стеклянному оформлению.</div></div>
+      <label class="setting-switch" title="Спокойный режим"><input class="telechat-switch-v36" type="checkbox" id="calm-mode-v95" aria-label="Спокойный режим" aria-describedby="calm-mode-note-v95"></label>
     </div>
   </div>
   <div class="panel-section">

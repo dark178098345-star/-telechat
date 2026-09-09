@@ -1,5 +1,6 @@
-const CACHE_NAME='telechat-shell-v94-chat-foundation';
+const CACHE_NAME='telechat-shell-v95-appearance-mode';
 const APP_SHELL=[
+  './appearance-mode-v95.js?v=95',
   './chat-foundation-v94.css?v=94',
   './profile-studio-v92.css?v=92',
   './profile-studio-v92.js?v=92',
