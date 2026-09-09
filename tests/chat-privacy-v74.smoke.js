@@ -49,6 +49,6 @@ for (const asset of [
   assert(index.includes(asset), `index is missing ${asset}`);
   assert(serviceWorker.includes(asset), `service worker is missing ${asset}`);
 }
-assert.match(serviceWorker, /telechat-shell-v92-profile-studio/);
+assert.match(serviceWorker, /telechat-shell-v93-profile-stability/);
 
 console.log('chat privacy V74 smoke: ok');

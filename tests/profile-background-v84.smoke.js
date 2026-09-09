@@ -10,7 +10,7 @@ const js=read('profile-background-v84.js');
 const worker=read('sw.js');
 
 assert.match(html,/profile-background-v84\.css\?v=86/);
-assert.match(html,/profile-background-v84\.js\?v=86/);
+assert.match(html,/profile-background-v84\.js\?v=93/);
 assert.match(html,/Загрузить баннер/);
 assert.match(html,/Фон карточки профиля/);
 assert.match(html,/Установить фото/);
@@ -26,8 +26,8 @@ assert.match(js,/element\.id==='view-profile-cover'/);
 assert.match(js,/window\.buildProfPanel/);
 assert.match(js,/window\.openUserProfile=async/);
 assert.match(js,/const user=isOwn\?currentUser:cached/);
-assert.match(worker,/telechat-shell-v92-profile-studio/);
+assert.match(worker,/telechat-shell-v93-profile-stability/);
 assert.match(worker,/profile-background-v84\.css\?v=86/);
-assert.match(worker,/profile-background-v84\.js\?v=86/);
+assert.match(worker,/profile-background-v84\.js\?v=93/);
 
 console.log('profile background V84 smoke: ok');

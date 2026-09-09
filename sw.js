@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v92-profile-studio';
+const CACHE_NAME='telechat-shell-v93-profile-stability';
 const APP_SHELL=[
   './profile-studio-v92.css?v=92',
   './profile-studio-v92.js?v=92',
@@ -18,7 +18,7 @@ const APP_SHELL=[
   './favicon-32.png',
   './favicon-48.png',
   './favicon.ico',
-  './profile-performance-v11.js',
+  './profile-performance-v11.js?v=93',
   './followers-v12.js',
   './app-performance-v17.js?v=51',
   './ui-polish-v16.css',
@@ -81,7 +81,7 @@ const APP_SHELL=[
   './emoji-motion-v80.css?v=82',
   './emoji-motion-v80.js?v=82',
   './profile-background-v84.css?v=86',
-  './profile-background-v84.js?v=86'
+  './profile-background-v84.js?v=93'
 ];
 
 self.addEventListener('install',event=>{

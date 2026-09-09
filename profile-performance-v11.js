@@ -26,14 +26,33 @@
     inflight.set(nick,task);return task;
   }
   function mode(type,text){const load=document.getElementById('profile-load'),refresh=document.getElementById('profile-refresh');if(!load)return;load.classList.remove('show','error');refresh.classList.remove('show');if(type==='load')load.classList.add('show');if(type==='refresh')refresh.classList.add('show');if(type==='error'){load.classList.add('show','error');document.getElementById('profile-load-text').textContent=text||'Не удалось загрузить профиль';}}
+  const mediaPaints=new WeakMap();
+  function paintMedia(element,key,render){
+    const previous=mediaPaints.get(element);
+    if(previous&&previous.key===key&&previous.child===element.firstChild)return;
+    render();mediaPaints.set(element,{key,child:element.firstChild});
+  }
   function paint(user,complete){
-    viewedProfileNickV5=user.nick;setAvatarElement(document.getElementById('view-profile-avatar'),user);document.getElementById('view-profile-name').textContent=user.name||user.nick;document.getElementById('view-profile-nick').innerHTML='@'+escHtml(user.nick)+(typeof verifiedBadgeHtml==='function'?verifiedBadgeHtml(user.nick,true):'');
+    viewedProfileNickV5=user.nick;
+    const avatar=document.getElementById('view-profile-avatar');
+    paintMedia(avatar,avatarMarkup(user),()=>setAvatarElement(avatar,user));
+    document.getElementById('view-profile-name').textContent=user.name||user.nick;document.getElementById('view-profile-nick').innerHTML='@'+escHtml(user.nick)+(typeof verifiedBadgeHtml==='function'?verifiedBadgeHtml(user.nick,true):'');
     const online=isOnline(user.last_seen),seen=document.getElementById('view-profile-seen');seen.textContent=online?'● сейчас в сети':formatLastSeen(user.last_seen);seen.style.color=online?'var(--green)':'var(--text3)';const data=unpackProfileData(user.status);document.getElementById('view-profile-status').textContent=data.status.trim()||'Статус не указан';document.getElementById('view-profile-bio').textContent=complete?((user.bio||'').trim()||'Пользователь пока ничего о себе не рассказал.'):'Загружаем информацию…';
-    const button=document.getElementById('view-profile-message-btn');button.style.display=user.nick===me.nick?'none':'block';button.onclick=()=>{closeUserProfile();openChat(user.nick);};applyProfileBanner(document.getElementById('view-profile-cover'),complete?user.banner:'preset:cosmos');if(typeof enhanceVerifiedBadges==='function')enhanceVerifiedBadges();
+    const button=document.getElementById('view-profile-message-btn');button.style.display=user.nick===me.nick?'none':'block';button.onclick=()=>{closeUserProfile();openChat(user.nick);};
+    const cover=document.getElementById('view-profile-cover'),banner=user.banner||'preset:cosmos';
+    paintMedia(cover,JSON.stringify([user.nick,banner,user.animated_profile]),()=>applyProfileBanner(cover,banner));
+    const appearance=window.telechatProfileAppearanceV84;
+    if(appearance)appearance.applyBackground(appearance.decode(banner).background);
+    if(typeof enhanceVerifiedBadges==='function')enhanceVerifiedBadges();
   }
   openUserProfile=async function(nick,force=false){
-    nick=String(nick||'').toLowerCase();if(!nick)return;lastNick=nick;const request=++token,modal=document.getElementById('user-profile-modal'),saved=cache.get(nick),preview=saved?.user||userCache[nick];modal.classList.add('show');if(preview){paint(preview,!!saved);mode('refresh');}else{mode('load');document.getElementById('view-profile-name').textContent='';document.getElementById('view-profile-nick').textContent='@'+nick;applyProfileBanner(document.getElementById('view-profile-cover'),'preset:cosmos');}
-    const started=performance.now();try{const user=await full(nick,force);if(request!==token)return;const wait=preview?0:Math.max(0,260-(performance.now()-started));if(wait)await new Promise(r=>setTimeout(r,wait));if(request!==token)return;paint(user,true);mode('idle');}catch(e){if(request!==token)return;if(preview){paint(preview,!!saved);mode('idle');showToast('Показана сохранённая версия профиля');}else mode('error',String(e.message||'Ошибка загрузки'));}
+    nick=String(nick||'').toLowerCase();if(!nick)return;lastNick=nick;
+    if(!force&&me&&String(me.nick).toLowerCase()===nick&&Object.hasOwn(me,'banner'))cache.set(nick,{user:me,time:Date.now()});
+    const request=++token,modal=document.getElementById('user-profile-modal'),saved=cache.get(nick),preview=saved?.user||userCache[nick];
+    const complete=!!saved||!!preview&&Object.hasOwn(preview,'bio');
+    if(preview){paint(preview,complete);mode('idle');}else{mode('load');document.getElementById('view-profile-name').textContent='';document.getElementById('view-profile-nick').textContent='@'+nick;applyProfileBanner(document.getElementById('view-profile-cover'),'preset:cosmos');mediaPaints.delete(document.getElementById('view-profile-cover'));}
+    modal.classList.add('show');
+    const started=performance.now();try{const user=await full(nick,force);if(request!==token)return;const wait=preview?0:Math.max(0,260-(performance.now()-started));if(wait)await new Promise(r=>setTimeout(r,wait));if(request!==token)return;paint(user,true);mode('idle');}catch(e){if(request!==token)return;if(preview){mode('idle');showToast('Показана сохранённая версия профиля');}else mode('error',String(e.message||'Ошибка загрузки'));}
   };
   closeUserProfile=function(){token++;document.getElementById('user-profile-modal').classList.remove('show');viewedProfileNickV5='';mode('idle');};
   document.getElementById('profile-load-retry').onclick=()=>openUserProfile(lastNick,true);

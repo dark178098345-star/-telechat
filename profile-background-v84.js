@@ -134,6 +134,7 @@
       const args=Array.prototype.slice.call(arguments,1);
       const result=await openBefore.apply(this,[nick].concat(args));
       const key=String(nick||'').toLowerCase();
+      if(!document.getElementById('user-profile-modal')?.classList.contains('show')||String(viewedProfileNickV5||'').toLowerCase()!==key)return result;
       const currentUser=typeof me!=='undefined'&&me?me:(window.me||null);
       const isOwn=currentUser&&String(currentUser.nick||'').toLowerCase()===key;
       const cached=(typeof userCache!=='undefined'&&(userCache[key]||userCache[nick]))||null;
