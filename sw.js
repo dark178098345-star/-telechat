@@ -1,5 +1,7 @@
-const CACHE_NAME='telechat-shell-v91-profile-quick';
+const CACHE_NAME='telechat-shell-v92-profile-studio';
 const APP_SHELL=[
+  './profile-studio-v92.css?v=92',
+  './profile-studio-v92.js?v=92',
   './profile-quick-v91.css?v=91',
   './profile-quick-v91.js?v=91',
   './profile-editor-v88.css?v=90',
