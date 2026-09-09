@@ -1,0 +1,38 @@
+#profile-quick-v91{
+  --pq-surface:#191928;--pq-block:rgba(255,255,255,.045);--pq-line:rgba(184,174,229,.13);--pq-text:#f0eef9;--pq-muted:#a5a1bb;
+  position:fixed;z-index:12000;box-sizing:border-box;width:328px;overflow:auto;overscroll-behavior:contain;
+  border:1px solid var(--pq-line);border-radius:22px;background:var(--pq-surface);color:var(--pq-text);
+  box-shadow:0 18px 60px rgba(0,0,0,.4);font-family:inherit;
+  transform-origin:bottom left;animation:pq-appear .2s cubic-bezier(.2,.8,.2,1);
+}
+#profile-quick-v91[hidden]{display:none!important}
+#profile-quick-v91 *{box-sizing:border-box}
+#profile-quick-v91 .pq-cover{height:100px;position:relative;overflow:hidden;background-size:cover;background-position:center;background-color:#444065}
+#profile-quick-v91 .pq-cover video{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
+#profile-quick-v91 button{font-family:inherit;cursor:pointer;text-align:left;color:inherit;scale:1!important;letter-spacing:normal}
+#profile-quick-v91 .pq-close{position:absolute;right:10px;top:10px;display:grid;place-items:center;width:28px;height:28px;border:1px solid rgba(255,255,255,.15);border-radius:50%;padding:0;background:rgba(12,12,24,.64);color:white;font-size:21px;line-height:1}
+#profile-quick-v91 .pq-body{padding:0 14px 14px}
+#profile-quick-v91 .pq-top{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-top:-34px;position:relative;margin-bottom:10px}
+#profile-quick-v91 .pq-avatar-wrap{position:relative;width:82px;height:82px;flex-shrink:0}
+#profile-quick-v91 .pq-avatar{display:flex;align-items:center;justify-content:center;width:82px;height:82px;border:5px solid var(--pq-surface);border-radius:50%;overflow:hidden;background:#36324f;font-size:38px}
+#profile-quick-v91 .pq-avatar img,#profile-quick-v91 .pq-avatar video{width:100%;height:100%;object-fit:cover;border-radius:50%}
+#profile-quick-v91 .pq-dot{position:absolute;right:2px;bottom:4px;width:21px;height:21px;border:4px solid var(--pq-surface);border-radius:50%;background:#53c990}
+#profile-quick-v91 .pq-online{display:flex;align-items:center;gap:6px;padding:0 3px 9px;font-size:11px;color:var(--pq-muted)}
+#profile-quick-v91 .pq-online i{width:6px;height:6px;border-radius:50%;background:#53c990}
+#profile-quick-v91 .pq-name{margin:0 0 3px;font-size:21px;font-weight:750;line-height:1.25;overflow-wrap:anywhere;color:var(--pq-text)}
+#profile-quick-v91 .pq-nick{font-size:12px;color:var(--pq-muted);overflow-wrap:anywhere}
+#profile-quick-v91 .pq-status{display:block;width:100%;margin:12px 0;padding:10px 12px;border:1px solid var(--pq-line);border-radius:12px;background:rgba(143,123,239,.07);font-size:12px;line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere;max-height:78px;overflow:auto}
+#profile-quick-v91 .pq-status-empty{color:var(--pq-muted)}
+#profile-quick-v91 .pq-actions{padding:4px;border-radius:13px;background:var(--pq-block)}
+#profile-quick-v91 .pq-actions button,#profile-quick-v91 .pq-switch{display:flex;align-items:center;gap:10px;min-height:43px;width:100%;padding:10px;border:0;border-radius:9px;background:transparent;font-size:12px;line-height:1.4;transition:background .15s ease}
+#profile-quick-v91 svg{width:18px;height:18px;flex:0 0 18px;color:#ada2e6}
+#profile-quick-v91 button span{flex:1;min-width:0}
+#profile-quick-v91 button b{font-size:19px;font-weight:400;color:var(--pq-muted)}
+#profile-quick-v91 .pq-switch{margin-top:8px;padding:12px 14px;background:var(--pq-block);border-radius:13px}
+#profile-quick-v91 small{display:block;margin-top:2px;font-size:10px;color:var(--pq-muted)}
+#profile-quick-v91 button:hover{background-color:rgba(160,139,255,.13)}
+#profile-quick-v91 button:focus-visible{outline:2px solid #a396ef;outline-offset:2px}
+body.theme-light #profile-quick-v91{--pq-surface:#f9f8ff;--pq-block:rgba(55,37,103,.045);--pq-line:rgba(55,37,103,.12);--pq-text:#302843;--pq-muted:#756a88;box-shadow:0 18px 50px rgba(39,26,71,.18)}
+body.theme-green #profile-quick-v91{--pq-surface:#12251f;--pq-block:rgba(171,232,190,.06);--pq-line:rgba(171,232,190,.15)}
+@keyframes pq-appear{from{opacity:0;transform:translateY(7px) scale(.975)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){#profile-quick-v91{animation:none}#profile-quick-v91 button{transition:none}}

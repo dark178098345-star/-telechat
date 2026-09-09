@@ -1,5 +1,7 @@
-const CACHE_NAME='telechat-shell-v90-profile-video-frame';
+const CACHE_NAME='telechat-shell-v91-profile-quick';
 const APP_SHELL=[
+  './profile-quick-v91.css?v=91',
+  './profile-quick-v91.js?v=91',
   './profile-editor-v88.css?v=90',
   './profile-editor-v88.js?v=90',
   './profile-editor-v87.css?v=87',
@@ -69,7 +71,7 @@ const APP_SHELL=[
   './chat-privacy-v74.css?v=75',
   './chat-privacy-v74.js?v=74',
   './smooth-ui-v76.css?v=76',
-  './smooth-ui-v76.js?v=76',
+  './smooth-ui-v76.js?v=91',
   './full-redesign-v77.css?v=77',
   './chat-stability-v78.css?v=78',
   './mobile-experience-v79.css?v=79',

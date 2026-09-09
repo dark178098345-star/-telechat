@@ -12,7 +12,7 @@ const script=read('smooth-ui-v76.js');
 const worker=read('sw.js');
 
 assert.match(index,/smooth-ui-v76\.css\?v=76/);
-assert.match(index,/smooth-ui-v76\.js\?v=76/);
+assert.match(index,/smooth-ui-v76\.js\?v=91/);
 assert.match(index,/id="account-session-v76"/);
 assert.match(index,/openLogoutDialogV76\(\)/);
 assert.match(index,/Выйти из аккаунта|Выйти/);
@@ -31,8 +31,8 @@ assert.match(script,/removeAllChannels/);
 assert.match(script,/location\.reload\(\)/);
 assert.doesNotMatch(script,/deleteDatabase|indexedDB\.delete|saved-accounts-v75/);
 
-assert.match(worker,/telechat-shell-v90-profile-video-frame/);
+assert.match(worker,/telechat-shell-v91-profile-quick/);
 assert.match(worker,/smooth-ui-v76\.css\?v=76/);
-assert.match(worker,/smooth-ui-v76\.js\?v=76/);
+assert.match(worker,/smooth-ui-v76\.js\?v=91/);
 
 console.log('smooth UI V76 smoke: ok');

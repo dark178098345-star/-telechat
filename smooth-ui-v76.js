@@ -42,10 +42,16 @@
     document.body.appendChild(overlay);
   }
 
-  function openLogoutDialogV76(){
+  function openLogoutDialogV76(mode){
     if(leaving)return;
     renderAccountSessionV76();ensureLogoutDialogV76();
     const overlay=byId('logout-dialog-v76');
+    const switching=mode==='switch';
+    byId('logout-title-v76').textContent=switching?'Сменить аккаунт?':'Выйти из аккаунта?';
+    overlay.querySelector('p').textContent=switching
+      ?'Текущий сеанс завершится. Откроется экран входа: выбери сохранённый аккаунт или добавь другой.'
+      :'Текущий сеанс завершится. Карточка аккаунта останется на экране входа, чтобы можно было быстро вернуться.';
+    byId('logout-confirm-v76').textContent=switching?'К аккаунтам':'Выйти';
     overlay.classList.add('show');document.body.classList.add('logout-open-v76');
     requestAnimationFrame(()=>byId('logout-confirm-v76')?.focus());
   }
