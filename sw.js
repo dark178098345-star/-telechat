@@ -1,5 +1,7 @@
-const CACHE_NAME='telechat-shell-v100-mobile';
+const CACHE_NAME='telechat-shell-v101-background';
 const APP_SHELL=[
+  './background-presence-v101.css?v=101',
+  './background-presence-v101.js?v=101',
   './mobile-adaptation-v100.css?v=100',
   './mobile-optimization-v100.js?v=100',
   './soundcloud-v98.js?v=99',

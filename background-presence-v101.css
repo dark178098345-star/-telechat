@@ -1,0 +1,10 @@
+/* Background presence: warm moon instead of a misleading green online dot. */
+.av-background-v101::after{content:'☾';position:absolute;right:-2px;bottom:-2px;display:grid;place-items:center;width:18px;height:18px;border:2px solid var(--bg2);border-radius:50%;background:#302b4b;color:#f5d58e;font-size:12px;line-height:1;font-family:Arial,sans-serif}
+.chat-status-text.background-v101{display:inline-flex;align-items:center;gap:5px;color:#e6c981!important}
+.presence-moon-v101{display:inline-grid;place-items:center;width:17px;height:17px;margin-left:5px;border:1px solid rgba(245,213,142,.22);border-radius:6px;background:rgba(245,213,142,.10);color:#f5d58e;font-size:12px;line-height:1;vertical-align:-3px}
+.presence-moon-v101[title]{cursor:help}
+#view-profile-seen.background-v101{display:inline-flex;align-items:center;gap:5px;color:#e6c981!important}
+@media (max-width:720px), ((max-width:900px) and (pointer:coarse)){
+  body.telechat-mobile-v100 .av-background-v101::after{width:17px;height:17px;font-size:11px}
+  body.telechat-mobile-v100 .presence-moon-v101{width:16px;height:16px;margin-left:4px}
+}
