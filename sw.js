@@ -1,5 +1,7 @@
-const CACHE_NAME='telechat-shell-v105-stability';
+const CACHE_NAME='telechat-shell-v106-mentions';
 const APP_SHELL=[
+  './mentions-v106.js?v=106',
+  './mentions-v106.css?v=106',
   './message-core-v104.js?v=105',
   './profile-follow-compact-v103.css?v=103',
   './profile-follow-compact-v102.css?v=102',

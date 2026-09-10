@@ -31,7 +31,7 @@ assert.match(script,/removeAllChannels/);
 assert.match(script,/location\.reload\(\)/);
 assert.doesNotMatch(script,/deleteDatabase|indexedDB\.delete|saved-accounts-v75/);
 
-assert.match(worker,/telechat-shell-v105-stability/);
+assert.match(worker,/telechat-shell-v106-mentions/);
 assert.match(worker,/smooth-ui-v76\.css\?v=76/);
 assert.match(worker,/smooth-ui-v76\.js\?v=91/);
 
