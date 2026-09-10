@@ -1,0 +1,108 @@
+/* tele.chat V100 — isolated phone layout and low-power polish. Desktop stays untouched. */
+@media (max-width:720px), ((max-width:900px) and (pointer:coarse)) {
+  html body.telechat-mobile-v100{
+    --v100-height:100dvh;
+    --v100-surface:#101326;
+    --v100-panel:#171a2d;
+    --v100-line:rgba(178,168,255,.14);
+    width:100%;max-width:100%;min-width:0;overflow:hidden;
+    background:#080b16;-webkit-tap-highlight-color:transparent;
+  }
+  html body.telechat-mobile-v100 *,
+  html body.telechat-mobile-v100 *::before,
+  html body.telechat-mobile-v100 *::after{box-sizing:border-box}
+  html body.telechat-mobile-v100 button,
+  html body.telechat-mobile-v100 input,
+  html body.telechat-mobile-v100 textarea{touch-action:manipulation}
+
+  /* One viewport-sized scene prevents the page itself from scrolling behind the keyboard. */
+  body.telechat-mobile-v100 #chat-screen,
+  body.telechat-mobile-v100 #startup-loader,
+  body.telechat-mobile-v100 #auth-screen{width:100vw!important;max-width:100vw!important;height:var(--v100-height)!important;min-height:var(--v100-height)!important}
+  body.telechat-mobile-v100 #chat-screen{position:fixed!important;inset:0!important;overflow:hidden!important;isolation:isolate}
+  body.telechat-mobile-v100 .sidebar,
+  body.telechat-mobile-v100 .chat-main{position:absolute!important;top:0!important;bottom:0!important;height:var(--v100-height)!important;min-height:0!important}
+  body.telechat-mobile-v100 .sidebar{left:0!important;right:0!important;width:100vw!important;min-width:0!important;z-index:20!important;overflow:hidden!important;transition:transform .22s cubic-bezier(.2,.8,.2,1)!important}
+  body.telechat-mobile-v100 .sidebar.hidden{transform:translate3d(-102%,0,0)!important;pointer-events:none!important}
+  body.telechat-mobile-v100 .chat-main{left:0!important;right:0!important;width:100vw!important;min-width:0!important;z-index:10!important;transform:translate3d(102%,0,0)!important;opacity:0!important;pointer-events:none!important;transition:transform .22s cubic-bezier(.2,.8,.2,1),opacity .16s ease!important}
+  body.telechat-mobile-v100 .sidebar.hidden + .chat-main{transform:translate3d(0,0,0)!important;opacity:1!important;pointer-events:auto!important}
+  body.telechat-mobile-v100 #active-chat{height:var(--v100-height)!important;min-height:0!important;overflow:hidden!important}
+  body.telechat-mobile-v100 #active-chat.chat-enter{animation:none!important}
+
+  body.telechat-mobile-v100 .sidebar-top{padding:calc(9px + env(safe-area-inset-top,0px)) 12px 8px!important}
+  body.telechat-mobile-v100 .contacts-list{min-height:0!important;contain:layout paint style;content-visibility:auto;overscroll-behavior:contain}
+  body.telechat-mobile-v100 .contact{min-height:64px!important;transform:none!important;transition:background-color .12s ease,border-color .12s ease!important}
+  body.telechat-mobile-v100 .contact:hover{transform:none!important}
+  body.telechat-mobile-v100 .telechat-bottom-nav{min-height:66px!important;padding-bottom:calc(6px + env(safe-area-inset-bottom,0px))!important}
+
+  body.telechat-mobile-v100 .chat-header{min-height:58px!important;padding:calc(6px + env(safe-area-inset-top,0px)) 8px 6px!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+  body.telechat-mobile-v100 .chat-header-actions{min-width:0!important}
+  body.telechat-mobile-v100 .chat-name{max-width:42vw!important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  body.telechat-mobile-v100 .chat-status-text{max-width:42vw!important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  body.telechat-mobile-v100 .messages{min-height:0!important;contain:layout style;content-visibility:auto;overscroll-behavior:contain;padding:9px 8px 10px!important}
+  body.telechat-mobile-v100 .msg{max-width:min(88%,360px)!important;animation:none!important}
+  body.telechat-mobile-v100 .msg-bubble{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;box-shadow:none!important}
+  body.telechat-mobile-v100 .msg-photo,
+  body.telechat-mobile-v100 .chat-photo{max-width:min(78vw,330px)!important;height:auto!important}
+  body.telechat-mobile-v100 .input-area{min-height:62px!important;padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px))!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+  body.telechat-mobile-v100 .composer-shell{min-width:0!important;max-width:none!important}
+  body.telechat-mobile-v100 .msg-input{font-size:16px!important;max-height:104px!important}
+  body.telechat-mobile-v100 .composer-tools{max-width:100%!important;overflow-x:auto!important;overscroll-behavior:contain}
+  body.telechat-mobile-v100 .send-btn{flex:0 0 46px!important;width:46px!important;height:46px!important}
+
+  /* Sheets and profile editor use the same safe viewport, with no sideways overflow. */
+  body.telechat-mobile-v100 .side-panel.open{z-index:140!important;top:0!important;bottom:0!important;height:var(--v100-height)!important;max-height:var(--v100-height)!important;overflow-x:hidden!important;overflow-y:auto!important;overscroll-behavior:contain!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+  body.telechat-mobile-v100 #room-panel.side-panel.open{left:0!important;right:0!important;width:100vw!important;max-width:none!important;padding:calc(10px + env(safe-area-inset-top,0px)) 12px calc(12px + env(safe-area-inset-bottom,0px))!important;border:0!important;border-radius:0!important}
+  body.telechat-mobile-v100 #settings-panel.v65-full-panel.open,
+  body.telechat-mobile-v100 #profile-panel.v65-full-panel.open{left:0!important;right:0!important;width:100vw!important;max-width:none!important;padding:0 10px calc(84px + env(safe-area-inset-bottom,0px))!important;border:0!important;border-radius:0!important;background:linear-gradient(165deg,#15182c,#0a0e1d 70%)!important}
+  body.telechat-mobile-v100 #settings-panel.v65-full-panel .panel-head,
+  body.telechat-mobile-v100 #profile-panel.v65-full-panel .panel-head{margin:0 -10px!important;padding:calc(9px + env(safe-area-inset-top,0px)) 10px 8px!important;min-height:62px!important}
+  body.telechat-mobile-v100 #settings-panel.v65-full-panel .panel-section,
+  body.telechat-mobile-v100 #profile-panel.v65-full-panel .profile-preview-btn,
+  body.telechat-mobile-v100 #profile-panel.v65-full-panel .profile-editor-card,
+  body.telechat-mobile-v100 #profile-panel.v65-full-panel .profile-choice-card,
+  body.telechat-mobile-v100 #profile-panel.v65-full-panel .profile-fields-card{width:100%!important;min-width:0!important;grid-column:1/-1!important;margin:0!important;padding:12px!important;border-radius:16px!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+  body.telechat-mobile-v100 #profile-panel.v65-full-panel .profile-banner-preview{height:104px!important;max-height:104px!important}
+  body.telechat-mobile-v100 #profile-panel.v65-full-panel .profile-avatar-toolbar{grid-template-columns:68px minmax(0,1fr)!important;gap:9px!important;margin-top:-24px!important}
+  body.telechat-mobile-v100 #profile-panel.v65-full-panel .profile-avatar-toolbar .av-preview{width:68px!important;height:68px!important}
+  body.telechat-mobile-v100 #profile-panel.v65-full-panel .banner-presets{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important}
+  body.telechat-mobile-v100 #profile-panel.v65-full-panel .profile-choice-card .av-grid{grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:5px!important}
+  body.telechat-mobile-v100 #profile-panel.v65-full-panel .profile-choice-card .av-option{min-height:40px!important}
+  body.telechat-mobile-v100 #profile-panel.v65-full-panel .profile-action-dock{left:8px!important;right:8px!important;bottom:calc(7px + env(safe-area-inset-bottom,0px))!important;width:auto!important;padding:6px!important}
+
+  body.telechat-mobile-v100 .modal-overlay{padding:8px!important;align-items:flex-end!important}
+  body.telechat-mobile-v100 .modal-overlay .modal{width:100%!important;max-width:430px!important;max-height:calc(var(--v100-height) - 16px)!important;margin:0 auto!important;overflow-x:hidden!important;overflow-y:auto!important;padding:16px 14px calc(14px + env(safe-area-inset-bottom,0px))!important;border-radius:22px!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+  body.telechat-mobile-v100 .user-profile-cover{height:116px!important;max-height:116px!important}
+  body.telechat-mobile-v100 .user-profile-body{min-width:0!important}
+  body.telechat-mobile-v100 .user-profile-actions{position:sticky!important;bottom:calc(-14px - env(safe-area-inset-bottom,0px))!important;margin:12px -14px calc(-14px - env(safe-area-inset-bottom,0px))!important;padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px))!important;background:#171a2d!important}
+
+  body.telechat-mobile-v100 .ctx-menu{left:8px!important;right:8px!important;bottom:calc(8px + env(safe-area-inset-bottom,0px))!important;top:auto!important;width:auto!important;max-width:none!important;max-height:65dvh!important;overflow-y:auto!important;overscroll-behavior:contain}
+  body.telechat-mobile-v100 .emoji-picker{left:7px!important;right:7px!important;bottom:calc(7px + env(safe-area-inset-bottom,0px))!important;max-height:min(42dvh,300px)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+  body.telechat-mobile-v100 .voice-call-overlay,
+  body.telechat-mobile-v100 .voice-call-surface{width:100vw!important;height:var(--v100-height)!important;min-height:var(--v100-height)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+  body.telechat-mobile-v100 .voice-call-stage{min-height:0!important;overflow:auto!important;padding:8px!important}
+  body.telechat-mobile-v100 .voice-call-controls{width:calc(100% - 16px)!important;margin-left:8px!important;margin-right:8px!important}
+
+  body.telechat-mobile-v100 img,
+  body.telechat-mobile-v100 video{max-width:100%;height:auto}
+  body.telechat-mobile-v100 .cosmic-star,
+  body.telechat-mobile-v100 .emoji-particle,
+  body.telechat-mobile-v100 .shooting-star,
+  body.telechat-mobile-v100 .meteor{animation:none!important;will-change:auto!important}
+  body.telechat-mobile-v100 .sidebar,
+  body.telechat-mobile-v100 .chat-main,
+  body.telechat-mobile-v100 .messages,
+  body.telechat-mobile-v100 .contacts-list{contain:layout paint}
+  body.telechat-mobile-v100 [hidden]{display:none!important}
+}
+
+@media (max-width:380px){
+  body.telechat-mobile-v100 .chat-name,body.telechat-mobile-v100 .chat-status-text{max-width:34vw!important}
+  body.telechat-mobile-v100 .hdr-btn,body.telechat-mobile-v100 .back-btn{width:38px!important;height:38px!important;flex-basis:38px!important}
+  body.telechat-mobile-v100 .chat-header{gap:4px!important}
+  body.telechat-mobile-v100 .composer-tool{width:33px!important;height:33px!important;flex-basis:33px!important}
+}
+
+@media (prefers-reduced-motion:reduce){
+  body.telechat-mobile-v100 *,body.telechat-mobile-v100 *::before,body.telechat-mobile-v100 *::after{animation:none!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+}
