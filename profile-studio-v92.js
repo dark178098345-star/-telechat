@@ -40,6 +40,7 @@
     panel.querySelector('#profile-editor-name-v88').textContent=name||user?.name||user?.nick||'Твой профиль';
     const statusNode=details.querySelector('.ps-status');
     statusNode.textContent=status||'Здесь может быть твой статус';statusNode.classList.toggle('ps-placeholder',!status);
+    window.telechatProfileMusicV97?.renderAfter(statusNode,user);
     const bioNode=details.querySelector('.ps-bio p');
     bioNode.textContent=bio||'Расскажи немного о себе — что любишь и чем увлекаешься.';
     bioNode.classList.toggle('ps-placeholder',!bio);

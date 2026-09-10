@@ -38,6 +38,7 @@
     paintMedia(avatar,avatarMarkup(user),()=>setAvatarElement(avatar,user));
     document.getElementById('view-profile-name').textContent=user.name||user.nick;document.getElementById('view-profile-nick').innerHTML='@'+escHtml(user.nick)+(typeof verifiedBadgeHtml==='function'?verifiedBadgeHtml(user.nick,true):'');
     const online=isOnline(user.last_seen),seen=document.getElementById('view-profile-seen');seen.textContent=online?'● сейчас в сети':formatLastSeen(user.last_seen);seen.style.color=online?'var(--green)':'var(--text3)';const data=unpackProfileData(user.status);document.getElementById('view-profile-status').textContent=data.status.trim()||'Статус не указан';document.getElementById('view-profile-bio').textContent=complete?((user.bio||'').trim()||'Пользователь пока ничего о себе не рассказал.'):'Загружаем информацию…';
+    window.telechatProfileMusicV97?.renderAfter(document.getElementById('view-profile-status'),user);
     const button=document.getElementById('view-profile-message-btn');button.style.display=user.nick===me.nick?'none':'block';button.onclick=()=>{closeUserProfile();openChat(user.nick);};
     const cover=document.getElementById('view-profile-cover'),banner=user.banner||'preset:cosmos';
     paintMedia(cover,JSON.stringify([user.nick,banner,user.animated_profile]),()=>applyProfileBanner(cover,banner));

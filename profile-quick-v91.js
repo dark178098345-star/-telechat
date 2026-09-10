@@ -75,6 +75,7 @@
     const statusButton=card.querySelector('.pq-status');
     statusButton.textContent=status||'＋ Добавить статус';
     statusButton.classList.toggle('pq-status-empty',!status);
+    window.telechatProfileMusicV97?.renderAfter(statusButton,user);
     const avatar=card.querySelector('.pq-avatar');
     if(typeof window.setAvatarElement==='function')window.setAvatarElement(avatar,user);
     else avatar.textContent='👤';

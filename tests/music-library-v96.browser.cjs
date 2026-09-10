@@ -10,10 +10,11 @@ function wav(){
  try{
  const context=await browser.newContext({viewport:{width:1280,height:900}});
  await context.addInitScript(()=>{
-  window.me={nick:'music-tester'};window.showToast=text=>window.lastToast=text;
+  window.me={nick:'music-tester',status:'Привет'};window.showToast=text=>window.lastToast=text;window.savedProfileStatus='Привет';
+  window.sb={from:()=>{let change=null;const q={select(){return q},update(data){change=data;return q},eq(){return q},async maybeSingle(){if(change)savedProfileStatus=change.status;return {data:{nick:me.nick,status:savedProfileStatus},error:null};}};return q;}};
   const Original=window.Audio;window.Audio=class extends Original{constructor(...args){super(...args);if(!window.testMusicAudio)window.testMusicAudio=this;}};
  });
- const html=fs.readFileSync(path.join(root,'index.html'),'utf8').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,tag=>tag.includes('music-library-v96.js')||tag.includes('appearance-mode-v95.js')?tag:'');
+ const html=fs.readFileSync(path.join(root,'index.html'),'utf8').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,tag=>tag.includes('music-library-v96.js')||tag.includes('profile-music-v97.js')||tag.includes('appearance-mode-v95.js')?tag:'');
  await context.route('**/*',route=>{
   const url=new URL(route.request().url());
   if(url.hostname==='audio.test')return route.fulfill({contentType:url.pathname==='/bad'?'text/html':'audio/wav',body:url.pathname==='/bad'?'<html>Not audio</html>':wav()});
@@ -43,6 +44,10 @@ function wav(){
  await page.locator('.music-link-details-v96 summary').click();
  await page.locator('#music-url-v96').fill('https://audio.test/song.wav');await page.locator('#music-title-v96').fill('Трек по ссылке');await page.locator('#music-link-form-v96 button').click();
   await page.waitForFunction(()=>document.querySelectorAll('.music-track-v96').length===2);
+ await page.locator('.music-track-v96').filter({hasText:'Трек по ссылке'}).locator('.music-track-more-v97').click();
+ await page.locator('.music-track-v96').filter({hasText:'Трек по ссылке'}).locator('.music-track-profile-v97').click();
+ await page.waitForFunction(()=>window.telechatProfileMusicV97.getOwn()?.url==='https://audio.test/song.wav');
+ assert.equal(await page.evaluate(()=>JSON.parse(savedProfileStatus.split('__telechat_profile_v1__:')[1]).status),'Привет');
  await page.locator('.music-track-v96').filter({hasText:'Трек по ссылке'}).locator('.music-track-play').click();await page.waitForFunction(()=>testMusicAudio.src==='https://audio.test/song.wav'&&!testMusicAudio.paused);
  await page.locator('#music-url-v96').fill('http://audio.test/song.wav');await page.locator('#music-link-form-v96 button').click();await page.waitForFunction(()=>!document.querySelector('#music-link-form-v96 button').disabled);assert.match(await page.locator('#music-status-v96').textContent(),/HTTPS/);
  await page.locator('#music-url-v96').fill('https://youtube.com/watch?v=test');await page.locator('#music-link-form-v96 button').click();await page.waitForFunction(()=>!document.querySelector('#music-link-form-v96 button').disabled);
@@ -54,8 +59,11 @@ function wav(){
  await page.locator('#music-search-v96').fill('город');assert.equal(await page.locator('.music-track-v96').count(),1);await page.locator('#music-search-v96').fill('');
  await page.locator('.music-link-details-v96 summary').click();
  await page.locator('.music-track-v96 strong').first().evaluate(el=>el.textContent='Тихий вечер');
- await page.screenshot({path:path.join(root,'outputs/music-v96-desktop.png')});
- await page.setViewportSize({width:390,height:844});await page.screenshot({path:path.join(root,'outputs/music-v96-mobile.png')});
+ await page.waitForTimeout(230);
+ assert.equal(await page.locator('#music-dialog-v96').evaluate(el=>el.matches(':modal')),false);
+ assert((await page.locator('#music-dialog-v96').boundingBox()).width<=350);
+ await page.screenshot({path:path.join(root,'outputs/music-v97-desktop.png')});
+ await page.setViewportSize({width:390,height:844});await page.waitForTimeout(60);await page.screenshot({path:path.join(root,'outputs/music-v97-mobile.png')});
  assert(await page.locator('#music-dialog-v96').evaluate(el=>el.scrollWidth<=el.clientWidth));
  await page.locator('.music-track-play').first().click();await page.waitForFunction(()=>!testMusicAudio.paused);
  await page.locator('.music-close-v96').click();
@@ -63,6 +71,9 @@ function wav(){
  const box=await page.locator('#input-area').boundingBox();assert(box&&box.y+box.height<=845,JSON.stringify(box));
  await page.evaluate(()=>{document.querySelector('.sidebar').classList.remove('hidden');document.querySelector('.chat-main').classList.remove('visible');});
  await open();
+ await page.keyboard.press('Escape');assert.equal(await page.locator('#music-dialog-v96').evaluate(el=>el.open),false);
+ await open();
+ await page.locator('.music-track-more-v97').first().click();
  await page.locator('.music-track-remove').first().click();await page.waitForFunction(()=>document.querySelectorAll('.music-track-v96').length===2);assert(await page.evaluate(()=>testMusicAudio.paused));
  await page.locator('.music-close-v96').click();await page.evaluate(()=>me.nick='other-account');await open();assert.equal(await page.locator('.music-track-v96').count(),0);
  // A failed transaction must not report success or display a saved track.

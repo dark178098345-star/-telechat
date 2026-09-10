@@ -1,13 +1,15 @@
-const CACHE_NAME='telechat-shell-v96-music-library';
+const CACHE_NAME='telechat-shell-v97-music-card';
 const APP_SHELL=[
-  './music-library-v96.js?v=96',
+  './music-card-v97.css?v=97',
+  './profile-music-v97.js?v=97',
+  './music-library-v96.js?v=97',
   './music-library-v96.css?v=96',
   './appearance-mode-v95.js?v=95',
   './chat-foundation-v94.css?v=94',
   './profile-studio-v92.css?v=92',
-  './profile-studio-v92.js?v=92',
+  './profile-studio-v92.js?v=97',
   './profile-quick-v91.css?v=91',
-  './profile-quick-v91.js?v=91',
+  './profile-quick-v91.js?v=97',
   './profile-editor-v88.css?v=90',
   './profile-editor-v88.js?v=90',
   './profile-editor-v87.css?v=87',
@@ -22,7 +24,7 @@ const APP_SHELL=[
   './favicon-32.png',
   './favicon-48.png',
   './favicon.ico',
-  './profile-performance-v11.js?v=93',
+  './profile-performance-v11.js?v=97',
   './followers-v12.js',
   './app-performance-v17.js?v=51',
   './ui-polish-v16.css',
