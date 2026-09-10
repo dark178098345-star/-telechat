@@ -1069,6 +1069,7 @@ let ctxMsg=null,pinnedMsgId=null,pinnedMsgText='';
 let typingTimer=null,isTyping=false;
 let pushSub=null;
 let liveSyncTimer=null,realtimeRetryTimer=null,liveLastMessageId='',liveConversationKey='';
+let lastSentMessageTsV111=0;
 let soundCtx=null;
 let deferredInstallPrompt=null;
 
@@ -2126,9 +2127,9 @@ ctxPin=async function(){document.getElementById('ctx-menu').classList.remove('sh
 
 sendMsg=async function(){
   const inp=document.getElementById('msg-input'),caption=inp.value.trim(),key=conversationKey();if(!key||(!caption&&!pendingMedia))return;if(!canWriteCurrent()){showToast('Писать в канал может только владелец');return;}
-  const text=pendingMedia?packMedia(pendingMedia.kind,pendingMedia.data,caption,pendingMedia.duration):caption,reply_text=replyTo?replyTo.text:null,ts=Date.now();
+  const text=pendingMedia?packMedia(pendingMedia.kind,pendingMedia.data,caption,pendingMedia.duration):caption,reply_text=replyTo?replyTo.text:null,now=Date.now(),ts=Math.max(now,lastSentMessageTsV111+1);lastSentMessageTsV111=ts;
   inp.value='';inp.style.height='';cancelReply();cancelPendingMedia();await sb.from('typing').delete().eq('chat_key',key).eq('nick',me.nick);appendMessage({from_nick:me.nick,text,ts,reply_text,read_by:[],deleted:false});renderContacts();
-  const {error}=await sb.from('messages').insert({chat_key:key,from_nick:me.nick,text,ts,reply_text,read_by:[],deleted:false});if(error)showToast('Не удалось отправить сообщение');else playSendSound();
+  const {error}=await sb.from('messages').insert({chat_key:key,from_nick:me.nick,text,ts,reply_text,read_by:[],deleted:false});if(error)showToast('Не удалось отправить сообщение');else {playSendSound();window.telechatChatSpeedV51?.refreshActive?.();}
 };
 clearChat=async function(){
   const key=conversationKey();if(!key)return;if(currentRoom&&currentRoom.owner_nick!==me.nick){showToast('Очистить пространство может только владелец');return;}if(!confirm('Очистить все сообщения?'))return;

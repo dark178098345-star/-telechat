@@ -9,6 +9,8 @@ assert.match(script,/SEEN_TTL/);
 assert.match(script,/CHANNEL_ERROR/);
 assert.match(script,/TIMED_OUT/);
 assert.match(script,/scheduleRefresh/);
+assert.match(script,/probeLatest/);
+assert.match(script,/7000/);
 assert.match(fs.readFileSync(path.join(root,'chat-speed-v51.js'),'utf8'),/telechatSyncVisibleMessagesV105/);
 assert.match(context,/telechatRefreshReactionsV36/);
 assert.match(worker,/message-core-v104\.js\?v=105/);

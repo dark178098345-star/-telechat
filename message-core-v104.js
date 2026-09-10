@@ -2,7 +2,7 @@
 (()=>{
   'use strict';
   const SEEN_TTL=120000,MAX_SEEN=5000,MAX_RETRY=30000;
-  const seenEvents=new Map();
+  const seenEvents=new Map(),latestByKey=new Map();
   let reconnectTimer=0,reconnectAttempt=0,refreshTimer=0,generation=0;
   const unhealthy=new Set();
 
@@ -41,6 +41,16 @@
     const delay=Math.min(MAX_RETRY,600*2**Math.min(reconnectAttempt++,6))+Math.round(Math.random()*240);
     reconnectTimer=setTimeout(()=>{reconnectTimer=0;if(sameKey(key)&&!document.hidden)subscribeCore();},delay);
   }
+  async function probeLatest(key){
+    if(document.hidden||!sameKey(key)||typeof sb==='undefined')return;
+    try{
+      const result=await sb.from('messages').select('id,ts').eq('chat_key',key).order('ts',{ascending:false}).limit(1);
+      const newest=result.data?.[0];if(!newest)return;
+      const id=String(newest.id||'');if(!id)return;
+      const previous=latestByKey.get(key);latestByKey.set(key,id);
+      if(previous&&previous!==id)scheduleRefresh(key);
+    }catch(_){ }
+  }
   function channelStatus(status,key,token,kind){
     if(token!==generation||!sameKey(key))return;
     if(status==='SUBSCRIBED'){unhealthy.delete(kind);if(!unhealthy.size)reconnectAttempt=0;scheduleRefresh(key);return;}
@@ -55,6 +65,7 @@
     const channel=sb.channel('telechat-messages-v104-'+key+'-'+Date.now())
       .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:'chat_key=eq.'+key},async payload=>{
         const message=payload?.new;if(token!==generation||!sameKey(key)||!message||message.deleted)return;
+        if(message.id!==undefined&&message.id!==null)latestByKey.set(key,String(message.id));
         if(!currentRoom&&window.telechatIsBlockedV74?.(message.from_nick))return;
         if(message.from_nick===me.nick){scheduleRefresh(key);return;}
         if(seen(message))return;
@@ -88,5 +99,6 @@
   }
   window.addEventListener('online',()=>{reconnectAttempt=0;recover();});
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)recover();},{passive:true});
+  setInterval(()=>{const key=activeKey();if(key)probeLatest(key);},7000);
   window.telechatMessageCoreV104={resync:recover,reconnect:subscribeCore,seen:eventKey};
 })();
