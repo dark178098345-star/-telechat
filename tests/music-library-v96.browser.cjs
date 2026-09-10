@@ -14,7 +14,7 @@ function wav(){
   window.sb={from:()=>{let change=null;const q={select(){return q},update(data){change=data;return q},eq(){return q},async maybeSingle(){if(change)savedProfileStatus=change.status;return {data:{nick:me.nick,status:savedProfileStatus},error:null};}};return q;}};
   const Original=window.Audio;window.Audio=class extends Original{constructor(...args){super(...args);if(!window.testMusicAudio)window.testMusicAudio=this;}};
  });
- const html=fs.readFileSync(path.join(root,'index.html'),'utf8').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,tag=>tag.includes('music-library-v96.js')||tag.includes('profile-music-v97.js')||tag.includes('appearance-mode-v95.js')?tag:'');
+ const html=fs.readFileSync(path.join(root,'index.html'),'utf8').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,tag=>tag.includes('music-library-v96.js')||tag.includes('profile-music-v97.js')||tag.includes('appearance-mode-v95.js')||tag.includes('navigation-readers-v109.js')?tag:'');
  await context.route('**/*',route=>{
   const url=new URL(route.request().url());
   if(url.hostname==='audio.test')return route.fulfill({contentType:url.pathname==='/bad'?'text/html':'audio/wav',body:url.pathname==='/bad'?'<html>Not audio</html>':wav()});

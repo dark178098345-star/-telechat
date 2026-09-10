@@ -28,6 +28,7 @@ const source=name=>fs.readFileSync(path.join(root,name),'utf8');
       });
     });
     await page.addScriptTag({content:source('chat-speed-v51.js')});
+    await page.addScriptTag({content:source('navigation-readers-v109.js')});
     await page.evaluate(async()=>{
       const row={id:1,chat_key:conversationKey(),from_nick:'friend',text:'first',ts:100,read_by:[]};
       serverRows=[row];await renderMessages();window.original=document.querySelector('.msg');window.video=original.querySelector('video');
@@ -59,6 +60,12 @@ const source=name=>fs.readFileSync(path.join(root,name),'utf8');
     await page.evaluate(()=>{window.arrivalTask=appendMessage({id:4,chat_key:conversationKey(),from_nick:'friend',text:'arrived during paint',ts:400});releaseAppend();});
     await page.evaluate(()=>Promise.all([refreshTask,arrivalTask]));
     assert.equal(await page.locator('.msg[data-id="4"]').count(),1,'arrival during async history paint must remain visible exactly once');
+    await page.evaluate(()=>{
+      window.sentRow=document.querySelector('.msg[data-id="3"]');
+      telechatChatSpeedV51.applyRealtimeUpdate({...serverRows[2],read_by:['friend']});
+    });
+    assert.equal(await page.locator('.msg[data-id="3"] .reader-avatar-v109').count(),1,'Realtime receipt renders below existing sent message');
+    assert(await page.evaluate(()=>sentRow===document.querySelector('.msg[data-id="3"]')),'read event does not replace message');
 
     const sidebar=await browser.newPage();await sidebar.route('**/*',route=>route.fulfill({contentType:'text/html',body:'<div id="contacts-list"></div>'}));await sidebar.goto('http://telechat.test');
     await sidebar.evaluate(()=>{

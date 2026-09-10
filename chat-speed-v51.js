@@ -229,9 +229,12 @@
 
   function syncReadReceiptsV51(items) {
     if (!me?.nick) return;
+    const rows = new Map([...(document.getElementById('messages')?.querySelectorAll('.msg[data-id]') || [])].map(row => [String(row.dataset.id), row]));
     (items || []).forEach(item => {
       if (!item || item._type === 'poll' || item.from_nick !== me.nick) return;
-      const check = messageElementV51(item)?.querySelector('.msg-check');
+      const row = rows.get(String(item.id));
+      window.telechatReadReceiptV109?.(row, item);
+      const check = row?.querySelector('.msg-check');
       if (!check) return;
       const readBy = Array.isArray(item.read_by) ? item.read_by : [];
       const isRead = currentRoom ? readBy.some(nick => nick !== me.nick) : !!currentChat && readBy.includes(currentChat);
@@ -468,6 +471,7 @@
     const value=await appendMessageBeforeV51(message, doScroll);
     const element=messageElementV51(message)||document.getElementById('messages')?.lastElementChild;
     if(element?.classList?.contains('msg')){element.dataset.messageKeyV105=normalizedKey;renderedRowsV105.set(element,stateMarkV51([normalized]));}
+    window.telechatReadReceiptV109?.(element, normalized);
     return value;
   };
 

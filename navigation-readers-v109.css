@@ -1,0 +1,31 @@
+.section-rail-v109{display:none}
+.readers-v109{display:flex;align-items:center;justify-content:flex-end;gap:4px;min-height:20px;margin:3px 2px 1px;color:var(--accent3);font-size:10px;line-height:1;max-width:100%}
+.readers-v109>svg{width:14px;height:14px;margin-right:2px;flex:none}
+.reader-avatar-v109{display:grid;place-items:center;width:18px;height:18px;flex:none;border-radius:50%;overflow:hidden;background:var(--bg3);box-shadow:0 0 0 1px var(--border);color:var(--text);font-size:11px}
+.reader-avatar-v109 img{display:block;width:100%;height:100%;object-fit:cover;border-radius:inherit}
+.reader-more-v109{font-weight:800;color:var(--text2);padding-left:2px}
+@media(min-width:901px),(min-width:721px) and (pointer:fine){
+  html body #chat-screen #sidebar{position:relative;display:flex;flex-direction:column;width:382px;min-width:382px;padding-left:72px}
+  html body #sidebar>.section-rail-v109{position:absolute;display:flex;flex-direction:column;align-items:stretch;gap:7px;left:0;top:0;bottom:142px;width:72px;padding:12px 6px;overflow-y:auto;scrollbar-width:none}
+  html body #sidebar::before{content:'';position:absolute;inset:0 auto 0 0;width:72px;background:rgba(7,9,19,.23);border-right:1px solid var(--border);pointer-events:none}
+  .rail-brand-v109{display:block;text-align:center;font-size:27px;font-weight:900;letter-spacing:-2px;height:44px;color:var(--text)}
+  .rail-brand-v109>span{color:var(--accent3)}
+  html body #sidebar .section-rail-v109 button{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;min-height:62px;width:100%;padding:9px 2px;border:0;border-radius:14px;color:var(--text2);background:transparent;font:700 10px 'Nunito',sans-serif;cursor:pointer;transition:background .18s ease,color .18s ease}
+  html body #sidebar .section-rail-v109 button svg{width:23px;height:23px}
+  html body #sidebar .section-rail-v109 .music-entry-v96{margin:0;box-shadow:none;flex:none}
+  html body #sidebar .section-rail-v109 .music-entry-v96 b{display:none}
+  html body #sidebar .section-rail-v109 button:hover{color:var(--text);background:rgba(139,124,255,.09)}
+  html body #sidebar .section-rail-v109 button.active{color:var(--accent3);background:rgba(139,124,255,.16)}
+  .section-rail-v109 button.active::before{content:'';position:absolute;left:-6px;top:20px;bottom:20px;width:3px;border-radius:0 4px 4px 0;background:var(--accent)}
+  html body #sidebar .sidebar-tabs{display:none}
+  html body #sidebar>.sidebar-footer.telechat-bottom-nav{position:absolute;left:5px;bottom:7px;display:flex;flex-direction:column;width:62px;margin:0;padding:4px 0;gap:4px;border:0;border-radius:0;background:transparent;box-shadow:none;backdrop-filter:none}
+  html body #sidebar>.sidebar-footer>[data-nav="chats"]{display:none}
+  html body #sidebar>.sidebar-footer>.telechat-nav-btn{width:62px;min-height:58px;font-size:9px;border-radius:14px}
+  html body #sidebar>.sidebar-footer>.telechat-nav-btn::after{display:none}
+  html body #sidebar>.sidebar-top{padding:16px 12px 12px}
+  html body #sidebar>.contacts-list{min-height:0;padding:5px}
+  html body #sidebar .contact{padding-left:8px;padding-right:8px;gap:9px}
+  html body #sidebar>.music-sidebar-player{flex-shrink:0;margin:6px;width:auto;min-width:0}
+  html body #sidebar .section-rail-v109 button:focus-visible{outline:2px solid var(--accent3);outline-offset:-2px}
+}
+@media(prefers-reduced-motion:reduce){.section-rail-v109 button{transition:none!important}}
