@@ -1143,6 +1143,13 @@ function playSendSound(){
 // PUSH NOTIFICATIONS
 async function requestPush(){
   try{
+    if(window.TelechatAndroid&&typeof window.TelechatAndroid.requestNotifications==='function'){
+      window.TelechatAndroid.requestNotifications();
+      document.getElementById('push-btn').textContent='✅ Запрошены';
+      document.getElementById('push-btn').style.color='var(--green)';
+      showToast('Разреши уведомления в системном окне Android');
+      return;
+    }
     if(!('Notification' in window)){showToast('Браузер не поддерживает уведомления');return;}
     const perm=await Notification.requestPermission();
     if(perm==='granted'){
@@ -1157,6 +1164,7 @@ async function requestPush(){
 
 function sendPushNotification(title,body){
   try{
+    if(window.TelechatAndroid&&typeof window.TelechatAndroid.notify==='function'&&document.hidden){window.TelechatAndroid.notify(String(title||'tele.chat'),String(body||''));return;}
     if(typeof Notification==='undefined')return;
     if(Notification.permission==='granted'&&document.hidden){
       const n=new Notification(title,{body});

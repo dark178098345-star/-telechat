@@ -42,10 +42,10 @@ for (const asset of ['delivery-v72.css?v=72', 'device-presence-v72.js?v=72']) {
   assert(index.includes(asset), `index is missing ${asset}`);
   assert(serviceWorker.includes(asset), `service worker is missing ${asset}`);
 }
-for (const asset of ['chat-reliability-v24.js?v=78', 'chat-speed-v51.js?v=105', 'voice-calls-v32.js?v=78']) {
+for (const asset of ['chat-reliability-v24.js?v=78', 'chat-speed-v51.js?v=109', 'voice-calls-v32.js?v=78']) {
   assert(index.includes(asset), `index is missing ${asset}`);
   assert(serviceWorker.includes(asset), `service worker is missing ${asset}`);
 }
-assert.match(serviceWorker, /telechat-shell-v106-mentions/);
+assert.match(serviceWorker, /telechat-shell-v109-navigation-readers/);
 
 console.log('V72 reliable experience smoke test passed');

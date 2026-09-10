@@ -2,6 +2,11 @@ package chat.tele.app;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.os.Build;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -11,6 +16,7 @@ import android.os.Bundle;
 import android.provider.Settings;
 import android.view.View;
 import android.webkit.CookieManager;
+import android.webkit.JavascriptInterface;
 import android.webkit.PermissionRequest;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
@@ -21,10 +27,12 @@ import android.webkit.WebViewClient;
 import android.widget.Toast;
 
 public class MainActivity extends Activity {
-    private static final String TELECHAT_URL = "https://dark178098345-star.github.io/-telechat/?app=android&v=85";
+    private static final String TELECHAT_URL = "https://dark178098345-star.github.io/-telechat/?app=android&v=109";
     private static final String TELECHAT_HOST = "dark178098345-star.github.io";
+    private static final String NOTIFICATION_CHANNEL = "telechat-messages";
     private static final int FILE_CHOOSER_REQUEST = 401;
     private static final int MICROPHONE_PERMISSION_REQUEST = 402;
+    private static final int NOTIFICATION_PERMISSION_REQUEST = 403;
 
     private WebView webView;
     private ValueCallback<Uri[]> fileCallback;
@@ -42,6 +50,8 @@ public class MainActivity extends Activity {
         setContentView(webView);
 
         configureWebView();
+        webView.addJavascriptInterface(new TelechatAndroidBridge(), "TelechatAndroid");
+        createNotificationChannel();
         if (savedInstanceState == null) webView.loadUrl(TELECHAT_URL);
         else webView.restoreState(savedInstanceState);
     }
@@ -57,7 +67,7 @@ public class MainActivity extends Activity {
         settings.setAllowContentAccess(true);
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
         settings.setCacheMode(WebSettings.LOAD_DEFAULT);
-        settings.setUserAgentString(settings.getUserAgentString() + " telechat-android/1.2.2");
+        settings.setUserAgentString(settings.getUserAgentString() + " telechat-android/1.2.3");
 
         CookieManager.getInstance().setAcceptCookie(true);
         CookieManager.getInstance().setAcceptThirdPartyCookies(webView, false);
@@ -101,6 +111,45 @@ public class MainActivity extends Activity {
         webView.setDownloadListener((url, userAgent, contentDisposition, mimeType, contentLength) -> {
             openExternal(Uri.parse(url));
         });
+    }
+
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return;
+        NotificationChannel channel = new NotificationChannel(
+                NOTIFICATION_CHANNEL, "Сообщения tele.chat", NotificationManager.IMPORTANCE_DEFAULT);
+        channel.setDescription("Уведомления о новых сообщениях");
+        getSystemService(NotificationManager.class).createNotificationChannel(channel);
+    }
+
+    private void requestNotifications() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+                && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, NOTIFICATION_PERMISSION_REQUEST);
+        } else {
+            Toast.makeText(this, "Уведомления tele.chat включены", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void notifyMessage(String title, String body) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+                && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return;
+        Intent intent = new Intent(this, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        PendingIntent pending = PendingIntent.getActivity(this, 0, intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_IMMUTABLE : 0));
+        Notification.Builder builder = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+                ? new Notification.Builder(this, NOTIFICATION_CHANNEL)
+                : new Notification.Builder(this);
+        builder.setSmallIcon(chat.tele.app.R.drawable.telechat_icon)
+                .setContentTitle(title == null || title.isEmpty() ? "tele.chat" : title)
+                .setContentText(body == null ? "" : body)
+                .setAutoCancel(true).setContentIntent(pending).setPriority(Notification.PRIORITY_DEFAULT);
+        getSystemService(NotificationManager.class).notify((int) (System.currentTimeMillis() & 0x7fffffff), builder.build());
+    }
+
+    private final class TelechatAndroidBridge {
+        @JavascriptInterface public boolean isApp() { return true; }
+        @JavascriptInterface public void requestNotifications() { runOnUiThread(MainActivity.this::requestNotifications); }
+        @JavascriptInterface public void notify(String title, String body) { runOnUiThread(() -> notifyMessage(title, body)); }
     }
 
     private void handleWebPermission(PermissionRequest request) {

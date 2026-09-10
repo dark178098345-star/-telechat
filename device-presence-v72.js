@@ -8,7 +8,7 @@
   const ownKey=()=>isPhone()?PHONE_KEY:PC_KEY;
 
   async function publish(force=false){
-    if(!me?.nick||publishing||(!force&&Date.now()-publishAt<42000))return;
+    if(document.hidden||!me?.nick||publishing||(!force&&Date.now()-publishAt<42000))return;
     publishing=true;publishAt=Date.now();
     try{await sb.from('typing').upsert({chat_key:ownKey(),nick:me.nick,ts:Date.now()},{onConflict:'chat_key,nick'});}catch(error){}
     finally{publishing=false;}
@@ -52,7 +52,7 @@
   goBack=function(){paintToken++;return previousBack();};
   const previousLogin=doLogin;
   doLogin=async function(){const result=await previousLogin();if(me){publish(true);setTimeout(paint,300);}return result;};
-  setInterval(()=>publish(),45000);
+  setInterval(()=>{if(!document.hidden)publish();},45000);
   window.addEventListener('focus',()=>{publish();paint();});
   window.telechatDevicePresenceV72={publish,refresh:()=>{cache.clear();return paint();},device:()=>isPhone()?'phone':'pc'};
   if(me)publish(true);

@@ -2,6 +2,9 @@ name: Build tele.chat Android APK
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
 
 permissions:
   contents: read
@@ -44,15 +47,15 @@ jobs:
         run: gradle :app:assembleRelease --stacktrace
 
       - name: Rename APK
-        run: cp android-app/app/build/outputs/apk/release/app-release.apk tele.chat-Android-1.2.2.apk
+        run: cp android-app/app/build/outputs/apk/release/app-release.apk tele.chat-Android-1.2.3.apk
 
       - name: Verify APK signature
-        run: '"$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs tele.chat-Android-1.2.2.apk'
+        run: '"$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs tele.chat-Android-1.2.3.apk'
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: tele-chat-android-apk
-          path: tele.chat-Android-1.2.2.apk
+          path: tele.chat-Android-1.2.3.apk
           if-no-files-found: error
           retention-days: 30

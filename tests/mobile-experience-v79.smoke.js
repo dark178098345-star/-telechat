@@ -24,12 +24,12 @@ assert.match(script,/visualViewport/);
 assert.match(script,/trimDecorations/);
 assert.match(script,/deviceMemory/);
 
-assert.match(worker,/telechat-shell-v106-mentions/);
+assert.match(worker,/telechat-shell-v109-navigation-readers/);
 assert.match(worker,/mobile-experience-v79\.css\?v=79/);
 assert.match(worker,/mobile-experience-v79\.js\?v=79/);
-assert.match(activity,/\?app=android&v=85/);
-assert.match(activity,/telechat-android\/1\.2\.2/);
-assert.match(gradle,/versionCode 5/);
-assert.match(gradle,/versionName '1\.2\.2'/);
+assert.match(activity,/\?app=android&v=109/);
+assert.match(activity,/telechat-android\/1\.2\.3/);
+assert.match(gradle,/versionCode 6/);
+assert.match(gradle,/versionName '1\.2\.3'/);
 
 console.log('mobile-experience-v79 smoke ok');
