@@ -1,5 +1,6 @@
-const CACHE_NAME='telechat-shell-v103-profile-follow-polish';
+const CACHE_NAME='telechat-shell-v104-message-core';
 const APP_SHELL=[
+  './message-core-v104.js?v=104',
   './profile-follow-compact-v103.css?v=103',
   './profile-follow-compact-v102.css?v=102',
   './profile-follow-compact-v102.js?v=102',

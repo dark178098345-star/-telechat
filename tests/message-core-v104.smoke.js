@@ -1,0 +1,15 @@
+const fs=require('fs'),path=require('path'),assert=require('assert/strict');
+const root=path.resolve(__dirname,'..');
+const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
+const script=fs.readFileSync(path.join(root,'message-core-v104.js'),'utf8');
+const context=fs.readFileSync(path.join(root,'message-context-v36.js'),'utf8');
+const worker=fs.readFileSync(path.join(root,'sw.js'),'utf8');
+assert.match(html,/message-core-v104\.js\?v=104/);
+assert.match(script,/SEEN_TTL/);
+assert.match(script,/CHANNEL_ERROR/);
+assert.match(script,/TIMED_OUT/);
+assert.match(script,/scheduleRefresh/);
+assert.match(script,/telechatRefreshReactionsV36/);
+assert.match(context,/telechatRefreshReactionsV36/);
+assert.match(worker,/message-core-v104\.js\?v=104/);
+console.log('message-core-v104 smoke ok');

@@ -661,6 +661,10 @@
     if (!event.target.closest('#ctx-menu')) closeContextMenuV36();
   }
 
+  // Expose the small hooks used by the message engine after a Realtime repaint.
+  window.telechatRefreshReactionsV36 = refreshVisibleReactionsV36;
+  window.telechatResetVisibleReactionsV36 = () => visibleMessagesV36.clear();
+
   installInterfaceSettingsV36();
   buildContextMenuV36();
   installMessageModalsV36();
