@@ -29,6 +29,36 @@
   let contactsInFlightV17=null,contactsQueuedV17=false;
   let sidebarMessagesCacheV17=[],sidebarCacheReadyV17=false,sidebarCacheUpdatedAtV17=0,sidebarLocalPaintCreditsV25=0;
   const sidebarPendingPatchesV51=new Map();
+  const rowMarkupV105=new WeakMap();
+  let sidebarLayoutV105='',sidebarPaintV105=0;
+
+  function commitSidebarV105(list,fragment){
+    const existing=new Map([...list.querySelectorAll('.contact[data-chat-key]')].map(row=>[row.dataset.chatKey,row]));
+    const desired=[...fragment.children].map(next=>{
+      const key=next.dataset.chatKey,old=key&&existing.get(key);
+      const marks={};
+      for(const selector of ['.av','.room-avatar','.contact-name','.contact-last','.contact-time']){
+        const part=next.querySelector(selector);if(part)marks[selector]=part.innerHTML;
+      }
+      if(!old){rowMarkupV105.set(next,marks);return next;}
+      const previous=rowMarkupV105.get(old)||{};
+      for(const [selector,html] of Object.entries(marks)){
+        const part=old.querySelector(selector);
+        if(part&&previous[selector]!==html)part.innerHTML=html;
+      }
+      old.classList.toggle('active',next.classList.contains('active'));
+      old.querySelector('.av')?.classList.toggle('av-online',!!next.querySelector('.av.av-online'));
+      Object.assign(old.dataset,next.dataset);old.onclick=next.onclick;
+      rowMarkupV105.set(old,marks);existing.delete(key);return old;
+    });
+    const layout=JSON.stringify([sidebarFilter,desired.map(row=>row.dataset.chatKey||row.textContent)]);
+    if(layout!==sidebarLayoutV105||desired.some(row=>row.dataset.chatKey&&row.parentNode!==list)){
+      const keep=new Set(desired);
+      [...list.children].forEach(row=>{if(!keep.has(row))row.remove();});
+      desired.forEach((row,index)=>{if(list.children[index]!==row){if(list.moveBefore&&row.parentNode===list)list.moveBefore(row,list.children[index]||null);else list.insertBefore(row,list.children[index]||null);}});
+      sidebarLayoutV105=layout;
+    }
+  }
   const SIDEBAR_SNAPSHOT_TTL_V18=7*24*60*60*1000;
   const SIDEBAR_NETWORK_TTL_V18=15000;
   const loadMyRoomsNetworkV18=loadMyRooms;
@@ -129,6 +159,7 @@
   }
 
   async function paintSidebarV17(allMsgs){
+    const paint=++sidebarPaintV105,owner=me?.nick,filter=sidebarFilter;
     const list=document.getElementById('contacts-list');
     if(!list||!me)return false;
     const roomLast={};
@@ -136,6 +167,7 @@
     const visibleRooms=roomRows.filter(room=>sidebarFilter==='all'||room.type===sidebarFilter);
     const chats=collectPrivateChatsV17(allMsgs);
     if(chats.length)await batchUsersV15(chats.map(chat=>chat.nick));
+    if(paint!==sidebarPaintV105||me?.nick!==owner||sidebarFilter!==filter)return false;
 
     const fragment=document.createDocumentFragment();let rendered=0;
     if(visibleRooms.length){
@@ -169,7 +201,7 @@
       empty.style.cssText='padding:22px 14px;font-size:13px;color:var(--text3);line-height:1.55';
       empty.innerHTML=(sidebarFilter==='all'?'Найди друга или создай первое пространство':'Здесь пока пусто')+setup;fragment.appendChild(empty);
     }
-    list.classList.add('tab-swap-v17');list.replaceChildren(fragment);requestAnimationFrame(()=>list.classList.remove('tab-swap-v17'));
+    commitSidebarV105(list,fragment);
     if(typeof window.telechatApplySidebarCustomV52==='function')window.telechatApplySidebarCustomV52();
     if(typeof enhanceVerifiedBadges==='function')enhanceVerifiedBadges();
     return true;
@@ -203,7 +235,7 @@
   }
 
   function requestSidebarRefreshV18(){
-    if(contactsInFlightV17){contactsQueuedV17=true;return contactsInFlightV17;}
+    if(contactsInFlightV17)return contactsInFlightV17;
     contactsInFlightV17=renderContactsNowV17().finally(()=>{
       contactsInFlightV17=null;
       if(contactsQueuedV17){contactsQueuedV17=false;setTimeout(requestSidebarRefreshV18,0);}

@@ -17,6 +17,7 @@
   let reactionRowsV36 = new Map();
   let reactionSubscriptionV36 = null;
   let reactionRefreshTimerV36 = 0;
+  let reactionRequestV105=0;
   let contextOpenedAtV36 = 0;
   let manualMessageScrollAtV36 = 0;
   let selectionModeV36 = false;
@@ -573,7 +574,8 @@
       remaining.delete(emoji);
       button.className = 'message-reaction-v36' + (nicks.includes(me?.nick) ? ' mine' : '');
       button.title = nicks.map(nick => '@' + nick).join(', ');
-      button.innerHTML = `<span>${emoji}</span><span>${nicks.length}</span>`;
+      const markup=`<span>${emoji}</span><span>${nicks.length}</span>`;
+      if(button.innerHTML!==markup)button.innerHTML=markup;
     });
     remaining.forEach(button => button.remove());
   }
@@ -596,6 +598,7 @@
   }
 
   async function refreshVisibleReactionsV36() {
+    const request=++reactionRequestV105,key=conversationKey();
     const messages = Array.from(visibleMessagesV36.values()).filter(message => message.id && !message.deleted);
     const ids = Array.from(new Set(messages.map(message => message.id)));
     const nextRows = new Map();
@@ -608,6 +611,7 @@
         nextRows.get(key).push(row);
       });
     }
+    if(request!==reactionRequestV105||key!==conversationKey())return;
     reactionRowsV36 = nextRows;
     visibleMessagesV36.forEach((message, key) => {
       const element = Array.from(document.querySelectorAll('#messages .msg')).find(item => item.dataset.contextKeyV36 === key);
@@ -664,6 +668,17 @@
   // Expose the small hooks used by the message engine after a Realtime repaint.
   window.telechatRefreshReactionsV36 = refreshVisibleReactionsV36;
   window.telechatResetVisibleReactionsV36 = () => visibleMessagesV36.clear();
+  window.telechatSyncVisibleMessagesV105 = items => {
+    reactionRequestV105++;
+    visibleMessagesV36.clear();
+    const elements=new Map([...document.querySelectorAll('#messages .msg[data-id]')].map(element=>[String(element.dataset.id),element]));
+    items.filter(item=>item._type!=='poll').forEach(message=>{
+      const element=elements.get(String(message.id));
+      if(element)decorateMessageV36(message,element);
+    });
+    ensureReactionSubscriptionV36();
+    scheduleReactionRefreshV36();
+  };
 
   installInterfaceSettingsV36();
   buildContextMenuV36();

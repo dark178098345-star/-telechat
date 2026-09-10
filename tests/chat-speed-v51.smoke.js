@@ -13,6 +13,8 @@ class ClassList {
 class Element {
   constructor(tag = 'div') { this.tagName = tag;this.children = [];this.dataset = {};this.className = '';this.classList = new ClassList(this);this.scrollHeight = 500;this.scrollTop = 500;this.clientHeight = 400; }
   appendChild(child) { this.children.push(child);return child; }
+  insertBefore(child,anchor) {const old=this.children.indexOf(child);if(old>=0)this.children.splice(old,1);const index=this.children.indexOf(anchor);this.children.splice(index<0?this.children.length:index,0,child);return child;}
+  get lastElementChild(){return this.children[this.children.length-1]||null;}
   replaceChildren(...children) { this.children = children; }
   addEventListener() {}
   querySelector(selector) {
@@ -30,12 +32,13 @@ class Element {
 }
 
 const messages = new Element();
-global.document = { getElementById: id => id === 'messages' ? messages : null };
+global.document = { getElementById: id => id === 'messages' ? messages : null,createElement:tag=>new Element(tag) };
 global.window = global;
 global.me = { nick: 'creator' };
 global.currentChat = 'tele';
 global.currentRoom = null;
 global.lastRenderedDate = '';
+global.makeDateStr = ts=>new Date(ts).toDateString();
 global.userCache = {};
 global.conversationKey = () => 'creator_tele';
 global.renderMessages = async () => {};

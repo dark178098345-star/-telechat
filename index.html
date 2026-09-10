@@ -1050,7 +1050,12 @@ function avatarMarkup(user){
   if(photo)return`<img class="avatar-photo" src="${photo}" alt="">`;
   return AVATARS[Number(user&&user.av)]||AVATARS[0];
 }
-function setAvatarElement(el,user){el.innerHTML=avatarMarkup(user);}
+function setAvatarElement(el,user){
+  if(!el)return;
+  const markup=avatarMarkup(user);
+  if(el._avatarMarkupV105===markup&&el._avatarNodeV105===el.firstChild)return;
+  el.innerHTML=markup;el._avatarMarkupV105=markup;el._avatarNodeV105=el.firstChild;
+}
 
 // PWA service worker
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){
@@ -2591,7 +2596,7 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 </script>
 <script src="./profile-performance-v11.js?v=97"></script>
 <script src="./followers-v12.js"></script>
-<script src="./app-performance-v17.js?v=51"></script>
+<script src="./app-performance-v17.js?v=105"></script>
 <script src="./ui-polish-v16.js"></script>
 <script src="./moderation-v19.js"></script>
 <script src="./moons-v20.js"></script>
@@ -2601,15 +2606,15 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <script src="./chat-reliability-v24.js?v=78"></script>
 <script src="./message-send-animation-v35.js?v=54"></script>
 <script src="./voice-calls-v32.js?v=78"></script>
-<script src="./message-context-v36.js?v=78"></script>
+<script src="./message-context-v36.js?v=105"></script>
 <script src="./desktop-notifications-v37.js?v=74"></script>
 <script src="./voice-send-v38.js?v=39"></script>
 <script src="./media-compat-v40.js?v=40"></script>
 <script src="./chat-boot-v41.js?v=51"></script>
 <script src="./fluid-ui-v42.js?v=48"></script>
 <script src="./chat-open-loader-v44.js?v=51"></script>
-<script src="./chat-speed-v51.js?v=74"></script>
-<script src="./chat-actions-v52.js?v=59"></script>
+<script src="./chat-speed-v51.js?v=105"></script>
+<script src="./chat-actions-v52.js?v=105"></script>
 <script src="./sound-studio-v53.js?v=53"></script>
 <script src="./chat-experience-v62.js?v=74"></script>
 <script src="./chat-flow-v64.js?v=74"></script>
@@ -2628,8 +2633,8 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <script src="./soundcloud-v98.js?v=99"></script>
 <script src="./profile-music-v97.js?v=99"></script>
 <script src="./music-library-v96.js?v=99"></script>
-<script src="./background-presence-v101.js?v=101"></script>
+<script src="./background-presence-v101.js?v=105"></script>
 <script src="./profile-follow-compact-v102.js?v=102"></script>
-<script src="./message-core-v104.js?v=104"></script>
+<script src="./message-core-v104.js?v=105"></script>
 </body>
 </html>

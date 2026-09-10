@@ -12,6 +12,7 @@
   const avatarMarkupCacheV51 = new WeakMap();
   let persistentDbV72 = null;
   let renderTokenV51 = 0;
+  const renderedRowsV105=new WeakMap();
 
   const appendMessageBeforeV51 = appendMessage;
   const renderMessagesFallbackV51 = renderMessages;
@@ -282,7 +283,7 @@
 
   async function paintStateV51(state, options = {}) {
     if (!state || state.disposed || state.key !== activeKeyV51()) return false;
-    if (state.painting) return state.painting;
+    if (state.painting) return state.painting.then(()=>paintStateV51(state,options));
     state.painting = (async () => {
       const token = ++renderTokenV51;
       await warmUsersV51(state.items);
@@ -290,29 +291,45 @@
       const box = document.getElementById('messages');
       if (!box) return false;
       const visibleItems = state.items.filter(item => item._type === 'poll' || !window.telechatShouldHideMessageV74?.(item));
+      const oldTop=box.scrollTop;
+      const existing=new Map([...box.children].filter(element=>element.dataset?.messageKeyV105).map(element=>[element.dataset.messageKeyV105,element]));
+      const dates=new Map([...box.children].filter(element=>element.classList?.contains('date-divider')).map(element=>[element.textContent,element]));
+      const desired=[];
       box.classList.add('v51-painting');
       try {
-        box.replaceChildren();
         box.dataset.chatKeyV51 = state.key;
         lastRenderedDate = '';
         if (!visibleItems.length) {
-          box.innerHTML = '<div class="v51-empty-chat" style="text-align:center;padding:30px;font-size:13px;color:var(--text3)">Начни первым! 👋</div>';
+          const empty=box.querySelector('.v51-empty-chat')||document.createElement('div');
+          empty.className='v51-empty-chat';empty.textContent='Начни первым! 👋';desired.push(empty);
         } else {
           for (const item of visibleItems) {
             if (token !== renderTokenV51 || state.key !== activeKeyV51()) return false;
-            if (item._type === 'poll') renderPoll(item, box);
-            else {
-              const beforeCount = box.children.length;
-              await appendMessageBeforeV51(item, false);
-              [...box.children].slice(beforeCount).forEach(element => {
-                if (element.classList?.contains('msg')) element.classList.add('v51-hydrated');
-              });
+            const date=makeDateStr(item.ts);
+            if(date!==lastRenderedDate){
+              const divider=dates.get(date)||document.createElement('div');
+              divider.className='date-divider';divider.textContent=date;desired.push(divider);lastRenderedDate=date;
             }
+            const key=itemKeyV51(item),mark=stateMarkV51([item]);
+            let element=existing.get(key);
+            if(!element||renderedRowsV105.get(element)!==mark){
+              const before=new Set([...box.children]);
+              if(item._type==='poll')renderPoll(item,box);else await appendMessageBeforeV51(item,false);
+              const added=[...box.children].filter(child=>!before.has(child));
+              element=added.find(child=>child.classList?.contains('msg'));
+              if(element){element.classList.add('v51-hydrated');element.dataset.messageKeyV105=key;renderedRowsV105.set(element,mark);}
+            }
+            if(element)desired.push(element);
           }
         }
+        if(token!==renderTokenV51||state.key!==activeKeyV51())return false;
+        const keep=new Set(desired);
+        [...box.children].forEach(element=>{if(!keep.has(element))element.remove();});
+        desired.forEach((element,index)=>{if(box.children[index]!==element){if(box.moveBefore&&element.parentNode===box)box.moveBefore(element,box.children[index]||null);else box.insertBefore(element,box.children[index]||null);}});
         state.lastPaintAt = Date.now();
         syncReadReceiptsV51(visibleItems);
-        if (!options.keepScroll) scrollToBottom();
+        window.telechatSyncVisibleMessagesV105?.(visibleItems);
+        if (!options.keepScroll) scrollToBottom();else box.scrollTop=oldTop;
         return true;
       } finally {
         box.classList.remove('v51-painting');
@@ -325,11 +342,17 @@
     if (!state || state.disposed || state.loading) return state?.loading || null;
     state.loading = (async () => {
       const previousMark = stateMarkV51(state.items);
+      const beforeFetch=new Map(state.items.map(item=>[itemKeyV51(item),item]));
       const page = await fetchPageV51(state.key);
       if (state.disposed) return null;
       const oldestFresh = page.items.length ? page.cursor : Infinity;
       const older = page.items.length ? state.items.filter(item => Number(item.ts || 0) < oldestFresh) : [];
-      state.items = mergeItemsV51(older, page.items);
+      // Preserve local sends and arrivals that raced the network snapshot.
+      const arrived=state.items.filter(item=>{
+        if(item._type!=='poll'&&!item.id)return !page.items.some(saved=>saved._type!=='poll'&&saved.from_nick===item.from_nick&&Number(saved.ts)===Number(item.ts));
+        return beforeFetch.get(itemKeyV51(item))!==item;
+      });
+      state.items = mergeItemsV51(older, page.items, arrived);
       state.cursor = state.items.length ? Math.min(...state.items.map(item => Number(item.ts || 0))) : null;
       state.hasMore = page.hasMore;
       state.touchedAt = Date.now();
@@ -382,7 +405,7 @@
       await paintStateV51(state);
     } catch (error) {
       historyCacheV51.delete(key);
-      return renderMessagesFallbackV51();
+      if(key===activeKeyV51())return renderMessagesFallbackV51();
     }
   };
 
@@ -426,6 +449,10 @@
     state.items = mergeItemsV51(state.items, normalized);
     state.cursor = state.items.length ? Math.min(...state.items.map(item => Number(item.ts || 0))) : state.cursor;
     schedulePersistentV72(state);
+    if(state.painting&&key===activeKeyV51()){
+      await paintStateV51(state,{keepScroll:false});
+      return messageElementV51(normalized);
+    }
     if (existed) {
       syncReadReceiptsV51(state.items);
       return null;
@@ -436,8 +463,12 @@
       return null;
     }
 
+    if(key!==activeKeyV51())return null;
     document.getElementById('messages')?.querySelector('.v51-empty-chat')?.remove();
-    return appendMessageBeforeV51(message, doScroll);
+    const value=await appendMessageBeforeV51(message, doScroll);
+    const element=messageElementV51(message)||document.getElementById('messages')?.lastElementChild;
+    if(element?.classList?.contains('msg')){element.dataset.messageKeyV105=normalizedKey;renderedRowsV105.set(element,stateMarkV51([normalized]));}
+    return value;
   };
 
   avatarMarkup = function(user) {

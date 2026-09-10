@@ -29,12 +29,12 @@ for(const selector of ['.contacts-list.tab-swap-v17','.message-reaction-v36','.c
 for(const asset of [
   'chat-stability-v78.css?v=78',
   'chat-reliability-v24.js?v=78',
-  'message-context-v36.js?v=78',
+  'message-context-v36.js?v=105',
   'voice-calls-v32.js?v=78'
 ]){
   assert.ok(index.includes(asset),`index is missing ${asset}`);
   assert.ok(worker.includes(asset),`service worker is missing ${asset}`);
 }
-assert.match(worker,/telechat-shell-v104-message-core/);
+assert.match(worker,/telechat-shell-v105-stability/);
 
 console.log('chat stability V78 smoke: ok');

@@ -5,6 +5,7 @@
   let activeTargetV52 = null;
   let longPressTimerV52 = 0;
   let menuOpenedAtV52 = 0;
+  let lastCustomStateV105='',lastCustomRowsV105=[];
   const PIN_EMOJIS_V59 = ['📌','⭐','💜','🔥','🌙','⚡','🎮','🎧','🌸','🚀','💎','👑'];
 
   function storageKeyV52() {
@@ -103,6 +104,9 @@
     const list = document.getElementById('contacts-list');
     if (!list || !me) return;
     const state = readStateV52();
+    const currentRows=[...list.querySelectorAll('.contact[data-chat-key]')];
+    const signature=JSON.stringify([state,currentRows.map(row=>[row.dataset.chatKey,row.dataset.originalName,row.querySelector('.contact-name')?.textContent])]);
+    if(signature===lastCustomStateV105&&currentRows.length===lastCustomRowsV105.length&&currentRows.every((row,index)=>row===lastCustomRowsV105[index]))return;
     const pins = new Set(state.pins), contacts = new Set(state.contacts);
     list.querySelectorAll('.v52-custom-section').forEach(element => element.remove());
     const rows = [...list.querySelectorAll('.contact[data-chat-key]')];
@@ -130,6 +134,8 @@
     let anchor = moveGroupToTopV52(list, pinnedRows, 'Закреплённые', 'v52-pinned-section');
     anchor = moveGroupToTopV52(list, contactRows, 'Контакты', 'v52-contacts-section', anchor);
     hideEmptyNativeSectionsV52(list);
+    lastCustomRowsV105=[...list.querySelectorAll('.contact[data-chat-key]')];
+    lastCustomStateV105=JSON.stringify([state,lastCustomRowsV105.map(row=>[row.dataset.chatKey,row.dataset.originalName,row.querySelector('.contact-name')?.textContent])]);
   }
 
   function ensureMenuV52() {

@@ -4,7 +4,7 @@
   const PHONE='__telechat_device_phone_v72__',PC='__telechat_device_pc_v72__';
   const PHONE_BG='__telechat_background_phone_v101__',PC_BG='__telechat_background_pc_v101__';
   const ACTIVE_KEYS=[PHONE,PC],BACKGROUND_KEYS=[PHONE_BG,PC_BG],FRESH_MS=110000,BACKGROUND_MS=15*60*1000,CACHE_MS=30000;
-  const cache=new Map();let painting=0,marking=false;
+  const cache=new Map(),pending=new Map();let painting=0,marking=false;
   const phone=()=>Boolean(navigator.userAgentData?.mobile||/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)||(matchMedia?.('(pointer:coarse)')?.matches&&innerWidth<820));
   const activeKey=()=>phone()?PHONE:PC,backgroundKey=()=>phone()?PHONE_BG:PC_BG;
   const fresh=(ts,limit)=>Number(ts)>0&&Date.now()-Number(ts)<limit;
@@ -21,6 +21,8 @@
   async function state(nick){
     const key=String(nick||'').toLowerCase(),old=cache.get(key);
     if(old&&Date.now()-old.checked<CACHE_MS)return old.value;
+    if(pending.has(key))return pending.get(key);
+    const job=(async()=>{
     let value='';
     try{
       const result=await sb.from('typing').select('chat_key,ts').eq('nick',nick).in('chat_key',[...ACTIVE_KEYS,...BACKGROUND_KEYS]);
@@ -30,6 +32,8 @@
       value=active?'online':background?'background':'';
     }catch(error){}
     cache.set(key,{value,checked:Date.now()});return value;
+    })().finally(()=>pending.delete(key));
+    pending.set(key,job);return job;
   }
   function moon(){const node=document.createElement('span');node.className='presence-moon-v101';node.textContent='☾';node.title='Приложение в фоне';node.setAttribute('aria-label','Приложение в фоне');return node;}
   function applyAvatar(avatar,value){if(!avatar)return;avatar.classList.toggle('av-background-v101',value==='background');if(value==='background')avatar.classList.remove('av-online');}
@@ -45,8 +49,11 @@
     const rows=[...document.querySelectorAll('.contact[data-contact-nick]')];
     await Promise.all(rows.map(async row=>{
       const value=await state(row.dataset.contactNick),avatar=row.querySelector('.av'),name=row.querySelector('.contact-name');
-      applyAvatar(avatar,value);name?.querySelector('.presence-moon-v101')?.remove();
-      if(value==='background'&&name){const badge=moon();badge.title='Приложение в фоне';name.append(badge);}
+      if(!row.isConnected)return;
+      applyAvatar(avatar,value);
+      const existing=name?.querySelector('.presence-moon-v101');
+      if(value!=='background')existing?.remove();
+      if(value==='background'&&name&&!existing){const badge=moon();badge.title='Приложение в фоне';name.append(badge);}
     }));
   }
   async function paintProfile(nick){

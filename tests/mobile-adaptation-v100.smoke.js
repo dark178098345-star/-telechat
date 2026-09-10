@@ -10,5 +10,5 @@ assert.match(style,/profile-panel\.v65-full-panel/);
 assert.match(script,/visualViewport/);
 assert.match(script,/deviceMemory/);
 assert.match(worker,/background-presence-v101\.css\?v=101/);
-assert.match(worker,/background-presence-v101\.js\?v=101/);
+assert.match(worker,/background-presence-v101\.js\?v=105/);
 console.log('mobile-adaptation-v100 smoke ok');
