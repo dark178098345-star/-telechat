@@ -3,6 +3,7 @@
   'use strict';
 
   const CALM_KEY = 'telechat_calm_mode_v95';
+  const phoneQuery = matchMedia('(max-width:720px), ((max-width:900px) and (pointer:coarse))');
   const style = document.createElement('style');
   style.textContent = `
     /* Calm mode keeps the exact same surfaces and layout, but stops decorative
@@ -19,7 +20,10 @@
   document.head.appendChild(style);
 
   const isCalm = () => {
-    try { return localStorage.getItem(CALM_KEY) === 'true'; } catch (_) { return false; }
+    try {
+      const saved = localStorage.getItem(CALM_KEY);
+      return saved === 'true' || (saved === null && phoneQuery.matches);
+    } catch (_) { return phoneQuery.matches; }
   };
 
   function syncCalmClass() {
@@ -27,6 +31,7 @@
   }
   syncCalmClass();
   addEventListener('storage', event => { if (event.key === CALM_KEY || event.key === null) syncCalmClass(); }, { passive: true });
+  phoneQuery.addEventListener?.('change', syncCalmClass);
   document.addEventListener('change', event => {
     if (event.target?.id === 'calm-mode-v95') requestAnimationFrame(syncCalmClass);
   }, { passive: true });

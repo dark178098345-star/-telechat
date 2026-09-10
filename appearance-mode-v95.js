@@ -1,10 +1,23 @@
-/* Apply the saved appearance before the first paint. Classic is the default. */
+/* Apply the saved appearance before the first paint. Phones default to calm mode. */
 (() => {
   'use strict';
   const key = 'telechat_calm_mode_v95';
   const stylesheet = document.getElementById('calm-style-v95');
+  const phoneQuery = matchMedia('(max-width:720px), ((max-width:900px) and (pointer:coarse))');
   let calm = false;
-  try { calm = localStorage.getItem(key) === 'true'; } catch (_) {}
+  let hasPreference = false;
+
+  function readPreference() {
+    try {
+      const saved = localStorage.getItem(key);
+      hasPreference = saved !== null;
+      calm = saved === 'true' || (!hasPreference && phoneQuery.matches);
+    } catch (_) {
+      hasPreference = false;
+      calm = phoneQuery.matches;
+    }
+  }
+  readPreference();
 
   function apply() {
     if (stylesheet) stylesheet.media = calm ? 'all' : 'not all';
@@ -25,15 +38,21 @@
     apply();
     document.getElementById('calm-mode-v95')?.addEventListener('change', event => {
       calm = event.target.checked;
+      hasPreference = true;
       try { localStorage.setItem(key, String(calm)); } catch (_) {}
       apply();
     });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ready, { once: true });
   else ready();
+  phoneQuery.addEventListener?.('change', () => {
+    if (hasPreference) return;
+    calm = phoneQuery.matches;
+    apply();
+  });
   window.addEventListener('storage', event => {
     if (event.key === key || event.key === null) {
-      calm = event.key === key && event.newValue === 'true';
+      readPreference();
       apply();
     }
   });
