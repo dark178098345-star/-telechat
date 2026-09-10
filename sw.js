@@ -1,5 +1,7 @@
-const CACHE_NAME='telechat-shell-v101-background';
+const CACHE_NAME='telechat-shell-v102-profile-follow';
 const APP_SHELL=[
+  './profile-follow-compact-v102.css?v=102',
+  './profile-follow-compact-v102.js?v=102',
   './background-presence-v101.css?v=101',
   './background-presence-v101.js?v=101',
   './mobile-adaptation-v100.css?v=100',
