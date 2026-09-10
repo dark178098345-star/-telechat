@@ -35,6 +35,6 @@ for(const asset of [
   assert.ok(index.includes(asset),`index is missing ${asset}`);
   assert.ok(worker.includes(asset),`service worker is missing ${asset}`);
 }
-assert.match(worker,/telechat-shell-v98-soundcloud/);
+assert.match(worker,/telechat-shell-v99-music-add/);
 
 console.log('chat stability V78 smoke: ok');

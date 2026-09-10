@@ -28,6 +28,7 @@ function wav(){
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
  async function showApp(){await page.evaluate(()=>{document.querySelector('#startup-loader')?.remove();document.querySelector('#auth-screen').classList.remove('active');document.querySelector('#chat-screen').classList.add('active');document.body.classList.add('telechat-glass-v36');});}
  async function open(){await page.locator('.music-entry-v96').click();await page.waitForFunction(()=>document.querySelector('#music-status-v96').textContent==='');}
+ async function openLinkDetails(){if(!(await page.locator('.music-add-details-v98').evaluate(el=>el.open)))await page.locator('.music-add-details-v98>summary').click();if(!(await page.locator('.music-link-details-v96').evaluate(el=>el.open)))await page.locator('.music-link-details-v96>summary').click();}
  async function upload(name='Ночной город.wav'){await page.locator('#music-files-v96').setInputFiles({name,mimeType:'audio/wav',buffer:wav()});await page.waitForFunction(()=>!document.querySelector('.music-upload-v96').disabled);}
  await page.goto('https://telechat.test/');await showApp();await open();
  assert.equal(await page.locator('.music-track-v96').count(),0);
@@ -41,7 +42,7 @@ function wav(){
  await page.reload();await showApp();await open();assert.equal(await page.locator('.music-track-v96').count(),1);
  await page.locator('.music-track-play').click();await page.waitForFunction(()=>!testMusicAudio.paused);
  await page.evaluate(()=>document.body.classList.add('voice-call-full-v32'));await page.waitForFunction(()=>testMusicAudio.paused);await page.evaluate(()=>document.body.classList.remove('voice-call-full-v32'));
- await page.locator('.music-link-details-v96 summary').click();
+ await openLinkDetails();
  await page.locator('#music-url-v96').fill('https://audio.test/song.wav');await page.locator('#music-title-v96').fill('Трек по ссылке');await page.locator('#music-link-form-v96 button').click();
   await page.waitForFunction(()=>document.querySelectorAll('.music-track-v96').length===2);
  await page.locator('.music-track-v96').filter({hasText:'Трек по ссылке'}).locator('.music-track-more-v97').click();
@@ -57,7 +58,6 @@ function wav(){
  await page.locator('#music-url-v96').fill('https://audio.test/song.wav');await page.locator('#music-link-form-v96 button').click();await page.waitForFunction(()=>!document.querySelector('#music-link-form-v96 button').disabled);assert.match(await page.locator('#music-status-v96').textContent(),/уже есть/);
  await upload('<img src=x onerror=alert(1)>.wav');assert.equal(await page.locator('.music-track-v96 img').count(),0);
  await page.locator('#music-search-v96').fill('город');assert.equal(await page.locator('.music-track-v96').count(),1);await page.locator('#music-search-v96').fill('');
- await page.locator('.music-link-details-v96 summary').click();
  await page.locator('.music-track-v96 strong').first().evaluate(el=>el.textContent='Тихий вечер');
  await page.waitForTimeout(230);
  assert.equal(await page.locator('#music-dialog-v96').evaluate(el=>el.matches(':modal')),false);

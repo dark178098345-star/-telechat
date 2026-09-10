@@ -12,5 +12,13 @@
 #music-dialog-v96.has-soundcloud-v98 .music-record-v97{top:8px;width:36px;height:36px;border-width:2px}
 #music-dialog-v96.has-soundcloud-v98 .music-dialog-player{display:none}
 #music-dialog-v96.has-soundcloud-v98 #music-list-v96{flex-shrink:0;max-height:150px}
+.music-add-details-v98{flex-shrink:0;margin-top:8px;border:1px solid var(--music-line);border-radius:12px;background:rgba(255,255,255,.035);overflow:hidden}
+.music-add-details-v98>summary{display:flex;align-items:center;gap:8px;min-height:43px;padding:8px 11px;cursor:pointer;list-style:none;color:var(--text);font-size:12px;font-weight:650}
+.music-add-details-v98>summary::-webkit-details-marker{display:none}
+.music-add-details-v98>summary::before{content:'+';display:grid;place-items:center;width:23px;height:23px;border-radius:8px;background:rgba(171,146,255,.15);color:#cbbbf4;font-size:17px;font-weight:400;transition:transform .18s ease,background .18s ease}
+.music-add-details-v98[open]>summary::before{transform:rotate(45deg);background:rgba(171,146,255,.25)}
+.music-add-details-v98>summary small{margin-left:auto;color:#9e98b4;font-size:9px;font-weight:500}
+.music-add-details-v98>summary:hover{background:rgba(160,139,255,.07)}
+.music-add-details-v98 .music-add-v96{margin:0;border-top:1px solid var(--music-line);border-radius:0;background:rgba(255,255,255,.025)}
 .profile-music-copy-v97 .music-soundcloud-source-v98{margin-top:5px}
 .profile-music-copy-v97 .music-soundcloud-source-v98 img{width:90px;height:16px}

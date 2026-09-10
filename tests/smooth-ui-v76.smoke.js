@@ -31,7 +31,7 @@ assert.match(script,/removeAllChannels/);
 assert.match(script,/location\.reload\(\)/);
 assert.doesNotMatch(script,/deleteDatabase|indexedDB\.delete|saved-accounts-v75/);
 
-assert.match(worker,/telechat-shell-v98-soundcloud/);
+assert.match(worker,/telechat-shell-v99-music-add/);
 assert.match(worker,/smooth-ui-v76\.css\?v=76/);
 assert.match(worker,/smooth-ui-v76\.js\?v=91/);
 

@@ -50,7 +50,8 @@ const mock=`(() => {
   await page.locator('.music-entry-v96').click();await page.waitForFunction(()=>document.querySelector('#music-status-v96').textContent==='');
   assert.equal(remoteRequests,0,'Opening library must not contact SoundCloud');
   assert.equal(await page.locator('.music-soundcloud-support-v98 img').evaluate(el=>el.complete&&el.naturalWidth>0),true);
-  await page.locator('.music-link-details-v96 summary').click();
+  async function openLinkDetails(){if(!(await page.locator('.music-add-details-v98').evaluate(el=>el.open)))await page.locator('.music-add-details-v98>summary').click();if(!(await page.locator('.music-link-details-v96').evaluate(el=>el.open)))await page.locator('.music-link-details-v96>summary').click();}
+  await openLinkDetails();
   async function add(url){await page.locator('#music-url-v96').fill(url);await page.locator('#music-link-form-v96 button').click();await page.waitForFunction(()=>!document.querySelector('#music-link-form-v96 button').disabled,{},{timeout:40000});}
   await add(link+'?si=tracking&utm_source=clipboard');
   assert.equal(await page.locator('.music-track-v96').count(),1,await page.locator('#music-status-v96').textContent());
@@ -58,7 +59,7 @@ const mock=`(() => {
   assert.equal(await page.locator('#music-soundcloud-probe-v98 iframe').count(),0);
   if(live){
    console.log('LIVE PASS: SoundCloud accepted supplied track:',await page.locator('.music-track-copy strong').textContent());
-   await page.locator('.music-link-details-v96 summary').click();await page.locator('.music-track-play').click();
+    await page.locator('.music-track-play').click();
    await page.waitForFunction(()=>document.querySelector('.music-track-play').dataset.state==='pause',{},{timeout:35000});
    await page.waitForTimeout(600);
    await page.screenshot({path:path.join(root,'outputs/soundcloud-v98-live.png')});
@@ -69,7 +70,7 @@ const mock=`(() => {
   await add('https://soundcloud.com/artist/unavailable');assert.match(await page.locator('#music-status-v96').textContent(),/SoundCloud не разрешил/);
   assert.equal(await page.locator('.music-track-v96').count(),1);
   await add('https://soundcloud.com/artist/sets/album');assert.match(await page.locator('#music-status-v96').textContent(),/отдельный трек/);
-  await page.locator('.music-link-details-v96 summary').click();
+  await openLinkDetails();
   await page.locator('.music-track-play').click();await page.waitForFunction(()=>widgets.at(-1).plays===1);
   await page.waitForFunction(()=>document.querySelector('.music-track-play').dataset.state==='pause');
   await page.locator('.music-track-more-v97').click();await page.locator('.music-track-profile-v97').click();
