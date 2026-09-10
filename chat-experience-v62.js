@@ -277,10 +277,14 @@
 
   function animatePanelV62(panel) {
     if (!panel || reducedMotionV62) return;
+    // Mark the panel before the mutation observers run. The older fluid layer
+    // sees this marker and leaves the animation to this single owner instead
+    // of running a second filter/transform pass over the same cards.
+    panel.dataset.motionOwnerV62 = '1';
     const cards = [...panel.querySelectorAll('.panel-section,.profile-editor-card,.profile-choice-card,.profile-fields-card,.profile-preview-btn')];
     cards.forEach((card, index) => card.style.setProperty('--motion-order-v62', String(index)));
     panel.classList.remove('v62-motion-enter');void panel.offsetWidth;panel.classList.add('v62-motion-enter');
-    setTimeout(() => panel.classList.remove('v62-motion-enter'), 850);
+    setTimeout(() => { panel.classList.remove('v62-motion-enter'); delete panel.dataset.motionOwnerV62; }, 850);
   }
 
   function animateChatV62() {

@@ -42,7 +42,7 @@
   }
 
   function animatePanelV42(panel) {
-    if (reducedMotionV42 || !panel?.classList.contains('open')) return;
+    if (reducedMotionV42 || !panel?.classList.contains('open') || panel.dataset.motionOwnerV62 === '1') return;
     const cards = panel.querySelectorAll('.panel-section,.profile-editor-card,.profile-choice-card,.profile-fields-card');
     cards.forEach((card, index) => card.style.setProperty('--motion-order-v42', String(index)));
     panel.classList.remove('v42-panel-enter');
