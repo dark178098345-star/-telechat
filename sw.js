@@ -1,8 +1,11 @@
-const CACHE_NAME='telechat-shell-v97-music-card';
+const CACHE_NAME='telechat-shell-v98-soundcloud';
 const APP_SHELL=[
+  './soundcloud-v98.js?v=98',
+  './soundcloud-v98.css?v=98',
+  './branding/soundcloud-white.png',
   './music-card-v97.css?v=97',
-  './profile-music-v97.js?v=97',
-  './music-library-v96.js?v=97',
+  './profile-music-v97.js?v=98',
+  './music-library-v96.js?v=98',
   './music-library-v96.css?v=96',
   './appearance-mode-v95.js?v=95',
   './chat-foundation-v94.css?v=94',

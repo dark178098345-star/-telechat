@@ -9,6 +9,7 @@
     try {
       const url=new URL(value.url);
       if(url.protocol!=='https:'||url.username||url.password)return null;
+      if(window.telechatSoundCloudV98?.isLink(url.href))return {url:window.telechatSoundCloudV98.normalize(url.href),title:typeof value.title==='string'&&value.title.trim()?value.title.trim().slice(0,160):'Трек SoundCloud',duration:Number.isFinite(value.duration)&&value.duration>0?Math.min(value.duration,604800):0};
       if(/(^|\.)(youtube\.com|youtu\.be|spotify\.com|music\.apple\.com|music\.yandex\.(ru|com))$/i.test(url.hostname))return null;
       return {url:url.href,title:typeof value.title==='string'&&value.title.trim()?value.title.trim().slice(0,160):'Любимый трек',duration:Number.isFinite(value.duration)&&value.duration>0?Math.min(value.duration,604800):0};
     }catch(_){return null;}
@@ -82,6 +83,9 @@
     node.dataset.key=key;node.dataset.nick=user.nick;node.dataset.url=music.url;
     node.innerHTML='<button type="button" class="profile-music-play-v97"></button><div class="profile-music-copy-v97"><small>МУЗЫКА ПРОФИЛЯ</small><strong></strong></div>';
     node.querySelector('strong').textContent=music.title;
+    if(window.telechatSoundCloudV98?.isLink(music.url)){
+      const source=document.createElement('a');source.className='music-soundcloud-source-v98';source.href=music.url;source.target='_blank';source.rel='noopener noreferrer';source.innerHTML=window.telechatSoundCloudV98.brand;source.setAttribute('aria-label','Открыть трек на SoundCloud');node.querySelector('.profile-music-copy-v97').append(source);
+    }
     const button=node.querySelector('.profile-music-play-v97');syncButton(button,music.url);
     button.addEventListener('click',async()=>{
       if(!window.telechatMusicV96)return;

@@ -17,6 +17,17 @@
   const durationText = value => Number.isFinite(value) ? Math.floor(value / 60) + ':' + String(Math.floor(value % 60)).padStart(2,'0') : '—';
   let dbPromise, dialog, tracks = [], activeOwner = '', current = null, objectUrl = '', playToken = 0, busy = false;
   let opener = null, restoreFocusOnClose = false, positionFrame = 0, lastPlaybackState = '';
+  const soundcloud = window.telechatSoundCloudV98;
+  let cloudPlayer = null, cloudAbort = null, pendingAutoPlay = false;
+  const isCloud = track => !!soundcloud?.isLink(track?.url);
+  const player = () => isCloud(current) ? (cloudPlayer || {paused:true,currentTime:0,duration:current?.duration||0}) : audio;
+  const inCall = () => !!document.querySelector('#voice-call-overlay.show,#voice-call-mini.show') || document.body.classList.contains('voice-call-full-v32');
+  function pauseMusic() {pendingAutoPlay=false;audio.pause();cloudPlayer?.pause();}
+  function seekTo(seconds) {if(isCloud(current))cloudPlayer?.seek(seconds);else if(Number.isFinite(audio.duration))audio.currentTime=Math.max(0,Math.min(seconds,audio.duration));}
+  function ended() {const index=tracks.findIndex(t=>t.id===current?.id);if(index>=0&&index<tracks.length-1)play(tracks[index+1]);else updatePlayers();}
+  function cloudSource(url) {
+    const a=document.createElement('a');a.className='music-soundcloud-source-v98';a.href=url;a.target='_blank';a.rel='noopener noreferrer';a.setAttribute('aria-label','Открыть трек на SoundCloud');a.innerHTML=soundcloud.brand;return a;
+  }
 
   function database() {
     if (dbPromise) return dbPromise;
@@ -69,6 +80,8 @@
     if (!dialog?.open) window.showToast?.(text);
   }
   function stop() {
+    pendingAutoPlay=false;cloudAbort?.abort();cloudAbort=null;cloudPlayer?.destroy();cloudPlayer=null;
+    byId('music-soundcloud-widget-v98')?.replaceChildren();dialog?.classList.remove('has-soundcloud-v98');
     ++playToken; audio.pause(); audio.removeAttribute('src'); audio.load();
     if (objectUrl) URL.revokeObjectURL(objectUrl);
     objectUrl = ''; current = null; updatePlayers();
@@ -89,6 +102,8 @@
     let url;
     try { url = new URL(value.trim()); } catch (_) { throw new Error('Вставь полную HTTPS-ссылку на аудиофайл.'); }
     if (url.protocol !== 'https:' || url.username || url.password) throw new Error('Нужна HTTPS-ссылка без логина и пароля.');
+    if (soundcloud?.isLink(url.href)) return soundcloud.normalize(url.href);
+    if (url.hostname === 'on.soundcloud.com') throw new Error('Открой короткую ссылку и скопируй полный адрес трека с soundcloud.com.');
     if (/(^|\.)(youtube\.com|youtu\.be|spotify\.com|music\.apple\.com|music\.yandex\.(ru|com))$/i.test(url.hostname)) {
       throw new Error('Это страница музыкального сервиса. Нужна прямая ссылка на аудиофайл.');
     }
@@ -146,11 +161,17 @@
       if (tracks.some(t => t.url === url)) throw new Error('Эта ссылка уже есть в библиотеке.');
       if (tracks.length >= COUNT_LIMIT) throw new Error('В библиотеке уже 100 треков.');
       status('Проверяем аудио по ссылке…');
-      const seconds = await inspectAudio(url);
+      let seconds, cloudTitle='';
+      if(soundcloud?.isLink(url)) {
+        const host=byId('music-soundcloud-probe-v98');
+        status('Открываем официальный плеер SoundCloud…');position();
+        const probe=await soundcloud.create(url,host,{canPlay:()=>false});
+        seconds=probe.duration;cloudTitle=probe.title;probe.destroy();position();
+      } else seconds = await inspectAudio(url);
       if (owner() !== nick) throw new Error('Аккаунт изменился. Открой библиотеку заново.');
       let filename = new URL(url).pathname.split('/').pop() || 'Трек по ссылке';
       try {filename = decodeURIComponent(filename);} catch (_) {}
-      const title = byId('music-title-v96').value.trim() || filename.replace(/\.[^.]+$/,'');
+      const title = byId('music-title-v96').value.trim() || cloudTitle || filename.replace(/\.[^.]+$/,'');
       const track = {id:crypto.randomUUID(),owner:nick,title:title.slice(0,160),kind:'link',url,size:0,duration:seconds,added:Date.now()};
       await write(track);tracks.unshift(track);renderList();event.target.reset();
       status('Ссылка сохранена. Для прослушивания нужен интернет.');
@@ -158,7 +179,24 @@
   }
   async function play(track) {
     if (!track || owner() !== track.owner) return;
-    if (document.querySelector('#voice-call-overlay.show,#voice-call-mini.show')) {notify('Музыка на паузе во время звонка.');return;}
+    if (inCall()) {notify('Музыка на паузе во время звонка.');return;}
+    if(isCloud(track)) {
+      if(current?.id===track.id&&cloudPlayer){if(!cloudPlayer.paused)pauseMusic();else await cloudPlayer.play();return;}
+      stop();const token=playToken;current=track;pendingAutoPlay=true;cloudAbort=new AbortController();
+      ensureDialog();dialog.classList.add('has-soundcloud-v98');updatePlayers();position();
+      try {
+        cloudPlayer=await soundcloud.create(track.url,byId('music-soundcloud-widget-v98'),{
+          signal:cloudAbort.signal,canPlay:()=>token===playToken&&owner()===track.owner&&!inCall(),
+          onState:()=>{if(token!==playToken)return;audio.pause();updatePlayers();},onEnd:ended,onError:error=>notify(errorText(error))
+        });
+        if(token!==playToken||owner()!==track.owner){cloudPlayer?.destroy();cloudPlayer=null;return;}
+        current.duration=cloudPlayer.duration;
+        if('mediaSession' in navigator&&'MediaMetadata' in window)navigator.mediaSession.metadata=new MediaMetadata({title:track.title,artist:'SoundCloud · tele.chat'});
+        updatePlayers();position();
+        if(pendingAutoPlay&&!inCall())await cloudPlayer.play();
+      } catch(error){if(token===playToken&&error.name!=='AbortError'){stop();notify(errorText(error));}}
+      return;
+    }
     if (current?.id === track.id) {
       if (!audio.paused) {audio.pause();return;}
       try {await audio.play();} catch (_) {notify('Нажми ▶ ещё раз. Если трек недоступен, добавь его заново.');}
@@ -189,17 +227,19 @@
     play(tracks[(index + direction + tracks.length) % tracks.length]);
   }
   function updatePlayers() {
+    const media=player();
     if (dialog) {
       const title = dialog.querySelector('.music-now-title-v97'), hint = dialog.querySelector('.music-now-hint-v97');
       const text = current?.title || 'Включи любимый трек';
       if (title.textContent !== text) title.textContent = text;
-      hint.textContent = current ? `${audio.paused ? 'На паузе' : 'Сейчас играет'} · ${durationText(audio.currentTime||0)} / ${durationText(current.duration)}` : 'Твоя музыка — всегда рядом';
-      dialog.classList.toggle('music-is-playing-v97',!!current && !audio.paused);
+      hint.textContent = current ? `${media.paused ? 'На паузе' : 'Сейчас играет'} · ${durationText(media.currentTime||0)} / ${durationText(current.duration)}` : 'Твоя музыка — всегда рядом';
+      dialog.classList.toggle('music-is-playing-v97',!!current && !media.paused);
     }
-    const playbackState = JSON.stringify([current?.url,current?.id,audio.paused]);
+    const playbackState = JSON.stringify([current?.url,current?.id,media.paused]);
     if (playbackState !== lastPlaybackState) {
       lastPlaybackState = playbackState;
-      window.dispatchEvent(new CustomEvent('telechat-music-state-v97',{detail:{url:current?.url||'',playing:!!current&&!audio.paused}}));
+      window.dispatchEvent(new CustomEvent('telechat-music-state-v97',{detail:{url:current?.url||'',playing:!!current&&!media.paused}}));
+      if('mediaSession' in navigator)navigator.mediaSession.playbackState=current?(media.paused?'paused':'playing'):'none';
     }
     document.querySelectorAll('.music-player-v96').forEach(player => {
       player.hidden = !current;
@@ -207,23 +247,23 @@
       const title = player.querySelector('.music-player-title');
       if (title.textContent !== current.title) title.textContent = current.title;
       const button = player.querySelector('[data-music="toggle"]');
-      const state = audio.paused ? 'play' : 'pause';
+      const state = media.paused ? 'play' : 'pause';
       if (button.dataset.state !== state) {
         button.innerHTML = svg(state);button.dataset.state = state;
-        button.setAttribute('aria-label',audio.paused ? 'Воспроизвести' : 'Пауза');
+        button.setAttribute('aria-label',media.paused ? 'Воспроизвести' : 'Пауза');
       }
       const seek = player.querySelector('.music-seek');
-      seek.max = Number.isFinite(audio.duration) ? audio.duration : current.duration;
-      if (document.activeElement !== seek) seek.value = audio.currentTime || 0;
-      seek.style.setProperty('--music-progress',Math.min(100,Math.max(0,(audio.currentTime||0)/Number(seek.max)*100||0))+'%');
-      player.querySelector('.music-time').textContent = durationText(audio.currentTime || 0) + ' / ' + durationText(current.duration);
+      seek.max = Number.isFinite(media.duration) ? media.duration : current.duration;
+      if (document.activeElement !== seek) seek.value = media.currentTime || 0;
+      seek.style.setProperty('--music-progress',Math.min(100,Math.max(0,(media.currentTime||0)/Number(seek.max)*100||0))+'%');
+      player.querySelector('.music-time').textContent = durationText(media.currentTime || 0) + ' / ' + durationText(current.duration);
       player.querySelector('[data-music="previous"]').disabled = tracks.length < 2;
       player.querySelector('[data-music="next"]').disabled = tracks.length < 2;
     });
     dialog?.querySelectorAll('.music-track-v96').forEach(row => {
       const selected = row.dataset.id === current?.id;
       row.classList.toggle('is-current',selected);
-      const button = row.querySelector('.music-track-play'), state = selected && !audio.paused ? 'pause' : 'play';
+      const button = row.querySelector('.music-track-play'), state = selected && !media.paused ? 'pause' : 'play';
       if (button.dataset.state !== state) {
         button.innerHTML = svg(state);button.dataset.state = state;
         button.setAttribute('aria-label',(state === 'pause' ? 'Пауза: ' : 'Слушать: ') + row.querySelector('strong').textContent);
@@ -245,6 +285,7 @@
       row.innerHTML = `<button type="button" class="music-track-play">${svg('play')}</button><div class="music-track-copy"><strong></strong><small></small></div><span class="music-track-duration"></span><button type="button" class="music-track-more-v97" aria-label="Действия с треком" aria-expanded="false">⋯</button><div class="music-track-actions-v97" hidden><button type="button" class="music-track-profile-v97">В профиль</button><button type="button" class="music-track-remove" aria-label="Удалить трек">${svg('trash')}<span>Удалить</span></button></div>`;
       row.querySelector('strong').textContent = track.title;
       row.querySelector('small').textContent = track.kind === 'file' ? 'На устройстве · без интернета' : 'По ссылке · нужен интернет';
+      if(isCloud(track)){row.querySelector('small').textContent='SoundCloud · онлайн';row.querySelector('.music-track-copy').append(cloudSource(track.url));}
       row.querySelector('.music-track-duration').textContent = durationText(track.duration);
       row.querySelector('.music-track-play').addEventListener('click',() => play(track));
       const menu = row.querySelector('.music-track-actions-v97'), more = row.querySelector('.music-track-more-v97');
@@ -295,7 +336,7 @@
       if (action === 'previous') step(-1);
       if (action === 'next') step(1);
     });
-    node.querySelector('.music-seek').addEventListener('input',event => {if (Number.isFinite(audio.duration)) audio.currentTime = Number(event.target.value);});
+    node.querySelector('.music-seek').addEventListener('input',event => seekTo(Number(event.target.value)));
     return node;
   }
   function ensureDialog() {
@@ -303,6 +344,16 @@
     dialog = document.createElement('dialog');dialog.id = 'music-dialog-v96';dialog.setAttribute('aria-labelledby','music-heading-v96');
     dialog.innerHTML = `<div class="music-cover-v97"><div class="music-cover-wave-v97" aria-hidden="true"></div><h2 id="music-heading-v96">Моя музыка</h2><button type="button" class="music-close-v96" aria-label="Закрыть музыку">${svg('close')}</button></div><div class="music-body-v96"><div class="music-now-v97"><div class="music-record-v97" aria-hidden="true"><span>♪</span></div><span class="music-now-label-v97">ТВОЯ ВОЛНА</span><h3 class="music-now-title-v97">Включи любимый трек</h3><p class="music-now-hint-v97">Твоя музыка — всегда рядом</p></div><div class="music-library-head-v96"><h3>Мои треки</h3><span id="music-count-v96"></span></div><input type="search" id="music-search-v96" placeholder="Найти трек" aria-label="Найти трек"><div id="music-list-v96"></div><div class="music-add-v96"><button type="button" class="music-upload-v96" data-music-add>${svg('upload')}<span>Загрузить треки<small>До 50 МБ на файл</small></span><b aria-hidden="true">›</b></button><input type="file" id="music-files-v96" accept="audio/*,.mp3,.m4a,.wav,.ogg,.opus,.flac" multiple hidden><details class="music-link-details-v96"><summary>Добавить по ссылке</summary><form id="music-link-form-v96"><label>Прямая HTTPS-ссылка на аудио<input type="url" id="music-url-v96" placeholder="https://example.com/track.mp3" required maxlength="4096"></label><label>Название · необязательно<input id="music-title-v96" placeholder="Как назвать трек" maxlength="160"></label><button type="submit" data-music-add>Сохранить ссылку</button></form></details></div><div id="music-status-v96" role="status" aria-live="polite"></div><details class="music-storage-v97"><summary>Хранится на этом устройстве</summary><p class="music-storage-note-v96">Файлы доступны без интернета, ссылки — онлайн. До 100 треков и 250 МБ. Очистка данных сайта удалит библиотеку. В профиль можно добавить трек по прямой ссылке.</p></details></div>`;
     document.body.append(dialog);dialog.querySelector('.music-now-v97').append(makePlayer('music-dialog-player'));
+    if(soundcloud){
+      const support=document.createElement('a');support.className='music-soundcloud-support-v98';support.href='https://soundcloud.com';support.target='_blank';support.rel='noopener noreferrer';
+      support.innerHTML=soundcloud.brand+'<span><strong>Поддерживается</strong>Добавляй ссылки на треки</span>';
+      dialog.querySelector('.music-add-v96').prepend(support);
+      const label=byId('music-url-v96').parentElement;label.firstChild.textContent='Ссылка SoundCloud или прямая ссылка на аудио';
+      byId('music-url-v96').placeholder='https://soundcloud.com/artist/track';
+      const host=document.createElement('div');host.id='music-soundcloud-widget-v98';host.className='music-soundcloud-widget-v98';dialog.querySelector('.music-now-v97').after(host);
+      const probe=document.createElement('div');probe.id='music-soundcloud-probe-v98';probe.className='music-soundcloud-probe-v98';byId('music-link-form-v96').append(probe);
+      dialog.querySelector('.music-storage-note-v96').textContent='Файлы доступны без интернета, ссылки и SoundCloud — онлайн. До 100 треков и 250 МБ файлов. Очистка данных сайта удалит библиотеку. Треки по ссылке можно добавить в профиль. SoundCloud может ограничивать доступ к отдельным трекам.';
+    }
     dialog.querySelector('.music-close-v96').addEventListener('click',() => close(true));
     dialog.addEventListener('close',() => {
       if(dialog.open)return;
@@ -366,22 +417,16 @@
   document.querySelector('.sidebar-footer')?.before(makePlayer('music-sidebar-player'));
   document.querySelector('.chat-main')?.prepend(makePlayer('music-chat-player'));
   for (const name of ['play','pause','timeupdate','loadedmetadata','durationchange']) audio.addEventListener(name,updatePlayers);
-  audio.addEventListener('loadedmetadata',()=>{if(current&&Number.isFinite(audio.duration)){current.duration=audio.duration;updatePlayers();}});
+  audio.addEventListener('loadedmetadata',()=>{if(current&&!isCloud(current)&&Number.isFinite(audio.duration)){current.duration=audio.duration;updatePlayers();}});
   if ('mediaSession' in navigator) {
-    for (const [action,handler] of Object.entries({play:()=>current&&audio.paused&&play(current),pause:()=>audio.pause(),previoustrack:()=>step(-1),nexttrack:()=>step(1),seekto:event=>{if(Number.isFinite(audio.duration))audio.currentTime=Math.max(0,Math.min(event.seekTime,audio.duration));}})) {
+    for (const [action,handler] of Object.entries({play:()=>current&&player().paused&&play(current),pause:pauseMusic,previoustrack:()=>step(-1),nexttrack:()=>step(1),seekto:event=>seekTo(event.seekTime)})) {
       try {navigator.mediaSession.setActionHandler(action,handler);} catch (_) {}
     }
-    audio.addEventListener('play',()=>navigator.mediaSession.playbackState='playing');
-    audio.addEventListener('pause',()=>navigator.mediaSession.playbackState=current?'paused':'none');
   }
-  audio.addEventListener('ended',() => {
-    const index = tracks.findIndex(t => t.id === current?.id);
-    if (index >= 0 && index < tracks.length-1) play(tracks[index+1]);
-    else updatePlayers();
-  });
-  audio.addEventListener('error',() => {if(current) notify('Трек сейчас недоступен. Проверь интернет или добавь файл заново.');});
+  audio.addEventListener('ended',ended);
+  audio.addEventListener('error',() => {if(current&&!isCloud(current)) notify('Трек сейчас недоступен. Проверь интернет или добавь файл заново.');});
   // A voice message or a call should never compete with music.
-  document.addEventListener('play',event => {if (event.target !== audio && event.target instanceof HTMLMediaElement && !event.target.muted && event.target.volume > 0) audio.pause();},true);
-  new MutationObserver(() => {if(document.body.classList.contains('voice-call-full-v32')) audio.pause();}).observe(document.body,{attributes:true,attributeFilter:['class']});
+  document.addEventListener('play',event => {if (event.target !== audio && event.target instanceof HTMLMediaElement && !event.target.muted && event.target.volume > 0) pauseMusic();},true);
+  new MutationObserver(() => {if(inCall()) pauseMusic();}).observe(document.body,{attributes:true,attributeFilter:['class']});
   window.addEventListener('pagehide',stop);
 })();
