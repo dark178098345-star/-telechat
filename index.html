@@ -119,6 +119,13 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
 .contact-name{font-size:13px;font-weight:700;color:var(--text);}
 .contact-last{font-size:12px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;}
 .contact-time{font-size:11px;color:var(--text3);flex-shrink:0;}
+.contact-more{width:28px;height:28px;border:0;border-radius:9px;background:transparent;color:var(--text3);font:700 18px/1 inherit;letter-spacing:1px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .2s ease,color .2s ease,transform .2s ease;}
+.contact-more:hover,.contact-more:focus-visible{background:rgba(124,110,247,.16);color:var(--accent3);outline:none;}
+.contact-more:active{transform:scale(.92);}
+.contact-menu{position:fixed;z-index:120;min-width:178px;padding:6px;border:1px solid rgba(167,139,250,.2);border-radius:14px;background:color-mix(in srgb,var(--bg2) 94%,transparent);box-shadow:0 18px 42px rgba(0,0,0,.42);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);display:none;}
+.contact-menu.show{display:block;animation:softFadeIn .16s ease both;}
+.contact-menu button{width:100%;border:0;border-radius:9px;padding:9px 10px;background:transparent;color:var(--text2);font:600 12px/1.2 inherit;text-align:left;cursor:pointer;}
+.contact-menu button:hover,.contact-menu button:focus-visible{background:rgba(124,110,247,.14);color:var(--text);outline:none;}
 .sidebar-footer{border-top:1px solid var(--border);padding:8px 12px;display:flex;gap:6px;flex-shrink:0;padding-bottom:calc(8px + var(--safe-bottom));background:rgba(13,13,22,.22);}
 .footer-btn{flex:1;background:none;border:none;color:var(--text3);cursor:pointer;padding:8px;border-radius:10px;font-size:20px;font-family:inherit;transition:transform .22s ease,background .22s ease,color .22s ease;}
 .footer-btn:active{background:var(--bg3);color:var(--accent3);}
@@ -603,6 +610,7 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
   <div class="ctx-sep"></div>
   <div class="ctx-item danger" id="ctx-delete-btn" onclick="ctxDelete()">🗑️ Удалить у всех</div>
 </div>
+<div class="contact-menu" id="contact-menu" role="menu" aria-label="Действия чата"></div>
 
 <!-- POLL MODAL -->
 <div class="modal-overlay" id="poll-modal">
@@ -1370,7 +1378,30 @@ async function doSearch(){
 document.addEventListener('click',e=>{
   if(!e.target.closest('.search-wrap'))document.getElementById('search-results').style.display='none';
   if(!e.target.closest('.ctx-menu')&&!e.target.closest('.msg'))document.getElementById('ctx-menu').classList.remove('show');
+  if(!e.target.closest('.contact-menu')&&!e.target.closest('.contact-more'))document.getElementById('contact-menu')?.classList.remove('show');
 });
+
+let contactMenuTargetV111=null;
+function pinnedContactsV111(){try{return JSON.parse(localStorage.getItem('telechat-pinned-chats-v111')||'[]');}catch(_){return [];}}
+function contactKeyV111(kind,key){return kind+':'+String(key||'');}
+function isPinnedContactV111(kind,key){return pinnedContactsV111().includes(contactKeyV111(kind,key));}
+function openContactMenuV111(event,kind,key){
+  event.preventDefault();event.stopPropagation();contactMenuTargetV111={kind,key};
+  const menu=document.getElementById('contact-menu');if(!menu)return;
+  const pinned=isPinnedContactV111(kind,key);
+  menu.innerHTML=`<button type="button" onclick="togglePinnedContactV111()">${pinned?'📍 Открепить':'📌 Закрепить'}</button><button type="button" onclick="openContactProfileV111()">👤 Открыть профиль</button><button type="button" onclick="closeContactMenuV111()">✕ Закрыть</button>`;
+  const rect=event.currentTarget.getBoundingClientRect(),gap=8;
+  menu.classList.add('show');
+  menu.style.left=Math.max(8,Math.min(window.innerWidth-menu.offsetWidth-8,rect.right-menu.offsetWidth))+'px';
+  menu.style.top=Math.max(8,Math.min(window.innerHeight-menu.offsetHeight-8,rect.bottom+gap))+'px';
+}
+function closeContactMenuV111(){document.getElementById('contact-menu')?.classList.remove('show');contactMenuTargetV111=null;}
+function togglePinnedContactV111(){
+  const target=contactMenuTargetV111;if(!target)return;const key=contactKeyV111(target.kind,target.key),items=pinnedContactsV111(),index=items.indexOf(key);
+  if(index>=0)items.splice(index,1);else items.unshift(key);
+  localStorage.setItem('telechat-pinned-chats-v111',JSON.stringify(items));closeContactMenuV111();renderContacts();showToast(index>=0?'Чат откреплён':'Чат закреплён 📌');
+}
+function openContactProfileV111(){const target=contactMenuTargetV111;closeContactMenuV111();if(target?.kind==='chat')openUserProfile(target.key);}
 
 async function openChat(nick){
   currentChat=nick;
@@ -1960,13 +1991,14 @@ renderContacts=async function(){
   const allMsgs=msgs||[],roomLast={};
   for(const m of allMsgs){if(m.chat_key&&m.chat_key.startsWith('room_')&&!roomLast[m.chat_key])roomLast[m.chat_key]=m;}
   list.innerHTML='';let rendered=0;
-  const visibleRooms=roomRows.filter(room=>sidebarFilter==='all'||room.type===sidebarFilter);
+  const visibleRooms=roomRows.filter(room=>sidebarFilter==='all'||room.type===sidebarFilter).sort((a,b)=>Number(isPinnedContactV111('room',b.id))-Number(isPinnedContactV111('room',a.id)));
   if(visibleRooms.length){
     const title=document.createElement('div');title.className='list-section-title';title.textContent=sidebarFilter==='channel'?'Каналы':sidebarFilter==='group'?'Группы':'Пространства';list.appendChild(title);
     for(const room of visibleRooms){
       const last=roomLast['room_'+room.id];
       const el=document.createElement('div');el.className='contact'+(currentRoom&&String(currentRoom.id)===String(room.id)?' active':'');
       el.innerHTML='<div class="room-avatar">'+escHtml(room.icon||'🌌')+'</div><div class="contact-info"><div class="contact-name">'+escHtml(room.name)+'<span class="room-type-badge">'+(room.type==='channel'?'канал':'группа')+'</span>'+roomVisibilityBadge(room)+(room.owner_nick===me.nick?'<span class="room-owner-star">★</span>':'')+'</div><div class="contact-last">'+(last?escHtml(messagePreviewText(last.text).substring(0,38)):escHtml(room.description||'Пока без сообщений'))+'</div></div><div class="contact-time">'+(last?formatMsgTime(last.ts):'')+'</div>';
+      const more=document.createElement('button');more.type='button';more.className='contact-more';more.textContent='•••';more.title='Действия чата';more.setAttribute('aria-label','Действия чата');more.onclick=event=>openContactMenuV111(event,'room',room.id);el.appendChild(more);
       el.onclick=()=>openRoom(room);list.appendChild(el);rendered++;
     }
   }
@@ -1979,10 +2011,12 @@ renderContacts=async function(){
       if(other&&!seen.has(other)){seen.add(other);chats.push({nick:other,last:m.text,ts:m.ts});}
     }
     if(chats.length){const title=document.createElement('div');title.className='list-section-title';title.textContent='Личные чаты';list.appendChild(title);}
+    chats.sort((a,b)=>Number(isPinnedContactV111('chat',b.nick))-Number(isPinnedContactV111('chat',a.nick)));
     for(const c of chats){
       const u=await getUser(c.nick);if(!u)continue;
       const online=isOnline(u.last_seen),el=document.createElement('div');el.className='contact'+(currentChat===c.nick&&!currentRoom?' active':'');el.dataset.contactNick=c.nick;
       el.innerHTML=`<div class="av${online?' av-online':''}">${avatarMarkup(u)}</div><div class="contact-info"><div class="contact-name">${escHtml(u.name)}</div><div class="contact-last">${escHtml(messagePreviewText(c.last).substring(0,38))}</div></div><div class="contact-time">${formatMsgTime(c.ts)}</div>`;
+      const more=document.createElement('button');more.type='button';more.className='contact-more';more.textContent='•••';more.title='Действия чата';more.setAttribute('aria-label','Действия чата');more.onclick=event=>openContactMenuV111(event,'chat',c.nick);el.appendChild(more);
       el.onclick=()=>openChat(c.nick);list.appendChild(el);rendered++;
     }
   }
