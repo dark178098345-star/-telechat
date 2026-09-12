@@ -9,9 +9,10 @@
   const MAX_VIDEO_SECONDS = 60;
   const state = {
     stories: [], users: new Map(), viewed: new Set(), available: true,
+    likes: new Map(), liked: new Set(),
     viewerItems: [], viewerIndex: 0, viewerViews: new Map(),
     selectedFile: null, selectedPreviewUrl: '', loading: false, initialized: false,
-    realtime: null, refreshTimer: null, viewsRequest: 0
+    realtime: null, refreshTimer: null, viewsRequest: 0, likesRequest: 0
   };
 
   const byId = id => document.getElementById(id);
@@ -64,13 +65,14 @@
     if (!byId('story-viewer-v115')) {
       const overlay = document.createElement('div');
       overlay.id = 'story-viewer-v115'; overlay.className = 'story-overlay-v115'; overlay.setAttribute('role', 'dialog'); overlay.setAttribute('aria-modal', 'true');
-      overlay.innerHTML = '<section class="story-card-v115"><header class="story-head-v115"><div class="story-head-avatar-v115" id="story-head-avatar-v115"></div><div class="story-head-copy-v115"><div class="story-head-name-v115" id="story-head-name-v115"></div><div class="story-head-time-v115" id="story-head-time-v115"></div></div><button class="story-close-v115" id="story-viewer-close-v115" type="button" aria-label="Закрыть">×</button></header><div class="story-progress-v115" id="story-progress-v115"></div><div class="story-stage-v115" id="story-stage-v115"><button class="story-nav-v115 story-nav-prev-v115" id="story-prev-v115" type="button" aria-label="Предыдущая">‹</button><button class="story-nav-v115 story-nav-next-v115" id="story-next-v115" type="button" aria-label="Следующая">›</button></div><div class="story-caption-v115" id="story-caption-v115"></div><div class="story-foot-v115"><button class="story-action-btn-v115 story-add-more-v115" id="story-add-more-v115" type="button" hidden>＋ Добавить ещё</button><span class="story-foot-spacer-v115"></span><button class="story-views-btn-v115" id="story-views-btn-v115" type="button" hidden></button><button class="story-action-btn-v115 story-delete-btn-v115" id="story-delete-v115" type="button" hidden>🗑 Удалить</button></div><div class="story-viewers-v115" id="story-viewers-v115"></div></section>';
+      overlay.innerHTML = '<section class="story-card-v115"><header class="story-head-v115"><div class="story-head-avatar-v115" id="story-head-avatar-v115"></div><div class="story-head-copy-v115"><div class="story-head-name-v115" id="story-head-name-v115"></div><div class="story-head-time-v115" id="story-head-time-v115"></div></div><button class="story-close-v115" id="story-viewer-close-v115" type="button" aria-label="Закрыть">×</button></header><div class="story-progress-v115" id="story-progress-v115"></div><div class="story-stage-v115" id="story-stage-v115"><button class="story-nav-v115 story-nav-prev-v115" id="story-prev-v115" type="button" aria-label="Предыдущая">‹</button><button class="story-nav-v115 story-nav-next-v115" id="story-next-v115" type="button" aria-label="Следующая">›</button></div><div class="story-caption-v115" id="story-caption-v115"></div><div class="story-foot-v115"><div class="story-like-wrap-v116"><button class="story-like-btn-v116" id="story-like-v116" type="button" aria-label="Поставить лайк" aria-pressed="false">♡</button><span class="story-like-count-v116" id="story-like-count-v116">0</span></div><button class="story-action-btn-v115 story-add-more-v115" id="story-add-more-v115" type="button" hidden>＋ Добавить ещё</button><span class="story-foot-spacer-v115"></span><button class="story-views-btn-v115" id="story-views-btn-v115" type="button" hidden></button><button class="story-action-btn-v115 story-delete-btn-v115" id="story-delete-v115" type="button" hidden>🗑 Удалить</button></div><div class="story-viewers-v115" id="story-viewers-v115"></div></section>';
       overlay.addEventListener('click', event => { if (event.target === overlay) closeViewer(); });
       document.body.appendChild(overlay);
       byId('story-viewer-close-v115').onclick = closeViewer;
       byId('story-prev-v115').onclick = () => showStory(state.viewerIndex - 1);
       byId('story-next-v115').onclick = () => showStory(state.viewerIndex + 1);
       byId('story-views-btn-v115').onclick = toggleViewers;
+      byId('story-like-v116').onclick = toggleStoryLike;
       byId('story-add-more-v115').onclick = () => { closeViewer(); openComposer(); };
       byId('story-delete-v115').onclick = deleteCurrentStory;
     }
@@ -126,7 +128,22 @@
       const views = await sb.from('story_views').select('story_id').eq('viewer_nick', user.nick).in('story_id', ids);
       (views.data || []).forEach(item => state.viewed.add(String(item.story_id)));
     }
+    await loadStoryLikes(ids, user);
     renderStories();
+  }
+
+  async function loadStoryLikes(ids, user = currentUser()) {
+    state.likes = new Map(); state.liked = new Set();
+    ids.forEach(id => state.likes.set(String(id), 0));
+    if (!ids.length || !user) return;
+    const request = ++state.likesRequest;
+    const result = await sb.from('story_likes').select('story_id,liker_nick').in('story_id', ids);
+    if (request !== state.likesRequest || result.error) return;
+    (result.data || []).forEach(row => {
+      const key = String(row.story_id);
+      state.likes.set(key, (state.likes.get(key) || 0) + 1);
+      if (safeNick(row.liker_nick) === safeNick(user.nick)) state.liked.add(key);
+    });
   }
 
   function openComposer() {
@@ -178,10 +195,34 @@
     const story = state.viewerItems[state.viewerIndex], user = storyUser(story.author_nick); renderAvatar(byId('story-head-avatar-v115'), user); byId('story-head-name-v115').textContent = user.name || story.author_nick; byId('story-head-time-v115').textContent = formatStoryTime(story.created_at) + ' · ' + formatRemaining(story.expires_at); byId('story-caption-v115').textContent = story.caption || '';
     const progress = byId('story-progress-v115'); progress.replaceChildren(); state.viewerItems.forEach((_, i) => { const bar = document.createElement('span'); if (i === state.viewerIndex) bar.className = 'active-v115'; progress.appendChild(bar); });
     byId('story-prev-v115').hidden = state.viewerIndex === 0; byId('story-next-v115').hidden = state.viewerIndex === state.viewerItems.length - 1;
-    const stage = byId('story-stage-v115'); stage.querySelectorAll('img,video').forEach(node => node.remove()); const media = document.createElement(story.media_type === 'video' ? 'video' : 'img'); media.src = story.media_url; media.alt = 'История ' + (user.name || story.author_nick); if (media.tagName === 'VIDEO') { media.controls = true; media.playsInline = true; media.autoplay = true; media.addEventListener('error', () => showToast?.('Видео истории недоступно')); } stage.insertBefore(media, byId('story-prev-v115'));
-    const own = safeNick(story.author_nick) === safeNick(currentUser()?.nick); const viewButton = byId('story-views-btn-v115'); viewButton.hidden = !own; byId('story-add-more-v115').hidden = !own; byId('story-delete-v115').hidden = !own; byId('story-viewers-v115').classList.remove('open-v115');
+    const stage = byId('story-stage-v115'); stage.querySelectorAll('img,video,.story-backdrop-v116').forEach(node => node.remove()); stage.classList.toggle('video-v116', story.media_type === 'video'); const backdrop = document.createElement('div'); backdrop.className = 'story-backdrop-v116'; backdrop.style.backgroundImage = 'url(' + JSON.stringify(story.media_url) + ')'; stage.insertBefore(backdrop, byId('story-prev-v115')); const media = document.createElement(story.media_type === 'video' ? 'video' : 'img'); media.src = story.media_url; media.alt = 'История ' + (user.name || story.author_nick); if (media.tagName === 'VIDEO') { media.controls = true; media.playsInline = true; media.autoplay = true; media.addEventListener('error', () => showToast?.('Видео истории недоступно')); } stage.insertBefore(media, byId('story-prev-v115'));
+    const own = safeNick(story.author_nick) === safeNick(currentUser()?.nick); const viewButton = byId('story-views-btn-v115'); viewButton.hidden = !own; byId('story-add-more-v115').hidden = !own; byId('story-delete-v115').hidden = !own; byId('story-viewers-v115').classList.remove('open-v115'); renderLikeControl(story);
     if (own) { const views = await loadViewers(story.id); viewButton.textContent = '👁 ' + views.length + ' просмотров'; }
     else markStoryViewed(story);
+  }
+  function renderLikeControl(story) {
+    const button = byId('story-like-v116'), count = byId('story-like-count-v116'); if (!button || !story) return;
+    const key = String(story.id), active = state.liked.has(key), total = state.likes.get(key) || 0;
+    button.textContent = active ? '♥' : '♡'; button.classList.toggle('liked-v116', active); button.setAttribute('aria-pressed', String(active)); button.setAttribute('aria-label', active ? 'Убрать лайк' : 'Поставить лайк');
+    if (count) count.textContent = String(total);
+  }
+  async function toggleStoryLike() {
+    const story = state.viewerItems[state.viewerIndex], user = currentUser(), button = byId('story-like-v116'); if (!story || !user || !button || button.disabled) return;
+    const key = String(story.id), wasLiked = state.liked.has(key), previousCount = state.likes.get(key) || 0;
+    if (wasLiked) { state.liked.delete(key); state.likes.set(key, Math.max(0, previousCount - 1)); }
+    else { state.liked.add(key); state.likes.set(key, previousCount + 1); }
+    renderLikeControl(story); button.disabled = true;
+    const result = wasLiked
+      ? await sb.from('story_likes').delete().eq('story_id', story.id).eq('liker_nick', user.nick)
+      : await sb.from('story_likes').insert({ story_id: story.id, liker_nick: user.nick });
+    button.disabled = false;
+    if (result.error) {
+      if (wasLiked) state.liked.add(key); else state.liked.delete(key);
+      state.likes.set(key, previousCount); renderLikeControl(story);
+      showToast?.(/42P01|PGRST204|story_likes|relation/i.test(String(result.error.code || '') + ' ' + String(result.error.message || '')) ? 'Лайки ещё не включены на сервере' : 'Не удалось сохранить лайк');
+      return;
+    }
+    showToast?.(wasLiked ? 'Лайк убран' : 'Истории поставлен лайк ❤️');
   }
   function closeViewer() { byId('story-viewer-v115')?.classList.remove('open-v115'); byId('story-stage-v115')?.querySelectorAll('video').forEach(video => { video.pause(); video.removeAttribute('src'); }); }
   function storagePathFromStoryUrl(value) {
@@ -214,7 +255,7 @@
     rows.forEach(row => { const item = document.createElement('div'); item.className = 'story-viewer-row-v115'; const av = document.createElement('div'); av.className = 'av'; renderAvatar(av, row.user); const copy = document.createElement('div'); copy.className = 'story-viewer-copy-v115'; const name = document.createElement('div'); name.className = 'story-viewer-name-v115'; name.textContent = row.user.name || row.viewer_nick; const time = document.createElement('div'); time.className = 'story-viewer-time-v115'; time.textContent = formatStoryTime(row.viewed_at); copy.append(name, time); item.append(av, copy); box.appendChild(item); }); box.classList.add('open-v115');
   }
 
-  function subscribe() { if (state.realtime || !currentUser()) return; state.realtime = sb.channel('stories-v115-' + currentUser().nick).on('postgres_changes', { event: '*', schema: 'public', table: 'stories' }, () => loadStories(true)).subscribe(); state.refreshTimer = setInterval(() => loadStories(true), 60000); }
+  function subscribe() { if (state.realtime || !currentUser()) return; state.realtime = sb.channel('stories-v115-' + currentUser().nick).on('postgres_changes', { event: '*', schema: 'public', table: 'stories' }, () => loadStories(true)).on('postgres_changes', { event: '*', schema: 'public', table: 'story_likes' }, () => loadStories(true)).subscribe(); state.refreshTimer = setInterval(() => loadStories(true), 60000); }
   function init() { ensureUi(); if (!currentUser()) return; state.initialized = true; loadStories(false); subscribe(); }
   const previousLogin = window.doLogin;
   if (typeof previousLogin === 'function' && !previousLogin.storiesWrappedV115) { const wrapped = async function (...args) { const result = await previousLogin.apply(this, args); if (currentUser()) init(); return result; }; wrapped.storiesWrappedV115 = true; window.doLogin = wrapped; }
