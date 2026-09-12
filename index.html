@@ -835,6 +835,8 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
       <input class="field-input" id="room-add-member-input" placeholder="ник" style="margin:0;min-width:0" autocomplete="off" autocapitalize="none">
       <button class="modal-btn primary" onclick="addRoomMember()" style="flex:0 0 auto;padding:0 14px">Пригласить</button>
     </div>
+    <button type="button" class="modal-btn primary" id="room-add-all-creator" style="display:none;width:100%;margin-top:10px" onclick="addAllAccountsToChannel()">Добавить все аккаунты</button>
+    <div id="room-add-all-result" role="status" style="font-size:12px;margin-top:8px;color:var(--text2)"></div>
   </div>
   <div class="panel-section">
     <div class="panel-section-title">Участники</div>
@@ -868,8 +870,6 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
       <div class="setting-copy"><div class="setting-label">Спокойный режим</div><div class="setting-note" id="calm-mode-note-v95">Мягкие сплошные панели и приглушённый фон. Выключи, чтобы вернуться к привычному стеклянному оформлению.</div></div>
       <label class="setting-switch" title="Спокойный режим"><input class="telechat-switch-v36" type="checkbox" id="calm-mode-v95" aria-label="Спокойный режим" aria-describedby="calm-mode-note-v95"></label>
     </div>
-    <button type="button" class="modal-btn primary" id="room-add-all-creator" style="display:none;width:100%;margin-top:10px" onclick="addAllAccountsToChannel()">Добавить все аккаунты</button>
-    <div id="room-add-all-result" role="status" style="font-size:12px;margin-top:8px;color:var(--text2)"></div>
   </div>
   <div class="panel-section">
     <div class="panel-section-title">Шрифт</div>
