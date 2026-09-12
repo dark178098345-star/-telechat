@@ -868,6 +868,8 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
       <div class="setting-copy"><div class="setting-label">Спокойный режим</div><div class="setting-note" id="calm-mode-note-v95">Мягкие сплошные панели и приглушённый фон. Выключи, чтобы вернуться к привычному стеклянному оформлению.</div></div>
       <label class="setting-switch" title="Спокойный режим"><input class="telechat-switch-v36" type="checkbox" id="calm-mode-v95" aria-label="Спокойный режим" aria-describedby="calm-mode-note-v95"></label>
     </div>
+    <button type="button" class="modal-btn primary" id="room-add-all-creator" style="display:none;width:100%;margin-top:10px" onclick="addAllAccountsToChannel()">Добавить все аккаунты</button>
+    <div id="room-add-all-result" role="status" style="font-size:12px;margin-top:8px;color:var(--text2)"></div>
   </div>
   <div class="panel-section">
     <div class="panel-section-title">Шрифт</div>
@@ -2199,7 +2201,46 @@ async function createRoom(){
   const accessLabel=selectedRoomVisibility==='public'?'общая 🌍':'приватная 🔒';showToast((selectedRoomType==='channel'?'Канал создан 📢':'Группа создана 👥')+' · '+accessLabel);
 }
 async function openRoomPanel(){if(!currentRoom)return;await renderRoomPanel();openPanel('room-panel');}
+let bulkAddingAccountsV114=false;
+async function addAllAccountsToChannel(){
+  if(bulkAddingAccountsV114||me?.nick!=='creator'||currentRoom?.owner_nick!=='creator'||currentRoom?.type!=='channel')return;
+  const roomId=currentRoom.id,button=document.getElementById('room-add-all-creator'),status=document.getElementById('room-add-all-result');
+  if(!confirm('Добавить все зарегистрированные аккаунты в канал «'+currentRoom.name+'»?'))return;
+  bulkAddingAccountsV114=true;button.disabled=true;let added=0;
+  const allowed=()=>me?.nick==='creator';
+  const show=text=>{if(String(currentRoom?.id)===String(roomId))status.textContent=text;};
+  try{
+    const check=await sb.from('rooms').select('id,type,owner_nick').eq('id',roomId).single();
+    if(check.error||check.data?.owner_nick!=='creator'||check.data?.type!=='channel')throw new Error('Нет доступа к каналу');
+    let after='';
+    while(allowed()){
+      show('Добавление участников… '+added);
+      let query=sb.from('users').select('nick').order('nick',{ascending:true}).limit(200);
+      if(after)query=query.gt('nick',after);
+      const users=await query;if(users.error)throw users.error;
+      if(!users.data?.length)break;
+      const nicks=users.data.map(user=>user.nick);
+      const existing=await sb.from('room_members').select('user_nick').eq('room_id',roomId).in('user_nick',nicks);
+      if(existing.error)throw existing.error;
+      const members=new Set((existing.data||[]).map(item=>item.user_nick));
+      const rows=nicks.filter(nick=>!members.has(nick)&&nick!=='creator').map(nick=>({room_id:roomId,user_nick:nick,role:'member',joined_at:Date.now()}));
+      if(!allowed())throw new Error('Аккаунт изменён');
+      if(rows.length){
+        const result=await sb.from('room_members').upsert(rows,{onConflict:'room_id,user_nick',ignoreDuplicates:true}).select('user_nick');
+        if(result.error)throw result.error;added+=(result.data||[]).length;
+      }
+      after=nicks[nicks.length-1];if(nicks.length<200)break;
+    }
+    if(!allowed())throw new Error('Аккаунт изменён');
+    if(String(currentRoom?.id)===String(roomId)){await renderRoomPanel();await updateStatusBar();}
+    show(added?'Добавлено аккаунтов: '+added:'Все аккаунты уже в канале');
+  }catch(error){show('Добавлено: '+added+'. Не удалось завершить. Можно повторить — дубликатов не будет.');}
+  finally{bulkAddingAccountsV114=false;button.disabled=false;}
+}
 async function renderRoomPanel(){
+  const bulkButton=document.getElementById('room-add-all-creator');
+  bulkButton.style.display=me?.nick==='creator'&&currentRoom?.owner_nick==='creator'&&currentRoom?.type==='channel'?'block':'none';
+  if(!bulkAddingAccountsV114)document.getElementById('room-add-all-result').textContent='';
   document.getElementById('room-panel-icon').innerHTML=roomAvatarMarkupV113(currentRoom);document.getElementById('room-panel-name').textContent=currentRoom.name;document.getElementById('room-panel-description').textContent=currentRoom.description||'Описание пока не добавлено';
   const {data:members}=await sb.from('room_members').select('*').eq('room_id',currentRoom.id).order('joined_at',{ascending:true}),nicks=(members||[]).map(m=>m.user_nick);let users=[];if(nicks.length){const res=await sb.from('users').select('*').in('nick',nicks);users=res.data||[];}
   const visibility=normalizedRoomVisibility(currentRoom),isPublic=visibility==='public',isOwner=currentRoom.owner_nick===me.nick;
