@@ -130,6 +130,11 @@
     }
     await loadStoryLikes(ids, user);
     renderStories();
+    const openedStory = state.viewerItems[state.viewerIndex];
+    if (openedStory) {
+      const freshStory = state.stories.find(item => String(item.id) === String(openedStory.id));
+      if (freshStory) { state.viewerItems[state.viewerIndex] = freshStory; renderLikeControl(freshStory); }
+    }
   }
 
   async function loadStoryLikes(ids, user = currentUser()) {
