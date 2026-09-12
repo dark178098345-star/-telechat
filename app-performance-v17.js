@@ -175,7 +175,7 @@
       for(const room of visibleRooms){
         const last=roomLast['room_'+room.id],element=document.createElement('div');
         element.className='contact'+(currentRoom&&String(currentRoom.id)===String(room.id)?' active':'');
-        element.innerHTML='<div class="room-avatar">'+escHtml(room.icon||'🌌')+'</div><div class="contact-info"><div class="contact-name">'+escHtml(room.name)+'<span class="room-type-badge">'+(room.type==='channel'?'канал':'группа')+'</span>'+roomVisibilityBadge(room)+(room.owner_nick===me.nick?'<span class="room-owner-star">★</span>':'')+'</div><div class="contact-last">'+(last?escHtml(messagePreviewText(last.text).substring(0,38)):escHtml(room.description||'Пока без сообщений'))+'</div></div><div class="contact-time">'+(last?formatMsgTime(last.ts):'')+'</div>';
+        element.innerHTML='<div class="room-avatar">'+roomAvatarMarkupV113(room)+'</div><div class="contact-info"><div class="contact-name">'+escHtml(room.name)+'<span class="room-type-badge">'+(room.type==='channel'?'канал':'группа')+'</span>'+roomVisibilityBadge(room)+(room.owner_nick===me.nick?'<span class="room-owner-star">★</span>':'')+'</div><div class="contact-last">'+(last?escHtml(messagePreviewText(last.text).substring(0,38)):escHtml(room.description||'Пока без сообщений'))+'</div></div><div class="contact-time">'+(last?formatMsgTime(last.ts):'')+'</div>';
         element.dataset.chatKey='room_'+room.id;
         element.dataset.chatKind='room';
         element.dataset.roomId=String(room.id);

@@ -1867,7 +1867,7 @@ doSearch=async function(){
       const joined=memberRoles.has(String(room.id));
       const el=document.createElement('div');el.className='search-result-item';
       const actionText=joined?'Открыть':'Вступить';
-      el.innerHTML='<div class="room-avatar">'+escHtml(room.icon||'🌌')+'</div><div class="search-room-copy"><div class="search-room-name">'+escHtml(room.name)+'<span class="room-type-badge">'+(room.type==='channel'?'канал':'группа')+'</span>'+roomVisibilityBadge(room)+'</div><div class="search-room-meta">'+escHtml(room.description||'Без описания')+'</div></div><button class="search-room-action'+(joined?'':' join')+'" type="button">'+actionText+'</button>';
+      el.innerHTML='<div class="room-avatar">'+roomAvatarMarkupV113(room)+'</div><div class="search-room-copy"><div class="search-room-name">'+escHtml(room.name)+'<span class="room-type-badge">'+(room.type==='channel'?'канал':'группа')+'</span>'+roomVisibilityBadge(room)+'</div><div class="search-room-meta">'+escHtml(room.description||'Без описания')+'</div></div><button class="search-room-action'+(joined?'':' join')+'" type="button">'+actionText+'</button>';
       el.onclick=async()=>{
         if(joined){closeGlobalSearch();await openRoom(Object.assign({},room,{my_role:memberRoles.get(String(room.id))||'member'}));}
         else await joinPublicRoom(room,el.querySelector('.search-room-action'));
@@ -1969,7 +1969,7 @@ renderContacts=async function(){
     for(const room of visibleRooms){
       const last=roomLast['room_'+room.id];
       const el=document.createElement('div');el.className='contact'+(currentRoom&&String(currentRoom.id)===String(room.id)?' active':'');
-      el.innerHTML='<div class="room-avatar">'+escHtml(room.icon||'🌌')+'</div><div class="contact-info"><div class="contact-name">'+escHtml(room.name)+'<span class="room-type-badge">'+(room.type==='channel'?'канал':'группа')+'</span>'+roomVisibilityBadge(room)+(room.owner_nick===me.nick?'<span class="room-owner-star">★</span>':'')+'</div><div class="contact-last">'+(last?escHtml(messagePreviewText(last.text).substring(0,38)):escHtml(room.description||'Пока без сообщений'))+'</div></div><div class="contact-time">'+(last?formatMsgTime(last.ts):'')+'</div>';
+      el.innerHTML='<div class="room-avatar">'+roomAvatarMarkupV113(room)+'</div><div class="contact-info"><div class="contact-name">'+escHtml(room.name)+'<span class="room-type-badge">'+(room.type==='channel'?'канал':'группа')+'</span>'+roomVisibilityBadge(room)+(room.owner_nick===me.nick?'<span class="room-owner-star">★</span>':'')+'</div><div class="contact-last">'+(last?escHtml(messagePreviewText(last.text).substring(0,38)):escHtml(room.description||'Пока без сообщений'))+'</div></div><div class="contact-time">'+(last?formatMsgTime(last.ts):'')+'</div>';
       const more=document.createElement('button');more.type='button';more.className='contact-more';more.textContent='•••';more.title='Действия чата';more.setAttribute('aria-label','Действия чата');more.onclick=event=>openContactMenuV111(event,'room',room.id);el.appendChild(more);
       el.onclick=()=>openRoom(room);list.appendChild(el);rendered++;
     }
@@ -2014,7 +2014,7 @@ async function openRoom(room){
   currentChat=null;currentRoom=room;pinnedMsgId=null;pinnedMsgText='';liveLastMessageId='';clearTimeout(realtimeRetryTimer);cancelPendingMedia();
   document.getElementById('empty-state').style.display='none';
   const ac=document.getElementById('active-chat');ac.style.display='flex';ac.classList.remove('chat-enter');void ac.offsetWidth;ac.classList.add('chat-enter');
-  const av=document.getElementById('chat-av');av.className='room-avatar';av.textContent=room.icon||'🌌';
+  const av=document.getElementById('chat-av');av.className='room-avatar';av.innerHTML=roomAvatarMarkupV113(room);
   document.getElementById('chat-name-hdr').textContent=room.name;document.getElementById('room-info-btn').style.display='';
   document.getElementById('clear-chat-btn').style.display=room.owner_nick===me.nick?'':'none';
   cancelReply();closeChatSearch();updateComposerAccess();await renderMessages();await updateStatusBar();await markAsRead();renderContacts();subscribeRealtime();subscribeTyping();
@@ -2200,7 +2200,7 @@ async function createRoom(){
 }
 async function openRoomPanel(){if(!currentRoom)return;await renderRoomPanel();openPanel('room-panel');}
 async function renderRoomPanel(){
-  document.getElementById('room-panel-icon').textContent=currentRoom.icon||'🌌';document.getElementById('room-panel-name').textContent=currentRoom.name;document.getElementById('room-panel-description').textContent=currentRoom.description||'Описание пока не добавлено';
+  document.getElementById('room-panel-icon').innerHTML=roomAvatarMarkupV113(currentRoom);document.getElementById('room-panel-name').textContent=currentRoom.name;document.getElementById('room-panel-description').textContent=currentRoom.description||'Описание пока не добавлено';
   const {data:members}=await sb.from('room_members').select('*').eq('room_id',currentRoom.id).order('joined_at',{ascending:true}),nicks=(members||[]).map(m=>m.user_nick);let users=[];if(nicks.length){const res=await sb.from('users').select('*').in('nick',nicks);users=res.data||[];}
   const visibility=normalizedRoomVisibility(currentRoom),isPublic=visibility==='public',isOwner=currentRoom.owner_nick===me.nick;
   document.getElementById('room-panel-meta').textContent=(currentRoom.type==='channel'?'Канал':'Группа')+' · '+nicks.length+' участников · '+(isPublic?'общая':'приватная');
@@ -2641,7 +2641,8 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 </script>
 <script src="./profile-performance-v11.js?v=97"></script>
 <script src="./followers-v12.js"></script>
-<script src="./app-performance-v17.js?v=105"></script>
+<script src="./room-media-v113.js?v=113"></script>
+<script src="./app-performance-v17.js?v=113"></script>
 <script src="./ui-polish-v16.js"></script>
 <script src="./moderation-v19.js"></script>
 <script src="./moons-v20.js"></script>
@@ -2651,13 +2652,13 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <script src="./chat-reliability-v24.js?v=78"></script>
 <script src="./message-send-animation-v35.js?v=54"></script>
 <script src="./voice-calls-v32.js?v=78"></script>
-<script src="./message-context-v36.js?v=105"></script>
+<script src="./message-context-v36.js?v=113"></script>
 <script src="./desktop-notifications-v37.js?v=74"></script>
 <script src="./voice-send-v38.js?v=39"></script>
 <script src="./media-compat-v40.js?v=40"></script>
 <script src="./chat-boot-v41.js?v=51"></script>
 <script src="./fluid-ui-v42.js?v=48"></script>
-<script src="./chat-open-loader-v44.js?v=51"></script>
+<script src="./chat-open-loader-v44.js?v=113"></script>
 <script src="./chat-speed-v51.js?v=109"></script>
 <script src="./chat-actions-v52.js?v=105"></script>
 <script src="./sound-studio-v53.js?v=53"></script>

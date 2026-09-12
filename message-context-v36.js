@@ -417,7 +417,7 @@
     const visible = forwardTargetsV36.map((target, index) => ({ target, index })).filter(item => !query || `${item.target.name} ${item.target.meta}`.toLowerCase().includes(query));
     if (!visible.length) { box.innerHTML = '<div class="forward-empty-v36">Подходящих чатов пока нет</div>'; return; }
     box.innerHTML = visible.map(({ target, index }) => {
-      const avatar = target.type === 'user' ? avatarMarkup(target.user) : escHtml(target.room.icon || '🌌');
+      const avatar = target.type === 'user' ? avatarMarkup(target.user) : roomAvatarMarkupV113(target.room);
       return `<button type="button" class="forward-target-v36" data-forward-index-v36="${index}"><span class="forward-avatar-v36 ${target.type === 'user' ? 'user' : ''}">${avatar}</span><span class="forward-copy-v36"><span class="forward-name-v36">${escHtml(target.name)}</span><span class="forward-meta-v36">${escHtml(target.meta)}</span></span><span aria-hidden="true">›</span></button>`;
     }).join('');
   }

@@ -1,5 +1,9 @@
 const CACHE_NAME='telechat-shell-v109-navigation-readers';
 const APP_SHELL=[
+  './room-media-v113.js?v=113',
+  './app-performance-v17.js?v=113',
+  './chat-open-loader-v44.js?v=113',
+  './message-context-v36.js?v=113',
   './navigation-readers-v109.js?v=109',
   './navigation-readers-v109.css?v=109',
   './performance-v107.js?v=108',

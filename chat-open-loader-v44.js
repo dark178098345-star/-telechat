@@ -49,7 +49,7 @@
     avatar.replaceChildren();
     if (kind === 'room') {
       const room = value || {};
-      avatar.textContent = room.icon || '🌌';
+      avatar.innerHTML = roomAvatarMarkupV113(room);
       title.textContent = room.name || 'Пространство';
       return;
     }
