@@ -41,6 +41,7 @@
         play(){if(alive&&ready&&options.canPlay?.()!==false)widget.play();return Promise.resolve();},
         pause(){if(!alive)return;widget.pause();controller.paused=true;options.onState?.();},
         seek(seconds){if(alive&&ready)widget.seekTo(Math.max(0,Math.min(Number(seconds)||0,controller.duration))*1000);},
+        setVolume(value){if(alive&&ready)widget.setVolume?.(Math.max(0,Math.min(1,value))*100);},
         destroy(){if(!alive)return;alive=false;clearTimeout(timer);options.signal?.removeEventListener('abort',abort);for(const name of Object.values(events))widget.unbind(name);iframe.remove();if(!settled){settled=true;reject(new DOMException('Cancelled','AbortError'));}}
       };
       const abort=()=>controller.destroy();options.signal?.addEventListener('abort',abort,{once:true});

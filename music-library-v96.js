@@ -17,6 +17,7 @@
   const durationText = value => Number.isFinite(value) ? Math.floor(value / 60) + ':' + String(Math.floor(value % 60)).padStart(2,'0') : '—';
   let dbPromise, dialog, tracks = [], activeOwner = '', current = null, objectUrl = '', playToken = 0, busy = false;
   let opener = null, restoreFocusOnClose = false, positionFrame = 0, lastPlaybackState = '';
+  let queue = [], repeat = false, shuffle = false;
   const soundcloud = window.telechatSoundCloudV98;
   let cloudPlayer = null, cloudAbort = null, pendingAutoPlay = false;
   const isCloud = track => !!soundcloud?.isLink(track?.url);
@@ -24,7 +25,7 @@
   const inCall = () => !!document.querySelector('#voice-call-overlay.show,#voice-call-mini.show') || document.body.classList.contains('voice-call-full-v32');
   function pauseMusic() {pendingAutoPlay=false;audio.pause();cloudPlayer?.pause();}
   function seekTo(seconds) {if(isCloud(current))cloudPlayer?.seek(seconds);else if(Number.isFinite(audio.duration))audio.currentTime=Math.max(0,Math.min(seconds,audio.duration));}
-  function ended() {const index=tracks.findIndex(t=>t.id===current?.id);if(index>=0&&index<tracks.length-1)play(tracks[index+1]);else updatePlayers();}
+  function ended() {const items=queue.length?queue:tracks,index=items.findIndex(t=>t.id===current?.id);if(repeat&&current){seekTo(0);play(current);}else if(shuffle&&items.length>1)step(1);else if(index>=0&&index<items.length-1)play(items[index+1]);else updatePlayers();}
   function cloudSource(url) {
     const a=document.createElement('a');a.className='music-soundcloud-source-v98';a.href=url;a.target='_blank';a.rel='noopener noreferrer';a.setAttribute('aria-label','Открыть трек на SoundCloud');a.innerHTML=soundcloud.brand;return a;
   }
@@ -90,7 +91,7 @@
   async function loadLibrary() {
     const nick = owner();
     if (!nick) throw new Error('Войди в аккаунт, чтобы открыть музыку.');
-    if (activeOwner !== nick) { stop(); tracks = []; activeOwner = nick; renderList(); }
+    if (activeOwner !== nick) { stop(); tracks = []; queue = []; activeOwner = nick; renderList(); }
     const rows = await read('tracks',nick,'owner');
     if (owner() !== nick) return;
     const sorted = rows.sort((a,b) => b.added - a.added);
@@ -191,6 +192,7 @@
         });
         if(token!==playToken||owner()!==track.owner){cloudPlayer?.destroy();cloudPlayer=null;return;}
         current.duration=cloudPlayer.duration;
+        cloudPlayer.setVolume?.(audio.volume);
         if('mediaSession' in navigator&&'MediaMetadata' in window)navigator.mediaSession.metadata=new MediaMetadata({title:track.title,artist:'SoundCloud · tele.chat'});
         updatePlayers();position();
         if(pendingAutoPlay&&!inCall())await cloudPlayer.play();
@@ -221,13 +223,16 @@
     }
   }
   function step(direction) {
-    if (!current || tracks.length < 2) return;
-    const index = tracks.findIndex(t => t.id === current.id);
-    if(index<0){play(direction>0?tracks[0]:tracks[tracks.length-1]);return;}
-    play(tracks[(index + direction + tracks.length) % tracks.length]);
+    const items=queue.length?queue:tracks;
+    if (!current || items.length < 2) return;
+    const index = items.findIndex(t => t.id === current.id);
+    if(index<0){play(direction>0?items[0]:items[items.length-1]);return;}
+    const next=shuffle?(index+1+Math.floor(Math.random()*(items.length-1)))%items.length:(index+direction+items.length)%items.length;
+    play(items[next]);
   }
   function updatePlayers() {
     const media=player();
+    window.dispatchEvent(new CustomEvent('telechat-music-progress-v117',{detail:{track:current?{...current}:null,paused:media.paused,time:media.currentTime||0,duration:media.duration||current?.duration||0,repeat,shuffle}}));
     if (dialog) {
       const title = dialog.querySelector('.music-now-title-v97'), hint = dialog.querySelector('.music-now-hint-v97');
       const text = current?.title || 'Включи любимый трек';
@@ -350,7 +355,8 @@
       dialog.querySelector('.music-add-v96').prepend(support);
       const label=byId('music-url-v96').parentElement;label.firstChild.textContent='Ссылка SoundCloud или прямая ссылка на аудио';
       byId('music-url-v96').placeholder='https://soundcloud.com/artist/track';
-      const host=document.createElement('div');host.id='music-soundcloud-widget-v98';host.className='music-soundcloud-widget-v98';dialog.querySelector('.music-now-v97').after(host);
+      const host=document.createElement('div');host.id='music-soundcloud-widget-v98';host.className='music-soundcloud-widget-v98';
+      const hubHost=window.telechatMusicHubV117?.getPlayerHost();if(hubHost)hubHost.append(host);else dialog.querySelector('.music-now-v97').after(host);
       const probe=document.createElement('div');probe.id='music-soundcloud-probe-v98';probe.className='music-soundcloud-probe-v98';byId('music-link-form-v96').append(probe);
       dialog.querySelector('.music-storage-note-v96').textContent='Файлы доступны без интернета, ссылки и SoundCloud — онлайн. До 100 треков и 250 МБ файлов. Очистка данных сайта удалит библиотеку. Треки по ссылке можно добавить в профиль. SoundCloud может ограничивать доступ к отдельным трекам.';
     }
@@ -389,8 +395,9 @@
       dialog.style.transformOrigin = `${Math.max(12,Math.min(rect.width-12,anchor.left+anchor.width/2-parseFloat(dialog.style.left)))}px top`;
     });
   }
-  async function open(trigger) {
+  async function open(trigger, legacy = false) {
     if (!owner()) {window.showToast?.('Сначала войди в аккаунт');return;}
+    if(!legacy&&window.telechatMusicHubV117)return window.telechatMusicHubV117.open();
     ensureDialog();opener = trigger || document.activeElement;
     if (!dialog.open) dialog.show();
     trigger?.setAttribute('aria-expanded','true');position();
@@ -410,11 +417,23 @@
   document.addEventListener('visibilitychange',()=>{if(document.hidden)close();});
   window.addEventListener('telechat-profile-music-updated-v97',()=>{if(dialog)renderList();});
   window.telechatMusicV96 = {
+    async getTracks(){ensureDialog();await loadLibrary();return tracks.map(t=>({...t}));},
+    getState(){const media=player();return {track:current?{...current}:null,paused:media.paused,time:media.currentTime||0,duration:media.duration||current?.duration||0,repeat,shuffle};},
+    async playTrack(track,items=[]){ensureDialog();await loadLibrary();queue=items.map(t=>({...t,owner:owner()}));return play({...track,owner:owner()});},
+    async getFile(id){await loadLibrary();if(!tracks.some(t=>t.id===id))throw new Error('Трек не найден');return read('files',id);},
+    async importFiles(files){ensureDialog();await addFiles(files);window.dispatchEvent(new Event('telechat-music-library-v117'));return tracks.map(t=>({...t}));},
+    async removeLocal(id){await loadLibrary();const t=tracks.find(t=>t.id===id);if(!t)return;await write(t,null,true);if(current?.id===id)stop();tracks=tracks.filter(t=>t.id!==id);renderList();},
+    async saveLink(track){ensureDialog();await loadLibrary();const url=normalizeLink(track.url);if(tracks.some(t=>t.url===url))return;if(tracks.length>=COUNT_LIMIT)throw new Error('В библиотеке уже 100 треков');const item={...track,id:crypto.randomUUID(),owner:owner(),url,kind:'link',size:0,added:Date.now()};await write(item);tracks.unshift(item);renderList();},
+    inspectAudio,normalizeLink,pause:pauseMusic,seek:seekTo,step,stop,
+    toggle(){if(current)return play(current);},
+    setRepeat(value){repeat=!!value;updatePlayers();},setShuffle(value){shuffle=!!value;updatePlayers();},
+    setVolume(value){const volume=Math.max(0,Math.min(1,Number(value)||0));audio.volume=volume;cloudPlayer?.setVolume?.(volume);},
+    openLocal(trigger){return open(trigger,true);},
     async playLink(track,nick) {
       if(!owner())return;
       const url = normalizeLink(track.url);
       if(current?.kind==='link'&&current.url===url&&current.owner===owner())return play(current);
-      await loadLibrary();
+      await loadLibrary();queue=[];
       return play({id:'profile:'+nick+':'+url,owner:owner(),kind:'link',url,title:track.title||'Музыка профиля',duration:track.duration||0});
     }
   };
