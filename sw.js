@@ -1,9 +1,11 @@
-const CACHE_NAME='telechat-shell-v118-music-intro';
+const CACHE_NAME='telechat-shell-v119-music-wallpapers';
 const APP_SHELL=[
+  './chat-wallpaper-v119.js?v=119',
+  './chat-wallpaper-v119.css?v=119',
   './music-intro-v118.js?v=118',
   './music-intro-v118.css?v=118',
-  './music-hub-v117.js?v=118',
-  './music-hub-v117.css?v=117',
+  './music-hub-v117.js?v=119',
+  './music-hub-v117.css?v=119',
   './stories-v115.css?v=116',
   './stories-v115.js?v=116',
   './room-media-v113.js?v=113',
@@ -28,7 +30,7 @@ const APP_SHELL=[
   './branding/soundcloud-white.png',
   './music-card-v97.css?v=97',
   './profile-music-v97.js?v=99',
-  './music-library-v96.js?v=117',
+  './music-library-v96.js?v=119',
   './music-library-v96.css?v=96',
   './appearance-mode-v95.js?v=95',
   './chat-foundation-v94.css?v=94',

@@ -1,0 +1,38 @@
+/* Scoped backgrounds: no changes to the default glass or calm interfaces. */
+html body #chat-screen #messages.has-wallpaper-v119,
+html body #chat-screen #contacts-list.has-wallpaper-v119{background-image:linear-gradient(rgba(8,10,20,var(--wallpaper-shade-v119,.45)),rgba(8,10,20,var(--wallpaper-shade-v119,.45))),var(--wallpaper-photo-v119)!important;background-size:cover!important;background-position:center!important;background-repeat:no-repeat!important;background-attachment:scroll!important}
+html body #chat-screen #contacts-list.has-wallpaper-v119 .contact{background:rgba(17,19,34,.75);border-radius:14px}
+html body #chat-screen #contacts-list.has-wallpaper-v119 .contact.active{background:rgba(66,55,100,.94)!important}
+html body #chat-screen #contacts-list.has-wallpaper-v119 .contact-name{color:#f6f4ff}
+html body #chat-screen #contacts-list.has-wallpaper-v119 .contact-last,
+html body #chat-screen #contacts-list.has-wallpaper-v119 .contact-time{color:#d0cede}
+html body #chat-screen #contacts-list.has-wallpaper-v119 .list-section-title{color:#f1edf9!important;text-shadow:0 1px 4px #000}
+html body #chat-screen #messages.has-wallpaper-v119 .msg-time,
+html body #chat-screen #messages.has-wallpaper-v119 .msg-check{color:#e3ddec;text-shadow:0 1px 3px #000}
+html body #chat-screen #messages.has-wallpaper-v119 .msg-check.read{color:#94d3ff}
+.wallpaper-settings-v119>p{line-height:1.6}
+#settings-panel .wallpaper-settings-v119 .panel-section-title::before{content:'🖼️'!important;font-size:14px!important}
+#settings-panel.v65-full-panel>.wallpaper-settings-v119{grid-column:1/-1!important;grid-row:6!important}
+#settings-panel.v65-full-panel:has(.wallpaper-settings-v119)>.close-btn{grid-row:7!important}
+.wallpaper-targets-v119{border:0;margin:16px 0 12px;padding:0;display:flex;gap:5px}
+.wallpaper-targets-v119 legend{font-size:11px;color:var(--text2);margin-bottom:9px}
+.wallpaper-targets-v119 label{position:relative;flex:1;min-width:0;cursor:pointer}
+.wallpaper-targets-v119 input{position:absolute;opacity:0;width:1px;height:1px}
+.wallpaper-targets-v119 span{display:block;text-align:center;padding:10px 3px;border:1px solid var(--border);border-radius:10px;color:var(--text2);font-size:11px;font-weight:700}
+.wallpaper-targets-v119 input:checked+span{background:rgba(157,127,255,.17);border-color:var(--accent);color:var(--text)}
+.wallpaper-targets-v119 input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}
+.wallpaper-previews-v119{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:12px 0}
+.wallpaper-previews-v119>div{display:flex;flex-direction:column;gap:7px;min-height:122px;border:1px solid var(--border);border-radius:13px;padding:12px;background:#171725;background-size:cover;background-position:center;overflow:hidden}
+.wallpaper-previews-v119 i{height:13px;width:90%;background:#d5c3ff30;border-radius:7px}
+.wallpaper-previews-v119 i::before{content:'';display:block;width:13px;height:13px;border-radius:50%;background:#d5c3ff70}
+.wallpaper-previews-v119 b{height:14px;width:60%;border-radius:8px;background:#d5c3ff50}
+.wallpaper-previews-v119 b:nth-child(2){width:72%;align-self:flex-end;background:#9980e4}
+.wallpaper-previews-v119 span{font-size:10px;color:#fff;margin-top:auto;text-shadow:0 1px 3px #000;font-weight:700}
+.wallpaper-actions-v119{display:flex;gap:8px}.wallpaper-actions-v119 button{min-width:0;min-height:40px;font-size:12px}
+.wallpaper-actions-v119 button:not(.primary){border:1px solid var(--border);background:rgba(120,108,174,.1);color:var(--text);border-radius:12px}
+.wallpaper-dim-v119{display:block;margin:16px 0 12px;font-size:12px;color:var(--text)}
+.wallpaper-dim-v119>span{display:flex;justify-content:space-between}.wallpaper-dim-v119 output{color:var(--text2)}
+.wallpaper-dim-v119 input{display:block;width:100%;margin-top:10px;accent-color:var(--accent)}
+#wallpaper-status-v119{font-size:12px;color:var(--text2);min-height:1.5em;margin:8px 0 0}#wallpaper-status-v119.is-error{color:var(--red,#fb9898)}
+.wallpaper-settings-v119 button:disabled{opacity:.45;cursor:default}
+@media(max-width:760px){html body #settings-panel.v65-full-panel>.wallpaper-settings-v119,html body #settings-panel.v65-full-panel:has(.wallpaper-settings-v119)>.close-btn{grid-row:auto!important}}

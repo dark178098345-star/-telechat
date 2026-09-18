@@ -142,17 +142,19 @@
     try { seconds = await inspectAudio(src); } finally { URL.revokeObjectURL(src); }
     if (owner() !== nick) throw new Error('Аккаунт изменился. Открой библиотеку заново.');
     const track = {id:crypto.randomUUID(),owner:nick,title:file.name.replace(/\.[^.]+$/,'').slice(0,160),kind:'file',size:file.size,duration:seconds,added:Date.now()};
-    await write(track,file);tracks.unshift(track);renderList();
+    await write(track,file);tracks.unshift(track);renderList();return track;
   }
   async function addFiles(files) {
-    if (busy || !files.length) return;
-    setBusy(true);let count = 0;
+    if (busy) return {added:[],error:'Дождись завершения предыдущей загрузки.'};
+    if (!files.length) return {added:[],error:''};
+    setBusy(true);let count = 0;const added=[];let failure='';
     try {
       await loadLibrary();const nick = owner();
-      for (const file of files) {status('Сохраняем: ' + file.name);await addFile(file,nick);count++;}
+      for (const file of files) {status('Сохраняем: ' + file.name);added.push(await addFile(file,nick));count++;}
       status(`Сохранено треков: ${count}. Можно слушать без интернета.`);
-    } catch (error) {status((count ? `Сохранено: ${count}. ` : '') + errorText(error),true);}
+    } catch (error) {failure=errorText(error);status((count ? `Сохранено: ${count}. ` : '') + failure,true);}
     finally {setBusy(false);byId('music-files-v96').value = '';}
+    return {added:added.map(t=>({...t})),error:failure};
   }
   async function addLink(event) {
     event.preventDefault();if (busy) return;
@@ -262,8 +264,8 @@
       if (document.activeElement !== seek) seek.value = media.currentTime || 0;
       seek.style.setProperty('--music-progress',Math.min(100,Math.max(0,(media.currentTime||0)/Number(seek.max)*100||0))+'%');
       player.querySelector('.music-time').textContent = durationText(media.currentTime || 0) + ' / ' + durationText(current.duration);
-      player.querySelector('[data-music="previous"]').disabled = tracks.length < 2;
-      player.querySelector('[data-music="next"]').disabled = tracks.length < 2;
+      player.querySelector('[data-music="previous"]').disabled = (queue.length?queue:tracks).length < 2;
+      player.querySelector('[data-music="next"]').disabled = (queue.length?queue:tracks).length < 2;
     });
     dialog?.querySelectorAll('.music-track-v96').forEach(row => {
       const selected = row.dataset.id === current?.id;
@@ -422,6 +424,7 @@
     async playTrack(track,items=[]){ensureDialog();await loadLibrary();queue=items.map(t=>({...t,owner:owner()}));return play({...track,owner:owner()});},
     async getFile(id){await loadLibrary();if(!tracks.some(t=>t.id===id))throw new Error('Трек не найден');return read('files',id);},
     async importFiles(files){ensureDialog();await addFiles(files);window.dispatchEvent(new Event('telechat-music-library-v117'));return tracks.map(t=>({...t}));},
+    async importFilesReport(files){ensureDialog();const result=await addFiles(files);window.dispatchEvent(new Event('telechat-music-library-v117'));return result;},
     async removeLocal(id){await loadLibrary();const t=tracks.find(t=>t.id===id);if(!t)return;await write(t,null,true);if(current?.id===id)stop();tracks=tracks.filter(t=>t.id!==id);renderList();},
     async saveLink(track){ensureDialog();await loadLibrary();const url=normalizeLink(track.url);if(tracks.some(t=>t.url===url))return;if(tracks.length>=COUNT_LIMIT)throw new Error('В библиотеке уже 100 треков');const item={...track,id:crypto.randomUUID(),owner:owner(),url,kind:'link',size:0,added:Date.now()};await write(item);tracks.unshift(item);renderList();},
     inspectAudio,normalizeLink,pause:pauseMusic,seek:seekTo,step,stop,
