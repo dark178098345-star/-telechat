@@ -1,6 +1,8 @@
-const CACHE_NAME='telechat-shell-v117-music';
+const CACHE_NAME='telechat-shell-v118-music-intro';
 const APP_SHELL=[
-  './music-hub-v117.js?v=117',
+  './music-intro-v118.js?v=118',
+  './music-intro-v118.css?v=118',
+  './music-hub-v117.js?v=118',
   './music-hub-v117.css?v=117',
   './stories-v115.css?v=116',
   './stories-v115.js?v=116',

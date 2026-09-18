@@ -70,11 +70,13 @@
   }
   async function open() {
     if(!user()?.nick){toast('Сначала войди в аккаунт');return;}
+    const firstOpen=!state.opened;
     ensure();lastFocus=document.activeElement;state.opened=true;root.hidden=false;document.body.classList.add('music-hub-open-v117');document.querySelector('.music-entry-v96')?.setAttribute('aria-expanded','true');
     const changed=state.owner!==user().nick;
     if(changed){state.owner=user().nick;state.catalog.clear();state.feed=[];state.saved.clear();state.liked.clear();state.playlists=[];state.view='home';state.query='';state.profile=state.owner;state.local=[];$('mh-search').value='';}
     const self=root.querySelector('.mh-self');try{self.innerHTML=typeof avatarMarkup==='function'?avatarMarkup(user()):icon('user');}catch(_){self.innerHTML=icon('user');}
     render();syncPlayer(core()?.getState());$('mh-search').focus({preventScroll:true});
+    if(firstOpen)window.telechatMusicIntroV118?.enter(root,state.owner,core()?.getState());
     const results=await Promise.allSettled([core().getTracks(),loadLibrary(),loadFeed(true)]);
     if(user()?.nick!==state.owner)return close();
     if(results[0].status==='fulfilled')state.local=results[0].value;
