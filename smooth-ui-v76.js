@@ -74,8 +74,10 @@
       const tasks=[];
       if(typeof window.endCallV32==='function')tasks.push(waitAtMostV76(window.endCallV32(),700));
       if(user?.nick&&typeof sb!=='undefined'){
-        tasks.push(waitAtMostV76(sb.from('users').update({last_seen:Date.now()-91000}).eq('nick',user.nick),700));
-        tasks.push(waitAtMostV76(sb.from('typing').delete().eq('nick',user.nick),700));
+        if(window.telechatPresenceV120)tasks.push(waitAtMostV76(window.telechatPresenceV120.leave(),1200));
+        // Logout belongs to this session. Other devices and privacy preferences stay intact.
+        let key='';try{key=typeof conversationKey==='function'?conversationKey():'';}catch(_){}
+        if(key)tasks.push(waitAtMostV76(sb.from('typing').delete().eq('nick',user.nick).eq('chat_key',key),700));
       }
       await Promise.allSettled(tasks);
       try{if(typeof sb!=='undefined'&&typeof sb.removeAllChannels==='function')await waitAtMostV76(sb.removeAllChannels(),400)}catch(error){}

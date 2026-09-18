@@ -486,6 +486,7 @@
 
   function paintPrivateStatusV51(nick, lastSeen) {
     if (currentRoom || currentChat !== nick) return;
+    if(window.telechatPresenceV120){window.telechatPresenceV120.paintHeader(nick,lastSeen);return;}
     const element = document.getElementById('chat-status-text');
     if (!element || element.classList.contains('typing')) return;
     const online = isOnline(lastSeen);

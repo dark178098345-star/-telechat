@@ -27,7 +27,7 @@ import android.webkit.WebViewClient;
 import android.widget.Toast;
 
 public class MainActivity extends Activity {
-    private static final String TELECHAT_URL = "https://dark178098345-star.github.io/-telechat/?app=android&v=109";
+    private static final String TELECHAT_URL = "https://dark178098345-star.github.io/-telechat/?app=android&v=120";
     private static final String TELECHAT_HOST = "dark178098345-star.github.io";
     private static final String NOTIFICATION_CHANNEL = "telechat-messages";
     private static final int FILE_CHOOSER_REQUEST = 401;
@@ -37,6 +37,7 @@ public class MainActivity extends Activity {
     private WebView webView;
     private ValueCallback<Uri[]> fileCallback;
     private PermissionRequest pendingAudioRequest;
+    private volatile boolean appInBackground = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,12 +68,17 @@ public class MainActivity extends Activity {
         settings.setAllowContentAccess(true);
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
         settings.setCacheMode(WebSettings.LOAD_DEFAULT);
-        settings.setUserAgentString(settings.getUserAgentString() + " telechat-android/1.2.3");
+        settings.setUserAgentString(settings.getUserAgentString() + " telechat-android/1.2.4");
 
         CookieManager.getInstance().setAcceptCookie(true);
         CookieManager.getInstance().setAcceptThirdPartyCookies(webView, false);
 
         webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                if (isTelechatUri(Uri.parse(url))) publishVisibility();
+            }
+
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 Uri uri = request.getUrl();
@@ -148,6 +154,7 @@ public class MainActivity extends Activity {
 
     private final class TelechatAndroidBridge {
         @JavascriptInterface public boolean isApp() { return true; }
+        @JavascriptInterface public boolean isInBackground() { return appInBackground; }
         @JavascriptInterface public void requestNotifications() { runOnUiThread(MainActivity.this::requestNotifications); }
         @JavascriptInterface public void notify(String title, String body) { runOnUiThread(() -> notifyMessage(title, body)); }
     }
@@ -204,6 +211,27 @@ public class MainActivity extends Activity {
         if (requestCode != FILE_CHOOSER_REQUEST || fileCallback == null) return;
         fileCallback.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(resultCode, data));
         fileCallback = null;
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        appInBackground = false;
+        publishVisibility();
+    }
+
+    @Override
+    protected void onStop() {
+        appInBackground = true;
+        publishVisibility();
+        super.onStop();
+    }
+
+    private void publishVisibility() {
+        if (webView == null) return;
+        webView.evaluateJavascript(
+                "window.dispatchEvent(new CustomEvent('telechat-native-visibility',{detail:{background:"
+                        + appInBackground + "}}));", null);
     }
 
     @Override
