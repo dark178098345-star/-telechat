@@ -30,6 +30,8 @@ function init({nick,device}){
  const observer=await pageFor('observer'),pc=await pageFor('alice'),phone=await pageFor('alice','phone');
  const state=async wanted=>observer.waitForFunction(w=>telechatPresenceV120.state('alice').state===w,wanted);
  await state('online');await observer.waitForFunction(()=>document.querySelector('#chat-status-text').classList.contains('online'));
+ await observer.evaluate(()=>{window.oldPresenceChannel=fixtureChannel;fixtureChannel.status('CHANNEL_ERROR');});await observer.waitForFunction(()=>fixtureChannel!==oldPresenceChannel);await state('online');
+ await observer.evaluate(()=>{window.recoveredPresenceChannel=fixtureChannel;oldPresenceChannel.status('CLOSED');oldPresenceChannel.apply({});});await observer.waitForTimeout(150);assert.equal(await observer.evaluate(()=>fixtureChannel===recoveredPresenceChannel),true,'Late events from replaced channel cannot restart or erase new connection');
  await pc.evaluate(()=>setVisible(false));await phone.evaluate(()=>setVisible(false));await state('background');await observer.waitForFunction(()=>document.querySelector('#chat-status-text').textContent==='в фоне☾');assert.equal(await observer.locator('.contact .av').evaluate(e=>e.classList.contains('av-online')),false);
  assert.equal(await observer.locator('#view-profile-seen').textContent(),'в фоне☾');
  await phone.evaluate(()=>setVisible(true));await state('online');assert.equal(await observer.evaluate(()=>telechatPresenceV120.state('alice').device),'phone');
