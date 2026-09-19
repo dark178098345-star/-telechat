@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v121-message-recovery';
+const CACHE_NAME='telechat-shell-v122-safe-cleanup';
 const APP_SHELL=[
   './presence-model-v120.js?v=120',
   './presence-v120.js?v=120',
@@ -55,7 +55,6 @@ const APP_SHELL=[
   './favicon.ico',
   './profile-performance-v11.js?v=97',
   './followers-v12.js',
-  './app-performance-v17.js?v=105',
   './ui-polish-v16.css',
   './ui-polish-v16.js',
   './moderation-v19.css',
@@ -77,7 +76,6 @@ const APP_SHELL=[
   './voice-calls-v32.css?v=72',
   './voice-calls-v32.js?v=78',
   './glass-context-v36.css?v=36',
-  './message-context-v36.js?v=105',
   './desktop-notifications-v37.js?v=74',
   './voice-send-v38.js?v=39',
   './media-compat-v40.js?v=40',
@@ -86,7 +84,6 @@ const APP_SHELL=[
   './fluid-ui-v42.css?v=48',
   './fluid-ui-v42.js?v=48',
   './chat-open-loader-v44.css?v=51',
-  './chat-open-loader-v44.js?v=51',
   './desktop-panel-fix-v45.css?v=45',
   './gpu-safe-panels-v46.css?v=47',
   './liquid-glass-v50.css?v=50',
