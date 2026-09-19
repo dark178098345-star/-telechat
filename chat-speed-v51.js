@@ -210,8 +210,8 @@
   }
 
   function shortContentMarkV51(value) {
-    const text = String(value ?? '');
-    return `${text.length}:${text.slice(0, 28)}:${text.slice(-28)}`;
+    // Comparing only the ends misses equal-length edits in the middle.
+    return JSON.stringify(String(value ?? ''));
   }
 
   function stateMarkV51(items) {
@@ -357,7 +357,8 @@
       });
       state.items = mergeItemsV51(older, page.items, arrived);
       state.cursor = state.items.length ? Math.min(...state.items.map(item => Number(item.ts || 0))) : null;
-      state.hasMore = page.hasMore;
+      // A first-page refresh must not reopen an already exhausted older cursor.
+      state.hasMore = older.length ? state.hasMore : page.hasMore;
       state.touchedAt = Date.now();
       state.lastFetchedAt = Date.now();
       schedulePersistentV72(state);
@@ -540,20 +541,23 @@
   const markAsReadInFlightV51 = new Map();
   markAsRead = function() {
     const key = activeKeyV51();
-    if (!key || markAsReadInFlightV51.has(key)) return Promise.resolve();
+    const reader = me?.nick;
+    const canRead = () => !document.hidden && me?.nick === reader && activeKeyV51() === key;
+    if (!key || !reader || !canRead() || markAsReadInFlightV51.has(key)) return Promise.resolve();
     const job = (async () => {
-      const result = await sb.from('messages').select('id,read_by').eq('chat_key', key).neq('from_nick', me.nick).order('ts', { ascending: false }).limit(80);
-      if (result.error) return;
-      const pending = (result.data || []).filter(message => !(message.read_by || []).includes(me.nick));
+      const result = await sb.from('messages').select('id,read_by').eq('chat_key', key).neq('from_nick', reader).order('ts', { ascending: false }).limit(80);
+      if (result.error || !canRead()) return;
+      const pending = (result.data || []).filter(message => !(message.read_by || []).includes(reader));
       const groups = new Map();
       pending.forEach(message => {
-        const readBy = [...new Set([...(message.read_by || []), me.nick])].sort();
+        const readBy = [...new Set([...(message.read_by || []), reader])].sort();
         const groupKey = JSON.stringify(readBy);
         if (!groups.has(groupKey)) groups.set(groupKey, { readBy, ids: [] });
         groups.get(groupKey).ids.push(message.id);
       });
       for (const group of groups.values()) {
         for (let start = 0; start < group.ids.length; start += 50) {
+          if (!canRead()) return;
           await sb.from('messages').update({ read_by: group.readBy }).in('id', group.ids.slice(start, start + 50));
         }
       }

@@ -6,7 +6,7 @@ function makeChannel(name){
   const channel={name,handlers:[],on(event,filter,handler){channel.handlers.push({event,filter,handler});return channel;},subscribe(status){channel.statusHandler=status;status?.('SUBSCRIBED');return channel;}};
   channels.push(channel);return channel;
 }
-const sandbox={
+const sandbox={AbortController,
   window:{addEventListener(){},playPing(){},sendPushNotification(){}},
   document:{hidden:false,addEventListener(){}},
   me:{nick:'me'},currentRoom:null,currentChat:'other',msgSub:null,pollSub:null,
@@ -14,7 +14,7 @@ const sandbox={
   sb:{channel:makeChannel,removeChannel(){}},
   renderMessages:async()=>{renderCount++;},renderContacts:()=>{},appendMessage:async()=>{appendCount++;},
   getUser:async()=>({name:'Друг'}),messagePreviewText:value=>String(value||''),markAsRead:()=>Promise.resolve(),
-  setTimeout,clearTimeout,Date,Math,Promise,console
+  setInterval(){return 0;},setTimeout,clearTimeout,Date,Math,Promise,console
 };
 vm.runInNewContext(source,sandbox,{filename:'message-core-v104.js'});
 sandbox.subscribeRealtime();

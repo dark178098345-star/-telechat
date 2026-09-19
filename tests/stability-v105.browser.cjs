@@ -15,8 +15,8 @@ const source=name=>fs.readFileSync(path.join(root,name),'utf8');
         updateStatusBar:async()=>{},markAsRead:async()=>{},avatarMarkup:()=>'',renderPoll:()=>{},scrollToBottom:()=>{},
         batchUsersV15:async()=>{},isOnline:()=>false,formatLastSeen:()=>'',normalizedRoomVisibility:()=>'',
         makeDateStr:ts=>new Date(ts).toDateString(),serverRows:[],queries:0,
-        sb:{from:table=>({select(){return this},eq(){return this},order(){return this},limit(){return this},
-          then(resolve,reject){queries++;const result={data:table==='messages'?serverRows.map(row=>({...row})):[]};return Promise.resolve(result).then(resolve,reject);}})},
+        sb:{from:table=>({select(){return this},eq(){return this},order(){return this},limit(n){this.count=n;return this},lt(field,value){this.before=value;return this;},
+          then(resolve,reject){queries++;const result={data:table==='messages'?serverRows.filter(row=>this.before===undefined||row.ts<this.before).map(row=>({...row})).sort((a,b)=>b.ts-a.ts).slice(0,this.count):[]};return Promise.resolve(result).then(resolve,reject);}})},
         appendMessage:async message=>{
           if(window.pauseAppend){window.pauseAppend=false;await new Promise(resolve=>window.releaseAppend=resolve);}
           const element=document.createElement('div');element.className='msg';element.dataset.id=message.id||'';
@@ -40,6 +40,11 @@ const source=name=>fs.readFileSync(path.join(root,name),'utf8');
       await telechatChatSpeedV51.refreshActive();
     });
     assert(await page.evaluate(()=>original===document.querySelector('.msg')&&second!==document.querySelectorAll('.msg')[1]),'edit must replace only its own row');
+    await page.evaluate(async()=>{
+      serverRows[1].text='a'.repeat(40)+'OLD'+'z'.repeat(40);await telechatChatSpeedV51.refreshActive();
+      serverRows[1].text='a'.repeat(40)+'NEW'+'z'.repeat(40);await telechatChatSpeedV51.refreshActive();
+    });
+    assert((await page.locator('.msg[data-id="2"]').textContent()).includes('NEW'),'equal-length middle edit must update the visible text');
     await page.evaluate(async()=>{
       await appendMessage({chat_key:conversationKey(),from_nick:'me',text:'pending',ts:300});
       await telechatChatSpeedV51.refreshActive();
@@ -66,6 +71,32 @@ const source=name=>fs.readFileSync(path.join(root,name),'utf8');
     });
     assert.equal(await page.locator('.msg[data-id="3"] .reader-avatar-v109').count(),1,'Realtime receipt renders below existing sent message');
     assert(await page.evaluate(()=>sentRow===document.querySelector('.msg[data-id="3"]')),'read event does not replace message');
+    await page.evaluate(async()=>{
+      currentChat='long_history';serverRows=Array.from({length:65},(_,i)=>({id:100+i,ts:1000+i,from_nick:'friend',text:'message '+i,chat_key:conversationKey()}));
+      document.getElementById('messages').replaceChildren();await renderMessages();
+      await telechatChatSpeedV51.loadOlder();await telechatChatSpeedV51.loadOlder();
+    });
+    assert.equal(await page.locator('.msg').count(),65,'all older pages must load');
+    assert.equal(await page.evaluate(()=>telechatChatSpeedV51.info().chats.find(x=>x.key===conversationKey()).hasMore),false);
+    await page.evaluate(()=>telechatChatSpeedV51.refreshActive());
+    assert.equal(await page.evaluate(()=>telechatChatSpeedV51.info().chats.find(x=>x.key===conversationKey()).hasMore),false,'refresh must not reopen exhausted pagination');
+    await page.evaluate(()=>{currentChat='friend';});
+    await page.evaluate(()=>{
+      window.receiptQueries=0;window.receiptWrites=0;
+      Object.defineProperty(document,'hidden',{configurable:true,get:()=>window.testHidden||false});
+      sb={from:()=>({select(){receiptQueries++;return this;},eq(){return this;},neq(){return this;},order(){return this;},
+        limit(){return new Promise(resolve=>window.finishRead=resolve);},update(){receiptWrites++;return this;},in(){return Promise.resolve({});}})};
+      testHidden=true;markAsRead();
+    });
+    assert.equal(await page.evaluate(()=>receiptQueries),0,'background tabs must not mark messages as read');
+    await page.evaluate(()=>{testHidden=false;markAsRead();currentChat='elsewhere';finishRead({data:[{id:1,read_by:[]}]});});
+    await page.waitForTimeout(20);
+    assert.equal(await page.evaluate(()=>receiptWrites),0,'leaving the chat while reading must cancel stale receipts');
+    await page.evaluate(()=>{currentChat='friend';markAsRead();testHidden=true;finishRead({data:[{id:1,read_by:[]}]});});
+    await page.waitForTimeout(20);
+    assert.equal(await page.evaluate(()=>receiptWrites),0,'hiding the app during a request must cancel receipts');
+    await page.evaluate(()=>{testHidden=false;markAsRead();finishRead({data:[{id:1,read_by:[]}]});});
+    await page.waitForFunction(()=>receiptWrites===1);
 
     const sidebar=await browser.newPage();await sidebar.route('**/*',route=>route.fulfill({contentType:'text/html',body:'<div id="contacts-list"></div>'}));await sidebar.goto('http://telechat.test');
     await sidebar.evaluate(()=>{

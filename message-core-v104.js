@@ -3,6 +3,7 @@
   'use strict';
   const SEEN_TTL=120000,MAX_SEEN=5000,MAX_RETRY=30000;
   const seenEvents=new Map(),latestByKey=new Map();
+  let probeJob=null;
   let reconnectTimer=0,reconnectAttempt=0,refreshTimer=0,generation=0;
   const unhealthy=new Set();
 
@@ -42,14 +43,19 @@
     reconnectTimer=setTimeout(()=>{reconnectTimer=0;if(sameKey(key)&&!document.hidden)subscribeCore();},delay);
   }
   async function probeLatest(key){
-    if(document.hidden||!sameKey(key)||typeof sb==='undefined')return;
-    try{
-      const result=await sb.from('messages').select('id,ts').eq('chat_key',key).order('ts',{ascending:false}).limit(1);
-      const newest=result.data?.[0];if(!newest)return;
-      const id=String(newest.id||'');if(!id)return;
+    if(document.hidden||!sameKey(key)||typeof sb==='undefined'||probeJob)return;
+    const token=generation;
+    probeJob=(async()=>{const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),8000);try{
+      let query=sb.from('messages').select('id,ts').eq('chat_key',key).order('ts',{ascending:false}).limit(1);
+      if(query.abortSignal)query=query.abortSignal(controller.signal);
+      const result=await query;
+      if(result.error||token!==generation||!sameKey(key))return;
+      const newest=result.data?.[0];
+      const id=newest?String(newest.id??''):'';
       const previous=latestByKey.get(key);latestByKey.set(key,id);
-      if(previous&&previous!==id)scheduleRefresh(key);
-    }catch(_){ }
+      if(previous!==id)scheduleRefresh(key);
+    }catch(_){ }finally{clearTimeout(timeout);}})();
+    try{await probeJob;}finally{probeJob=null;}
   }
   function channelStatus(status,key,token,kind){
     if(token!==generation||!sameKey(key))return;
@@ -62,7 +68,7 @@
     unhealthy.clear();unhealthy.add('messages');unhealthy.add('polls');
     try{if(msgSub)sb.removeChannel(msgSub);}catch(_){ }
     try{if(pollSub)sb.removeChannel(pollSub);}catch(_){ }
-    const channel=sb.channel('telechat-messages-v104-'+key+'-'+Date.now())
+    const channel=sb.channel('telechat-messages-v104-'+key+'-'+token+'-'+Date.now())
       .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:'chat_key=eq.'+key},async payload=>{
         const message=payload?.new;if(token!==generation||!sameKey(key)||!message||message.deleted)return;
         if(message.id!==undefined&&message.id!==null)latestByKey.set(key,String(message.id));
@@ -82,7 +88,7 @@
       })
       .subscribe(status=>channelStatus(status,key,token,'messages'));
     msgSub=channel;
-    pollSub=sb.channel('telechat-polls-v104-'+key+'-'+Date.now())
+    pollSub=sb.channel('telechat-polls-v104-'+key+'-'+token+'-'+Date.now())
       .on('postgres_changes',{event:'*',schema:'public',table:'polls',filter:'chat_key=eq.'+key},()=>{if(token===generation)scheduleRefresh(key);})
       .subscribe(status=>channelStatus(status,key,token,'polls'));
   }

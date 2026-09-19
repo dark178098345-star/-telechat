@@ -1,7 +1,7 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 let key='me_friend',timerId=0,appends=0,pings=0,fetches=0,renders=0,blocked=false,muted=false;
 const timers=new Map(),channels=[],listeners={};
-const sandbox={
+const sandbox={AbortController,
   me:{nick:'me'},currentRoom:null,msgSub:null,pollSub:null,
   conversationKey:()=>key,subscribeRealtime(){},goBack(){key='';},
   renderMessages:async()=>{renders++;},renderContacts:async()=>{},appendMessage:async()=>{appends++;},
@@ -11,7 +11,7 @@ const sandbox={
   document:{hidden:false,addEventListener:(name,callback)=>{listeners[name]=callback;}},
   addEventListener:(name,callback)=>{listeners[name]=callback;},
   sb:{channel(name){const c={name,handlers:[],on(event,filter,handler){this.handlers.push({filter,handler});return this;},subscribe(callback){this.status=callback;callback('SUBSCRIBED');return this;}};channels.push(c);return c;},removeChannel(channel){channel.status('CLOSED');}},
-  setTimeout(callback,delay){const id=++timerId;timers.set(id,{callback,delay});return id;},clearTimeout:id=>timers.delete(id),Date,Math,Promise,console
+  setInterval(){return 0;},setTimeout(callback,delay){const id=++timerId;timers.set(id,{callback,delay});return id;},clearTimeout:id=>timers.delete(id),Date,Math,Promise,console
 };sandbox.window=sandbox;
 vm.runInNewContext(fs.readFileSync(require('node:path').join(__dirname,'../message-core-v104.js'),'utf8'),sandbox);
 const flush=async()=>{const jobs=[...timers.values()];timers.clear();for(const job of jobs)await job.callback();};
