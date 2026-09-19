@@ -1,0 +1,40 @@
+-- Run in the SQL editor after migration. All test writes are rolled back.
+begin;
+do $$
+declare credential text; result jsonb; denied boolean:=false;
+ sid text:='00000000-0000-4000-8000-000000000124';
+ sid2 text:='00000000-0000-4000-8000-000000000125';
+begin
+ select pass into credential from public.users where nick='creator';
+ if credential is null then raise exception 'Test account unavailable'; end if;
+ begin perform public.telechat_activity_v124('creator','invalid-fixture-password','snapshot');
+ exception when raise_exception then denied:=true; end;
+ assert denied,'Invalid password accepted';
+ assert not has_table_privilege('anon','public.activity_stats_v124','SELECT'),'Private totals exposed';
+ assert not has_table_privilege('anon','public.activity_stats_v124','UPDATE'),'Direct writes allowed';
+ assert has_table_privilege('anon','public.activity_levels_v124','SELECT'),'Public levels missing';
+ perform public.telechat_activity_v124('creator',credential,'snapshot');
+ update public.activity_stats_v124 set xp=0,active_seconds=0,music_seconds=0,active_today=0,music_today=0,sessions='{}' where nick='creator';
+ perform public.telechat_activity_v124('creator',credential,'pulse',jsonb_build_object('session',sid,'seq',1,'active',999,'music',999));
+ assert (select active_seconds=0 and music_seconds=0 from public.activity_stats_v124 where nick='creator'),'New session credited';
+ update public.activity_stats_v124 set active_credit_at=clock_timestamp()-interval '60 seconds',music_credit_at=clock_timestamp()-interval '60 seconds',sessions=jsonb_build_object(sid,jsonb_build_object('seq',1,'at',clock_timestamp()-interval '60 seconds')) where nick='creator';
+ result:=public.telechat_activity_v124('creator',credential,'pulse',jsonb_build_object('session',sid,'seq',2,'active',60,'music',60));
+ assert (result->>'active_seconds')::integer=60 and (result->>'music_seconds')::integer=60,'Time not credited';
+ assert (result->>'xp')::integer=3,'Wrong XP';
+ result:=public.telechat_activity_v124('creator',credential,'pulse',jsonb_build_object('session',sid,'seq',2,'active',60,'music',60));
+ assert (result->>'active_seconds')::integer=60,'Retry counted twice';
+ update public.activity_stats_v124 set sessions=sessions||jsonb_build_object(sid2,jsonb_build_object('seq',1,'at',clock_timestamp()-interval '60 seconds')) where nick='creator';
+ result:=public.telechat_activity_v124('creator',credential,'pulse',jsonb_build_object('session',sid2,'seq',2,'active',60,'music',60));
+ assert (result->>'active_seconds')::integer=60,'Second device counted same minute';
+ update public.activity_stats_v124 set xp=0,active_today=7190,music_today=10790,active_credit_at=clock_timestamp()-interval '60 seconds',music_credit_at=clock_timestamp()-interval '60 seconds',sessions=jsonb_build_object(sid,jsonb_build_object('seq',2,'at',clock_timestamp()-interval '60 seconds')) where nick='creator';
+ result:=public.telechat_activity_v124('creator',credential,'pulse',jsonb_build_object('session',sid,'seq',3,'active',60,'music',60));
+ assert (result->>'xp')::integer=3 and (result->>'today_xp')::integer=480,'Daily cap boundary';
+ update public.activity_stats_v124 set active_credit_at=clock_timestamp()-interval '60 seconds',music_credit_at=clock_timestamp()-interval '60 seconds',sessions=jsonb_build_object(sid,jsonb_build_object('seq',3,'at',clock_timestamp()-interval '60 seconds')) where nick='creator';
+ result:=public.telechat_activity_v124('creator',credential,'pulse',jsonb_build_object('session',sid,'seq',4,'active',60,'music',60));
+ assert (result->>'xp')::integer=3,'XP grew beyond daily cap';
+ update public.activity_stats_v124 set day=(clock_timestamp() at time zone 'UTC')::date-1 where nick='creator';
+ result:=public.telechat_activity_v124('creator',credential,'snapshot');
+ assert (result->>'today_xp')::integer=0 and (result->>'xp')::integer=3,'UTC reset lost accumulated XP';
+end $$;
+rollback;
+select 'PASS: auth, private totals, public levels, first pulse, elapsed time, retry, second device, daily cap, UTC rollover; test changes rolled back' as result;

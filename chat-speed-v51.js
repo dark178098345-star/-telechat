@@ -92,8 +92,7 @@
       const transaction = database.transaction(PERSISTENT_STORE_V72, 'readwrite');
       transaction.objectStore(PERSISTENT_STORE_V72).put(record);
       transaction.oncomplete = resolve;
-      transaction.onerror = resolve;
-      transaction.onabort = resolve;
+      transaction.onerror = transaction.onabort = () => { window.telechatStorageV124?.report(transaction.error); resolve(); };
     });
   }
 
@@ -115,7 +114,7 @@
     clearTimeout(state.persistTimer);
     state.persistTimer = setTimeout(() => {
       state.persistTimer = 0;
-      writePersistentV72(state).catch(() => {});
+      writePersistentV72(state).catch(error => window.telechatStorageV124?.report(error));
     }, delay);
   }
 

@@ -1,0 +1,16 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+const model=require('../activity-model-v124.js');
+assert.equal(model.progress(0).level,1);assert.equal(model.progress(99).level,1);assert.equal(model.progress(100).level,2);assert.equal(model.progress(400).level,3);assert.equal(model.progress(100).percent,0);assert.equal(model.progress(-10).xp,0);
+const state=(time,paused=false,id='a')=>({time,paused,track:{id}});
+assert.equal(model.listening(state(10),state(15),5),5);
+assert.equal(model.listening(state(10),state(120),5),0,'seeking does not earn XP');
+assert.equal(model.listening(state(10),state(15,true),5),0);
+assert.equal(model.listening(state(10,true),state(15),5),0);
+assert.equal(model.listening(state(10),state(15,false,'b'),5),0);
+assert.equal(model.listening(state(10),state(5),5),0,'loop/restart resets baseline');
+assert.equal(model.listening(state(10),state(70),60),60,'throttled background timer counts real playback advancement');
+assert.equal(model.listening(state(10),state(610),600),0,'suspended timer does not manufacture activity');
+const sql=fs.readFileSync(path.join(__dirname,'../supabase-activity-v124.sql'),'utf8');
+for(const clause of ['for update','seq>(prior','pass=p_pass','enable row level security','revoke all on public.activity_stats_v124','limit 31','least(s.active_today,7200)','least(s.music_today,10800)'])assert(sql.includes(clause),clause);
+assert(!/grant.*(?:insert|update|delete).*to anon/i.test(sql));
+console.log('PASS activity model: level thresholds, playback, pause, seek, track change, sleep, SQL safeguards');

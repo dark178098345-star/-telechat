@@ -1,0 +1,26 @@
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+const {chromium}=require('playwright'),root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f),'utf8');
+(async()=>{const browser=await chromium.launch({channel:'msedge',headless:true});try{
+ const page=await browser.newPage({viewport:{width:390,height:844}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.route('https://stats.test/**',r=>r.fulfill({contentType:'text/html',body:'<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{font-family:Arial,sans-serif;background:#10101b}</style><div id="settings-panel"></div><div id="user-profile-modal"><div id="view-profile-nick">@alice<span>✓</span></div></div>'}));await page.goto('https://stats.test');
+ await page.evaluate(()=>{window.me={nick:'alice',pass:'fixture'};window.calls=[];window.fail=false;window.remote={nick:'alice',xp:100,active_seconds:3600,music_seconds:7200,today_xp:100};
+ window.sb={rpc:async(name,args)=>{calls.push(args);if(fail)throw Error('offline fixture');return {data:{...remote,nick:args.p_nick}};},from:()=>({select(){return this},eq(k,nick){this.nick=nick;return this},maybeSingle(){return Promise.resolve({data:{nick:this.nick,xp:this.nick==='bob'?400:100}});}})};
+ Object.defineProperty(navigator,'storage',{value:{estimate:async()=>({usage:100,quota:1000})},configurable:true});});
+ for(const f of ['activity-model-v124.js','storage-watch-v124.js','activity-stats-v124.js'])await page.addScriptTag({content:read(f)});await page.addStyleTag({content:read('activity-stats-v124.css')});
+ await page.locator('#stats-open-v124').click();await page.waitForFunction(()=>document.querySelector('#stats-level-v124').textContent==='Уровень 2');
+ assert.equal(await page.locator('#stats-active-v124').textContent(),'1 ч 0 мин');assert.equal(await page.locator('#stats-music-v124').textContent(),'2 ч 0 мин');
+ assert(await page.locator('#activity-dialog-v124').evaluate(e=>e.getBoundingClientRect().width<=innerWidth));
+ await page.evaluate(()=>telechatActivityV124.refreshBadges());await page.waitForSelector('.activity-badge-v124:not([hidden])');assert.equal(await page.locator('.activity-badge-v124').textContent(),'✦ Уровень 2');
+ await page.screenshot({path:path.join(root,'outputs/activity-v124-mobile.png')});
+ await page.keyboard.press('Escape');assert.equal(await page.locator('#activity-dialog-v124').evaluate(e=>e.open),false);
+ await page.evaluate(()=>{document.querySelector('#view-profile-nick').textContent='@bob';});await page.waitForFunction(()=>document.querySelector('.activity-badge-v124').textContent==='✦ Уровень 3');assert.equal(await page.locator('.activity-badge-v124').isDisabled(),true);
+ await page.evaluate(async()=>{fail=true;await telechatActivityV124.sync(true);await telechatActivityV124.sync(true);});
+ const retries=await page.evaluate(()=>calls.slice(-2));assert.equal(retries[0].p_data.seq,retries[1].p_data.seq,'failed pulse retries same idempotency sequence');
+ await page.evaluate(async()=>{fail=false;me={nick:'bob',pass:'fixture2'};remote.xp=400;await telechatActivityV124.sync(true);telechatActivityV124.open();});await page.waitForFunction(()=>document.querySelector('#stats-level-v124').textContent==='Уровень 3');
+ assert.equal(await page.evaluate(()=>calls.at(-1).p_nick),'bob');
+ await page.setViewportSize({width:1280,height:900});await page.screenshot({path:path.join(root,'outputs/activity-v124-desktop.png')});await page.keyboard.press('Escape');
+ await page.evaluate(async()=>{navigator.storage.estimate=async()=>({usage:930,quota:1000});await telechatStorageV124.check(true);});assert.match(await page.locator('#storage-notice-v124').textContent(),/почти заполнено/);
+ await page.locator('#storage-notice-v124 button').click();await page.evaluate(()=>{navigator.storage.estimate=async()=>({usage:10,quota:1000});telechatStorageV124.report(new DOMException('quota','QuotaExceededError'));});
+ await page.waitForTimeout(100);assert.equal(await page.locator('#storage-notice-v124').isVisible(),true,'quota failure remains visible even if browser estimate is low');assert.match(await page.locator('#storage-notice-v124 strong').textContent(),/заполнено/);
+ assert.deepEqual(errors,[]);console.log('PASS activity UI: mobile/desktop, levels, account switch, retry, privacy, storage warnings');
+ }finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

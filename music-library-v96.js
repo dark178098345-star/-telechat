@@ -68,6 +68,7 @@
     });
   }
   function errorText(error) {
+    window.telechatStorageV124?.report(error);
     if (error?.name === 'QuotaExceededError') return 'На устройстве не хватает места. Удали несколько треков и попробуй снова.';
     if (error?.name === 'SecurityError' || error?.name === 'InvalidStateError') return 'Браузер запретил локальное хранилище. Разреши хранение данных сайта.';
     return error?.message || 'Не удалось открыть музыкальную библиотеку.';

@@ -32,8 +32,8 @@
           if(++count>MAX_RECORDS||bytes>MAX_BYTES||Date.now()-record.at>DISK_TTL)store.delete(record.id);
         }};
       }
-      tx.oncomplete=resolve;tx.onerror=resolve;tx.onabort=resolve;
-    });}catch(_){/* Storage may be unavailable/full. Network and memory still work. */}
+      tx.oncomplete=resolve;tx.onerror=tx.onabort=()=>{window.telechatStorageV124?.report(tx.error);resolve();};
+    });}catch(error){window.telechatStorageV124?.report(error);/* Network and memory still work. */}
   }
   function persist(user,at){
     if(!owner)return;

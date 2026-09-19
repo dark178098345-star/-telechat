@@ -1,0 +1,15 @@
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict'),{chromium}=require('playwright');
+const root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f),'utf8');
+(async()=>{const browser=await chromium.launch({channel:'msedge',headless:true});try{const page=await browser.newPage();
+ await page.route('**/*',route=>{const url=new URL(route.request().url());if(url.hostname!=='layout.test')return route.abort();const file=path.join(root,url.pathname==='/'?'index.html':url.pathname.slice(1));if(!fs.existsSync(file))return route.fulfill({status:404,body:''});let body=read(path.relative(root,file));if(file.endsWith('.html'))body=body.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'');return route.fulfill({contentType:file.endsWith('.css')?'text/css':'text/html',body});});
+ await page.goto('https://layout.test/');await page.evaluate(()=>{document.querySelector('#startup-loader')?.remove();document.querySelector('#auth-screen')?.classList.remove('active');document.querySelector('#chat-screen')?.classList.add('active');window.me={nick:'creator',pass:'fixture'};window.sb={rpc:async()=>({data:{xp:400,active_seconds:13200,music_seconds:30600,today_xp:210}}),from:()=>({select(){return this},eq(){return this},maybeSingle:async()=>({data:{nick:'creator',xp:400}})})};document.querySelector('#view-profile-name').textContent='creator';document.querySelector('#view-profile-nick').innerHTML='@creator<span class="verified-badge">✓</span>';document.querySelector('#view-profile-avatar').textContent='🌙';document.querySelector('#view-profile-bio').textContent='Создаю tele.chat';document.querySelector('#view-profile-seen').textContent='сейчас в сети';});
+ for(const file of ['activity-model-v124.js','storage-watch-v124.js','activity-stats-v124.js'])await page.addScriptTag({content:read(file)});
+ for(const width of [320,390,1280]){await page.setViewportSize({width,height:900});await page.evaluate(()=>{document.querySelector('#user-profile-modal').classList.add('show');telechatActivityV124.refreshBadges();});await page.waitForSelector('.activity-badge-v124:not([hidden])');
+  assert.equal(await page.locator('.activity-badge-v124').evaluate(e=>getComputedStyle(e).gridColumnStart),'2');
+  assert(await page.locator('.activity-badge-v124').evaluate(e=>{const r=e.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth;}));
+  await page.screenshot({path:path.join(root,`outputs/activity-profile-v124-${width}.png`)});
+  await page.evaluate(()=>telechatActivityV124.open());await page.waitForTimeout(50);assert(await page.locator('#activity-dialog-v124').evaluate(e=>e.scrollWidth<=e.clientWidth+1),'No horizontal overflow at '+width);
+  await page.screenshot({path:path.join(root,`outputs/activity-layout-v124-${width}.png`)});await page.keyboard.press('Escape');
+ }
+ console.log('PASS full stylesheet integration: statistics and verified profile badges at 320/390/1280px');
+ }finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

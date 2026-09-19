@@ -43,7 +43,7 @@ for (const asset of ['delivery-v72.css?v=72', 'presence-model-v120.js?v=120', 'p
   assert(index.includes(asset), `index is missing ${asset}`);
   assert(serviceWorker.includes(asset), `service worker is missing ${asset}`);
 }
-for (const asset of ['chat-reliability-v24.js?v=78', 'chat-speed-v51.js?v=121', 'voice-calls-v32.js?v=78']) {
+for (const asset of ['chat-reliability-v24.js?v=78', 'chat-speed-v51.js?v=124', 'voice-calls-v32.js?v=78']) {
   assert(index.includes(asset), `index is missing ${asset}`);
   assert(serviceWorker.includes(asset), `service worker is missing ${asset}`);
 }
