@@ -13,13 +13,13 @@
 
   const lightFields='nick,name,av,status,last_seen,avatar_video,animated_profile',profileFields='nick,name,av,status,bio,banner,last_seen,avatar_video,animated_profile';
   const cache=new Map(),inflight=new Map(),lightInflight=new Map(),times=new Map();let token=0,lastNick='';
-  function merge(user){if(!user||!user.nick)return null;userCache[user.nick]=Object.assign({},userCache[user.nick]||{},user);times.set(user.nick,Date.now());return userCache[user.nick];}
+  function merge(user){if(window.telechatUserCacheV123)return window.telechatUserCacheV123.merge(user);if(!user||!user.nick)return null;userCache[user.nick]=Object.assign({},userCache[user.nick]||{},user);times.set(user.nick,Date.now());return userCache[user.nick];}
   async function light(nick){
     if(lightInflight.has(nick))return lightInflight.get(nick);
     const task=(async()=>{let r=await sb.from('users').select(lightFields).eq('nick',nick).maybeSingle();if(r.error&&/avatar_video|animated_profile/.test(String(r.error.message)))r=await sb.from('users').select('nick,name,av,status,last_seen').eq('nick',nick).maybeSingle();return r.data?merge(r.data):null;})().finally(()=>lightInflight.delete(nick));
     lightInflight.set(nick,task);return task;
   }
-  getUser=async function(nick){nick=String(nick||'').toLowerCase();if(!nick)return null;const saved=userCache[nick];if(saved){if(Date.now()-(times.get(nick)||0)>45000)light(nick).catch(()=>{});return saved;}return light(nick);};
+  getUser=async function(nick){if(window.telechatUserCacheV123)return window.telechatUserCacheV123.get(nick);nick=String(nick||'').toLowerCase();if(!nick)return null;const saved=userCache[nick];if(saved){if(Date.now()-(times.get(nick)||0)>45000)light(nick).catch(()=>{});return saved;}return light(nick);};
   async function full(nick,force){
     const saved=cache.get(nick);if(!force&&saved&&Date.now()-saved.time<90000)return saved.user;if(inflight.has(nick))return inflight.get(nick);
     const task=(async()=>{let r=await sb.from('users').select(profileFields).eq('nick',nick).maybeSingle();if(r.error&&/avatar_video|animated_profile/.test(String(r.error.message)))r=await sb.from('users').select('nick,name,av,status,bio,banner,last_seen').eq('nick',nick).maybeSingle();if(r.error)throw r.error;if(!r.data)throw Error('Профиль не найден');const user=merge(r.data);cache.set(nick,{user,time:Date.now()});return user;})().finally(()=>inflight.delete(nick));

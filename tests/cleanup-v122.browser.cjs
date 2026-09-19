@@ -1,6 +1,7 @@
 const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),assert=require('node:assert/strict');
 const {chromium}=require('playwright');
 const root=path.resolve(__dirname,'..'),failures=[];
+const cacheName=fs.readFileSync(path.join(root,'sw.js'),'utf8').match(/const CACHE_NAME='([^']+)'/)[1];
 const server=http.createServer((req,res)=>{
   const route=new URL(req.url,'http://localhost').pathname;
   if(route==='/cleanup-fixture'){res.setHeader('Content-Type','text/html');return res.end('<!doctype html><title>Cache verification</title>');}
@@ -21,8 +22,8 @@ const server=http.createServer((req,res)=>{
       await navigator.serviceWorker.register('/sw.js');await navigator.serviceWorker.ready;
       if(!navigator.serviceWorker.controller)await new Promise(resolve=>navigator.serviceWorker.addEventListener('controllerchange',resolve,{once:true}));
     });
-    assert.deepEqual(await page.evaluate(()=>caches.keys()),['telechat-shell-v122-safe-cleanup'],'new cache must replace the previous app shell');
-    const urls=await page.evaluate(async()=>{const c=await caches.open('telechat-shell-v122-safe-cleanup');return (await c.keys()).map(r=>r.url);});
+    assert.deepEqual(await page.evaluate(()=>caches.keys()),[cacheName],'new cache must replace the previous app shell');
+    const urls=await page.evaluate(async name=>{const c=await caches.open(name);return (await c.keys()).map(r=>r.url);},cacheName);
     assert.equal(new Set(urls.map(url=>new URL(url).pathname)).size,urls.length,'one cached copy per file');
     await context.setOffline(true);
     const errors=await page.evaluate(async urls=>{

@@ -20,6 +20,8 @@ const root=path.resolve(__dirname,'..');
     assert.equal(await page.locator('#profile-panel').evaluate(el=>el.getBoundingClientRect().width),390);
     await page.evaluate(()=>{const image=document.createElement('img');image.src='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';document.body.append(image);});
     await page.waitForFunction(()=>document.querySelector('img')?.loading==='lazy');
+    await page.evaluate(()=>{const avatar=document.createElement('img');avatar.className='avatar-photo';avatar.src=document.querySelector('img').src;document.body.append(avatar);});
+    await page.waitForFunction(()=>document.querySelector('.avatar-photo')?.loading==='eager');
     await context.close();
     const desktop=await browser.newPage({viewport:{width:1280,height:900}});
     await desktop.setContent(`<div id="chat-screen"><div class="sidebar"><div class="sidebar-top"></div></div><div class="chat-main"><div id="active-chat"></div></div></div>`);

@@ -12,6 +12,7 @@
   const USER_FIELDS_V15='nick,name,av,status,last_seen,avatar_video,animated_profile';
   const sidebarUserFreshV18=new Map();
   async function batchUsersV15(nicks,force=false){
+    if(window.telechatUserCacheV123)return window.telechatUserCacheV123.many(nicks,force);
     const unique=[...new Set((nicks||[]).map(nick=>String(nick||'').toLowerCase()).filter(Boolean))];
     const missing=unique.filter(nick=>!userCache[nick]||(force&&Date.now()-(sidebarUserFreshV18.get(nick)||0)>60000));
     for(let start=0;start<missing.length;start+=100){
@@ -109,7 +110,7 @@
       const snapshot=JSON.parse(raw),age=Date.now()-Number(snapshot.at||0);
       if(snapshot.version!==18||age<0||age>SIDEBAR_SNAPSHOT_TTL_V18)return false;
       roomRows=Array.isArray(snapshot.rooms)?snapshot.rooms:[];roomsAvailable=true;
-      Object.entries(snapshot.users||{}).forEach(([nick,user])=>{userCache[nick]={...(userCache[nick]||{}),...user};});
+      Object.entries(snapshot.users||{}).forEach(([nick,user])=>{userCache[nick]={...user,...(userCache[nick]||{})};});
       sidebarMessagesCacheV17=(Array.isArray(snapshot.messages)?snapshot.messages:[]).map(compactSidebarMessageV18).filter(message=>message.chat_key);
       sidebarCacheReadyV17=true;sidebarCacheUpdatedAtV17=Number(snapshot.at)||0;return true;
     }catch(error){return false;}
@@ -137,12 +138,17 @@
       seen.add(key);latest.push(message);if(latest.length>=180)break;
     }
     const textById=new Map();
+    // Avatars do not depend on message text or room loading: fetch them in parallel.
+    const tasks=[batchUsersV15(sidebarPrivateNicksV18(latest),true)];
     for(let start=0;start<latest.length;start+=80){
       const ids=latest.slice(start,start+80).map(message=>message.id);
-      const textResult=await sb.from('messages').select('id,text').in('id',ids);
-      if(textResult.error)throw textResult.error;
-      (textResult.data||[]).forEach(message=>textById.set(String(message.id),message.text));
+      tasks.push((async()=>{
+        const textResult=await sb.from('messages').select('id,text').in('id',ids);
+        if(textResult.error)throw textResult.error;
+        (textResult.data||[]).forEach(message=>textById.set(String(message.id),message.text));
+      })());
     }
+    await Promise.all(tasks);
     return latest.map(message=>compactSidebarMessageV18({...message,text:textById.get(String(message.id))||''}));
   }
 
@@ -279,6 +285,13 @@
     if(Date.now()-sidebarCacheUpdatedAtV17>SIDEBAR_NETWORK_TTL_V18){clearTimeout(tabRefreshTimerV17);tabRefreshTimerV17=setTimeout(requestSidebarRefreshV18,120);}
   };
   window.renderSidebarCachedV17=renderSidebarCachedV17;
+  let userPaintFrameV123=0;
+  window.addEventListener('telechat-user-updated-v123',event=>{
+    const nick=event.detail?.nick;
+    if(nick&&currentChat===nick&&!currentRoom&&typeof setAvatarElement==='function')setAvatarElement(document.getElementById('chat-av'),userCache[nick]);
+    if(!sidebarCacheReadyV17||userPaintFrameV123)return;
+    userPaintFrameV123=requestAnimationFrame(()=>{userPaintFrameV123=0;paintSidebarV17(sidebarMessagesCacheV17).catch(()=>{});});
+  });
   window.telechatSidebarCacheInfoV17=()=>({ready:sidebarCacheReadyV17,age:sidebarCacheReadyV17?Date.now()-sidebarCacheUpdatedAtV17:null,messages:sidebarMessagesCacheV17.length,snapshot:sidebarSnapshotHydratedForV18===me?.nick});
   const renderMessagesFallbackV15=renderMessages;
   let messageRequestV15=0;

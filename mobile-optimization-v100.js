@@ -21,7 +21,7 @@
     const images=[];const videos=[];
     if(scope.matches?.('img'))images.push(scope);if(scope.matches?.('video'))videos.push(scope);
     scope.querySelectorAll?.('img').forEach(image=>images.push(image));scope.querySelectorAll?.('video').forEach(video=>videos.push(video));
-    images.forEach(image=>{if(image.loading!=='lazy')image.loading='lazy';if(image.decoding!=='async')image.decoding='async';});
+    images.forEach(image=>{const loading=image.matches('.avatar-photo')||image.closest('.av,.room-avatar')?'eager':'lazy';if(image.loading!==loading)image.loading=loading;if(image.decoding!=='async')image.decoding='async';});
     videos.forEach(video=>{video.playsInline=true;if(!video.autoplay)video.preload='metadata';});
   }
   function update(){if(frame)return;frame=requestAnimationFrame(()=>{frame=0;viewport();prepareMedia();});}

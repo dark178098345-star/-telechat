@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v122-safe-cleanup';
+const CACHE_NAME='telechat-shell-v123-avatar-cache';
 const APP_SHELL=[
   './presence-model-v120.js?v=120',
   './presence-v120.js?v=120',
@@ -11,7 +11,7 @@ const APP_SHELL=[
   './stories-v115.css?v=116',
   './stories-v115.js?v=116',
   './room-media-v113.js?v=113',
-  './app-performance-v17.js?v=113',
+  './app-performance-v17.js?v=123',
   './chat-open-loader-v44.js?v=113',
   './message-context-v36.js?v=113',
   './navigation-readers-v109.js?v=109',
@@ -25,7 +25,7 @@ const APP_SHELL=[
   './profile-follow-compact-v102.js?v=102',
   './background-presence-v101.css?v=101',
   './mobile-adaptation-v100.css?v=100',
-  './mobile-optimization-v100.js?v=100',
+  './mobile-optimization-v100.js?v=123',
   './soundcloud-v98.js?v=117',
   './soundcloud-v98.css?v=99',
   './branding/soundcloud-white.png',
@@ -53,7 +53,8 @@ const APP_SHELL=[
   './favicon-32.png',
   './favicon-48.png',
   './favicon.ico',
-  './profile-performance-v11.js?v=97',
+  './user-cache-v123.js?v=123',
+  './profile-performance-v11.js?v=123',
   './followers-v12.js',
   './ui-polish-v16.css',
   './ui-polish-v16.js',
