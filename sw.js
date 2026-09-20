@@ -1,5 +1,7 @@
-const CACHE_NAME='telechat-shell-v125-voice-icons';
+const CACHE_NAME='telechat-shell-v126-reactions';
 const APP_SHELL=[
+  './reaction-art-v126.js?v=126',
+  './reactions-v126.css?v=126',
   './ui-symbols-v125.js?v=125',
   './ui-icons-v125.js?v=125',
   './ui-icons-v125.css?v=125',
@@ -22,7 +24,7 @@ const APP_SHELL=[
   './room-media-v113.js?v=113',
   './app-performance-v17.js?v=123',
   './chat-open-loader-v44.js?v=113',
-  './message-context-v36.js?v=113',
+  './message-context-v36.js?v=126',
   './navigation-readers-v109.js?v=109',
   './navigation-readers-v109.css?v=109',
   './performance-v107.js?v=108',

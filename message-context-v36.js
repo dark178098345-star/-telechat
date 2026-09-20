@@ -18,6 +18,8 @@
   let reactionSubscriptionV36 = null;
   let reactionRefreshTimerV36 = 0;
   let reactionRequestV105=0;
+  const pendingReactionsV126=new Map();
+  const reactionInfoV126=emoji=>window.telechatReactionArtV126?.info(emoji)||{label:emoji,color:'#c5b4ee',html:''};
   let contextOpenedAtV36 = 0;
   let manualMessageScrollAtV36 = 0;
   let selectionModeV36 = false;
@@ -94,7 +96,7 @@
     menu.setAttribute('aria-label', 'Действия с сообщением');
     menu.innerHTML = `
       <div class="ctx-reactions-v36" id="ctx-reactions-v36" aria-label="Быстрые реакции">
-        ${REACTIONS_V36.map(emoji => `<button type="button" class="ctx-reaction-v36" data-reaction-v36="${emoji}" aria-label="Реакция ${emoji}">${emoji}</button>`).join('')}
+        ${REACTIONS_V36.map(emoji => {const art=reactionInfoV126(emoji);return `<button type="button" class="ctx-reaction-v36" data-reaction-v36="${emoji}" style="--reaction-tone:${art.color}" title="${art.label}" aria-label="${art.label}" aria-pressed="false">${art.html||emoji}</button>`;}).join('')}
       </div>
       <button type="button" class="ctx-item ctx-button-v36" data-action-v36="reply"><span class="ctx-icon-v36">↩</span><span>Ответить</span></button>
       <button type="button" class="ctx-item ctx-button-v36" id="ctx-edit-v36" data-action-v36="edit"><span class="ctx-icon-v36">✎</span><span>Изменить</span></button>
@@ -111,9 +113,7 @@
       if (reaction) {
         const message = ctxMsg;
         if (message?.id && !reaction.disabled) {
-          reaction.disabled = true;
-          Promise.resolve(toggleMessageReactionV36(message.id, reaction.dataset.reactionV36))
-            .finally(() => { reaction.disabled = false; });
+          toggleMessageReactionV36(message.id, reaction.dataset.reactionV36);
         }
         return;
       }
@@ -177,6 +177,7 @@
     const canEdit = !!message.id && own && !message.deleted && !isSpecialMessageV36(message.text);
     const canPin = !!message.id && !message.deleted;
     document.getElementById('ctx-reactions-v36').style.display = message.id && !message.deleted ? 'grid' : 'none';
+    syncReactionPickerV126(message.id);
     document.getElementById('ctx-edit-v36').style.display = canEdit ? 'flex' : 'none';
     document.getElementById('ctx-pin-v36').style.display = canPin ? 'flex' : 'none';
     document.getElementById('ctx-forward-v36').style.display = message.deleted ? 'none' : 'flex';
@@ -190,10 +191,10 @@
     menu.style.visibility = 'hidden';
     menu.classList.add('show');
     requestAnimationFrame(() => {
-      const rect = menu.getBoundingClientRect();
       const gap = 8;
-      const left = Math.max(gap, Math.min(x, window.innerWidth - rect.width - gap));
-      const top = Math.max(gap, Math.min(y, window.innerHeight - rect.height - gap));
+      // Entrance transforms shrink getBoundingClientRect; use the final layout size.
+      const left = Math.max(gap, Math.min(x, window.innerWidth - menu.offsetWidth - gap));
+      const top = Math.max(gap, Math.min(y, window.innerHeight - menu.offsetHeight - gap));
       menu.style.setProperty('--ctx-origin-x', x > window.innerWidth / 2 ? '90%' : '10%');
       menu.style.setProperty('--ctx-origin-y', y > window.innerHeight / 2 ? '90%' : '10%');
       menu.style.left = left + 'px';
@@ -549,7 +550,7 @@
     const groups = new Map();
     rows.forEach(row => {
       if (!groups.has(row.emoji)) groups.set(row.emoji, []);
-      groups.get(row.emoji).push(row.user_nick);
+      if(!groups.get(row.emoji).includes(row.user_nick))groups.get(row.emoji).push(row.user_nick);
     });
     if (!container) {
       container = document.createElement('div');
@@ -572,10 +573,12 @@
         container.appendChild(button);
       }
       remaining.delete(emoji);
-      button.className = 'message-reaction-v36' + (nicks.includes(me?.nick) ? ' mine' : '');
+      button.classList.add('message-reaction-v36');button.classList.toggle('mine',nicks.includes(me?.nick));
       button.title = nicks.map(nick => '@' + nick).join(', ');
-      const markup=`<span>${emoji}</span><span>${nicks.length}</span>`;
-      if(button.innerHTML!==markup)button.innerHTML=markup;
+      const art=reactionInfoV126(emoji),mine=nicks.includes(me?.nick),busy=pendingReactionsV126.has(String(message.id));
+      button.style.setProperty('--reaction-tone',art.color);button.disabled=busy;button.setAttribute('aria-busy',String(busy));button.setAttribute('aria-pressed',String(mine));button.setAttribute('aria-label',art.label+' · '+nicks.length+(mine?' · твоя реакция, нажми чтобы убрать':' · поставить реакцию'));
+      if(!button.querySelector('.reaction-icon-v126')){const icon=document.createElement('span');icon.className='reaction-icon-v126';if(art.html)icon.innerHTML=art.html;else icon.textContent=emoji;const count=document.createElement('span');count.className='reaction-count-v126';button.replaceChildren(icon,count);}
+      const count=button.querySelector('.reaction-count-v126');if(count.textContent!==String(nicks.length))count.textContent=String(nicks.length);
     });
     remaining.forEach(button => button.remove());
   }
@@ -603,7 +606,9 @@
     const ids = Array.from(new Set(messages.map(message => message.id)));
     const nextRows = new Map();
     if (ids.length) {
-      const result = await sb.from('message_reactions').select('*').in('message_id', ids);
+      let result;
+      try { result = await sb.from('message_reactions').select('*').in('message_id', ids); }
+      catch (error) { return; } // Keep the last good snapshot while offline.
       if (result.error) return;
       (result.data || []).forEach(row => {
         const key = String(row.message_id);
@@ -612,11 +617,19 @@
       });
     }
     if(request!==reactionRequestV105||key!==conversationKey())return;
+    // Realtime can arrive before our write finishes; keep the local intent visible.
+    for (const [id, pending] of pendingReactionsV126) {
+      if (pending.key !== key || pending.owner !== me?.nick) continue;
+      const rows = (nextRows.get(id) || []).filter(row => row.user_nick !== pending.owner);
+      if (pending.emoji) rows.push({message_id:pending.id, user_nick:pending.owner, emoji:pending.emoji});
+      nextRows.set(id, rows);
+    }
     reactionRowsV36 = nextRows;
     visibleMessagesV36.forEach((message, key) => {
       const element = Array.from(document.querySelectorAll('#messages .msg')).find(item => item.dataset.contextKeyV36 === key);
       if (element) renderMessageReactionsV36(message, element);
     });
+    if (typeof ctxMsg !== 'undefined' && ctxMsg?.id) syncReactionPickerV126(ctxMsg.id);
   }
 
   function scheduleReactionRefreshV36() {
@@ -631,15 +644,62 @@
       .subscribe();
   }
 
+  function syncReactionPickerV126(messageId) {
+    const mine = (reactionRowsV36.get(String(messageId)) || []).find(row => row.user_nick === me?.nick);
+    document.querySelectorAll('[data-reaction-v36]').forEach(button => {
+      button.setAttribute('aria-pressed', String(button.dataset.reactionV36 === mine?.emoji));
+      button.disabled = pendingReactionsV126.has(String(messageId));
+    });
+  }
+
+  function reactionElementV126(id) {
+    return [...document.querySelectorAll('#messages .msg[data-id]')].find(el => el.dataset.id === String(id));
+  }
+
+  function paintReactionV126(id) {
+    const message = visibleMessagesV36.get('id:' + id);
+    if (message) renderMessageReactionsV36(message, reactionElementV126(id));
+    if (String(typeof ctxMsg !== 'undefined' ? ctxMsg?.id : '') === String(id)) syncReactionPickerV126(id);
+  }
+
   async function toggleMessageReactionV36(messageId, emoji) {
-    if (!messageId || !REACTIONS_V36.includes(emoji)) return;
-    const rows = reactionRowsV36.get(String(messageId)) || [];
-    const mine = rows.find(row => row.user_nick === me?.nick);
-    const result = mine?.emoji === emoji
-      ? await sb.from('message_reactions').delete().eq('message_id', messageId).eq('user_nick', me.nick)
-      : await sb.from('message_reactions').upsert({ message_id: messageId, user_nick: me.nick, emoji, created_at: Date.now() }, { onConflict: 'message_id,user_nick' });
-    if (result.error) { showToast('Не удалось поставить реакцию'); return; }
-    await refreshVisibleReactionsV36();
+    const id = String(messageId), owner = me?.nick, key = conversationKey();
+    if (!messageId || !owner || !key || !REACTIONS_V36.includes(emoji) || pendingReactionsV126.has(id)) return;
+    const rows = reactionRowsV36.get(id) || [];
+    const mine = rows.find(row => row.user_nick === owner);
+    const selected = mine?.emoji === emoji ? null : emoji;
+    pendingReactionsV126.set(id, {id:messageId, owner, key, emoji:selected});
+    reactionRequestV105++;
+    const optimistic = rows.filter(row => row.user_nick !== owner);
+    if (selected) optimistic.push({message_id:messageId, user_nick:owner, emoji:selected});
+    reactionRowsV36.set(id, optimistic);
+    paintReactionV126(id);
+    closeContextMenuV36();
+    if (selected) {
+      const button = [...(reactionElementV126(id)?.querySelectorAll('.message-reaction-v36') || [])]
+        .find(el => el.dataset.emojiV36 === selected);
+      window.telechatReactionArtV126?.animate(button);
+    }
+    try {
+      const result = selected === null
+        ? await sb.from('message_reactions').delete().eq('message_id', messageId).eq('user_nick', owner)
+        : await sb.from('message_reactions').upsert({message_id:messageId, user_nick:owner, emoji, created_at:Date.now()}, {onConflict:'message_id,user_nick'});
+      if (result.error) throw result.error;
+    } catch (error) {
+      if (key === conversationKey() && owner === me?.nick) {
+        const current = (reactionRowsV36.get(id) || []).filter(row => row.user_nick !== owner);
+        if (mine) current.push(mine);
+        reactionRowsV36.set(id, current);
+        showToast('Не удалось сохранить реакцию. Попробуй ещё раз.');
+      }
+    } finally {
+      pendingReactionsV126.delete(id);
+      if (key === conversationKey() && owner === me?.nick) {
+        reactionRequestV105++;
+        paintReactionV126(id);
+        scheduleReactionRefreshV36();
+      }
+    }
   }
 
   const appendMessageBeforeV36 = appendMessage;
