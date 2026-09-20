@@ -1,6 +1,9 @@
-const CACHE_NAME='telechat-shell-v126-reactions';
+const CACHE_NAME='telechat-shell-v127-custom-emoji';
 const APP_SHELL=[
-  './reaction-art-v126.js?v=126',
+  './tele-emoji-art-v127.js?v=127',
+  './tele-emoji-v127.js?v=127',
+  './tele-emoji-v127.css?v=127',
+  './reaction-art-v126.js?v=127',
   './reactions-v126.css?v=126',
   './ui-symbols-v125.js?v=125',
   './ui-icons-v125.js?v=125',
@@ -122,7 +125,7 @@ const APP_SHELL=[
   './mobile-experience-v79.css?v=79',
   './mobile-experience-v79.js?v=79',
   './emoji-motion-v80.css?v=82',
-  './emoji-motion-v80.js?v=82',
+  './emoji-motion-v80.js?v=127',
   './profile-background-v84.css?v=86',
   './profile-background-v84.js?v=93'
 ];

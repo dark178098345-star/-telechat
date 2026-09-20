@@ -19,7 +19,7 @@ const root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f
     sb:{from:()=>({select(){return this},in(field,ids){return failRead?Promise.reject(Error('offline')):Promise.resolve({data:serverRows.filter(r=>ids.includes(r.message_id)).map(r=>({...r}))});},delete(){this.remove=true;this.filters={};return this},eq(k,v){this.filters[k]=v;return this},upsert(row){this.row=row;return this},then(resolve,reject){const op=this;writes.push({finish(error,throwError=false){if(!error){const id=op.remove?op.filters.message_id:op.row.message_id;serverRows=serverRows.filter(r=>!(r.message_id===id&&r.user_nick==='me'));if(!op.remove)serverRows.push(op.row);}if(throwError)reject(Error(error));else resolve({error:error?{message:error}:null});}});}}),channel:()=>({on(){return this},subscribe(){return this}})}
    });
   });
-  for(const f of ['reaction-art-v126.js','message-context-v36.js','ui-symbols-v125.js','ui-icons-v125.js'])await p.addScriptTag({content:read(f)});
+  for(const f of ['tele-emoji-art-v127.js','reaction-art-v126.js','message-context-v36.js','ui-symbols-v125.js','ui-icons-v125.js'])await p.addScriptTag({content:read(f)});
   await p.evaluate(()=>telechatSyncVisibleMessagesV105([row]));
   await p.waitForSelector('.message-reaction-v36');
   const heart=p.locator('.message-reaction-v36[data-emoji-v36="❤️"]');
