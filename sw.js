@@ -1,10 +1,10 @@
-const CACHE_NAME='telechat-shell-v124-activity';
+const CACHE_NAME='telechat-shell-v124-1-level-badge';
 const APP_SHELL=[
   './viewport-performance-v124.js?v=124',
   './viewport-performance-v124.css?v=124',
   './storage-watch-v124.js?v=124',
   './activity-model-v124.js?v=124',
-  './activity-stats-v124.js?v=124',
+  './activity-stats-v124.js?v=124.1',
   './activity-stats-v124.css?v=124',
   './presence-model-v120.js?v=120',
   './presence-v120.js?v=120',

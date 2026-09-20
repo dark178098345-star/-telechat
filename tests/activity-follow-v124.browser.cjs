@@ -1,0 +1,15 @@
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict'),{chromium}=require('playwright');
+const root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f),'utf8');
+(async()=>{const browser=await chromium.launch({channel:'msedge',headless:true});try{const page=await browser.newPage();
+ await page.route('https://badge.test/**',r=>r.fulfill({contentType:'text/html',body:'<!doctype html><div id="user-profile-modal"><div class="user-profile-body"><div id="view-profile-nick" class="user-profile-nick">@creator<span>✓</span></div><div id="follow-stats">8 подписчиков</div><button id="follow-btn">Подписаться</button></div></div>'}));await page.goto('https://badge.test');
+ await page.evaluate(()=>{window.me={nick:'creator',pass:'fixture'};window.changes=0;window.queries=0;window.sb={rpc:async()=>({data:{xp:100}}),from:()=>({select(){return this},eq(k,nick){this.nick=nick;return this},maybeSingle(){queries++;return Promise.resolve({data:{nick:this.nick,xp:100}})}})};new MutationObserver(records=>changes+=records.length).observe(document.querySelector('.user-profile-body'),{childList:true,subtree:true});});
+ for(const file of ['profile-follow-compact-v102.js','activity-model-v124.js','activity-stats-v124.js'])await page.addScriptTag({content:read(file)});
+ await page.evaluate(()=>telechatActivityV124.refreshBadges());await page.waitForSelector('.activity-badge-v124:not([hidden])');await page.waitForTimeout(400);
+ assert.equal(await page.locator('.activity-badge-v124').count(),1,'followers observer must not multiply badges');
+ assert.equal(await page.locator('#profile-follow-compact-v102').evaluate(e=>e.previousElementSibling.id),'view-profile-nick');
+ const settled=await page.evaluate(()=>changes);await page.waitForTimeout(400);assert.equal(await page.evaluate(()=>changes),settled,'layout observers must settle instead of looping');
+ await page.evaluate(()=>{const badge=document.querySelector('.activity-badge-v124');for(let i=0;i<30;i++)badge.parentElement.append(badge.cloneNode(true));telechatActivityV124.refreshBadges();});await page.waitForTimeout(100);assert.equal(await page.locator('.activity-badge-v124').count(),1,'existing duplicates are removed');
+ await page.evaluate(()=>{for(let i=0;i<50;i++){telechatFollowCompactV102.ensure();telechatActivityV124.refreshBadges();}});await page.waitForTimeout(100);assert.equal(await page.locator('.activity-badge-v124').count(),1);
+ await page.evaluate(()=>document.querySelector('#view-profile-nick').textContent='@other');await page.waitForTimeout(100);assert.equal(await page.locator('.activity-badge-v124').count(),1);assert.equal(await page.locator('.activity-badge-v124').getAttribute('data-nick'),'other');
+ console.log('PASS actual followers + activity modules: one badge, settled observers, 30 duplicates cleaned, 50 refreshes, profile switch');
+ }finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

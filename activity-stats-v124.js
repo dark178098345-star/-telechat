@@ -65,7 +65,11 @@
  }
  const profileNick=anchor=>anchor.textContent.trim().match(/^@([a-z0-9_.-]+)/i)?.[1].toLowerCase()||'';
  async function badge(anchor){const account=profileNick(anchor);if(!account)return;
-  let node=anchor.nextElementSibling;if(!node?.classList.contains('activity-badge-v124')){node=document.createElement('button');node.type='button';node.className='activity-badge-v124';node.hidden=true;anchor.after(node);}
+  // Followers also belong after the nickname. Never use adjacency as identity:
+  // their layout observer can move that row between the nickname and this badge.
+  const badges=[...anchor.parentElement.querySelectorAll(':scope > .activity-badge-v124')];
+  let node=badges.shift();for(const duplicate of badges)duplicate.remove();
+  if(!node){node=document.createElement('button');node.type='button';node.className='activity-badge-v124';node.hidden=true;anchor.after(node);}
   if(node.dataset.nick!==account){node.hidden=true;node.dataset.nick=account;}
   const value=await levelFor(account);if(!value||!anchor.isConnected||profileNick(anchor)!==account)return;
   const label='✦ Уровень '+model.progress(value.xp).level;if(node.textContent!==label)node.textContent=label;node.hidden=false;node.title=account===nick()?'Открыть мою статистику':'Уровень активности';node.disabled=account!==nick();node.onclick=account===nick()?open:null;
