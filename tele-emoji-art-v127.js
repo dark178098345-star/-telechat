@@ -25,7 +25,29 @@
   ['🔥','Огонь','огонь жарко fire hot','#f2af92','<path d="M26 3c2 11 17 16 17 28a19 19 0 0 1-38 0c0-8 4-14 10-19-1 8 4 11 6 7 3-5 5-9 5-16Z" fill="#eea38f" stroke="#b97188" stroke-width="1.5"/><path d="M25 22c0 8 9 10 8 15-2 11-18 11-19 0-1-5 7-9 11-15Z" fill="#ffdfaa"/><path d="m13 24-3 7" stroke="#ffe0c1" stroke-width="2.5" stroke-linecap="round"/>'],
   ['🌙','Луна','ночь луна telechat moon night','#c0acee','<path d="M35 5C12 2 0 28 17 41c13 10 29 0 29-11C24 41 13 16 35 5Z" fill="#c0acee" stroke="#8f78be" stroke-width="1.5"/><path d="M18 11C8 21 12 35 23 38" fill="none" stroke="#e7dcff" stroke-width="3" stroke-linecap="round"/><path d="m36 10 2 5 5 2-5 2-2 5-2-5-5-2 5-2Z" fill="#f2cf9e"/>']
  ];
- const all=entries.map(([emoji,label,keywords,color,shape])=>({emoji,label,keywords,color,html:`<svg class="tele-emoji-art-v127 reaction-art-v126" viewBox="0 0 48 48" fill="none" aria-hidden="true" focusable="false">${shape}</svg>`}));
+ entries.push(['🌧️','Дождик','облако дождь погода rain cloud','#acc6ed','<path d="M12 29C1 29 1 15 11 14 12 2 31 1 34 13c15-1 17 16 3 16Z" fill="#c4c2ea" stroke="#8b8db6" stroke-width="1.5"/><path d="M12 16c1-7 11-10 16-4" fill="none" stroke="#efecff" stroke-width="3" stroke-linecap="round"/><path d="m14 33-3 7M25 33l-3 7M36 33l-3 7" fill="none" stroke="#83bee6" stroke-width="3" stroke-linecap="round"/>']);
+ const modes=['joy','laugh','love','tender','kiss','cool','plea','cry','anger','surprise','think','sleep','heart','thumb','fire','moon','rain'];
+ const selectors={
+  joy:{eyes:'ellipse[rx="2"]',mouth:'path[d^="M14 29"]'},
+  laugh:{tears:'path[fill="#81cfea"]'},love:{hearts:'path[fill="#e35e96"]'},tender:{hearts:'path[fill="#e35e96"]'},kiss:{hearts:'path[fill="#e35e96"]'},
+  cool:{glasses:'path[fill="#33283f"]',shine:'path[stroke="#bba7ed"]'},plea:{shine:'circle[fill="white"]'},
+  cry:{tears:'path[fill="#69acd5"]',mouth:'ellipse[rx="4"]'},anger:{vein:'path[stroke="#a65076"]'},surprise:{mouth:'ellipse[rx="4"]',eyes:'ellipse[rx="2"]'},
+  think:{hand:'path[fill="#edd2ac"]'},sleep:{sleep:'path[stroke="#8063bb"]',mouth:'ellipse[rx="3"]'},fire:{flame:'path[fill="#eea38f"]',core:'path[fill="#ffdfaa"]'},moon:{star:'path[fill="#f2cf9e"]'},rain:{cloud:'path[fill="#c4c2ea"]'}
+ };
+ function motionMarkup(shape,mode){
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.innerHTML=shape;
+  // Wrap moving details so CSS transforms never replace an original SVG transform.
+  for(const [part,selector] of Object.entries(selectors[mode]||{}))for(const node of svg.querySelectorAll(selector)){
+   const group=document.createElementNS(svg.namespaceURI,'g');group.dataset.emojiPart=part;node.replaceWith(group);group.append(node);
+  }
+  if(mode==='rain'){
+   svg.querySelector('path[stroke="#83bee6"]').remove();
+   for(const x of [14,25,36]){const drop=document.createElementNS(svg.namespaceURI,'path');drop.dataset.emojiPart='drop';drop.setAttribute('d',`m${x} 33-3 7`);drop.setAttribute('stroke','#83bee6');drop.setAttribute('stroke-width','3');drop.setAttribute('stroke-linecap','round');svg.append(drop);}
+  }
+  return `<g data-emoji-part="body">${svg.innerHTML}</g>`;
+ }
+ const all=entries.map(([emoji,label,keywords,color,shape],index)=>({emoji,label,keywords,color,html:`<svg class="tele-emoji-art-v127 reaction-art-v126" data-emoji-motion="${modes[index]}" viewBox="0 0 48 48" fill="none" aria-hidden="true" focusable="false">${motionMarkup(shape,modes[index])}</svg>`}));
  const byEmoji=new Map(all.map(item=>[item.emoji,item]));byEmoji.set('❤',byEmoji.get('❤️'));
+ byEmoji.set('🌧',byEmoji.get('🌧️'));
  window.telechatEmojiArtV127={all,get:emoji=>byEmoji.get(emoji)};
 })();

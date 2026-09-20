@@ -19,7 +19,7 @@ const root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f
     sb:{from:()=>({select(){return this},in(field,ids){return failRead?Promise.reject(Error('offline')):Promise.resolve({data:serverRows.filter(r=>ids.includes(r.message_id)).map(r=>({...r}))});},delete(){this.remove=true;this.filters={};return this},eq(k,v){this.filters[k]=v;return this},upsert(row){this.row=row;return this},then(resolve,reject){const op=this;writes.push({finish(error,throwError=false){if(!error){const id=op.remove?op.filters.message_id:op.row.message_id;serverRows=serverRows.filter(r=>!(r.message_id===id&&r.user_nick==='me'));if(!op.remove)serverRows.push(op.row);}if(throwError)reject(Error(error));else resolve({error:error?{message:error}:null});}});}}),channel:()=>({on(){return this},subscribe(){return this}})}
    });
   });
-  for(const f of ['tele-emoji-art-v127.js','reaction-art-v126.js','message-context-v36.js','ui-symbols-v125.js','ui-icons-v125.js'])await p.addScriptTag({content:read(f)});
+  for(const f of ['tele-emoji-art-v127.js','reaction-art-v126.js','message-context-v36.js','ui-symbols-v125.js','ui-icons-v125.js','emoji-animation-v128.js'])await p.addScriptTag({content:read(f)});
   await p.evaluate(()=>telechatSyncVisibleMessagesV105([row]));
   await p.waitForSelector('.message-reaction-v36');
   const heart=p.locator('.message-reaction-v36[data-emoji-v36="❤️"]');
@@ -29,7 +29,7 @@ const root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f
   assert.equal(await heart.locator('.reaction-count-v126').textContent(),'2','optimistic count before database response');
   assert.equal(await heart.getAttribute('aria-pressed'),'true');
   assert(await heart.isDisabled());
-  assert(await heart.locator('svg').evaluate(el=>el.getAnimations().length>0),'short animation on selection');
+  assert(await heart.locator('svg').evaluate(el=>el.getAnimations({subtree:true}).length>0),'short animation on selection');
   await p.evaluate(()=>{originalHeart.click();showCtxMenu({clientX:370,clientY:150},row);});
   assert.equal(await p.locator('[data-reaction-v36]:disabled').count(),6,'one pending reaction per message');
   await p.evaluate(()=>telechatRefreshReactionsV36());
@@ -39,8 +39,8 @@ const root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f
   await p.waitForFunction(()=>!document.querySelector('.message-reaction-v36').disabled);
   await p.evaluate(()=>telechatRefreshReactionsV36());
   assert(await p.evaluate(()=>originalMessage===document.querySelector('.msg')&&originalHeart===document.querySelector('.message-reaction-v36')&&originalIcon===originalHeart.querySelector('svg')),'refresh preserves message, pill and icon nodes');
-  await p.waitForTimeout(400);
-  assert.equal(await heart.locator('svg').evaluate(el=>el.getAnimations().length),0,'no idle animation');
+  await p.waitForTimeout(1300);
+  assert.equal(await heart.locator('svg').evaluate(el=>el.getAnimations({subtree:true}).length),0,'no idle animation');
   assert.equal(await p.locator('[data-reaction-v36][aria-pressed=true]').getAttribute('data-reaction-v36'),'❤️');
 
   await p.evaluate(()=>showCtxMenu({clientX:370,clientY:180},row));
@@ -63,7 +63,7 @@ const root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f
   await p.emulateMedia({reducedMotion:'reduce'});
   await p.waitForTimeout(60);
   await heart.click();await p.waitForFunction(()=>writes.length===4);
-  assert.deepEqual(await heart.locator('svg').evaluate(el=>el.getAnimations().map(a=>({type:a.constructor.name,name:a.animationName,property:a.transitionProperty,frames:a.effect.getKeyframes()}))),[],'respects reduced motion');
+  assert.deepEqual(await heart.locator('svg').evaluate(el=>el.getAnimations({subtree:true}).map(a=>({type:a.constructor.name,name:a.animationName,property:a.transitionProperty,frames:a.effect.getKeyframes()}))),[],'respects reduced motion');
   await p.evaluate(()=>writes[3].finish());await p.waitForFunction(()=>!document.querySelector('.message-reaction-v36').disabled);
   await p.emulateMedia({reducedMotion:'no-preference'});
 

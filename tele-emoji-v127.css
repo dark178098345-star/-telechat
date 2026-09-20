@@ -1,4 +1,6 @@
 /* Local vector emoji: no downloads, filters, or continuously running animation. */
+.tele-emoji-art-v127 *{transition:none!important;animation:none!important}
+.tele-emoji-art-v127 [data-emoji-part]{transform-box:fill-box;transform-origin:center}
 .tele-emoji-v127{position:relative;display:inline-block;width:1.65em;height:1.65em;vertical-align:-.38em;line-height:1;margin:0 .04em;cursor:pointer}
 .tele-emoji-v127 .tele-emoji-art-v127{width:100%;height:100%;display:block}
 .tele-emoji-text-v127{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}

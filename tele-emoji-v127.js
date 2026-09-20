@@ -4,7 +4,7 @@
  const art=window.telechatEmojiArtV127;
  if(!art||typeof window.renderMessageContent!=='function')return;
  const emojiPattern=/\p{Extended_Pictographic}(?:[\uFE0E\uFE0F]|\p{Emoji_Modifier})*(?:\u200D\p{Extended_Pictographic}(?:[\uFE0E\uFE0F]|\p{Emoji_Modifier})*)*/gu;
- const candidates=/[😀😂😍🥰😘😎🥺😭😡😮🤔😴❤👍🔥🌙]/u;
+ const candidates=/[😀😂😍🥰😘😎🥺😭😡😮🤔😴❤👍🔥🌙🌧]/u;
  const before=window.renderMessageContent;
  function decorate(html){
   if(!candidates.test(html))return html;
