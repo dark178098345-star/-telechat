@@ -553,6 +553,7 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
 <link rel="stylesheet" href="./chat-wallpaper-v119.css?v=119">
 <link rel="stylesheet" href="./viewport-performance-v124.css?v=124">
 <link rel="stylesheet" href="./activity-stats-v124.css?v=124">
+<link rel="stylesheet" href="./ui-icons-v125.css?v=125">
 <link rel="stylesheet" href="./music-intro-v118.css?v=118">
 </head>
 <body>
@@ -989,7 +990,7 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
     <div class="field-label">Имя</div>
     <input class="field-input" id="prof-name-inp" maxlength="48" placeholder="Как к тебе обращаться" autocomplete="off"/>
     <div class="field-label">Статус</div>
-    <input class="field-input" id="prof-status-inp" maxlength="80" placeholder="не трогать 🔥" autocomplete="off"/>
+    <input class="field-input" id="prof-status-inp" maxlength="80" placeholder="Напиши свой статус" autocomplete="off"/>
     <div class="field-label">О себе</div>
     <textarea class="profile-bio-input" id="prof-bio-inp" maxlength="220" placeholder="Расскажи немного о себе…"></textarea>
     <div class="profile-nick-row"><div class="field-label">Мой ник</div><div id="my-nick-display"></div></div>
@@ -1587,7 +1588,7 @@ function renderPoll(poll,box){
     </div>`;
   });
   wrap.innerHTML=`<div class="poll-card">
-    <div class="poll-question">📊 ${escHtml(poll.question)}</div>
+    <div class="poll-question">${window.telechatIconsV125?.html('chart')||''} ${escHtml(poll.question)}</div>
     ${optsHtml}
     <div class="poll-total">${totalVotes} ${totalVotes===1?'голос':totalVotes<5?'голоса':'голосов'}</div>
   </div>`;
@@ -1913,8 +1914,8 @@ function unpackMedia(text){
 function messagePreviewText(text){
   const media=unpackMedia(text);
   if(!media)return String(text||'');
-  if(media.kind==='image')return '📷 Фотография'+(media.caption?' · '+media.caption:'');
-  return '🎤 Голосовое сообщение';
+  if(media.kind==='image')return 'Фотография'+(media.caption?' · '+media.caption:'');
+  return 'Голосовое сообщение';
 }
 function formatDuration(seconds){
   const value=Math.max(0,Math.round(seconds||0));
@@ -2703,7 +2704,8 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <script src="./voice-calls-v32.js?v=78"></script>
 <script src="./message-context-v36.js?v=113"></script>
 <script src="./desktop-notifications-v37.js?v=74"></script>
-<script src="./voice-send-v38.js?v=39"></script>
+<script src="./ui-symbols-v125.js?v=125"></script>
+<script src="./voice-send-v38.js?v=125"></script>
 <script src="./media-compat-v40.js?v=40"></script>
 <script src="./chat-boot-v41.js?v=51"></script>
 <script src="./fluid-ui-v42.js?v=48"></script>
@@ -2743,5 +2745,6 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <script src="./viewport-performance-v124.js?v=124"></script>
 <script src="./activity-model-v124.js?v=124"></script>
 <script src="./activity-stats-v124.js?v=124.1"></script>
+<script src="./ui-icons-v125.js?v=125"></script>
 </body>
 </html>

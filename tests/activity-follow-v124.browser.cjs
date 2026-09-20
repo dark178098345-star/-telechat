@@ -3,7 +3,7 @@ const root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f
 (async()=>{const browser=await chromium.launch({channel:'msedge',headless:true});try{const page=await browser.newPage();
  await page.route('https://badge.test/**',r=>r.fulfill({contentType:'text/html',body:'<!doctype html><div id="user-profile-modal"><div class="user-profile-body"><div id="view-profile-nick" class="user-profile-nick">@creator<span>✓</span></div><div id="follow-stats">8 подписчиков</div><button id="follow-btn">Подписаться</button></div></div>'}));await page.goto('https://badge.test');
  await page.evaluate(()=>{window.me={nick:'creator',pass:'fixture'};window.changes=0;window.queries=0;window.sb={rpc:async()=>({data:{xp:100}}),from:()=>({select(){return this},eq(k,nick){this.nick=nick;return this},maybeSingle(){queries++;return Promise.resolve({data:{nick:this.nick,xp:100}})}})};new MutationObserver(records=>changes+=records.length).observe(document.querySelector('.user-profile-body'),{childList:true,subtree:true});});
- for(const file of ['profile-follow-compact-v102.js','activity-model-v124.js','activity-stats-v124.js'])await page.addScriptTag({content:read(file)});
+ for(const file of ['profile-follow-compact-v102.js','activity-model-v124.js','activity-stats-v124.js','ui-symbols-v125.js','ui-icons-v125.js'])await page.addScriptTag({content:read(file)});
  await page.evaluate(()=>telechatActivityV124.refreshBadges());await page.waitForSelector('.activity-badge-v124:not([hidden])');await page.waitForTimeout(400);
  assert.equal(await page.locator('.activity-badge-v124').count(),1,'followers observer must not multiply badges');
  assert.equal(await page.locator('#profile-follow-compact-v102').evaluate(e=>e.previousElementSibling.id),'view-profile-nick');
