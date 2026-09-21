@@ -1,0 +1,31 @@
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict'),{chromium}=require('playwright');
+const root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f),'utf8');
+(async()=>{const browser=await chromium.launch({channel:'msedge',headless:true});try{
+ const p=await browser.newPage({viewport:{width:900,height:800}}),errors=[];p.on('pageerror',e=>errors.push(e.message));await p.route('**/*',r=>r.fulfill({contentType:'text/html; charset=utf-8',body:'<!doctype html><meta charset="utf-8"><div id="chat-screen"><div id="messages"></div></div>'}));await p.goto('http://telechat.test');
+ const index=read('index.html');for(const m of index.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g))await p.addStyleTag({content:m[1]});for(const m of index.matchAll(/<link[^>]+href="\.\/([^"?]+\.css)(?:\?[^" ]*)?"/g))await p.addStyleTag({content:read(m[1])});
+ await p.addStyleTag({content:'#chat-screen{display:block!important;height:100vh!important;padding:30px;background:#101420}#messages{display:flex!important;height:650px;max-height:650px;overflow:auto;flex-direction:column;gap:18px}.msg{flex-shrink:0;min-height:100px}.msg.me{align-self:flex-end}'});
+ await p.evaluate(()=>Object.assign(window,{
+  me:{nick:'me'},currentChat:'friend',currentRoom:null,lastRenderedDate:'',userCache:{},serverRows:[],
+  conversationKey:()=>currentChat?'me_'+currentChat:'',renderMessages:async()=>{},updateStatusBar:async()=>{},markAsRead:async()=>{},avatarMarkup:()=>'',renderPoll:()=>{},scrollToBottom:()=>{},batchUsersV15:async()=>{},isOnline:()=>false,formatLastSeen:()=>'',normalizedRoomVisibility:()=>'',makeDateStr:ts=>new Date(ts).toDateString(),
+  renderMessageContent:text=>{const span=document.createElement('span');span.textContent=text;return span.innerHTML;},
+  sb:{from:table=>({select(){return this},eq(){return this},order(){return this},limit(n){this.count=n;return this},lt(){return this},then(resolve,reject){return Promise.resolve({data:table==='messages'?serverRows.map(r=>({...r})).sort((a,b)=>b.ts-a.ts).slice(0,this.count):[]}).then(resolve,reject)}})},
+  appendMessage:async m=>{const row=document.createElement('div');row.className='msg '+(m.from_nick==='me'?'me':'them');row.dataset.id=m.id||'';row.innerHTML='<div class="msg-bubble">'+renderMessageContent(m.text)+'</div><div class="msg-meta">12:30</div>';row.style.opacity='0';document.querySelector('#messages').append(row);setTimeout(()=>{row.style.opacity='1';const box=document.querySelector('#messages');box.scrollTop=box.scrollHeight;},220);}
+ }));
+ for(const f of ['tele-emoji-art-v127.js','reaction-art-v126.js','tele-emoji-v127.js','chat-speed-v51.js','emoji-animation-v128.js'])await p.addScriptTag({content:read(f)});
+ await p.evaluate(async()=>{serverRows=Array.from({length:8},(_,i)=>({id:i+1,ts:i+1,chat_key:conversationKey(),from_nick:'friend',text:'Ранее '+i}));await renderMessages();});await p.waitForTimeout(280);assert.equal(await p.evaluate(()=>telechatEmojiMotionV128.info().active),0);
+ await p.evaluate(()=>appendMessage({from_nick:'me',chat_key:conversationKey(),text:'❤️',ts:100}));
+ assert.equal(await p.evaluate(()=>telechatEmojiMotionV128.info().active),0,'do not start while entry opacity is zero and scroll is pending');
+ await p.waitForFunction(()=>telechatEmojiMotionV128.info().active===1);await p.evaluate(()=>{window.optimistic=document.querySelector('.msg.me');});
+ await p.evaluate(async()=>{const saved={id:99,from_nick:'me',chat_key:conversationKey(),text:'❤️',ts:100};serverRows.push(saved);telechatChatSpeedV51.acceptSent(saved);await telechatChatSpeedV51.repaintActive();});
+ await p.waitForFunction(()=>{const row=document.querySelector('.msg[data-id="99"]');return row&&row!==optimistic&&row.querySelector('svg').getAnimations({subtree:true}).some(a=>a.constructor.name==='Animation');});
+ const style=await p.locator('.msg[data-id="99"] .msg-bubble').evaluate(el=>{const s=getComputedStyle(el);return {background:s.backgroundColor,border:s.borderWidth,shadow:s.boxShadow,size:el.querySelector('.tele-emoji-v127').getBoundingClientRect().width}});assert.equal(style.background,'rgba(0, 0, 0, 0)');assert.equal(style.border,'0px');assert.equal(style.shadow,'none');assert(style.size>=90,'standalone emoji is sticker-sized');
+ assert.equal(await p.locator('[data-emoji-motion=heart] [fill]:not([fill="none"])[stroke]').count(),0,'no outline around filled heart');
+ await p.evaluate(()=>{window.secondArt=telechatEmojiArtV127.get('❤️').html;document.querySelector('#messages').insertAdjacentHTML('beforeend','<div class="msg them"><div class="msg-bubble">'+renderMessageContent('🌧️')+'</div></div>');});
+ const ids=await p.locator('linearGradient[id]').evaluateAll(els=>els.map(el=>el.id));assert.equal(new Set(ids).size,ids.length,'gradient IDs never collide between emoji instances');
+ fs.mkdirSync(path.join(root,'outputs'),{recursive:true});await p.screenshot({path:path.join(root,'outputs','emoji-send-v130.png')});
+ await p.waitForTimeout(3200);assert.deepEqual(await p.evaluate(()=>telechatEmojiMotionV128.info()),{active:0,max:8,pending:0},'arrival queue and motion become completely idle');
+ await p.locator('.msg[data-id="99"] .tele-emoji-v127').click();assert.equal(await p.evaluate(()=>telechatEmojiMotionV128.info().active),0,'click does not replay message animation');
+ for(const width of [320,390]){await p.setViewportSize({width,height:800});await p.evaluate(()=>{document.querySelector('#messages').insertAdjacentHTML('beforeend','<div class="msg me mobile-check"><div class="msg-bubble">'+renderMessageContent('❤️ 🌧️ 🌙')+'</div></div>');});const r=await p.locator('.mobile-check').last().boundingBox();assert(r.x>=0&&r.x+r.width<=width,'three standalone emoji fit a phone viewport');await p.locator('.mobile-check').last().evaluate(el=>el.remove());}
+ await p.evaluate(()=>renderMessages());await p.waitForTimeout(400);assert.equal(await p.evaluate(()=>telechatEmojiMotionV128.info().active),0,'reopening history never animates');assert.deepEqual(errors,[]);
+ console.log('PASS real chat engine: entry/scroll delay, optimistic acknowledgement replacement, automatic semantic motion, no message click trigger, no bubble/outline, unique gradient IDs, idle queue, history');
+ }finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

@@ -34,8 +34,13 @@
   cry:{tears:'path[fill="#69acd5"]',mouth:'ellipse[rx="4"]'},anger:{vein:'path[stroke="#a65076"]'},surprise:{mouth:'ellipse[rx="4"]',eyes:'ellipse[rx="2"]'},
   think:{hand:'path[fill="#edd2ac"]'},sleep:{sleep:'path[stroke="#8063bb"]',mouth:'ellipse[rx="3"]'},fire:{flame:'path[fill="#eea38f"]',core:'path[fill="#ffdfaa"]'},moon:{star:'path[fill="#f2cf9e"]'},rain:{cloud:'path[fill="#c4c2ea"]'}
  };
- function motionMarkup(shape,mode){
+ function tint(hex,amount){const n=parseInt(hex.slice(1),16);return '#'+[n>>16,(n>>8)&255,n&255].map(v=>Math.round(amount>0?v+(255-v)*amount:v*(1+amount)).toString(16).padStart(2,'0')).join('');}
+ function motionMarkup(shape,mode,color){
   const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.innerHTML=shape;
+  const base=mode==='fire'?'#eea38f':mode==='rain'?'#c4c2ea':color;
+  const primary=[...svg.querySelectorAll('[fill]')].filter(node=>node.getAttribute('fill')===base);
+  // Keep expressive facial lines, but remove contour strokes around filled shapes.
+  for(const node of svg.querySelectorAll('[fill][stroke]'))if(node.getAttribute('fill')!=='none')node.removeAttribute('stroke');
   // Wrap moving details so CSS transforms never replace an original SVG transform.
   for(const [part,selector] of Object.entries(selectors[mode]||{}))for(const node of svg.querySelectorAll(selector)){
    const group=document.createElementNS(svg.namespaceURI,'g');group.dataset.emojiPart=part;node.replaceWith(group);group.append(node);
@@ -44,9 +49,13 @@
    svg.querySelector('path[stroke="#83bee6"]').remove();
    for(const x of [14,25,36]){const drop=document.createElementNS(svg.namespaceURI,'path');drop.dataset.emojiPart='drop';drop.setAttribute('d',`m${x} 33-3 7`);drop.setAttribute('stroke','#83bee6');drop.setAttribute('stroke-width','3');drop.setAttribute('stroke-linecap','round');svg.append(drop);}
   }
-  return `<g data-emoji-part="body">${svg.innerHTML}</g>`;
+  for(const node of primary)node.setAttribute('fill','url(#tele-fill-token)');
+  const colors=mode==='heart'?['#ff7179','#ff1834','#bd002b']:[tint(base,.38),base,tint(base,-.25)];
+  if(mode==='heart'){svg.querySelector('[stroke="#ffe1ee"]')?.setAttribute('stroke','#fff4f5');svg.querySelector('[fill="#aa5a92"]')?.setAttribute('fill','#920027');}
+  return `<defs><linearGradient id="tele-fill-token" x1="8" y1="3" x2="34" y2="45" gradientUnits="userSpaceOnUse"><stop stop-color="${colors[0]}"/><stop offset=".42" stop-color="${colors[1]}"/><stop offset="1" stop-color="${colors[2]}"/></linearGradient></defs><g data-emoji-part="body">${svg.innerHTML}</g>`;
  }
- const all=entries.map(([emoji,label,keywords,color,shape],index)=>({emoji,label,keywords,color,html:`<svg class="tele-emoji-art-v127 reaction-art-v126" data-emoji-motion="${modes[index]}" viewBox="0 0 48 48" fill="none" aria-hidden="true" focusable="false">${motionMarkup(shape,modes[index])}</svg>`}));
+ let serial=0;
+ const all=entries.map(([emoji,label,keywords,color,shape],index)=>{const markup=motionMarkup(shape,modes[index],color);return {emoji,label,keywords,color,get html(){return `<svg class="tele-emoji-art-v127 reaction-art-v126" data-emoji-motion="${modes[index]}" viewBox="0 0 48 48" fill="none" aria-hidden="true" focusable="false">${markup.replaceAll('tele-fill-token','tele-fill-v130-'+(++serial))}</svg>`;}};});
  const byEmoji=new Map(all.map(item=>[item.emoji,item]));byEmoji.set('❤',byEmoji.get('❤️'));
  byEmoji.set('🌧',byEmoji.get('🌧️'));
  window.telechatEmojiArtV127={all,get:emoji=>byEmoji.get(emoji)};

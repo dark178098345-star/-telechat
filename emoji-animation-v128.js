@@ -3,6 +3,7 @@
  'use strict';
  const active=new Map(),MAX_ACTIVE=8,reduce=matchMedia('(prefers-reduced-motion: reduce)');
  let nativeHidden=false,motionEpoch=0;
+ const arrivals=new Map();let arrivalTimer=0;
  try{nativeHidden=window.TelechatAndroid?.isInBackground?.()===true;}catch(_){}
  const observer=window.IntersectionObserver?new IntersectionObserver(entries=>{
   for(const entry of entries)if(!entry.isIntersecting)stop(entry.target);
@@ -17,7 +18,7 @@
   return true;
  }
  function stop(svg){const state=active.get(svg);if(!state)return;active.delete(svg);observer?.unobserve(svg);for(const animation of state.animations)animation.cancel();}
- function stopAll(){motionEpoch++;for(const svg of [...active.keys()])stop(svg);}
+ function stopAll(){motionEpoch++;clearTimeout(arrivalTimer);arrivalTimer=0;arrivals.clear();for(const svg of [...active.keys()])stop(svg);}
  function animate(element){
   const svg=element?.matches?.('[data-emoji-motion]')?element:element?.querySelector?.('[data-emoji-motion]');
   if(!svg)return false;
@@ -68,17 +69,39 @@
  window.addEventListener('pagehide',stopAll,{passive:true});
  window.addEventListener('telechat-native-visibility',event=>{nativeHidden=event.detail?.background===true;if(nativeHidden)stopAll();});
  const changed=()=>{if(reduce.matches)stopAll();};if(reduce.addEventListener)reduce.addEventListener('change',changed);else reduce.addListener?.(changed);
- // History rendering passes false; only newly appended, visible messages get one pass.
+ function messageKey(message){return `msg:${message.id??`${message.from_nick||''}:${message.ts||0}`}`;}
+ function findRow(box,message){if(!message)return null;return [...(box?.querySelectorAll('.msg')||[])].find(row=>message.id&&row.dataset.id===String(message.id)||row.dataset.messageKeyV105===messageKey(message));}
+ function flushArrivals(){
+  arrivalTimer=0;
+  for(const [token,job] of arrivals){
+   if(Date.now()>job.until||job.epoch!==motionEpoch||job.key!==window.conversationKey?.()||document.hidden||nativeHidden||reduce.matches){arrivals.delete(token);continue;}
+   const row=findRow(document.getElementById('messages'),job.message)||(job.row?.isConnected?job.row:null);
+   if(row&&!job.played.has(row)){
+    const emoji=[...row.querySelectorAll('.tele-emoji-v127')].slice(0,4);
+    // Wait for layout, entry opacity and the frame-aligned chat scroll to settle.
+    if(emoji.length&&emoji.some(item=>visible(item.querySelector('[data-emoji-motion]')))){
+     job.played.add(row);for(const item of emoji)animate(item);
+    }
+   }
+  }
+  if(arrivals.size)arrivalTimer=setTimeout(flushArrivals,100);
+ }
+ function acknowledge(message){for(const job of arrivals.values())if(job.key===message.chat_key&&job.message.from_nick===message.from_nick&&Number(job.message.ts)===Number(message.ts))job.message={...job.message,...message};}
+ // History rendering passes false. A short queue follows new messages through
+ // entry/scroll and optimistic-to-saved row replacement, then destroys itself.
  if(typeof window.appendMessage==='function'){
   const before=window.appendMessage;
   window.appendMessage=async function(message,doScroll=true){
-   const box=document.getElementById('messages'),previous=box?.lastElementChild,key=window.conversationKey?.(),epoch=motionEpoch;
-   const result=await before.apply(this,arguments),row=box?.lastElementChild;
-   if(doScroll&&!document.hidden&&!nativeHidden&&!reduce.matches&&epoch===motionEpoch&&row&&row!==previous&&row.classList.contains('msg')&&!row.classList.contains('v51-hydrated')&&key===window.conversationKey?.()){
-    requestAnimationFrame(()=>{if(epoch===motionEpoch&&key===window.conversationKey?.()&&row.isConnected)for(const emoji of [...row.querySelectorAll('.tele-emoji-v127')].slice(0,4))animate(emoji);});
+   if(!doScroll)return before.apply(this,arguments);
+   const box=document.getElementById('messages'),previous=new Set(box?.querySelectorAll('.msg')||[]),key=window.conversationKey?.(),epoch=motionEpoch;
+   const result=await before.apply(this,arguments),row=findRow(box,message)||(result?.matches?.('.msg')?result:box?.lastElementChild);
+   if(doScroll&&message&&!document.hidden&&!nativeHidden&&!reduce.matches&&epoch===motionEpoch&&row&&!previous.has(row)&&row.classList.contains('msg')&&key===window.conversationKey?.()&&row.querySelector('.tele-emoji-v127')){
+    if(arrivals.size>=MAX_ACTIVE)arrivals.delete(arrivals.keys().next().value);
+    arrivals.set(key+'|'+messageKey(message),{message:{...message},row,key,epoch,until:Date.now()+1800,played:new WeakSet()});
+    if(!arrivalTimer)arrivalTimer=setTimeout(flushArrivals,100);
    }
    return result;
   };
  }
- window.telechatEmojiMotionV128={animate,stopAll,info:()=>({active:active.size,max:MAX_ACTIVE})};
+ window.telechatEmojiMotionV128={animate,stopAll,acknowledge,info:()=>({active:active.size,max:MAX_ACTIVE,pending:arrivals.size})};
 })();

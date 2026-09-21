@@ -30,8 +30,5 @@
   return template.innerHTML;
  }
  window.renderMessageContent=function(...args){return decorate(before.apply(this,args));};
- document.getElementById('messages')?.addEventListener('click',event=>{
-  const emoji=event.target.closest('.tele-emoji-v127');if(emoji)window.telechatReactionArtV126?.animate(emoji);
- });
  window.telechatEmojiV127={decorate};
 })();
