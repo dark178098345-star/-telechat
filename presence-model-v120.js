@@ -7,8 +7,9 @@
   const encode=(at,state)=>Math.floor(at)*10+({offline:0,online:1,background:2}[state]||0);
   function decode(row){const key=String(row.chat_key||'');if(!key.startsWith(PREFIX))return null;const value=Number(row.ts),code=value%10,at=Math.floor(value/10);if(!Number.isSafeInteger(value)||at<=0||code>2)return null;return {key,nick:normalize(row.nick),device:key.endsWith(':phone')?'phone':'pc',state:['offline','online','background'][code],at};}
   const fresh=(at,now,limit)=>at>0&&at<=now+15000&&now-at<limit;
-  function reduce({rows=[],live=[],departed=new Map(),lastSeen=0,now=Date.now(),available=true}){
+  function reduce({rows=[],live=[],departed=new Map(),lastSeen=0,now=Date.now(),available=true,reachable=true}){
     const sessions=new Map(),newest={phone:0,pc:0};let seen=Number(lastSeen)||0,known=false;
+    if(!Number.isFinite(seen)||seen<0||seen>now+15000)seen=0;
     for(const row of rows){const s=decode(row);if(!s||s.at>now+15000)continue;known=true;newest[s.device]=Math.max(newest[s.device],s.at);if(s.state==='online')seen=Math.max(seen,s.at);sessions.set(s.key,s);}
     for(const item of live){if(!item||!['online','background','offline'].includes(item.state))continue;const old=sessions.get(item.key);if(!old||item.at>=old.at)sessions.set(item.key,{...item,live:true});else if(old.state===item.state)old.live=true;known=true;}
     const active=[],background=[];
@@ -22,14 +23,16 @@
       if(bt>=at&&fresh(bt,now,BACKGROUND_MS))background.push({device,at:bt});else if(fresh(at,now,90000))active.push({device,at});
       seen=Math.max(seen,at<=now+15000?at:0,bt<=now+15000?bt:0);
     }
+    if(!reachable)return {state:'unknown',device:'',lastSeen:Math.min(seen,now)};
     if(active.length)return {state:'online',device:active.sort((a,b)=>b.at-a.at)[0].device,lastSeen:Math.min(seen,now)};
     if(background.length)return {state:'background',device:background.sort((a,b)=>b.at-a.at)[0].device,lastSeen:Math.min(seen,now)};
     if(!known&&available&&fresh(lastSeen,now,90000))return {state:'online',device:'',lastSeen};
     return {state:available?'offline':'unknown',device:'',lastSeen:Math.min(seen,now)};
   }
   function label(value,now=Date.now()){
-    if(value.state==='online')return 'в сети';if(value.state==='background')return 'в фоне';if(value.state==='unknown')return 'статус недоступен';
-    const ts=value.lastSeen;if(!ts)return 'не в сети';const elapsed=Math.max(0,now-ts);if(elapsed<60000)return 'был(а) только что';if(elapsed<3600000)return `был(а) ${Math.floor(elapsed/60000)} мин. назад`;if(elapsed<86400000)return `был(а) ${Math.floor(elapsed/3600000)} ч. назад`;return `был(а) ${new Date(ts).toLocaleDateString('ru',{day:'numeric',month:'short'})}`;
+    if(value.state==='online')return 'в сети';if(value.state==='background')return 'в фоне';
+    const ts=Number(value.lastSeen);if(!Number.isFinite(ts)||ts<=0||ts>now+15000)return value.state==='unknown'?(value.reason==='offline'?'нет соединения':value.reason==='loading'?'обновляем статус…':'нет данных об активности'):'не в сети';
+    const elapsed=Math.max(0,now-ts);if(elapsed<60000)return 'был(а) только что';if(elapsed<3600000)return `был(а) ${Math.floor(elapsed/60000)} мин. назад`;if(elapsed<86400000)return `был(а) ${Math.floor(elapsed/3600000)} ч. назад`;return `был(а) ${new Date(ts).toLocaleDateString('ru',{day:'numeric',month:'short'})}`;
   }
   const api=Object.freeze({PREFIX,LEGACY,ACTIVE_MS,BACKGROUND_MS,normalize,encode,decode,reduce,label});
   if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.telechatPresenceModelV120=api;

@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v128-emoji-motion';
+const CACHE_NAME='telechat-shell-v129-presence-recovery';
 const APP_SHELL=[
   './tele-emoji-art-v127.js?v=128',
   './tele-emoji-v127.js?v=128',
@@ -15,8 +15,8 @@ const APP_SHELL=[
   './activity-model-v124.js?v=124',
   './activity-stats-v124.js?v=124.1',
   './activity-stats-v124.css?v=124',
-  './presence-model-v120.js?v=120',
-  './presence-v120.js?v=120',
+  './presence-model-v120.js?v=129',
+  './presence-v120.js?v=129',
   './chat-wallpaper-v119.js?v=124',
   './chat-wallpaper-v119.css?v=119',
   './music-intro-v118.js?v=118',

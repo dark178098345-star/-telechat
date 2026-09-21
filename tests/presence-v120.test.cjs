@@ -20,4 +20,10 @@ assert.equal(reduce([row('a','offline',1)],{departed:new Map([[live.key,{at:now,
 assert.equal(reduce([row('a','online',70000)],{available:false}).state,'unknown','Network failure does not claim confirmed offline');
 assert.equal(reduce([row('a','background'),{nick:'alice',chat_key:'__telechat_device_pc_v72__',ts:now-5000}]).state,'background','Old version device marker cannot override a newer state');
 assert.equal(reduce([row('a','background'),{nick:'alice',chat_key:'__telechat_device_phone_v72__',ts:now-5000}]).state,'online','Old phone and new desktop still coexist');
+assert.equal(reduce([row('a','online')],{reachable:false}).state,'unknown','Offline viewer must not show cached green online');
+assert.equal(m.label({state:'unknown',lastSeen:now-300000},now),'был(а) 5 мин. назад','Preserve confirmed last seen on failed status fetch');
+assert.equal(m.label({state:'unknown',lastSeen:0,reason:'loading'},now),'обновляем статус…');
+assert.equal(m.label({state:'unknown',lastSeen:0,reason:'offline'},now),'нет соединения');
+assert.equal(m.label({state:'unknown',lastSeen:0,reason:'unavailable'},now),'нет данных об активности');
+assert.equal(reduce([],{lastSeen:now+90000,available:false}).lastSeen,0,'Invalid future fallback must not turn into just-seen');
 console.log('PASS presence model: multidevice precedence, lease expiry, disconnects, clock bounds, old clients, honest last-seen labels.');

@@ -1,7 +1,7 @@
 const fs=require('fs'),path=require('path'),assert=require('assert/strict');
 const {chromium}=require('playwright');const root=path.resolve(__dirname,'..');
 const db=new Map(),users=new Map(),clients=new Map(),pages=new Set(),errors=[],requests=[];
-let delayBackground=false,failWrites=false;
+let delayBackground=false,failWrites=false;const failReads=new Set();
 const dbKey=r=>r.nick+'|'+r.chat_key;
 const matches=(r,filters)=>filters.every(([op,k,v])=>op==='eq'?r[k]===v:op==='in'?v.includes(r[k]):op==='lt'?Number(r[k])<Number(v):op==='gte'?Number(r[k])>=Number(v):op==='like'?String(r[k]).startsWith(v.slice(0,-1)):true);
 async function broadcast(){const state={};for(const item of clients.values())if(item.payload)state[item.payload.key]=[item.payload];await Promise.all([...pages].filter(p=>!p.isClosed()).map(p=>p.evaluate(s=>window.fixtureChannel?.apply(s),state)));}
@@ -16,7 +16,7 @@ function init({nick,device}){
  const context=await browser.newContext();await context.exposeBinding('presenceFixture',async({page},data)=>{requests.push(data);
   if(data.a==='track'){clients.set(page,{payload:data.payload});await broadcast();return 'ok';}
   if(data.a==='untrack'){clients.delete(page);await broadcast();return 'ok';}
-  if(data.a==='query'){const source=data.table==='typing'?db:users,rows=[...source.values()].filter(r=>matches(r,data.filters));if(data.action==='delete')rows.forEach(r=>source.delete(data.table==='typing'?dbKey(r):r.nick));if(data.action==='update')rows.forEach(r=>Object.assign(r,data.values));return {data:structuredClone(rows),error:null};}
+  if(data.a==='query'){const kind=data.table==='users'?'users':data.filters.some(f=>f[0]==='like')?'modern':'legacy';if(data.action==='select'&&failReads.has(kind)){if(kind==='modern')throw Error('temporary modern failure');return {data:null,error:{message:'temporary '+kind+' failure'}};}const source=data.table==='typing'?db:users,rows=[...source.values()].filter(r=>matches(r,data.filters));if(data.action==='delete')rows.forEach(r=>source.delete(data.table==='typing'?dbKey(r):r.nick));if(data.action==='update')rows.forEach(r=>Object.assign(r,data.values));return {data:structuredClone(rows),error:null};}
  });
  await context.route('https://presence.test/**',async route=>{const req=route.request(),url=new URL(req.url()),method=req.method();
   if(method==='OPTIONS')return route.fulfill({status:200,headers:{'Access-Control-Allow-Origin':'*','Access-Control-Allow-Methods':'GET,POST,PATCH','Access-Control-Allow-Headers':'*'}});
@@ -46,5 +46,23 @@ function init({nick,device}){
  failWrites=true;await phone.evaluate(()=>{telechatPresenceV120.wake();});await state('online');failWrites=false;await phone.evaluate(()=>window.dispatchEvent(new Event('online')));await phone.waitForTimeout(200);assert.equal([...db.values()].filter(r=>r.nick==='alice').some(r=>r.ts%10===1),true,'Reconnect republishes after transient storage failure');
  const before=requests.filter(x=>x.a==='query'&&x.action==='select').length;await observer.evaluate(async()=>{for(let i=0;i<12;i++)await renderContacts();});await observer.waitForTimeout(200);assert.ok(requests.filter(x=>x.a==='query'&&x.action==='select').length-before<=3,'Contact redraws share cached batched reads');
  const aliceKeys=[...db.values()].filter(r=>r.nick==='alice').map(r=>r.chat_key);await phone.evaluate(async()=>{me={nick:'bob'};await doLogin();});await phone.waitForTimeout(200);assert.ok([...db.values()].some(r=>r.nick==='bob'));assert.ok(aliceKeys.every(k=>db.has('alice|'+k)),'Account switch does not delete another session');
- assert.deepEqual(errors,[]);console.log('PASS presence browser: desktop+phone, moon, rapid transitions/out-of-order writes, logout, typing/privacy, native lifecycle, retry, account switch, bounded batched reads.');
+ const model=require('../presence-model-v120.js'),partialKey=model.PREFIX+'partial:pc';
+ const partial={chat_key:partialKey,nick:'partial',ts:model.encode(Date.now(),'background')};db.set(dbKey(partial),partial);users.set('partial',{nick:'partial',last_seen:Date.now()-300000});
+ failReads.add('users');await observer.evaluate(async()=>{currentChat='partial';viewedProfileNickV5='partial';await telechatPresenceV120.refresh(true,'partial');});await observer.waitForFunction(()=>telechatPresenceV120.state('partial').state==='background');
+ await observer.waitForFunction(()=>document.querySelector('#chat-status-text').textContent==='в фоне☾');
+ failReads.delete('users');failReads.add('legacy');partial.ts=model.encode(Date.now(),'online');
+ await observer.evaluate(()=>telechatPresenceV120.refresh(true,'partial'));await observer.waitForFunction(()=>telechatPresenceV120.state('partial').state==='online');
+ failReads.add('modern');users.set('timestamp',{nick:'timestamp',last_seen:Date.now()-300000});
+ await observer.evaluate(async()=>{currentChat='timestamp';viewedProfileNickV5='timestamp';await telechatPresenceV120.refresh(true,'timestamp');});await observer.waitForFunction(()=>document.querySelector('#chat-status-text').textContent.includes('мин. назад'));assert.equal(await observer.evaluate(()=>telechatPresenceV120.state('timestamp').state),'unknown','A timestamp alone during partial failure cannot claim online');
+ assert((await observer.locator('#chat-status-text').getAttribute('title')).includes('подтверждённая'));
+ await observer.evaluate(()=>{currentChat='blank';viewedProfileNickV5='blank';telechatPresenceV120.paintHeader();});assert.equal(await observer.locator('#chat-status-text').textContent(),'обновляем статус…');
+ failReads.add('users');await observer.evaluate(()=>telechatPresenceV120.refresh(true,'blank'));await observer.waitForFunction(()=>document.querySelector('#chat-status-text').textContent==='нет данных об активности');
+ const blankReads=()=>requests.filter(x=>x.a==='query'&&x.action==='select'&&x.filters.some(f=>f[0]==='in'&&f[1]==='nick'&&f[2].includes('blank'))).length;
+ const failedBefore=blankReads();await observer.evaluate(async()=>{for(let i=0;i<20;i++){await updateStatusBar();await renderContacts();}});await observer.waitForTimeout(250);assert.equal(blankReads(),failedBefore,'Failed reads are throttled too; repaint cannot create a request storm');
+ failReads.clear();const recovered={chat_key:model.PREFIX+'blank:phone',nick:'blank',ts:model.encode(Date.now(),'online')};db.set(dbKey(recovered),recovered);
+ await observer.evaluate(()=>telechatPresenceV120.refresh(true,'blank'));await observer.waitForFunction(()=>document.querySelector('#chat-status-text').classList.contains('online'));
+ await observer.evaluate(()=>{Object.defineProperty(navigator,'onLine',{configurable:true,value:false});window.dispatchEvent(new Event('offline'));});await observer.waitForFunction(()=>!document.querySelector('#chat-status-text').classList.contains('online'));assert.equal(await observer.evaluate(()=>telechatPresenceV120.state('blank').state),'unknown');
+ assert((await observer.locator('#chat-status-text').getAttribute('title')).includes('Нет соединения'));
+ await observer.evaluate(()=>{delete navigator.onLine;window.dispatchEvent(new Event('online'));});await observer.waitForFunction(()=>document.querySelector('#chat-status-text').classList.contains('online'));
+ assert.deepEqual(errors,[]);console.log('PASS presence browser: multidevice/lifecycle/privacy, source failures, rejected reads, preserved last seen, unknown/loading/offline labels, recovery and bounded retry reads.');
  }finally{await browser.close();}})().catch(e=>{console.error(e);process.exit(1)});

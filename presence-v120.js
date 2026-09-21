@@ -8,7 +8,7 @@
   const chat=()=>{try{return currentRoom?'':normalize(currentChat);}catch(_){return '';}};
   const profile=()=>{try{return normalize(viewedProfileNickV5);}catch(_){return '';}};
   const blocked=nick=>!!window.telechatIsBlockedV74?.(nick);
-  const rows=new Map(),seen=new Map(),checked=new Map(),live=new Map(),departed=new Map();
+  const rows=new Map(),seen=new Map(),checked=new Map(),live=new Map(),departed=new Map(),attempted=new Map(),pending=new Set();
   let session=null,channel=null,connected=false,generation=0,fetchJob=null,paintTimer=0,refreshTimer=0,clockOffset=0,clockReady=false,shutdown=false,nativeHidden=false;
   try{nativeHidden=window.TelechatAndroid?.isInBackground?.()===true;}catch(_){}
   let pendingTrack=null,tracking=false,retryTimer=0,retryDelay=1000,lastLegacyWrite=0,reconnectTimer=0,reconnectDelay=1000,connectionFailed=false,closingChannel=null;
@@ -17,7 +17,10 @@
   function cachedUser(nick){try{return Number(userCache[nick]?.last_seen)||0;}catch(_){return 0;}}
   function value(nick,lastSeen=0){nick=normalize(nick);if(blocked(nick))return {state:'offline',device:'',lastSeen:0};
     const peerLive=connected?[...live.values()].filter(x=>x.nick===nick):[];
-    return model.reduce({rows:rows.get(nick)||[],live:peerLive,departed,lastSeen:Math.max(seen.get(nick)||0,lastSeen,cachedUser(nick)),now:now(),available:navigator.onLine!==false&&(peerLive.length>0||now()-(checked.get(nick)||0)<65000)});
+    const reachable=navigator.onLine!==false;
+    const result=model.reduce({rows:rows.get(nick)||[],live:peerLive,departed,lastSeen:Math.max(seen.get(nick)||0,lastSeen,cachedUser(nick)),now:now(),reachable,available:reachable&&(peerLive.length>0||now()-(checked.get(nick)||0)<65000)});
+    if(result.state==='unknown')result.reason=!reachable?'offline':pending.has(nick)||!attempted.has(nick)?'loading':'unavailable';
+    return result;
   }
   function syncOwn(row){const items=(rows.get(row.nick)||[]).filter(x=>x.chat_key!==row.chat_key);items.push(row);rows.set(row.nick,items);checked.set(row.nick,now());schedulePaint();}
   async function request(method,path,body,keepalive=false){
@@ -66,7 +69,7 @@
   }
   function disconnect(){clearTimeout(reconnectTimer);const previous=channel;channel=null;connected=false;pendingTrack=null;live.clear();if(previous){const closing=Promise.resolve(sb.removeChannel(previous)).catch(()=>{});closingChannel=closing;closing.finally(()=>{if(closingChannel!==closing)return;closingChannel=null;if(session&&!shutdown&&!channel&&navigator.onLine!==false)connect();});}}
   function ensureAccount(){if(!clockReady)return;const nick=account();if(session?.nick===nick||!session&&!nick)return;if(session){const old=session;old.at=Math.max(Math.floor(now()),old.at+1);persist(old,{state:'offline',at:old.at},true);}
-    ++generation;disconnect();session=null;lastLegacyWrite=0;clearTimeout(retryTimer);rows.clear();seen.clear();checked.clear();departed.clear();
+    ++generation;disconnect();session=null;lastLegacyWrite=0;clearTimeout(retryTimer);rows.clear();seen.clear();checked.clear();departed.clear();attempted.clear();pending.clear();
     if(!nick)return;shutdown=false;const device=phone()?'phone':'pc';session={nick,key:model.PREFIX+crypto.randomUUID()+':'+device,device,createdAt:Math.floor(now())-1,at:0,state:'',sentAt:0,ready:false};connect();
     // Only our old, expired presence rows. Never delete typing, privacy settings or another live device.
     sb.from('typing').delete().eq('nick',nick).like('chat_key',model.PREFIX+'%').lt('ts',model.encode(now()-86400000,'offline')).then(()=>{}).catch(()=>{});
@@ -74,28 +77,37 @@
   function watched(){const result=new Set([chat(),profile()]);document.querySelectorAll('.contact[data-contact-nick]').forEach(row=>result.add(normalize(row.dataset.contactNick)));result.delete('');return [...result];}
   async function refresh(force=false,extra=''){
     ensureAccount();if(!session||document.hidden||navigator.onLine===false)return;if(fetchJob)return fetchJob.then(()=>refresh(false,extra));
-    const nicks=[...new Set([...watched(),normalize(extra)])].filter(n=>n&&(force||now()-(checked.get(n)||0)>20000));if(!nicks.length){schedulePaint();return;}
+    const nicks=[...new Set([...watched(),normalize(extra)])].filter(n=>n&&(force||(now()-(checked.get(n)||0)>20000&&now()-(attempted.get(n)||0)>10000)));if(!nicks.length){schedulePaint();return;}
     const version=generation;
     fetchJob=(async()=>{for(let i=0;i<nicks.length;i+=80){const group=nicks.slice(i,i+80);
       const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),8000);
-      try{const [modern,legacy,users]=await Promise.all([
+      for(const nick of group){attempted.set(nick,now());pending.add(nick);}
+      try{const results=await Promise.allSettled([
         sb.from('typing').select('chat_key,nick,ts').in('nick',group).like('chat_key',model.PREFIX+'%').gte('ts',model.encode(now()-86400000,'offline')).abortSignal(controller.signal),
         sb.from('typing').select('chat_key,nick,ts').in('nick',group).in('chat_key',model.LEGACY).gte('ts',now()-120000).abortSignal(controller.signal),
         sb.from('users').select('nick,last_seen').in('nick',group).abortSignal(controller.signal)
-      ]);if(version!==generation)return;if(modern.error||legacy.error||users.error)continue;
-        const all=[...(modern.data||[]),...(legacy.data||[])];for(const nick of group){const previous=rows.get(nick)||[];const incoming=all.filter(x=>normalize(x.nick)===nick);
+      ]);if(version!==generation)return;
+        const [modern,legacy,users]=results.map(result=>result.status==='fulfilled'?result.value:{error:result.reason});
+        const modernOK=!!modern&&!modern.error,legacyOK=!!legacy&&!legacy.error;
+        const all=[...(modernOK?modern.data||[]:[]),...(legacyOK?legacy.data||[]:[])];for(const nick of group){const previous=rows.get(nick)||[];
+          // A failed source keeps its last snapshot; successful sources still update.
+          const incoming=previous.filter(item=>item.chat_key.startsWith(model.PREFIX)?!modernOK:!legacyOK).map(item=>({...item}));
+          incoming.push(...all.filter(x=>normalize(x.nick)===nick));
           // A slow SELECT must not undo a newer local write or realtime observation.
           for(const item of previous){const next=incoming.find(x=>x.chat_key===item.chat_key);if(item.chat_key.startsWith(model.PREFIX)&&Number(item.ts)>=model.encode(now()-86400000,'offline')&&Number(item.ts)>Number(next?.ts||0)){if(next)next.ts=item.ts;else incoming.push(item);}}
-          rows.set(nick,incoming);checked.set(nick,now());}
-        for(const u of users.data||[])seen.set(normalize(u.nick),Math.max(seen.get(normalize(u.nick))||0,Number(u.last_seen)||0));
-      }catch(_){/* Retain confirmed state; leases still expire locally. */}finally{clearTimeout(timeout);}
+          rows.set(nick,incoming);if(modernOK&&legacyOK)checked.set(nick,now());}
+        if(users&&!users.error)for(const u of users.data||[])seen.set(normalize(u.nick),Math.max(seen.get(normalize(u.nick))||0,Number(u.last_seen)||0));
+      }catch(_){/* Retain confirmed state; leases still expire locally. */}finally{clearTimeout(timeout);if(version===generation)for(const nick of group)pending.delete(nick);}
     }})().finally(()=>{fetchJob=null;schedulePaint();});return fetchJob;
   }
   function schedulePaint(){if(paintTimer||document.hidden)return;paintTimer=setTimeout(()=>{paintTimer=0;paint();},40);}
   function avatar(node,v){if(!node)return;node.classList.toggle('av-online',v.state==='online');node.classList.toggle('av-background-v101',v.state==='background');}
   function badge(node,v){let moon=node?.querySelector('.presence-moon-v101');if(v.state!=='background'){moon?.remove();return;}if(node&&!moon){moon=document.createElement('span');moon.className='presence-moon-v101';moon.textContent='☾';moon.title='Приложение в фоне';moon.setAttribute('aria-label',moon.title);node.append(moon);}}
   function status(node,v,isProfile=false,nick=''){
-    if(!node)return;const text=blocked(nick)?'был давно':(isProfile&&v.state==='online'?'● сейчас в сети':model.label(v,now()));const signature=[nick,v.state,v.device,text].join('|');
+    if(!node)return;
+    const hint=v.state==='unknown'?(v.lastSeen?'Последняя подтверждённая активность. ':'')+(v.reason==='offline'?'Нет соединения с интернетом.':v.reason==='loading'?'Обновляем текущий статус.':'Текущий статус пока не получен.') : '';
+    if(node.title!==hint)node.title=hint;
+    const text=blocked(nick)?'был давно':(isProfile&&v.state==='online'?'● сейчас в сети':model.label(v,now()));const signature=[nick,v.state,v.device,text].join('|');
     if(node.dataset.presenceV120===signature&&node.textContent===text+(v.state==='background'?'☾':'')&&node.classList.contains('background-v101')===(v.state==='background')&&node.classList.contains('online')===(v.state==='online')&&(!v.device||isProfile||v.state!=='online'||node.querySelector('.device-presence-v72')))return;
     node.dataset.presenceV120=signature;node.textContent=text;node.classList.toggle('online',v.state==='online');node.classList.toggle('offline',v.state!=='online');node.classList.toggle('background-v101',v.state==='background');
     if(isProfile)node.style.color=v.state==='online'?'var(--green)':v.state==='background'?'#e6c981':'var(--text3)';
