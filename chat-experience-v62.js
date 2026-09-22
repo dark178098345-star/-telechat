@@ -4,10 +4,8 @@
 
   const VERSION_V62 = 62;
   const MAX_UNREAD_SCAN_V62 = 1200;
-  const reducedMotionV62 = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const unreadV62 = new Map();
   const seenRealtimeV62 = new Set();
-  const animatedModalsV62 = new WeakSet();
   let draftsV62 = {};
   let activeNickV62 = '';
   let unreadChannelV62 = null;
@@ -275,33 +273,6 @@
     setTimeout(refreshUnreadV62, 120);
   }
 
-  function animatePanelV62(panel) {
-    if (!panel || reducedMotionV62) return;
-    // Mark the panel before the mutation observers run. The older fluid layer
-    // sees this marker and leaves the animation to this single owner instead
-    // of running a second filter/transform pass over the same cards.
-    panel.dataset.motionOwnerV62 = '1';
-    const cards = [...panel.querySelectorAll('.panel-section,.profile-editor-card,.profile-choice-card,.profile-fields-card,.profile-preview-btn')];
-    cards.forEach((card, index) => card.style.setProperty('--motion-order-v62', String(index)));
-    panel.classList.remove('v62-motion-enter');void panel.offsetWidth;panel.classList.add('v62-motion-enter');
-    setTimeout(() => { panel.classList.remove('v62-motion-enter'); delete panel.dataset.motionOwnerV62; }, 850);
-  }
-
-  function animateChatV62() {
-    if (reducedMotionV62) return;
-    const chat = document.getElementById('active-chat');
-    if (!chat) return;
-    chat.classList.remove('v62-content-enter');void chat.offsetWidth;chat.classList.add('v62-content-enter');
-    setTimeout(() => chat.classList.remove('v62-content-enter'), 620);
-  }
-
-  function animateModalV62(modal) {
-    if (!modal || reducedMotionV62 || !modal.classList.contains('show')) return;
-    [...(modal.querySelector('.modal')?.children || [])].forEach((child, index) => child.style.setProperty('--motion-order-v62', String(index)));
-    modal.classList.remove('v62-modal-enter');void modal.offsetWidth;modal.classList.add('v62-modal-enter');
-    setTimeout(() => modal.classList.remove('v62-modal-enter'), 700);
-  }
-
   const lazyImageObserverV62 = 'IntersectionObserver' in window ? new IntersectionObserver(entries => {
     entries.forEach(entry => {
       if (!entry.isIntersecting) return;
@@ -336,18 +307,12 @@
       }
       if (!image.classList.contains('avatar-photo') || image.dataset.preparedV62 === '1') return;
       image.dataset.preparedV62 = '1';image.loading = 'lazy';image.decoding = 'async';
-      const ready = () => { image.classList.remove('v62-media-pending');image.classList.add('v62-media-ready'); };
-      if (image.complete && image.naturalWidth) ready();
-      else { image.classList.add('v62-media-pending');image.addEventListener('load', ready, { once: true });image.addEventListener('error', ready, { once: true }); }
     });
 
     const videos = node.matches('video.avatar-video,video.profile-video') ? [node] : [...node.querySelectorAll('video.avatar-video,video.profile-video')];
     videos.forEach(video => {
       if (video.dataset.preparedV62 === '1') return;
       video.dataset.preparedV62 = '1';video.preload = 'metadata';
-      const ready = () => { video.classList.remove('v62-media-pending');video.classList.add('v62-media-ready'); };
-      if (video.readyState >= 2) ready();
-      else { video.classList.add('v62-media-pending');video.addEventListener('loadeddata', ready, { once: true });video.addEventListener('error', ready, { once: true }); }
       animatedMediaObserverV62?.observe(video);
     });
   }
@@ -378,7 +343,7 @@
       window[name] = async function(...args) {
         const oldKey = activeKeyV62();if (oldKey) saveDraftV62(oldKey);
         const value = await previous.apply(this, args);
-        const key = activeKeyV62();clearUnreadV62(key);loadDraftV62(key);animateChatV62();prepareMediaNodeV62(document.getElementById('active-chat') || document.body);
+        const key = activeKeyV62();clearUnreadV62(key);loadDraftV62(key);prepareMediaNodeV62(document.getElementById('active-chat') || document.body);
         return value;
       };
     });
@@ -402,11 +367,6 @@
       };
     }
 
-    const openPanelBeforeV62 = window.openPanel;
-    if (typeof openPanelBeforeV62 === 'function') {
-      window.openPanel = function(id, ...args) { const value = openPanelBeforeV62.call(this, id, ...args);animatePanelV62(document.getElementById(id));return value; };
-    }
-
     const renderContentBeforeV62 = window.renderMessageContent;
     if (typeof renderContentBeforeV62 === 'function') {
       window.renderMessageContent = function(...args) {
@@ -427,13 +387,6 @@
     addEventListener('beforeunload', () => saveDraftV62());
     document.addEventListener('visibilitychange', () => { if (!document.hidden) { const key = activeKeyV62();if (key) clearUnreadV62(key); } }, { passive: true });
 
-    document.querySelectorAll('.modal-overlay').forEach(modal => {
-      new MutationObserver(() => {
-        if (modal.classList.contains('show')) {
-          if (!animatedModalsV62.has(modal)) { animatedModalsV62.add(modal);animateModalV62(modal); }
-        } else animatedModalsV62.delete(modal);
-      }).observe(modal, { attributes: true, attributeFilter: ['class'] });
-    });
     new MutationObserver(records => {
       records.forEach(record => record.addedNodes.forEach(prepareMediaNodeV62));
     }).observe(document.body, { childList: true, subtree: true });

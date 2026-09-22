@@ -13,7 +13,7 @@
     if(name)name.textContent=user.name||user.nick||'Текущий аккаунт';
     if(nick)nick.textContent=user.nick?'@'+user.nick:'Активный сеанс';
     if(avatar){
-      try{avatar.innerHTML=typeof avatarMarkup==='function'?avatarMarkup(user):(user.av||'👤')}
+      try{if(typeof setAvatarElement==='function')setAvatarElement(avatar,user);else{const markup=typeof avatarMarkup==='function'?avatarMarkup(user):(user.av||'👤');if(avatar.innerHTML!==String(markup))avatar.innerHTML=markup;}}
       catch(error){avatar.textContent='👤'}
     }
   }

@@ -110,19 +110,6 @@ html body .side-panel.open.v62-motion-enter .profile-preview-btn {
   animation: none;
 }
 
-img.avatar-photo.v62-media-pending,
-video.avatar-video.v62-media-pending,
-video.profile-video.v62-media-pending {
-  opacity: 0 !important;
-  transform: scale(1.045) !important;
-}
-img.avatar-photo.v62-media-ready,
-video.avatar-video.v62-media-ready,
-video.profile-video.v62-media-ready {
-  opacity: 1;
-  transform: none;
-  transition: opacity 260ms ease,transform 360ms var(--ease-cinematic-v62) !important;
-}
 
 /* Buttons gain a small physical response without running a permanent animation. */
 body.telechat-experience-v62 button:not(:disabled),

@@ -10,15 +10,6 @@ html { -webkit-tap-highlight-color: transparent; }
 body { text-rendering: optimizeLegibility; }
 button, [role="button"], .contact, .search-result-item { touch-action: manipulation; }
 
-body.telechat-motion-v42 .sidebar,
-body.telechat-motion-v42 .chat-main,
-body.telechat-motion-v42 .side-panel,
-body.telechat-motion-v42 .modal,
-body.telechat-motion-v42 .voice-call-surface {
-  backface-visibility: hidden;
-  transform-style: preserve-3d;
-}
-
 /* Sliding segmented control: tabs now move as one physical pill. */
 .sidebar-tabs {
   position: relative;
@@ -92,15 +83,6 @@ body.telechat-motion-v42 .voice-call-surface {
   transition: transform 180ms var(--motion-v42),filter 180ms ease,box-shadow 180ms ease;
 }
 .msg:active .msg-bubble { transform: scale(.992); }
-.avatar-photo.v42-media-loading,
-.profile-video.v42-media-loading,
-.avatar-video.v42-media-loading {
-  opacity: 0;
-  transform: scale(1.035);
-}
-.avatar-photo,.profile-video,.avatar-video {
-  transition: opacity 260ms ease,transform 320ms var(--motion-v42);
-}
 
 /* Panels feel connected to the control that opened them. */
 .side-panel.open.v42-panel-enter .panel-head {
