@@ -27,16 +27,18 @@ import android.webkit.WebViewClient;
 import android.widget.Toast;
 
 public class MainActivity extends Activity {
-    private static final String TELECHAT_URL = "https://dark178098345-star.github.io/-telechat/?app=android&v=120";
+    private static final String TELECHAT_URL = "https://dark178098345-star.github.io/-telechat/?app=android&v=131";
     private static final String TELECHAT_HOST = "dark178098345-star.github.io";
     private static final String NOTIFICATION_CHANNEL = "telechat-messages";
     private static final int FILE_CHOOSER_REQUEST = 401;
     private static final int MICROPHONE_PERMISSION_REQUEST = 402;
     private static final int NOTIFICATION_PERMISSION_REQUEST = 403;
+    private static final int QR_SAVE_REQUEST = 404;
 
     private WebView webView;
     private ValueCallback<Uri[]> fileCallback;
     private PermissionRequest pendingAudioRequest;
+    private byte[] pendingQrImage;
     private volatile boolean appInBackground = true;
 
     @Override
@@ -68,7 +70,7 @@ public class MainActivity extends Activity {
         settings.setAllowContentAccess(true);
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
         settings.setCacheMode(WebSettings.LOAD_DEFAULT);
-        settings.setUserAgentString(settings.getUserAgentString() + " telechat-android/1.2.4");
+        settings.setUserAgentString(settings.getUserAgentString() + " telechat-android/1.2.5");
 
         CookieManager.getInstance().setAcceptCookie(true);
         CookieManager.getInstance().setAcceptThirdPartyCookies(webView, false);
@@ -157,26 +159,45 @@ public class MainActivity extends Activity {
         @JavascriptInterface public boolean isInBackground() { return appInBackground; }
         @JavascriptInterface public void requestNotifications() { runOnUiThread(MainActivity.this::requestNotifications); }
         @JavascriptInterface public void notify(String title, String body) { runOnUiThread(() -> notifyMessage(title, body)); }
+        @JavascriptInterface public void saveQrImage(String data) {
+            if (data == null || !data.startsWith("data:image/png;base64,") || data.length() > 3000000) return;
+            runOnUiThread(() -> {
+                if (pendingQrImage != null) return;
+                try {
+                    byte[] png = android.util.Base64.decode(data.substring(22), android.util.Base64.DEFAULT);
+                    if (png.length < 8 || png[0] != (byte)137 || png[1] != 80 || png[2] != 78 || png[3] != 71) return;
+                    pendingQrImage = png;
+                    Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE)
+                            .setType("image/png").putExtra(Intent.EXTRA_TITLE, "telechat-qr.png");
+                    startActivityForResult(intent, QR_SAVE_REQUEST);
+                } catch (Exception error) { pendingQrImage = null; Toast.makeText(MainActivity.this, "Не удалось сохранить QR", Toast.LENGTH_SHORT).show(); }
+            });
+        }
     }
 
     private void handleWebPermission(PermissionRequest request) {
-        if (!isTelechatUri(request.getOrigin()) || !requestsAudio(request)) {
+        if (!isTelechatUri(request.getOrigin()) || pendingAudioRequest != null) {
             request.deny();
             return;
         }
-        if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
-            request.grant(new String[]{PermissionRequest.RESOURCE_AUDIO_CAPTURE});
-            return;
+        java.util.ArrayList<String> missing = new java.util.ArrayList<>();
+        java.util.ArrayList<String> allowed = new java.util.ArrayList<>();
+        for (String resource : request.getResources()) {
+            String permission = mediaPermission(resource);
+            if (permission == null) continue;
+            allowed.add(resource);
+            if (checkSelfPermission(permission) != PackageManager.PERMISSION_GRANTED) missing.add(permission);
         }
+        if (allowed.isEmpty()) { request.deny(); return; }
+        if (missing.isEmpty()) { request.grant(allowed.toArray(new String[0])); return; }
         pendingAudioRequest = request;
-        requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, MICROPHONE_PERMISSION_REQUEST);
+        requestPermissions(missing.toArray(new String[0]), MICROPHONE_PERMISSION_REQUEST);
     }
 
-    private boolean requestsAudio(PermissionRequest request) {
-        for (String resource : request.getResources()) {
-            if (PermissionRequest.RESOURCE_AUDIO_CAPTURE.equals(resource)) return true;
-        }
-        return false;
+    private String mediaPermission(String resource) {
+        if (PermissionRequest.RESOURCE_AUDIO_CAPTURE.equals(resource)) return Manifest.permission.RECORD_AUDIO;
+        if (PermissionRequest.RESOURCE_VIDEO_CAPTURE.equals(resource)) return Manifest.permission.CAMERA;
+        return null;
     }
 
     private boolean isTelechatUri(Uri uri) {
@@ -196,18 +217,29 @@ public class MainActivity extends Activity {
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode != MICROPHONE_PERMISSION_REQUEST || pendingAudioRequest == null) return;
-        if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            pendingAudioRequest.grant(new String[]{PermissionRequest.RESOURCE_AUDIO_CAPTURE});
-        } else {
-            pendingAudioRequest.deny();
-            Toast.makeText(this, "Разреши микрофон для голосовых сообщений", Toast.LENGTH_LONG).show();
+        java.util.ArrayList<String> allowed = new java.util.ArrayList<>();
+        for (String resource : pendingAudioRequest.getResources()) {
+            String permission = mediaPermission(resource);
+            if (permission != null && checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED) allowed.add(resource);
         }
+        if (!allowed.isEmpty()) pendingAudioRequest.grant(allowed.toArray(new String[0]));
+        else pendingAudioRequest.deny();
         pendingAudioRequest = null;
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == QR_SAVE_REQUEST) {
+            byte[] png = pendingQrImage; pendingQrImage = null;
+            if (resultCode == RESULT_OK && data != null && data.getData() != null && png != null) {
+                try (java.io.OutputStream out = getContentResolver().openOutputStream(data.getData())) {
+                    if (out == null) throw new java.io.IOException("No output stream");
+                    out.write(png); Toast.makeText(this, "QR сохранён", Toast.LENGTH_SHORT).show();
+                } catch (Exception error) { Toast.makeText(this, "Не удалось сохранить QR", Toast.LENGTH_SHORT).show(); }
+            }
+            return;
+        }
         if (requestCode != FILE_CHOOSER_REQUEST || fileCallback == null) return;
         fileCallback.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(resultCode, data));
         fileCallback = null;

@@ -1,5 +1,9 @@
-const CACHE_NAME='telechat-shell-v130-emoji-send';
+const CACHE_NAME='telechat-shell-v131-profile-qr';
 const APP_SHELL=[
+  './qr-profile-v131.js?v=131',
+  './qr-profile-v131.css?v=131',
+  './vendor/qr/qrcode-1.4.4.js',
+  './vendor/qr/jsqr-1.4.0.js',
   './tele-emoji-art-v127.js?v=130',
   './tele-emoji-v127.js?v=130',
   './tele-emoji-v127.css?v=130',
