@@ -1,0 +1,7 @@
+#messages{overflow-anchor:none}
+#active-chat{position:relative}
+#active-chat .chat-bottom-v132{position:absolute;z-index:120;display:grid;place-items:center;width:42px;height:42px;padding:0;border-radius:50%;border:1px solid #bba5ff66;background:#28233f;color:#ddcfff;box-shadow:0 4px 16px #0005;cursor:pointer;touch-action:manipulation}
+#active-chat .chat-bottom-v132[hidden]{display:none!important}
+#active-chat .chat-bottom-v132 svg{width:22px;height:22px}
+#active-chat .chat-bottom-v132:hover{background:#44365f;color:#fff}
+#active-chat .chat-bottom-v132:focus-visible{outline:2px solid var(--accent3,#c4adff);outline-offset:3px}

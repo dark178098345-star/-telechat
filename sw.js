@@ -1,5 +1,7 @@
-const CACHE_NAME='telechat-shell-v131-profile-qr';
+const CACHE_NAME='telechat-shell-v132-chat-bottom';
 const APP_SHELL=[
+  './chat-scroll-v132.js?v=132',
+  './chat-scroll-v132.css?v=132',
   './qr-profile-v131.js?v=131',
   './qr-profile-v131.css?v=131',
   './vendor/qr/qrcode-1.4.4.js',
