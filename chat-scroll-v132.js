@@ -11,7 +11,7 @@
   const r=box.getBoundingClientRect(),h=host.getBoundingClientRect();button.style.left=Math.max(r.left-h.left+8,r.right-h.left-58)+'px';button.style.top=Math.max(r.top-h.top+8,r.bottom-h.top-58)+'px';button.hidden=distance()<150;
  }
  function schedule(){if(frame)return;const token=generation;frame=requestAnimationFrame(()=>{frame=0;if(token!==generation)return;if(pinned&&visible())box.scrollTop=box.scrollHeight;paint();});}
- function bottom(){if(opening&&cancelled)return;pinned=true;schedule();}
+ function bottom(force=false){if(force!==true&&(!pinned||opening&&cancelled)){paint();return;}pinned=true;schedule();}
  window.scrollToBottom=bottom;
  button.addEventListener('click',()=>{cancelled=false;pinned=true;schedule();});
  function manual(){intent++;cancelled=true;pinned=false;}
@@ -19,7 +19,15 @@
  let touchY=0;box.addEventListener('touchstart',e=>{touchY=e.touches[0]?.clientY||0;},{passive:true});box.addEventListener('touchmove',e=>{const y=e.touches[0]?.clientY||0;if(y>touchY)manual();touchY=y;},{passive:true});
  box.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'&&e.clientX>=box.getBoundingClientRect().right-18)manual();},{passive:true});
  box.addEventListener('keydown',e=>{if(['ArrowUp','PageUp','Home'].includes(e.key)||(e.key===' '&&e.shiftKey))manual();});
- box.addEventListener('scroll',()=>{if(distance()<3)pinned=true;else if(!opening)pinned=false;paint();},{passive:true});
+ box.addEventListener('scroll',()=>{if(distance()<3)pinned=true;else if(!opening&&!frame)pinned=false;paint();},{passive:true});
+ const append=window.appendMessage;if(typeof append==='function')window.appendMessage=async function(message,doScroll=true){
+  const key=window.conversationKey?.(),token=generation,startIntent=intent;
+  const own=doScroll&&message&&typeof me!=='undefined'&&message.from_nick===me?.nick&&(!message.chat_key||message.chat_key===key);
+  if(own)bottom(true);
+  const result=await append.apply(this,arguments);
+  if(own&&token===generation&&key===window.conversationKey?.()&&startIntent===intent)bottom(true);
+  return result;
+ };
  const observed=new Set(),resize=typeof ResizeObserver==='function'?new ResizeObserver(schedule):null;
  function watch(){for(const child of [...observed])if(child.parentNode!==box){resize?.unobserve(child);observed.delete(child);}for(const child of box.children)if(!observed.has(child)){observed.add(child);resize?.observe(child);}schedule();}
  resize?.observe(box);new MutationObserver(watch).observe(box,{childList:true});watch();

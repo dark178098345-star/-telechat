@@ -294,6 +294,8 @@
       if (!box) return false;
       const visibleItems = state.items.filter(item => item._type === 'poll' || !window.telechatShouldHideMessageV74?.(item));
       const oldTop=box.scrollTop;
+      const anchor=options.preserveAnchor?[...box.children].find(row=>row.classList.contains('msg')&&row.getBoundingClientRect().bottom>box.getBoundingClientRect().top):null;
+      const anchorTop=anchor?.getBoundingClientRect().top;
       const existing=new Map([...box.children].filter(element=>element.dataset?.messageKeyV105).map(element=>[element.dataset.messageKeyV105,element]));
       const dates=new Map([...box.children].filter(element=>element.classList?.contains('date-divider')).map(element=>[element.textContent,element]));
       const desired=[];
@@ -331,7 +333,9 @@
         state.lastPaintAt = Date.now();
         syncReadReceiptsV51(visibleItems);
         window.telechatSyncVisibleMessagesV105?.(visibleItems);
-        if (!options.keepScroll) scrollToBottom();else box.scrollTop=oldTop;
+        if (!options.keepScroll) scrollToBottom();
+        else if(anchor?.isConnected)box.scrollTop=oldTop+anchor.getBoundingClientRect().top-anchorTop;
+        else box.scrollTop=oldTop;
         return true;
       } finally {
         box.classList.remove('v51-painting');
@@ -417,8 +421,6 @@
     const state = historyCacheV51.get(key);
     const box = document.getElementById('messages');
     if (!key || !state || !box || !state.hasMore || state.loading || !Number.isFinite(state.cursor)) return;
-    const oldHeight = box.scrollHeight;
-    const oldTop = box.scrollTop;
     box.classList.add('v51-loading-older');
     state.loading = (async () => {
       const page = await fetchPageV51(key, state.cursor);
@@ -426,10 +428,8 @@
       state.items = mergeItemsV51(page.items, state.items);
       state.cursor = state.items.length ? Math.min(...state.items.map(item => Number(item.ts || 0))) : state.cursor;
       state.hasMore = page.hasMore;
-      await paintStateV51(state, { keepScroll: true });
+      await paintStateV51(state, { keepScroll: true, preserveAnchor: true });
       schedulePersistentV72(state);
-      await new Promise(resolve => requestAnimationFrame(resolve));
-      box.scrollTop = oldTop + Math.max(0, box.scrollHeight - oldHeight);
     })().catch(() => {
       if (typeof showToast === 'function') showToast('Не удалось загрузить старые сообщения');
     }).finally(() => {

@@ -1,6 +1,6 @@
-const CACHE_NAME='telechat-shell-v133-stable-ui';
+const CACHE_NAME='telechat-shell-v134-scroll-fix';
 const APP_SHELL=[
-  './chat-scroll-v132.js?v=132',
+  './chat-scroll-v132.js?v=134',
   './chat-scroll-v132.css?v=132',
   './qr-profile-v131.js?v=131',
   './qr-profile-v131.css?v=131',
@@ -110,7 +110,7 @@ const APP_SHELL=[
   './gpu-safe-panels-v46.css?v=47',
   './liquid-glass-v50.css?v=50',
   './chat-speed-v51.css?v=64',
-  './chat-speed-v51.js?v=130',
+  './chat-speed-v51.js?v=134',
   './chat-actions-v52.css?v=59',
   './chat-actions-v52.js?v=105',
   './sound-studio-v53.css?v=53',
