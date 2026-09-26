@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v134-scroll-fix';
+const CACHE_NAME='telechat-shell-v135-real-message-heights';
 const APP_SHELL=[
   './chat-scroll-v132.js?v=134',
   './chat-scroll-v132.css?v=132',
@@ -16,7 +16,7 @@ const APP_SHELL=[
   './ui-icons-v125.js?v=125',
   './ui-icons-v125.css?v=125',
   './viewport-performance-v124.js?v=124',
-  './viewport-performance-v124.css?v=124',
+  './viewport-performance-v124.css?v=135',
   './storage-watch-v124.js?v=124',
   './activity-model-v124.js?v=124',
   './activity-stats-v124.js?v=124.1',

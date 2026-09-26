@@ -10,10 +10,10 @@ const {chromium}=require('playwright'),root=path.resolve(__dirname,'..'),read=f=
  await page.evaluate(()=>dispatchEvent(new CustomEvent('telechat-native-visibility',{detail:{background:false}})));assert.deepEqual(await page.locator('.avatar-video').evaluateAll(es=>es.map(e=>e.paused)),[true,false]);
  await page.locator('.avatar-video').last().evaluate(e=>e.remove());await page.waitForTimeout(50);assert.equal(await page.evaluate(()=>telechatViewportV124.info().tracked),1);
  await page.addStyleTag({content:read('viewport-performance-v124.css')});await page.evaluate(()=>{const box=document.querySelector('#messages');for(let i=0;i<1000;i++){const row=document.createElement('div');row.className='msg';row.id='row'+i;row.textContent='Сообщение '+i;box.append(row);}window.skipped=0;box.addEventListener('contentvisibilityautostatechange',e=>{if(e.skipped)skipped++;},true);});
- await page.waitForTimeout(200);assert.equal(await page.locator('.msg').count(),1000);assert.equal(await page.locator('.msg').first().evaluate(e=>getComputedStyle(e).contentVisibility),'auto');
+ await page.waitForTimeout(200);assert.equal(await page.locator('.msg').count(),1000);assert.equal(await page.locator('.msg').first().evaluate(e=>getComputedStyle(e).contentVisibility),'visible');
  await page.locator('#row900').evaluate(e=>{e.classList.add('highlighted');e.scrollIntoView({block:'center'});});await page.waitForTimeout(150);
  assert.equal(await page.locator('#row900').evaluate(e=>getComputedStyle(e).contentVisibility),'visible');
  assert(await page.locator('#row900').evaluate(e=>{const r=e.getBoundingClientRect(),p=e.parentElement.getBoundingClientRect();return r.top>=p.top&&r.bottom<=p.bottom;}),'search/pinned message scroll target stays visible');
- assert((await page.evaluate(()=>skipped))>0,'browser skipped offscreen message rendering');
- console.log('PASS viewport: clipped avatars pause/resume, native background, cleanup, music untouched, 1000 messages retain search and skip offscreen rendering');
+ assert.equal(await page.evaluate(()=>skipped),0,'message geometry is not replaced by estimated offscreen heights');
+ console.log('PASS viewport: clipped avatars pause/resume, native background, cleanup, music untouched, 1000 messages retain search and real heights');
  }finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

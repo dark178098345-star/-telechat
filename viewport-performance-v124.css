@@ -1,8 +1,4 @@
-/* Browser-managed render skipping keeps messages in the DOM for search,
-   selection, context menus and pinned-message navigation. Measured block
-   heights are retained by `auto`; visible messages keep their original CSS. */
-@supports (content-visibility:auto){
-  #messages>.msg{content-visibility:auto;contain-intrinsic-block-size:auto 100px}
-  #messages>.msg:focus-within,#messages>.msg.highlighted,#messages>.msg.context-selected-v36{content-visibility:visible}
-}
-@media print{#messages>.msg{content-visibility:visible!important}}
+/* History uses real message heights. Estimated 100px placeholders changed
+   scroll geometry on every wheel step as short text/media became visible.
+   Media loading/playback optimizations remain in viewport-performance-v124.js. */
+#messages>.msg{content-visibility:visible;contain-intrinsic-block-size:none}
