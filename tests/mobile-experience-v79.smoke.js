@@ -1,35 +1,5 @@
-const assert=require('assert');
-const fs=require('fs');
-const path=require('path');
-const root=path.resolve(__dirname,'..');
-const read=file=>fs.readFileSync(path.join(root,file),'utf8');
-
-const html=read('index.html');
-const style=read('mobile-experience-v79.css');
-const script=read('mobile-experience-v79.js');
-const worker=read('sw.js');
-const activity=read('android-app/app/src/main/java/chat/tele/app/MainActivity.java');
-const gradle=read('android-app/app/build.gradle');
-
-assert.match(html,/mobile-experience-v79\.css\?v=79/);
-assert.match(html,/mobile-experience-v79\.js\?v=79/);
-assert.ok(html.indexOf('mobile-experience-v79.css?v=79')>html.indexOf('chat-stability-v78.css?v=78'));
-assert.ok(html.indexOf('mobile-experience-v79.js?v=79')>html.indexOf('smooth-ui-v76.js?v=76'));
-
-assert.match(style,/telechat-mobile-v79/);
-assert.match(style,/#clear-chat-btn\{display:none!important\}/);
-assert.match(style,/telechat-mobile-native-v79 #install-app-section/);
-assert.match(style,/backdrop-filter:none!important/);
-assert.match(script,/visualViewport/);
-assert.match(script,/trimDecorations/);
-assert.match(script,/deviceMemory/);
-
-assert.match(worker,/telechat-shell-v109-navigation-readers/);
-assert.match(worker,/mobile-experience-v79\.css\?v=79/);
-assert.match(worker,/mobile-experience-v79\.js\?v=79/);
-assert.match(activity,/\?app=android&v=109/);
-assert.match(activity,/telechat-android\/1\.2\.3/);
-assert.match(gradle,/versionCode 6/);
-assert.match(gradle,/versionName '1\.2\.3'/);
-
-console.log('mobile-experience-v79 smoke ok');
+const fs=require('fs'),path=require('path'),assert=require('assert/strict');const root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f),'utf8');
+assert(!fs.existsSync(path.join(root,'mobile-experience-v79.js')),'retired duplicate viewport controller stays removed');
+for(const f of ['index.html','sw.js']){assert(!read(f).includes('mobile-experience-v79.js'));assert(read(f).includes('mobile-optimization-v100.js?v=136'));assert(read(f).includes('mobile-experience-v79.css'),'layout compatibility styles remain');}
+const script=read('mobile-optimization-v100.js');for(const feature of ['telechat-mobile-v79','telechat-mobile-native-v79','telechat-mobile-lowpower-v79','visualViewport','viewportFrame','mediaFrame'])assert(script.includes(feature));
+console.log('PASS mobile migration: one viewport owner, legacy layout compatibility, independent viewport/media queues');

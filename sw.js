@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v135-real-message-heights';
+const CACHE_NAME='telechat-shell-v136-phone-stability';
 const APP_SHELL=[
   './chat-scroll-v132.js?v=134',
   './chat-scroll-v132.css?v=132',
@@ -46,7 +46,7 @@ const APP_SHELL=[
   './profile-follow-compact-v102.js?v=102',
   './background-presence-v101.css?v=101',
   './mobile-adaptation-v100.css?v=100',
-  './mobile-optimization-v100.js?v=123',
+  './mobile-optimization-v100.js?v=136',
   './soundcloud-v98.js?v=117',
   './soundcloud-v98.css?v=99',
   './branding/soundcloud-white.png',
@@ -91,7 +91,7 @@ const APP_SHELL=[
   './profile-details-v22.js',
   './profile-card-v29.css',
   './chat-reliability-v24.css',
-  './chat-reliability-v24.js?v=78',
+  './chat-reliability-v24.js?v=136',
   './delivery-v72.css?v=72',
   './message-send-animation-v35.css?v=54',
   './message-send-animation-v35.js?v=54',
@@ -110,7 +110,7 @@ const APP_SHELL=[
   './gpu-safe-panels-v46.css?v=47',
   './liquid-glass-v50.css?v=50',
   './chat-speed-v51.css?v=64',
-  './chat-speed-v51.js?v=134',
+  './chat-speed-v51.js?v=136',
   './chat-actions-v52.css?v=59',
   './chat-actions-v52.js?v=105',
   './sound-studio-v53.css?v=53',
@@ -130,7 +130,6 @@ const APP_SHELL=[
   './full-redesign-v77.css?v=77',
   './chat-stability-v78.css?v=78',
   './mobile-experience-v79.css?v=79',
-  './mobile-experience-v79.js?v=79',
   './emoji-motion-v80.css?v=82',
   './emoji-motion-v80.js?v=127',
   './profile-background-v84.css?v=86',

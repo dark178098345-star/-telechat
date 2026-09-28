@@ -197,6 +197,9 @@
   function compareItemsV51(a, b) {
     const time = Number(a?.ts || 0) - Number(b?.ts || 0);
     if (time) return time;
+    // Acknowledgement changes the database ID, not the author's ordering key.
+    const author=String(a?.from_nick||a?.created_by||'').localeCompare(String(b?.from_nick||b?.created_by||''),'en');
+    if(author)return author;
     const aKey = itemKeyV51(a || {});
     const bKey = itemKeyV51(b || {});
     return aKey.localeCompare(bKey, 'en', { numeric: true });
@@ -470,7 +473,7 @@
     document.getElementById('messages')?.querySelector('.v51-empty-chat')?.remove();
     const value=await appendMessageBeforeV51(message, doScroll);
     const element=messageElementV51(message)||document.getElementById('messages')?.lastElementChild;
-    if(element?.classList?.contains('msg')){element.dataset.messageKeyV105=normalizedKey;renderedRowsV105.set(element,stateMarkV51([normalized]));}
+    if(element?.classList?.contains('msg')){element.dataset.messageKeyV105=normalizedKey;element._messageSourceV136=message;renderedRowsV105.set(element,stateMarkV51([normalized]));}
     window.telechatReadReceiptV109?.(element, normalized);
     return value;
   };
@@ -581,6 +584,7 @@
   }
 
   window.telechatChatSpeedV51 = {
+    latestTimestamp: key => (historyCacheV51.get(key)?.items||[]).reduce((latest,item)=>Math.max(latest,Number(item.ts)||0),0),
     loadOlder: loadOlderV51,
     clearConversation: clearConversationV51,
     syncReadReceipts: syncReadReceiptsV51,
@@ -594,12 +598,18 @@
       const key = String(message?.chat_key || '');
       if (!key || !message) return false;
       const state = getStateV51(key);
+      const pending=state.items.find(item=>item._type!=='poll'&&!item.id&&item.from_nick===message.from_nick&&Number(item.ts)===Number(message.ts));
+      const pendingKey=pending?itemKeyV51(pending):null;
       state.items = state.items.filter(item => !(
         item?._type !== 'poll' && !item?.id &&
         String(item?.from_nick || '').toLowerCase() === String(message.from_nick || '').toLowerCase() &&
         Number(item?.ts || 0) === Number(message.ts || 0)
       ));
       state.items = mergeItemsV51(state.items, { ...message, chat_key: key, _type: 'msg' });
+      if(pending&&key===activeKeyV51()&&pending.text===message.text&&pending.reply_text===message.reply_text&&!!pending.deleted===!!message.deleted){
+        const row=[...(document.getElementById('messages')?.children||[])].find(row=>row.dataset.messageKeyV105===pendingKey);
+        if(row){const saved={...message,chat_key:key,_type:'msg'};if(row._messageSourceV136)Object.assign(row._messageSourceV136,saved);row.dataset.id=String(message.id||'');row.dataset.messageKeyV105=itemKeyV51(saved);renderedRowsV105.set(row,stateMarkV51([saved]));}
+      }
       window.telechatEmojiMotionV128?.acknowledge(message);
       state.cursor = state.items.length ? Math.min(...state.items.map(item => Number(item.ts || 0))) : state.cursor;
       schedulePersistentV72(state, 20);

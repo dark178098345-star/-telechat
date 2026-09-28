@@ -1,40 +1,23 @@
-/* Phone-only performance guardrails. The desktop path is never changed. */
-(() => {
-  'use strict';
-  const query=window.matchMedia('(max-width:720px), ((max-width:900px) and (pointer:coarse))');
-  const root=document.documentElement, body=document.body;
-  const lowPower=/telechat-android/i.test(navigator.userAgent)||(Number(navigator.deviceMemory)||8)<=4||(Number(navigator.hardwareConcurrency)||8)<=4;
-  let frame=0;
-  function mobile(){return query.matches;}
-  function viewport(){
-    if(!mobile()){body.classList.remove('telechat-mobile-v100','telechat-mobile-optimized-v100');root.style.removeProperty('--v100-height');root.style.removeProperty('overflow');root.style.removeProperty('width');return;}
-    const visual=window.visualViewport;
-    const height=Math.max(320,Math.round(visual?.height||window.innerHeight));
-    root.style.setProperty('--v100-height',height+'px');
-    root.style.overflow='hidden';root.style.width='100%';
-    body.classList.add('telechat-mobile-v100');
-    body.classList.toggle('telechat-mobile-optimized-v100',lowPower);
-    body.classList.toggle('telechat-mobile-keyboard-v100',!!visual&&visual.height<window.innerHeight*.78);
-  }
-  function prepareMedia(scope=document){
-    if(!mobile())return;
-    const images=[];const videos=[];
-    if(scope.matches?.('img'))images.push(scope);if(scope.matches?.('video'))videos.push(scope);
-    scope.querySelectorAll?.('img').forEach(image=>images.push(image));scope.querySelectorAll?.('video').forEach(video=>videos.push(video));
-    images.forEach(image=>{const loading=image.matches('.avatar-photo')||image.closest('.av,.room-avatar')?'eager':'lazy';if(image.loading!==loading)image.loading=loading;if(image.decoding!=='async')image.decoding='async';});
-    videos.forEach(video=>{video.playsInline=true;if(!video.autoplay)video.preload='metadata';});
-  }
-  function update(){if(frame)return;frame=requestAnimationFrame(()=>{frame=0;viewport();prepareMedia();});}
-  viewport();prepareMedia();
-  query.addEventListener?.('change',update);
-  window.addEventListener('resize',update,{passive:true});
-  window.addEventListener('orientationchange',update,{passive:true});
-  window.visualViewport?.addEventListener('resize',update,{passive:true});
-  window.visualViewport?.addEventListener('scroll',update,{passive:true});
-  new MutationObserver(records=>{
-    if(!mobile())return;
-    const added=[];
-    records.forEach(record=>record.addedNodes.forEach(node=>{if(node.nodeType===1&&(node.matches?.('img,video')||node.querySelector?.('img,video')))added.push(node);}));
-    if(added.length){if(frame)return;frame=requestAnimationFrame(()=>{frame=0;added.forEach(prepareMedia);});}
-  }).observe(document.body,{childList:true,subtree:true});
+/* One phone viewport owner. Legacy CSS classes remain for layout compatibility. */
+(()=>{
+ 'use strict';
+ const query=matchMedia('(max-width:720px), ((max-width:900px) and (pointer:coarse))'),root=document.documentElement,body=document.body;
+ const native=/telechat-android/i.test(navigator.userAgent),lowPower=native||(Number(navigator.deviceMemory)||8)<=4||(Number(navigator.hardwareConcurrency)||8)<=4;
+ let viewportFrame=0,mediaFrame=0;const pending=new Set();
+ function set(name,value){if(body.style.getPropertyValue(name)!==value)body.style.setProperty(name,value);}
+ function viewport(){
+  const phone=query.matches;for(const cls of ['telechat-mobile-v79','telechat-mobile-v100'])body.classList.toggle(cls,phone);
+  for(const cls of ['telechat-mobile-lowpower-v79','telechat-mobile-optimized-v100'])body.classList.toggle(cls,phone&&lowPower);
+  body.classList.toggle('telechat-mobile-native-v79',phone&&native);
+  const visual=window.visualViewport,keyboard=phone&&!!visual&&visual.height<innerHeight*.78;
+  for(const cls of ['telechat-mobile-keyboard-v79','telechat-mobile-keyboard-v100'])body.classList.toggle(cls,keyboard);
+  if(!phone){for(const prop of ['--v100-height','--v79-mobile-h']){body.style.removeProperty(prop);root.style.removeProperty(prop);}root.style.removeProperty('overflow');root.style.removeProperty('width');return;}
+  const height=Math.max(240,Math.round(visual?.height||innerHeight))+'px';set('--v100-height',height);set('--v79-mobile-h',height);root.style.overflow='hidden';root.style.width='100%';
+ }
+ function prepare(scope){if(!query.matches||!scope.isConnected)return;const nodes=scope.matches?.('img,video')?[scope]:[];scope.querySelectorAll?.('img,video').forEach(n=>nodes.push(n));for(const node of nodes){if(node.tagName==='IMG'){const loading=node.matches('.avatar-photo')||node.closest('.av,.room-avatar')?'eager':'lazy';if(node.loading!==loading)node.loading=loading;if(node.decoding!=='async')node.decoding='async';}else{node.playsInline=true;if(!node.autoplay&&node.preload!=='metadata')node.preload='metadata';}}}
+ function queueMedia(scope){pending.add(scope);if(mediaFrame)return;mediaFrame=requestAnimationFrame(()=>{mediaFrame=0;const roots=[...pending];pending.clear();for(const node of roots)if(!roots.some(parent=>parent!==node&&parent.contains(node)))prepare(node);});}
+ function update(){if(!viewportFrame)viewportFrame=requestAnimationFrame(()=>{viewportFrame=0;viewport();});}
+ function mode(){update();if(query.matches){queueMedia(body);document.querySelectorAll('.emoji-particle,.shooting-star,.meteor').forEach(n=>n.remove());[...document.querySelectorAll('.cosmic-star')].slice(lowPower?12:20).forEach(n=>n.remove());}}
+ viewport();mode();query.addEventListener?.('change',mode);window.addEventListener('resize',update,{passive:true});window.addEventListener('orientationchange',update,{passive:true});window.visualViewport?.addEventListener('resize',update,{passive:true});window.visualViewport?.addEventListener('scroll',update,{passive:true});
+ new MutationObserver(records=>{if(!query.matches)return;for(const record of records)for(const node of record.addedNodes)if(node.nodeType===1&&(node.matches('img,video')||node.querySelector('img,video')))queueMedia(node);}).observe(body,{childList:true,subtree:true});
 })();

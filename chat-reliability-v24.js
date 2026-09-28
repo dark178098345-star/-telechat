@@ -33,7 +33,7 @@
     return {ok:false,error:lastError};
   }
 
-  function nextTimestamp(){const now=Date.now();lastTimestamp=Math.max(now,lastTimestamp+1);return lastTimestamp;}
+  function nextTimestamp(){const now=Date.now(),latest=Number(window.telechatChatSpeedV51?.latestTimestamp?.(conversationKey()))||0;lastTimestamp=Math.max(now,lastTimestamp+1,latest+1);return lastTimestamp;}
   function openDatabase(){
     if(!('indexedDB' in window))return Promise.resolve(null);
     if(databasePromise)return databasePromise;
@@ -70,8 +70,10 @@
   }
   async function renderOptimistic(item){
     const box=document.getElementById('messages');box?.querySelector('.v51-empty-chat')?.remove();
-    const before=box?.querySelectorAll('.msg').length||0;await appendMessage({...item.row});
-    const rows=box?.querySelectorAll('.msg')||[],element=rows.length>before?rows[rows.length-1]:null;if(!element)return;
+    const result=await appendMessage({...item.row});
+    if(item.row.chat_key!==conversationKey())return;
+    const key='msg:'+item.row.from_nick+':'+item.row.ts;
+    const element=result?.classList?.contains('msg')?result:[...(box?.querySelectorAll('.msg')||[])].find(row=>row.dataset.messageKeyV105===key);if(!element)return;
     item.element=element;element.dataset.clientId=item.clientId;element.classList.add('v72-pending-message');element.querySelector('.msg-check')?.remove();
     element.querySelector('.msg-meta')?.insertAdjacentHTML('beforeend',deliveryMarkup('sending'));liveRows.set(item.clientId,item);
   }

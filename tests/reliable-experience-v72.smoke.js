@@ -16,7 +16,7 @@ assert.match(reliability, /telechat-outbox-v72/);
 assert.match(reliability, /Отправляется/);
 assert.match(reliability, /Повторить/);
 assert.match(reliability, /messageExists/);
-assert.match(reliability, /lastTimestamp=Math\.max\(now,lastTimestamp\+1\)/);
+assert.match(reliability, /lastTimestamp=Math\.max\(now,lastTimestamp\+1,latest\+1\)/);
 assert.match(reliability, /optimisticQueue=optimisticQueue\.then/);
 assert.doesNotMatch(reliability, /appendMessage\(\{\.\.\.item\.row,id:''\}\)/);
 assert.doesNotMatch(reliability, /localStorage/);
