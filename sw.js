@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v136-phone-stability';
+const CACHE_NAME='telechat-shell-v137-history-stability';
 const APP_SHELL=[
   './chat-scroll-v132.js?v=134',
   './chat-scroll-v132.css?v=132',
@@ -110,7 +110,7 @@ const APP_SHELL=[
   './gpu-safe-panels-v46.css?v=47',
   './liquid-glass-v50.css?v=50',
   './chat-speed-v51.css?v=64',
-  './chat-speed-v51.js?v=136',
+  './chat-speed-v51.js?v=137',
   './chat-actions-v52.css?v=59',
   './chat-actions-v52.js?v=105',
   './sound-studio-v53.css?v=53',

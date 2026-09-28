@@ -158,24 +158,30 @@
     state.touchedAt = Date.now();
     if (historyCacheV51.size > MAX_CACHED_CHATS_V51) {
       const oldest = [...historyCacheV51.values()]
-        .filter(item => item.key !== key)
+        .filter(item => item.key !== key && item.key !== activeKeyV51())
         .sort((a, b) => a.touchedAt - b.touchedAt)[0];
-      if (oldest) historyCacheV51.delete(oldest.key);
+      if (oldest) {
+        disposeStateV137(oldest);
+        historyCacheV51.delete(oldest.key);
+      }
     }
     return state;
+  }
+
+  function disposeStateV137(state) {
+    if (!state) return;
+    state.disposed = true;
+    clearTimeout(state.refreshTimer);
+    clearTimeout(state.persistTimer);
+    state.refreshTimer = state.persistTimer = 0;
+    state.refreshWaiters.splice(0).forEach(done => done(null));
   }
 
   function clearConversationV51(key = activeKeyV51()) {
     const normalizedKey = String(key || '');
     if (!normalizedKey) return false;
     const state = historyCacheV51.get(normalizedKey);
-    if (state) {
-      state.disposed = true;
-      clearTimeout(state.refreshTimer);
-      clearTimeout(state.persistTimer);
-      state.refreshTimer = 0;
-      state.refreshWaiters.splice(0).forEach(done => done(null));
-    }
+    disposeStateV137(state);
     historyCacheV51.delete(normalizedKey);
     deletePersistentV72(normalizedKey).catch(() => {});
     renderTokenV51++;
@@ -276,7 +282,7 @@
     return {
       items,
       cursor: items.length ? Math.min(...items.map(item => Number(item.ts || 0))) : beforeTs,
-      hasMore: messages.length === PAGE_SIZE_V51 || polls.length === PAGE_SIZE_V51
+      hasMore: messages.length === PAGE_SIZE_V51 || polls.length === PAGE_SIZE_V51 || messages.length + polls.length > items.length
     };
   }
 
@@ -427,7 +433,7 @@
     box.classList.add('v51-loading-older');
     state.loading = (async () => {
       const page = await fetchPageV51(key, state.cursor);
-      if (key !== activeKeyV51()) return;
+      if (state.disposed || historyCacheV51.get(key) !== state || key !== activeKeyV51()) return;
       state.items = mergeItemsV51(page.items, state.items);
       state.cursor = state.items.length ? Math.min(...state.items.map(item => Number(item.ts || 0))) : state.cursor;
       state.hasMore = page.hasMore;
