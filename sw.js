@@ -1,5 +1,7 @@
-const CACHE_NAME='telechat-shell-v137-history-stability';
+const CACHE_NAME='telechat-shell-v138-mobile-interface';
 const APP_SHELL=[
+  './mobile-interface-v138.css?v=138',
+  './mobile-interface-v138.js?v=138',
   './chat-scroll-v132.js?v=134',
   './chat-scroll-v132.css?v=132',
   './qr-profile-v131.js?v=131',

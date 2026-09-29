@@ -1,0 +1,35 @@
+/* Phone surfaces: solid panels, touch targets, no changes to desktop. */
+@media (max-width:720px), ((max-width:900px) and (pointer:coarse)) {
+  html body.telechat-mobile-v100 {--phone-call-space:0px;--phone-scene-height:calc(var(--v100-height) - var(--phone-call-space))}
+  html body.telechat-mobile-v100:has(#voice-call-mini.show){--phone-call-space:calc(64px + env(safe-area-inset-top,0px))}
+  html body.telechat-mobile-v100 #chat-screen{top:var(--phone-call-space)!important;height:var(--phone-scene-height)!important;min-height:var(--phone-scene-height)!important}
+  html body.telechat-mobile-v100 .sidebar,html body.telechat-mobile-v100 .chat-main,html body.telechat-mobile-v100 #active-chat{height:var(--phone-scene-height)!important}
+  html body.telechat-mobile-v100 #voice-call-mini{top:0!important;left:0!important;width:100%!important;height:var(--phone-call-space);min-height:64px;transform:none!important;animation:none!important;border-radius:0!important;padding:calc(8px + env(safe-area-inset-top,0px)) 10px 8px;background:#182a29;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;z-index:100}
+  html body.telechat-mobile-v100 .voice-call-mini-return,html body.telechat-mobile-v100 .voice-call-mini-end{width:44px;height:44px;flex:0 0 44px}
+  html body.telechat-mobile-v100 .voice-call-mini-time{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  html body.telechat-mobile-v100 .sidebar,html body.telechat-mobile-v100 .chat-header,html body.telechat-mobile-v100 .input-area{background:#111421!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;box-shadow:none!important}
+  html body.telechat-mobile-v100 .sidebar-top{border-bottom:1px solid rgba(180,180,220,.09)}
+  html body.telechat-mobile-v100 .contact{min-height:72px!important;border-radius:14px!important;margin:2px 4px!important;border-color:transparent!important;box-shadow:none!important}
+  html body.telechat-mobile-v100 .contact.active{background:#29263f!important}
+  html body.telechat-mobile-v100 .contact-name{font-size:15px!important}
+  html body.telechat-mobile-v100 .contact-preview{font-size:13px!important;color:#aeb2c6!important}
+  html body.telechat-mobile-v100 .back-btn,html body.telechat-mobile-v100 .hdr-btn,html body.telechat-mobile-v100 .composer-tool{min-width:44px!important;width:44px!important;min-height:44px!important;height:44px!important;flex-basis:44px!important}
+  html body.telechat-mobile-v100 .chat-header{gap:4px!important}
+  html body.telechat-mobile-v100 .chat-header-actions{gap:0!important}
+  html body.telechat-mobile-v100 .chat-name,html body.telechat-mobile-v100 .chat-status-text{max-width:100%!important}
+  html body.telechat-mobile-v100 .composer-tools{gap:4px!important;padding-bottom:2px!important}
+  html body.telechat-mobile-v100 #profile-panel .ps-preview{padding:12px 0!important}
+  html body.telechat-mobile-v100 #profile-panel .ps-preview-label,html body.telechat-mobile-v100 #profile-panel .ps-preview-note{display:none!important}
+  html body.telechat-mobile-v100 #profile-panel .ps-controls-scroll{padding:12px 0 20px!important}
+  html body.telechat-mobile-v100 #prof-av-prev,html body.telechat-mobile-v100 .profile-avatar-thumb-v89{position:relative;cursor:pointer}
+  html body.telechat-mobile-v100 #prof-av-prev::after{content:'Изменить';position:absolute;left:0;right:0;bottom:0;padding:4px 0;background:#111a;color:white;font-size:9px;text-align:center}
+  html body.telechat-mobile-v100 #profile-banner-preview{cursor:pointer}
+  html body.telechat-mobile-v100 #profile-banner-preview::after{content:'Изменить баннер';color:#fff;background:#111b;font-size:11px}
+  html body.telechat-mobile-v100 #profile-panel input,html body.telechat-mobile-v100 #profile-panel textarea{font-size:16px!important}
+  #mobile-media-v138{position:fixed;inset:auto 0 0;margin:0 auto;width:100%;max-width:520px;max-height:85dvh;overflow:auto;border:1px solid #39394e;border-bottom:0;border-radius:24px 24px 0 0;padding:22px 18px calc(18px + env(safe-area-inset-bottom,0px));background:#191c2b;color:#f5f3ff;box-sizing:border-box}
+  #mobile-media-v138::backdrop{background:#050711aa}
+  #mobile-media-v138 h2{margin:0 0 8px;font-size:20px}
+  #mobile-media-v138 p{color:#b4b6c8;font-size:13px;line-height:1.5;margin:0 0 18px}
+  #mobile-media-v138 button{display:block;width:100%;min-height:48px;margin-top:8px;border:1px solid #44405f;border-radius:14px;background:#302944;color:#eee9ff;font:inherit;cursor:pointer}
+  #mobile-media-v138 button[data-close]{background:transparent;color:#bbbdd0}
+}
