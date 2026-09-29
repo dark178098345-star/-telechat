@@ -4,6 +4,12 @@
   if(!bg||document.getElementById('cosmic-star-layer-v27'))return;
 
   const reduceMotion=window.matchMedia?.('(prefers-reduced-motion: reduce)');
+  const phone=window.matchMedia?.('(max-width:720px), ((max-width:900px) and (pointer:coarse))');
+  let nativeHidden=false;
+  function quiet(){
+    if(phone?.matches||reduceMotion?.matches)return true;
+    try{return localStorage.getItem('telechat_calm_mode_v95')==='true';}catch(_){return false;}
+  }
   const moon=document.createElement('div');
   moon.id='cosmic-moon-v29';
   moon.className='cosmic-moon-v29';
@@ -23,6 +29,7 @@
   const palette=['star-white','star-violet','star-blue','star-soft'];
   function makeStars(){
     starLayer.replaceChildren();
+    if(quiet())return;
     const count=reduceMotion?.matches?20:(innerWidth<=640?29:44);
     const fragment=document.createDocumentFragment();
     for(let index=0;index<count;index++){
@@ -36,7 +43,7 @@
   }
 
   function effectsEnabled(){
-    return !document.hidden&&!reduceMotion?.matches&&!document.body.classList.contains('telechat-app-paused');
+    return !document.hidden&&!nativeHidden&&!quiet()&&!document.body.classList.contains('telechat-app-paused');
   }
   function spawnShootingStar(delay=0){
     if(!effectsEnabled())return false;
@@ -56,6 +63,8 @@
   let showerTimer=0;
   function scheduleSky(){
     clearTimeout(showerTimer);
+    showerTimer=0;
+    if(!effectsEnabled())return;
     const wait=random(4200,9200);
     showerTimer=setTimeout(()=>{
       if(effectsEnabled()){
@@ -69,10 +78,16 @@
 
   makeStars();
   scheduleSky();
-  setTimeout(()=>spawnShootingStar(),random(900,2200));
+  if(effectsEnabled())setTimeout(()=>spawnShootingStar(),random(900,2200));
   let resizeTimer=0;
-  addEventListener('resize',()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(makeStars,300);},{passive:true});
-  reduceMotion?.addEventListener?.('change',()=>{makeStars();scheduleSky();});
+  addEventListener('resize',()=>{clearTimeout(resizeTimer);if(!quiet())resizeTimer=setTimeout(makeStars,300);},{passive:true});
+  function syncMode(){clearTimeout(resizeTimer);makeStars();shootingLayer.replaceChildren();scheduleSky();}
+  reduceMotion?.addEventListener?.('change',syncMode);
+  phone?.addEventListener?.('change',syncMode);
+  document.addEventListener('visibilitychange',scheduleSky);
+  addEventListener('telechat-native-visibility',event=>{nativeHidden=event.detail?.background===true;scheduleSky();});
+  document.addEventListener('change',event=>{if(event.target?.id==='calm-mode-v95')queueMicrotask(syncMode);});
+  addEventListener('storage',event=>{if(event.key==='telechat_calm_mode_v95'||event.key===null)syncMode();});
 
   window.spawnShootingStarV27=()=>spawnShootingStar();
   window.spawnShootingStarV29=()=>spawnShootingStar();

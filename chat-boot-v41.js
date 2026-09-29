@@ -87,7 +87,11 @@
     await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     const list = document.getElementById('contacts-list');
     if (!list) return;
-    const media = [...list.querySelectorAll('img.avatar-photo,video.avatar-video,video.profile-video')].slice(0, 32);
+    const bounds=list.getBoundingClientRect();
+    const media = [...list.querySelectorAll('img.avatar-photo,video.avatar-video,video.profile-video')].filter(element=>{
+      const rect=element.getBoundingClientRect();
+      return rect.width>0&&rect.height>0&&rect.bottom>Math.max(0,bounds.top)&&rect.top<Math.min(innerHeight,bounds.bottom);
+    }).slice(0, 12);
     if (!media.length) return;
     await Promise.race([
       Promise.allSettled(media.map(waitForElementV41)),
@@ -103,17 +107,13 @@
 
     completedNickV41 = nick;
     const token = ++activeTokenV41;
-    const started = performance.now();
     showLoaderV41(token);
 
     try {
       const value = await renderContactsBeforeV41(...args);
       setProgressV41(76, 'Загружаем аватарки…');
       await waitForVisibleAvatarsV41();
-      const minimum = Math.max(0, 280 - (performance.now() - started));
-      if (minimum) await waitV41(minimum);
       setProgressV41(100, 'Всё готово ✦');
-      await waitV41(90);
       return value;
     } finally {
       hideLoaderV41(token);

@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v138-mobile-interface';
+const CACHE_NAME='telechat-shell-v139-startup';
 const APP_SHELL=[
   './mobile-interface-v138.css?v=138',
   './mobile-interface-v138.js?v=138',
@@ -15,7 +15,7 @@ const APP_SHELL=[
   './reaction-art-v126.js?v=128',
   './reactions-v126.css?v=126',
   './ui-symbols-v125.js?v=125',
-  './ui-icons-v125.js?v=125',
+  './ui-icons-v125.js?v=139',
   './ui-icons-v125.css?v=125',
   './viewport-performance-v124.js?v=124',
   './viewport-performance-v124.css?v=135',
@@ -88,7 +88,7 @@ const APP_SHELL=[
   './animated-profile-v26.css',
   './animated-profile-v26.js',
   './cosmic-background-v27.css',
-  './cosmic-background-v27.js',
+  './cosmic-background-v27.js?v=139',
   './profile-details-v22.css',
   './profile-details-v22.js',
   './profile-card-v29.css',
@@ -104,7 +104,7 @@ const APP_SHELL=[
   './voice-send-v38.js?v=125',
   './media-compat-v40.js?v=40',
   './chat-boot-v41.css?v=51',
-  './chat-boot-v41.js?v=51',
+  './chat-boot-v41.js?v=139',
   './fluid-ui-v42.css?v=133',
   './fluid-ui-v42.js?v=133',
   './chat-open-loader-v44.css?v=51',
@@ -138,14 +138,28 @@ const APP_SHELL=[
   './profile-background-v84.js?v=93'
 ];
 
-self.addEventListener('install',event=>{
-  event.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.addAll(APP_SHELL)).then(()=>self.skipWaiting()));
-});
+async function installShellV139(){
+  const cache=await caches.open(CACHE_NAME);
+  const previous=(await caches.keys()).filter(key=>key.startsWith('telechat-shell-')&&key!==CACHE_NAME);
+  let next=0;
+  // Reuse only exact explicitly versioned resources. Unversioned files and
+  // HTML are mutable and must always be fetched for the new release.
+  await Promise.all(Array.from({length:4},async()=>{
+    while(next<APP_SHELL.length){
+      const asset=APP_SHELL[next++],url=new URL(asset,self.location.href);
+      let found=null;
+      if(url.searchParams.has('v'))for(const name of previous){found=await (await caches.open(name)).match(url.href);if(found?.ok)break;}
+      if(found?.ok)await cache.put(url.href,found);else await cache.add(asset);
+    }
+  }));
+  await self.skipWaiting();
+}
+self.addEventListener('install',event=>{event.waitUntil(installShellV139());});
 
 self.addEventListener('activate',event=>{
   event.waitUntil(
     caches.keys()
-      .then(keys=>Promise.all(keys.filter(key=>key!==CACHE_NAME).map(key=>caches.delete(key))))
+      .then(keys=>Promise.all(keys.filter(key=>key.startsWith('telechat-shell-')&&key!==CACHE_NAME).map(key=>caches.delete(key))))
       .then(()=>self.clients.claim())
   );
 });
