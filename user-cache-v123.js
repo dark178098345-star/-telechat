@@ -109,7 +109,14 @@
   async function many(values,force=false){
     const token=syncOwner(),keys=[...new Set(values.map(nick).filter(Boolean))];await restore(keys);
     if(token!==generation)return [];
-    await Promise.all(keys.filter(key=>!memory()[key]||(force&&Date.now()-(fresh.get(key)||0)>FRESH_MS)).map(request));
+    const missing=[];
+    for(const key of keys){
+      if(!memory()[key])missing.push(request(key));
+      else if(force&&Date.now()-(fresh.get(key)||0)>FRESH_MS)request(key).catch(()=>{});
+    }
+    // Cached profiles remain usable during refresh. One unavailable profile
+    // must not reject the entire history/sidebar paint and trigger a refetch.
+    await Promise.allSettled(missing);
     return token===generation?keys.map(key=>memory()[key]).filter(Boolean):[];
   }
   async function get(value){

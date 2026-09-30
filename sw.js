@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v139-startup';
+const CACHE_NAME='telechat-shell-v140-profile-loading';
 const APP_SHELL=[
   './mobile-interface-v138.css?v=138',
   './mobile-interface-v138.js?v=138',
@@ -34,7 +34,7 @@ const APP_SHELL=[
   './stories-v115.css?v=116',
   './stories-v115.js?v=116',
   './room-media-v113.js?v=113',
-  './app-performance-v17.js?v=123',
+  './app-performance-v17.js?v=140',
   './chat-open-loader-v44.js?v=113',
   './message-context-v36.js?v=126',
   './navigation-readers-v109.js?v=109',
@@ -76,7 +76,7 @@ const APP_SHELL=[
   './favicon-32.png',
   './favicon-48.png',
   './favicon.ico',
-  './user-cache-v123.js?v=124',
+  './user-cache-v123.js?v=140',
   './profile-performance-v11.js?v=123',
   './followers-v12.js',
   './ui-polish-v16.css',

@@ -192,7 +192,7 @@
     if(sidebarFilter==='all'){
       if(chats.length){const title=document.createElement('div');title.className='list-section-title';title.textContent='Личные чаты';fragment.appendChild(title);}
       for(const chat of chats){
-        const user=userCache[chat.nick];if(!user)continue;
+        const user=userCache[chat.nick]||{nick:chat.nick,name:chat.nick,av:0,status:'',last_seen:0};
         const online=isOnline(user.last_seen),element=document.createElement('div');element.className='contact'+(currentChat===chat.nick&&!currentRoom?' active':'');
         element.innerHTML='<div class="av'+(online?' av-online':'')+'">'+avatarMarkup(user)+'</div><div class="contact-info"><div class="contact-name">'+escHtml(user.name)+'</div><div class="contact-last">'+escHtml(messagePreviewText(chat.last).substring(0,38))+'</div></div><div class="contact-time">'+formatMsgTime(chat.ts)+'</div>';
         element.dataset.chatKey=chatKey(me.nick,chat.nick);
@@ -231,13 +231,14 @@
   }
 
   async function renderContactsNowV17(){
+    const owner=me?.nick;
     try{
       const list=document.getElementById('contacts-list');if(!list||!me)return;
       const [,messages]=await Promise.all([loadMyRooms(),fetchSidebarMessagesV18()]);
+      if(me?.nick!==owner)return;
       sidebarMessagesCacheV17=messages;sidebarCacheReadyV17=true;sidebarCacheUpdatedAtV17=Date.now();
-      await batchUsersV15(sidebarPrivateNicksV18(messages),true);
       await paintSidebarV17(sidebarMessagesCacheV17);saveSidebarSnapshotV18();
-    }catch(error){return renderContactsFallbackV17();}
+    }catch(error){if(me?.nick===owner)return renderContactsFallbackV17();}
   }
 
   function requestSidebarRefreshV18(){

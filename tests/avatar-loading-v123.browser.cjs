@@ -19,6 +19,7 @@ async function setup(context,legacy=false){
     sb={from:table=>({select(fields){this.fields=fields;return this;},eq(){return this;},order(){return this;},limit(){return this;},in(){return this;},maybeSingle(){this.single=true;return this;},abortSignal(){return this;},
       async then(resolve,reject){try{
         if(offlineFixture)throw Error('Unexpected network request on warm load');
+        if(window.failUsers&&table==='users')throw Error('Profile service unavailable');
         const kind=table==='users'?'users':this.fields==='id,text'?'text':'metadata';events.push({kind,event:'start'});if(kind==='users')userQueries++;
         await new Promise(r=>setTimeout(r,kind==='text'?120:80));events.push({kind,event:'end'});
         const data=table==='users'?[{...user}]:[{id:1,chat_key:'me_friend',from_nick:'friend',ts:100,text:'Hi'}];resolve({data:this.single?data[0]:data});
@@ -46,6 +47,12 @@ async function setup(context,legacy=false){
     const warm=await restored.evaluate(async()=>{const start=performance.now();await renderContacts();return {ms:Math.round(performance.now()-start),queries:userQueries};});
     await restored.waitForSelector('#contacts-list .avatar-photo',{state:'attached'});
     assert.equal(warm.queries,0,'restart must use the saved photo without server access');
+    const failureContext=await browser.newContext(),failure=await setup(failureContext);
+    await failure.evaluate(()=>{window.failUsers=true;});await failure.evaluate(()=>renderContacts());
+    assert.equal(await failure.locator('#contacts-list .contact[data-nick="friend"]').count(),1,'failed avatar must not hide chat or invoke fallback');
+    assert.equal(await failure.locator('#contacts-list .contact-name').textContent(),'friend');
+    assert.equal(await failure.locator('#contacts-list .contact-last').textContent(),'Hi');
+    await failureContext.close();
     assert.deepEqual(errors,[]);
     if(baseline){assert.equal(baseline.userQueries,2);assert(baseline.events.findIndex(e=>e.kind==='users'&&e.event==='start')>baseline.events.findIndex(e=>e.kind==='text'&&e.event==='end'));console.log('Controlled 80/120 ms network baseline:',JSON.stringify(baseline));}
     console.log('PASS avatar integration:',JSON.stringify({coldMs:current.coldMs,userQueries:current.userQueries,warm,parallelAvatars:true}));await context.close();

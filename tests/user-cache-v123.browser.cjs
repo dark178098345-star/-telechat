@@ -71,6 +71,13 @@ async function fixture(context,owner='me'){
     assert.equal(await concurrent.evaluate(()=>requests.length),2,'requests from separate turns must share the same concurrency limit');
     await concurrent.evaluate(()=>gates.splice(0).forEach(done=>done()));await concurrent.waitForFunction(()=>requests.length===3&&gates.length===1);
     await concurrent.evaluate(async()=>{gates.shift()();await Promise.all([a,b,c]);});
+    const resilient=await fixture(context,'resilient');
+    await resilient.evaluate(()=>{telechatUserCacheV123.merge({nick:'cached',name:'Saved',status:''});const now=Date.now;Date.now=()=>now()+61000;delayed=true;window.ready=false;window.refresh=telechatUserCacheV123.many(['cached'],true).then(rows=>{ready=rows[0].name==='Saved';});});
+    await resilient.waitForFunction(()=>gates.length===1&&ready);
+    assert.equal(await resilient.evaluate(()=>userCache.cached.name),'Saved','cached batch paints without waiting for slow refresh');
+    await resilient.evaluate(()=>gates.shift()());await resilient.waitForFunction(()=>userCache.cached.name==='cached');
+    await resilient.evaluate(()=>{delayed=false;fail=true;});
+    assert.equal(await resilient.evaluate(async()=> (await telechatUserCacheV123.many(['cached','unavailable'],true)).length),1,'one failed profile cannot reject cached peers');
     const deniedContext=await browser.newContext();await deniedContext.addInitScript(()=>{Object.defineProperty(window,'indexedDB',{value:{open(){throw Error('storage blocked');}}});});
     const denied=await fixture(deniedContext);await denied.evaluate(async()=>{await telechatUserCacheV123.get('alice');await telechatUserCacheV123.flush();});
     assert.equal(await denied.evaluate(()=>userCache.alice.nick),'alice','blocked device storage must not block normal network avatars');await deniedContext.close();
