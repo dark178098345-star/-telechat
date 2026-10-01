@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v143-profile-card';
+const CACHE_NAME='telechat-shell-v144-listening';
 const APP_SHELL=[
   './profile-card-v143.css?v=143',
   './attachments-v141.js?v=141',
@@ -27,7 +27,7 @@ const APP_SHELL=[
   './activity-stats-v124.js?v=124.1',
   './activity-stats-v124.css?v=124',
   './presence-model-v120.js?v=129',
-  './presence-v120.js?v=129',
+  './presence-v120.js?v=144',
   './chat-wallpaper-v119.js?v=124',
   './chat-wallpaper-v119.css?v=119',
   './music-intro-v118.js?v=118',

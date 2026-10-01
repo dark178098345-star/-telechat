@@ -13,12 +13,25 @@
   try{nativeHidden=window.TelechatAndroid?.isInBackground?.()===true;}catch(_){}
   let pendingTrack=null,tracking=false,retryTimer=0,retryDelay=1000,lastLegacyWrite=0,reconnectTimer=0,reconnectDelay=1000,connectionFailed=false,closingChannel=null;
   const now=()=>Date.now()+clockOffset;
+  let musicPlaying=false,musicOwner='';
+  function listeningHere(){
+    if(musicOwner!==account())return false;
+    const playback=window.telechatMusicV96?.getState?.();
+    return playback?!!playback.track&&playback.paused===false:musicPlaying;
+  }
   function stateKind(){return shutdown||navigator.onLine===false?'offline':document.hidden||nativeHidden?'background':'online';}
   function cachedUser(nick){try{return Number(userCache[nick]?.last_seen)||0;}catch(_){return 0;}}
   function value(nick,lastSeen=0){nick=normalize(nick);if(blocked(nick))return {state:'offline',device:'',lastSeen:0};
     const peerLive=connected?[...live.values()].filter(x=>x.nick===nick):[];
     const reachable=navigator.onLine!==false;
     const result=model.reduce({rows:rows.get(nick)||[],live:peerLive,departed,lastSeen:Math.max(seen.get(nick)||0,lastSeen,cachedUser(nick)),now:now(),reachable,available:reachable&&(peerLive.length>0||now()-(checked.get(nick)||0)<65000)});
+    // Playback is transient presence metadata, never a track title or URL in the database.
+    result.listening=reachable&&(peerLive.some(item=>{
+      if(item.key===session?.key||!item.listening||item.state==='offline')return false;
+      if(now()-item.at>(item.state==='background'?model.BACKGROUND_MS:model.ACTIVE_MS))return false;
+      const newer=(rows.get(nick)||[]).find(row=>row.chat_key===item.key);
+      return !newer||Number(newer.ts)<=model.encode(item.at,item.state);
+    })||(nick===account()&&stateKind()!=='offline'&&listeningHere()));
     if(result.state==='unknown')result.reason=!reachable?'offline':pending.has(nick)||!attempted.has(nick)?'loading':'unavailable';
     return result;
   }
@@ -47,13 +60,13 @@
   async function trackLatest(){if(tracking||!connected||!channel)return;tracking=true;const ownChannel=channel;
     try{while(pendingTrack&&connected&&ownChannel===channel){const item=pendingTrack;pendingTrack=null;const result=await ownChannel.track(item);if(result!=='ok'&&ownChannel===channel){pendingTrack=pendingTrack||item;break;}}}catch(_){/* The next heartbeat or reconnect retries the latest state. */}finally{tracking=false;}
   }
-  function publish(force=false){ensureAccount();const s=session;if(!s)return Promise.resolve();const kind=stateKind(),changed=s.state!==kind;if(!force&&!changed&&now()-s.sentAt<(kind==='background'?45000:25000))return Promise.resolve();
-    s.at=Math.max(Math.floor(now()),s.at+1);s.state=kind;s.sentAt=now();const snapshot={key:s.key,nick:s.nick,device:s.device,state:kind,at:s.at};
+  function publish(force=false){ensureAccount();const s=session;if(!s)return Promise.resolve();const kind=stateKind(),listening=kind!=='offline'&&listeningHere(),changed=s.state!==kind||s.listening!==listening;if(!force&&!changed&&now()-s.sentAt<(kind==='background'?45000:25000))return Promise.resolve();
+    s.at=Math.max(Math.floor(now()),s.at+1);s.state=kind;s.listening=listening;s.sentAt=now();const snapshot={key:s.key,nick:s.nick,device:s.device,state:kind,at:s.at,listening};
     syncOwn({chat_key:s.key,nick:s.nick,ts:model.encode(s.at,kind)});pendingTrack=snapshot;trackLatest();
     return persist(s,snapshot,document.hidden||shutdown);
   }
   function syncLive(ownChannel){if(channel!==ownChannel||!connected)return;const next=new Map();
-    for(const entries of Object.values(ownChannel.presenceState()))for(const item of entries||[]){if(typeof item.key!=='string'||!item.key.startsWith(model.PREFIX)||!normalize(item.nick)||!['online','background','offline'].includes(item.state))continue;const old=next.get(item.key);if(!old||Number(item.at)>old.at)next.set(item.key,{key:item.key,nick:normalize(item.nick),device:item.device==='phone'?'phone':'pc',state:item.state,at:Math.min(Number(item.at)||now(),now()+15000)});}
+    for(const entries of Object.values(ownChannel.presenceState()))for(const item of entries||[]){if(typeof item.key!=='string'||!item.key.startsWith(model.PREFIX)||!normalize(item.nick)||!['online','background','offline'].includes(item.state))continue;const old=next.get(item.key);if(!old||Number(item.at)>old.at)next.set(item.key,{key:item.key,nick:normalize(item.nick),device:item.device==='phone'?'phone':'pc',state:item.state,at:Math.min(Number(item.at)||now(),now()+15000),listening:item.listening===true});}
     for(const [key,old] of live){const nextItem=next.get(key);if(!nextItem){departed.set(key,{at:now(),state:old.state});if(old.state==='online')seen.set(old.nick,Math.max(seen.get(old.nick)||0,now()));}else if(old.state==='online'&&nextItem.state!=='online')seen.set(old.nick,Math.max(seen.get(old.nick)||0,nextItem.at));}
     live.clear();for(const [key,item] of next){live.set(key,item);departed.delete(key);}
     schedulePaint();
@@ -107,7 +120,7 @@
     if(!node)return;
     const hint=v.state==='unknown'?(v.lastSeen?'Последняя подтверждённая активность. ':'')+(v.reason==='offline'?'Нет соединения с интернетом.':v.reason==='loading'?'Обновляем текущий статус.':'Текущий статус пока не получен.') : '';
     if(node.title!==hint)node.title=hint;
-    const text=blocked(nick)?'был давно':(isProfile&&v.state==='online'?'● сейчас в сети':model.label(v,now()));const signature=[nick,v.state,v.device,text].join('|');
+    const text=blocked(nick)?'был давно':isProfile&&v.listening?'Слушает музыку':(isProfile&&v.state==='online'?'● сейчас в сети':model.label(v,now()));const signature=[nick,v.state,v.device,text].join('|');
     if(node.dataset.presenceV120===signature&&node.textContent===text+(v.state==='background'?'☾':'')&&node.classList.contains('background-v101')===(v.state==='background')&&node.classList.contains('online')===(v.state==='online')&&(!v.device||isProfile||v.state!=='online'||node.querySelector('.device-presence-v72')))return;
     node.dataset.presenceV120=signature;node.textContent=text;node.classList.toggle('online',v.state==='online');node.classList.toggle('offline',v.state!=='online');node.classList.toggle('background-v101',v.state==='background');
     if(isProfile)node.style.color=v.state==='online'?'var(--green)':v.state==='background'?'#e6c981':'var(--text3)';
@@ -127,6 +140,9 @@
   const oldContacts=window.renderContacts;if(typeof oldContacts==='function')window.renderContacts=async function(...args){const result=await oldContacts.apply(this,args);paint();refresh();return result;};
   const oldProfile=window.openUserProfile;if(typeof oldProfile==='function')window.openUserProfile=async function(nick,...args){const result=await oldProfile.call(this,nick,...args);paintProfile(nick);await refresh(false,nick);paintProfile(nick);return result;};
   const oldLogin=window.doLogin;if(typeof oldLogin==='function')window.doLogin=async function(...args){const result=await oldLogin.apply(this,args);wake();return result;};
+  window.addEventListener('telechat-music-state-v97',event=>{
+    musicPlaying=event.detail?.playing===true;musicOwner=account();publish();schedulePaint();
+  });
   document.addEventListener('visibilitychange',()=>{publish(true);if(!document.hidden)wake();});
   window.addEventListener('pagehide',event=>{if(event.persisted){nativeHidden=true;publish(true);}else leave();},{passive:true});
   window.addEventListener('pageshow',()=>{nativeHidden=false;wake();},{passive:true});
