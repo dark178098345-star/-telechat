@@ -1,5 +1,6 @@
-const CACHE_NAME='telechat-shell-v142-plain-background';
+const CACHE_NAME='telechat-shell-v143-profile-card';
 const APP_SHELL=[
+  './profile-card-v143.css?v=143',
   './attachments-v141.js?v=141',
   './attachments-v141.css?v=141',
   './mobile-interface-v138.css?v=138',

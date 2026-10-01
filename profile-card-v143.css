@@ -1,0 +1,121 @@
+/* Public profile only. Keep existing nodes and handlers: no layout observers. */
+html body #user-profile-modal{padding:16px;background:rgba(5,6,12,.8)}
+html body #user-profile-modal .user-profile-card{
+  width:min(500px,100%);max-width:500px;max-height:calc(100dvh - 32px);
+  margin:auto;padding:0!important;border:1px solid #ffffff24;border-radius:28px;
+  overflow:auto;overflow-x:hidden;background:#12131e;color:#f5f3fb;
+  box-shadow:0 28px 90px #0008;scrollbar-width:thin;scrollbar-gutter:stable;
+}
+html body #user-profile-modal .user-profile-cover{height:166px!important;max-height:none!important;border:0}
+html body #user-profile-modal .user-profile-cover::after{background:linear-gradient(180deg,#0001 40%,#11121e70)}
+html body #user-profile-modal .user-profile-close{
+  top:12px;right:12px;width:36px;height:36px;border-radius:50%;background:#11121ed9;
+  display:grid;place-items:center;color:#fff;box-shadow:none;backdrop-filter:none;
+}
+html body #user-profile-modal .user-profile-body{
+  display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:12px;row-gap:0;
+  padding:0 24px 22px;overflow:visible;text-align:left;text-shadow:none;
+  background:linear-gradient(180deg,rgba(16,17,27,.58),rgba(16,17,27,.78) 200px);
+}
+html body #user-profile-modal .user-profile-avatar{
+  grid-area:1/1;position:relative;z-index:1;width:100px;height:100px;
+  margin:-42px 0 16px;border:4px solid #191a26;border-radius:30px;
+  box-shadow:0 6px 20px #0004;justify-self:start;
+}
+html body #user-profile-modal .user-profile-avatar .avatar-photo{border-radius:25px}
+html body #user-profile-modal .activity-badge-v124{
+  grid-area:1/2;align-self:end;justify-self:end;margin:0 0 19px;
+  padding:7px 11px;background:#282139;color:#e0d3ff;border-color:#bca1f533;font-size:11px;
+}
+html body #user-profile-modal .user-profile-name{
+  grid-area:2/1;margin:0;min-width:0;font-size:26px;line-height:1.2;letter-spacing:-.6px;color:#fff;
+}
+html body #user-profile-modal .user-profile-seen{
+  grid-area:2/2;align-self:center;margin:0;font-size:10px;line-height:1.4;color:#b8c4ba;
+  max-width:130px;text-align:right;
+}
+html body #user-profile-modal .user-profile-nick{
+  grid-area:3/1;margin:6px 0 0;min-width:0;overflow-wrap:anywhere;font-size:12px;color:#b5a6ee;
+}
+html body #user-profile-modal .user-profile-role{
+  grid-area:3/2;justify-self:end;align-self:center;margin:5px 0 0;padding:4px 7px;
+  font-size:9px;line-height:1.3;box-shadow:none;
+}
+html body #user-profile-modal #profile-follow-compact-v102{
+  grid-area:4/1/5/-1;width:100%;max-width:100%;margin:16px 0 0;padding:0;
+  flex-wrap:wrap;gap:10px 12px;border:0;background:none;box-shadow:none;
+}
+html body #user-profile-modal #follow-stats{gap:18px;flex:1}
+html body #user-profile-modal .follow-count{font-size:15px;color:#f6f3ff}
+html body #user-profile-modal .follow-label{font-size:10px;color:#bdb9cd}
+html body #user-profile-modal #follow-btn{min-height:34px;padding:7px 12px;font-size:11px;color:#fff;box-shadow:none}
+html body #user-profile-modal .user-profile-status{
+  grid-area:5/1/6/-1;margin:15px 0 0;padding:0 0 0 11px;justify-self:stretch;
+  border:0;border-left:2px solid #a38ae0!important;border-radius:0;background:none!important;
+  box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;color:#e3dfee;font-size:13px;line-height:1.6;
+}
+html body #user-profile-modal .profile-music-v97{
+  grid-area:6/1/7/-1;width:100%;margin:18px 0 0;padding:12px;
+  border:1px solid #c1a7ff25;border-radius:16px;background:linear-gradient(110deg,#30283fbb,#1f1e2cbb);
+  color:#f5f1ff;gap:12px;
+}
+html body #user-profile-modal .profile-music-play-v97{width:42px;height:42px;flex-basis:42px;border-radius:50%;background:#bda0f52b;color:#e0ccff}
+html body #user-profile-modal .profile-music-copy-v97{flex:1;min-width:0}
+html body #user-profile-modal .profile-music-copy-v97 small{font-size:9px;letter-spacing:1px;color:#b9abcd}
+html body #user-profile-modal .profile-music-copy-v97 strong{font-size:14px;color:#f4efff;margin-top:4px}
+html body #user-profile-modal #moon-profile-showcase-v29{
+  grid-area:7/1/8/-1;margin:20px 0 0;padding:0 0 18px;border:0;border-bottom:1px solid #ffffff13!important;
+  border-radius:0;background:none!important;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;
+}
+html body #user-profile-modal .moon-showcase-head{padding:0 0 4px;border:0}
+html body #user-profile-modal .moon-showcase-head small{font-size:8px;color:#c1b492}
+html body #user-profile-modal .moon-showcase-head strong{font-size:13px;margin-top:3px}
+html body #user-profile-modal .moon-showcase-head em{font-size:10px;color:#c3b4ec}
+html body #user-profile-modal .moon-profile-showcase-list{gap:9px;padding-top:12px}
+html body #user-profile-modal .moon-showcase-star{
+  flex:1 0 64px;width:auto!important;height:73px!important;max-width:86px;
+  border-radius:16px;box-shadow:none;animation:none;
+}
+html body #user-profile-modal .moon-showcase-star small{font-size:8px}
+html body #user-profile-modal .user-profile-section{
+  grid-area:8/1/9/-1;margin:18px 0 0;padding:0 0 18px;border:0;border-bottom:1px solid #ffffff13!important;
+  border-radius:0;background:none!important;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;
+}
+html body #user-profile-modal .user-profile-section-label{font-size:9px;letter-spacing:1.4px;color:#afa5c6;margin-bottom:9px}
+html body #user-profile-modal .user-profile-bio{font-size:13px;line-height:1.75;color:#e0dce9;overflow-wrap:anywhere}
+html body #user-profile-modal .profile-details-toggle{
+  grid-area:9/1/10/-1;margin:8px 0 0;padding:10px 0;border:0;border-radius:0;
+  background:none!important;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;
+}
+html body #user-profile-modal .profile-details-copy{display:flex;flex-direction:column;gap:3px}
+html body #user-profile-modal .profile-details-title{font-size:12px;color:#eee9f6}
+html body #user-profile-modal .profile-details-subtitle{font-size:10px;line-height:1.4;color:#afa7c0;white-space:normal}
+html body #user-profile-modal .profile-details-icon{width:36px;height:36px;background:#ffffff07;border-color:#ffffff12;color:#c5b3e9}
+html body #user-profile-modal .profile-details-shell{
+  grid-area:10/1/11/-1;background:none!important;border:0;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;
+}
+html body #user-profile-modal .profile-details-group{background:#10111dbb;border-color:#ffffff12;border-radius:14px}
+html body #user-profile-modal .user-profile-actions{
+  grid-area:11/1/12/-1;position:static!important;width:100%;margin:12px 0 0!important;padding:0!important;
+  border:0!important;background:none!important;box-shadow:none!important;
+}
+html body #user-profile-modal .user-profile-actions .modal-btn{min-height:44px;border-radius:13px}
+html body #user-profile-modal :is(button,a):focus-visible{outline:2px solid #c2a6ff;outline-offset:3px}
+@media(max-width:520px){
+  html body #user-profile-modal{padding:6px}
+  html body #user-profile-modal .user-profile-card{max-height:calc(100dvh - 12px);border-radius:23px;scrollbar-gutter:auto}
+  html body #user-profile-modal .user-profile-cover{height:140px!important}
+  html body #user-profile-modal .user-profile-body{padding:0 18px max(18px,env(safe-area-inset-bottom));column-gap:8px}
+  html body #user-profile-modal .user-profile-avatar{width:88px;height:88px;margin-top:-38px;border-radius:27px}
+  html body #user-profile-modal .user-profile-avatar .avatar-photo{border-radius:22px}
+  html body #user-profile-modal .user-profile-name{font-size:24px}
+  html body #user-profile-modal .user-profile-seen{max-width:105px;font-size:9px}
+  html body #user-profile-modal #follow-stats{gap:12px}
+  html body #user-profile-modal .moon-showcase-head em{font-size:9px}
+}
+@media(max-width:350px){
+  html body #user-profile-modal .user-profile-body{padding-left:14px;padding-right:14px}
+  html body #user-profile-modal .user-profile-name{font-size:21px}
+  html body #user-profile-modal .follow-label{font-size:9px}
+  html body #user-profile-modal #follow-btn{padding:7px 9px;font-size:10px}
+}
