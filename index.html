@@ -33,38 +33,6 @@
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 html{height:100%;height:-webkit-fill-available;}
 body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-family:'Nunito',sans-serif;font-size:var(--font-size);background:#090a12;color:var(--text);}
-.emoji-bg{
-  position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;isolation:isolate;
-  background:
-    radial-gradient(ellipse at 18% 12%,rgba(106,82,222,.15) 0%,rgba(64,48,145,.06) 28%,transparent 54%),
-    radial-gradient(ellipse at 86% 78%,rgba(25,92,154,.13) 0%,rgba(18,59,111,.05) 31%,transparent 58%),
-    radial-gradient(ellipse at 54% 110%,rgba(92,62,190,.10) 0%,transparent 48%),
-    linear-gradient(135deg,#11101f 0%,#0b0b16 48%,#08101b 100%);
-}
-.emoji-bg::before{
-  content:'';position:absolute;inset:-12%;z-index:0;
-  background-image:
-    radial-gradient(circle,rgba(255,255,255,.82) 0 1px,transparent 1.4px),
-    radial-gradient(circle,rgba(167,139,250,.58) 0 .8px,transparent 1.25px),
-    radial-gradient(circle,rgba(125,211,252,.46) 0 .7px,transparent 1.15px),
-    radial-gradient(circle,rgba(255,255,255,.32) 0 .55px,transparent 1px);
-  background-size:113px 113px,173px 173px,241px 241px,67px 67px;
-  background-position:9px 21px,61px 37px,112px 83px,29px 46px;
-  opacity:.55;animation:starDrift 90s ease-in-out infinite;
-}
-.emoji-bg::after{
-  content:'';position:absolute;inset:0;z-index:1;
-  background:
-    radial-gradient(circle at 7% 76%,rgba(124,110,247,.18) 0 1px,transparent 2px),
-    radial-gradient(circle at 28% 18%,rgba(255,255,255,.24) 0 1px,transparent 2px),
-    radial-gradient(circle at 74% 24%,rgba(96,165,250,.18) 0 1px,transparent 2px),
-    radial-gradient(circle at 91% 62%,rgba(167,139,250,.20) 0 1px,transparent 2px);
-  background-size:271px 271px,337px 337px,293px 293px,389px 389px;
-  animation:starPulse 5s ease-in-out infinite alternate,starDriftBack 115s ease-in-out infinite;
-}
-@keyframes starDrift{0%,100%{transform:translate3d(0,0,0) rotate(0deg);}50%{transform:translate3d(-3%,-4%,0) rotate(.35deg);}}
-@keyframes starDriftBack{0%,100%{transform:translate3d(0,0,0) scale(1);}50%{transform:translate3d(2.2%,-1.8%,0) scale(1.015);}}
-@keyframes starPulse{from{opacity:.34;}to{opacity:.72;}}
 .screen{display:none;position:fixed;inset:0;z-index:10;align-items:center;justify-content:center;background:transparent;}
 .screen.active{display:flex;animation:softFadeIn .48s cubic-bezier(.2,.75,.25,1) both;}
 .auth-box{width:90%;max-width:360px;background:rgba(19,19,30,.84);border:1px solid rgba(124,110,247,.28);border-radius:20px;padding:32px 28px;z-index:2;box-shadow:0 24px 80px rgba(0,0,0,.56),inset 0 1px 0 rgba(255,255,255,.025);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);max-height:90vh;overflow-y:auto;}
@@ -327,25 +295,8 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
 /* STARTUP SCREEN */
 #startup-loader{
   position:fixed;inset:0;z-index:5000;display:flex;align-items:center;justify-content:center;
-  overflow:hidden;background:
-    radial-gradient(circle at 50% 42%,rgba(124,110,247,.17),transparent 31%),
-    radial-gradient(circle at 82% 82%,rgba(38,114,178,.12),transparent 35%),
-    linear-gradient(145deg,#111020 0%,#090a13 53%,#07101a 100%);
+  overflow:hidden;background:#090a12;
   opacity:1;visibility:visible;transition:opacity .55s ease,visibility .55s ease;
-}
-#startup-loader::before{
-  content:'';position:absolute;inset:-15%;opacity:.55;
-  background-image:
-    radial-gradient(circle,rgba(255,255,255,.85) 0 1px,transparent 1.4px),
-    radial-gradient(circle,rgba(167,139,250,.55) 0 .8px,transparent 1.25px),
-    radial-gradient(circle,rgba(125,211,252,.4) 0 .7px,transparent 1.15px);
-  background-size:89px 89px,151px 151px,223px 223px;
-  background-position:12px 19px,57px 31px,104px 76px;
-  animation:startupStarDrift 15s ease-in-out infinite alternate;
-}
-#startup-loader::after{
-  content:'';position:absolute;inset:0;pointer-events:none;
-  background:radial-gradient(circle at 50% 48%,transparent 0 22%,rgba(7,8,16,.18) 58%,rgba(4,5,11,.48) 100%);
 }
 #startup-loader.is-hidden{opacity:0;visibility:hidden;pointer-events:none;}
 .startup-inner{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;text-align:center;padding:28px;}
@@ -364,7 +315,6 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
 .startup-status{height:18px;margin-top:11px;color:#6f6f89;font-size:11px;font-weight:600;letter-spacing:.02em;}
 @keyframes startupOrbit{to{transform:rotate(360deg);}}
 @keyframes startupBreathe{0%,100%{transform:translateY(0) scale(1);}50%{transform:translateY(-3px) scale(1.035);}}
-@keyframes startupStarDrift{to{transform:translate3d(-2.5%,-2%,0) rotate(.3deg);}}
 @media (prefers-reduced-motion:reduce){.startup-orbit,.startup-bubble,#startup-loader::before{animation:none!important;}}
 /* ROOMS, CHANNELS & MEDIA */
 .sidebar-brand-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px;}
@@ -507,7 +457,6 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
 <link rel="stylesheet" href="./moderation-v19.css">
 <link rel="stylesheet" href="./moons-v20.css">
 <link rel="stylesheet" href="./animated-profile-v26.css">
-<link rel="stylesheet" href="./cosmic-background-v27.css">
 <link rel="stylesheet" href="./profile-details-v22.css">
 <link rel="stylesheet" href="./profile-card-v29.css">
 <link rel="stylesheet" href="./chat-reliability-v24.css">
@@ -601,7 +550,6 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
   setTimeout(finish,3500);
 })();
 </script>
-<div class="emoji-bg" id="emojiBg"></div>
 <div class="toast" id="toast"></div>
 <div class="panel-overlay" id="overlay" onclick="closeAllPanels()"></div>
 
@@ -2701,7 +2649,6 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <script src="./moderation-v19.js"></script>
 <script src="./moons-v20.js"></script>
 <script src="./animated-profile-v26.js"></script>
-<script src="./cosmic-background-v27.js?v=139"></script>
 <script src="./profile-details-v22.js"></script>
 <script src="./chat-reliability-v24.js?v=136"></script>
 <script src="./message-send-animation-v35.js?v=54"></script>
@@ -2759,5 +2706,6 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <script src="./mobile-interface-v138.js?v=138"></script>
 <link rel="stylesheet" href="./attachments-v141.css?v=141">
 <script src="./attachments-v141.js?v=141"></script>
+<style id="plain-background-v142">html body,html body #chat-screen.active,#startup-loader{background:#090a12!important}</style>
 </body>
 </html>

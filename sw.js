@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v141-attachments';
+const CACHE_NAME='telechat-shell-v142-plain-background';
 const APP_SHELL=[
   './attachments-v141.js?v=141',
   './attachments-v141.css?v=141',
@@ -89,8 +89,6 @@ const APP_SHELL=[
   './moons-v20.js',
   './animated-profile-v26.css',
   './animated-profile-v26.js',
-  './cosmic-background-v27.css',
-  './cosmic-background-v27.js?v=139',
   './profile-details-v22.css',
   './profile-details-v22.js',
   './profile-card-v29.css',

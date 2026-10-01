@@ -1,13 +1,6 @@
 const path=require('path'),assert=require('assert/strict'),{chromium}=require('playwright');const root=path.resolve(__dirname,'..');
 (async()=>{const b=await chromium.launch({channel:'msedge',headless:true});try{
- for(const width of [390,1280]){
- const p=await b.newPage({viewport:{width,height:800}});await p.route('**/*',r=>r.fulfill({body:'<div id="emojiBg"></div><input id="calm-mode-v95">',contentType:'text/html'}));await p.goto('http://test.local');
- await p.evaluate(()=>{localStorage.setItem('telechat_calm_mode_v95','true');window.jobs=new Map();window.seq=0;window.setTimeout=fn=>{jobs.set(++seq,fn);return seq;};window.clearTimeout=id=>jobs.delete(id);});
- await p.addScriptTag({path:path.join(root,'cosmic-background-v27.js')});assert.equal(await p.locator('.cosmic-star-v27').count(),0);assert.equal(await p.evaluate(()=>jobs.size),0,'calm startup schedules no sky timers');
- await p.evaluate(()=>{localStorage.setItem('telechat_calm_mode_v95','false');document.querySelector('input').dispatchEvent(new Event('change',{bubbles:true}));});
- if(width===390){assert.equal(await p.evaluate(()=>jobs.size),0,'phone keeps decorations disabled');}else{assert.equal(await p.locator('.cosmic-star-v27').count(),44);assert.equal(await p.evaluate(()=>jobs.size),1);await p.evaluate(()=>dispatchEvent(new CustomEvent('telechat-native-visibility',{detail:{background:true}})));assert.equal(await p.evaluate(()=>jobs.size),0,'background stops timer');}
- await p.close();
- }
+ // Cosmic effects were fully retired in v142; covered by plain-background test.
  const p=await b.newPage();await p.setContent('<div class="msg">'+ '<span>Текст</span>'.repeat(5000)+'</div><button>🎤</button>');
  await p.evaluate(()=>{window.visits=0;const original=document.createTreeWalker.bind(document);document.createTreeWalker=(root,what,filter)=>original(root,what,filter?{acceptNode(n){visits++;return filter.acceptNode(n);}}:filter);});
  for(const f of ['ui-symbols-v125.js','ui-icons-v125.js'])await p.addScriptTag({path:path.join(root,f)});
@@ -17,5 +10,5 @@ const path=require('path'),assert=require('assert/strict'),{chromium}=require('p
  await p.addScriptTag({path:path.join(root,'chat-boot-v41.js')});await p.evaluate(()=>renderContacts());
  assert.deepEqual(await p.evaluate(()=>delays),[2600],'offscreen avatar must not delay startup, no forced intro sleeps');
  assert.equal(await p.locator('#chat-boot-v41.is-visible').count(),0);
- console.log('PASS startup CPU: no cosmic timers/stars on calm startup and phones, desktop effects restored, background suspension, pruned icon traversal, no offscreen media wait or artificial intro delay');
+ console.log('PASS startup CPU: pruned icon traversal, no offscreen media wait or artificial intro delay');
 }finally{await b.close();}})().catch(e=>{console.error(e);process.exitCode=1;});
