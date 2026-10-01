@@ -1,0 +1,7 @@
+#user-profile-modal #view-profile-seen.listening-v145{
+  display:flex;align-items:center;justify-content:flex-end;gap:5px;
+  max-width:145px;padding:5px 7px;border-radius:9px;background:#76deb212;
+  color:#9cdec3!important;font-size:10px;line-height:1.4;
+}
+.listening-icon-v145{width:15px;height:15px;flex:0 0 15px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+@media(max-width:350px){#user-profile-modal #view-profile-seen.listening-v145{max-width:108px;font-size:9px;padding:4px;gap:4px}}

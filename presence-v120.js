@@ -3,6 +3,12 @@
   'use strict';
   const model=window.telechatPresenceModelV120;if(!model||typeof sb==='undefined')return;
   const $=id=>document.getElementById(id),normalize=model.normalize;
+  const MUSIC_PREFIX=model.PREFIX+'music:';
+  const musicKey=key=>MUSIC_PREFIX+key.slice(model.PREFIX.length);
+  const sessionKey=key=>model.PREFIX+key.slice(MUSIC_PREFIX.length);
+  // Codes 3/4 are ignored by older presence reducers, so music cannot create ghost online sessions.
+  const musicStamp=(at,state)=>model.encode(at,state)+(state==='offline'?0:2);
+  function decodeMusic(row){const ts=Number(row.ts),code=ts%10,at=Math.floor(ts/10);if(!Number.isSafeInteger(ts)||at<=0||![0,3,4].includes(code))return null;return {key:row.chat_key,at,state:code===3?'online':code===4?'background':'offline',listening:code!==0};}
   const phone=()=>Boolean(navigator.userAgentData?.mobile||/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&/Macintosh/.test(navigator.userAgent)));
   const account=()=>{try{return normalize(me?.nick);}catch(_){return '';}};
   const chat=()=>{try{return currentRoom?'':normalize(currentChat);}catch(_){return '';}};
@@ -24,13 +30,18 @@
   function value(nick,lastSeen=0){nick=normalize(nick);if(blocked(nick))return {state:'offline',device:'',lastSeen:0};
     const peerLive=connected?[...live.values()].filter(x=>x.nick===nick):[];
     const reachable=navigator.onLine!==false;
-    const result=model.reduce({rows:rows.get(nick)||[],live:peerLive,departed,lastSeen:Math.max(seen.get(nick)||0,lastSeen,cachedUser(nick)),now:now(),reachable,available:reachable&&(peerLive.length>0||now()-(checked.get(nick)||0)<65000)});
-    // Playback is transient presence metadata, never a track title or URL in the database.
-    result.listening=reachable&&(peerLive.some(item=>{
-      if(item.key===session?.key||!item.listening||item.state==='offline')return false;
-      if(now()-item.at>(item.state==='background'?model.BACKGROUND_MS:model.ACTIVE_MS))return false;
-      const newer=(rows.get(nick)||[]).find(row=>row.chat_key===item.key);
-      return !newer||Number(newer.ts)<=model.encode(item.at,item.state);
+    const stored=rows.get(nick)||[],presenceRows=stored.filter(row=>!row.chat_key.startsWith(MUSIC_PREFIX));
+    const result=model.reduce({rows:presenceRows,live:peerLive,departed,lastSeen:Math.max(seen.get(nick)||0,lastSeen,cachedUser(nick)),now:now(),reachable,available:reachable&&(peerLive.length>0||now()-(checked.get(nick)||0)<65000)});
+    // Short-lived playback leases share the existing batched read. No track identity is stored.
+    const playback=new Map();
+    for(const row of stored){if(!row.chat_key.startsWith(MUSIC_PREFIX))continue;const item=decodeMusic(row);if(item)playback.set(sessionKey(item.key),item);}
+    for(const item of peerLive){const old=playback.get(item.key);if(typeof item.listening==='boolean'&&(!old||item.at>=old.at))playback.set(item.key,item);}
+    result.listening=reachable&&([...playback].some(([key,item])=>{
+      if(key===session?.key||!item.listening||item.state==='offline'||item.at>now()+15000)return false;
+      if(now()-item.at>=(item.state==='background'?model.BACKGROUND_MS:model.ACTIVE_MS))return false;
+      if((departed.get(key)?.at||0)>=item.at)return false;
+      const newer=presenceRows.find(row=>row.chat_key===key),decoded=newer&&model.decode(newer);
+      return !decoded||decoded.state!=='offline'||decoded.at<item.at;
     })||(nick===account()&&stateKind()!=='offline'&&listeningHere()));
     if(result.state==='unknown')result.reason=!reachable?'offline':pending.has(nick)||!attempted.has(nick)?'loading':'unavailable';
     return result;
@@ -45,6 +56,17 @@
     }finally{clearTimeout(timer);}
   }
   function endpoint(s,stamp){return 'typing?chat_key=eq.'+encodeURIComponent(s.key)+'&nick=eq.'+encodeURIComponent(s.nick)+(stamp===undefined?'':'&ts=lt.'+stamp);}
+  async function persistMusic(s,snapshot,terminal){
+    if(!snapshot.listening&&!s.musicUsed&&!s.musicReady&&!s.musicInitialising)return;
+    const marker={key:musicKey(s.key),nick:s.nick};
+    if(!s.musicReady){
+      if(!s.musicInitialising)s.musicInitialising=request('POST','typing?on_conflict=chat_key,nick',{chat_key:marker.key,nick:s.nick,ts:model.encode(s.createdAt,'offline')},terminal).then(()=>{s.musicReady=true;}).finally(()=>{s.musicInitialising=null;});
+      await s.musicInitialising;
+    }
+    // Keep publishing "off" after a pause: a delayed play request cannot resurrect the lease.
+    const stamp=musicStamp(snapshot.at,snapshot.listening?snapshot.state:'offline');
+    await request('PATCH',endpoint(marker,stamp),{ts:stamp},terminal);
+  }
   async function persist(s,snapshot,terminal=false){
     if(navigator.onLine===false)return;
     try{
@@ -53,6 +75,7 @@
       const stamp=model.encode(snapshot.at,snapshot.state);
       // Conditional PATCH makes delayed/reordered requests unable to undo a newer state.
       await request('PATCH',endpoint(s,stamp),{ts:stamp},terminal);
+      await persistMusic(s,snapshot,terminal);
       if(session!==s)return;s.persistedAt=now();retryDelay=1000;
       if(snapshot.state==='online'&&now()-lastLegacyWrite>25000){lastLegacyWrite=now();sb.from('users').update({last_seen:snapshot.at}).eq('nick',s.nick).lt('last_seen',snapshot.at).then(result=>{if(result.error)lastLegacyWrite=0;}).catch(()=>{lastLegacyWrite=0;});}
     }catch(_){if(session!==s||shutdown||navigator.onLine===false)return;clearTimeout(retryTimer);retryTimer=setTimeout(()=>publish(true),retryDelay);retryDelay=Math.min(15000,retryDelay*2);}
@@ -61,12 +84,13 @@
     try{while(pendingTrack&&connected&&ownChannel===channel){const item=pendingTrack;pendingTrack=null;const result=await ownChannel.track(item);if(result!=='ok'&&ownChannel===channel){pendingTrack=pendingTrack||item;break;}}}catch(_){/* The next heartbeat or reconnect retries the latest state. */}finally{tracking=false;}
   }
   function publish(force=false){ensureAccount();const s=session;if(!s)return Promise.resolve();const kind=stateKind(),listening=kind!=='offline'&&listeningHere(),changed=s.state!==kind||s.listening!==listening;if(!force&&!changed&&now()-s.sentAt<(kind==='background'?45000:25000))return Promise.resolve();
-    s.at=Math.max(Math.floor(now()),s.at+1);s.state=kind;s.listening=listening;s.sentAt=now();const snapshot={key:s.key,nick:s.nick,device:s.device,state:kind,at:s.at,listening};
+    s.at=Math.max(Math.floor(now()),s.at+1);s.state=kind;s.listening=listening;s.musicUsed=s.musicUsed||listening;s.sentAt=now();const snapshot={key:s.key,nick:s.nick,device:s.device,state:kind,at:s.at,listening};
     syncOwn({chat_key:s.key,nick:s.nick,ts:model.encode(s.at,kind)});pendingTrack=snapshot;trackLatest();
+    if(s.musicUsed)syncOwn({chat_key:musicKey(s.key),nick:s.nick,ts:musicStamp(s.at,listening?kind:'offline')});
     return persist(s,snapshot,document.hidden||shutdown);
   }
   function syncLive(ownChannel){if(channel!==ownChannel||!connected)return;const next=new Map();
-    for(const entries of Object.values(ownChannel.presenceState()))for(const item of entries||[]){if(typeof item.key!=='string'||!item.key.startsWith(model.PREFIX)||!normalize(item.nick)||!['online','background','offline'].includes(item.state))continue;const old=next.get(item.key);if(!old||Number(item.at)>old.at)next.set(item.key,{key:item.key,nick:normalize(item.nick),device:item.device==='phone'?'phone':'pc',state:item.state,at:Math.min(Number(item.at)||now(),now()+15000),listening:item.listening===true});}
+    for(const entries of Object.values(ownChannel.presenceState()))for(const item of entries||[]){if(typeof item.key!=='string'||!item.key.startsWith(model.PREFIX)||!normalize(item.nick)||!['online','background','offline'].includes(item.state))continue;const old=next.get(item.key);if(!old||Number(item.at)>old.at)next.set(item.key,{key:item.key,nick:normalize(item.nick),device:item.device==='phone'?'phone':'pc',state:item.state,at:Math.min(Number(item.at)||now(),now()+15000),listening:typeof item.listening==='boolean'?item.listening:undefined});}
     for(const [key,old] of live){const nextItem=next.get(key);if(!nextItem){departed.set(key,{at:now(),state:old.state});if(old.state==='online')seen.set(old.nick,Math.max(seen.get(old.nick)||0,now()));}else if(old.state==='online'&&nextItem.state!=='online')seen.set(old.nick,Math.max(seen.get(old.nick)||0,nextItem.at));}
     live.clear();for(const [key,item] of next){live.set(key,item);departed.delete(key);}
     schedulePaint();
@@ -121,9 +145,12 @@
     const hint=v.state==='unknown'?(v.lastSeen?'Последняя подтверждённая активность. ':'')+(v.reason==='offline'?'Нет соединения с интернетом.':v.reason==='loading'?'Обновляем текущий статус.':'Текущий статус пока не получен.') : '';
     if(node.title!==hint)node.title=hint;
     const text=blocked(nick)?'был давно':isProfile&&v.listening?'Слушает музыку':(isProfile&&v.state==='online'?'● сейчас в сети':model.label(v,now()));const signature=[nick,v.state,v.device,text].join('|');
-    if(node.dataset.presenceV120===signature&&node.textContent===text+(v.state==='background'?'☾':'')&&node.classList.contains('background-v101')===(v.state==='background')&&node.classList.contains('online')===(v.state==='online')&&(!v.device||isProfile||v.state!=='online'||node.querySelector('.device-presence-v72')))return;
+    const musicBadge=isProfile&&v.listening&&!blocked(nick);
+    if(node.dataset.presenceV120===signature&&!!node.querySelector('.listening-icon-v145')===!!musicBadge&&node.textContent===text+(v.state==='background'?'☾':'')&&node.classList.contains('background-v101')===(v.state==='background')&&node.classList.contains('online')===(v.state==='online')&&(!v.device||isProfile||v.state!=='online'||node.querySelector('.device-presence-v72')))return;
     node.dataset.presenceV120=signature;node.textContent=text;node.classList.toggle('online',v.state==='online');node.classList.toggle('offline',v.state!=='online');node.classList.toggle('background-v101',v.state==='background');
     if(isProfile)node.style.color=v.state==='online'?'var(--green)':v.state==='background'?'#e6c981':'var(--text3)';
+    node.classList.toggle('listening-v145',!!musicBadge);
+    if(musicBadge){const icon=document.createElementNS('http://www.w3.org/2000/svg','svg');icon.setAttribute('viewBox','0 0 24 24');icon.setAttribute('aria-hidden','true');icon.setAttribute('class','listening-icon-v145');icon.innerHTML='<path d="M4 14v-3a8 8 0 0 1 16 0v3M4 12H3v7h4v-7H4Zm16 0h1v7h-4v-7h3Z"/>';node.prepend(icon);}
     badge(node,v);
     if(v.state==='online'&&v.device&&!isProfile){const icon=document.createElement('span');icon.className='device-presence-v72 '+v.device;icon.title=v.device==='phone'?'С телефона':'С компьютера';icon.setAttribute('aria-label',icon.title);icon.innerHTML=v.device==='phone'?'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="2.5" width="11" height="19" rx="2.4"></rect><path d="M10 18.2h4"></path></svg>':'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3.5" width="18" height="12.5" rx="2.2"></rect><path d="M8 20h8M12 16v4"></path></svg>';node.append(icon);}
   }

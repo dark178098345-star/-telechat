@@ -10,7 +10,7 @@ const root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f
   window.me={nick:'viewer'};window.openUserProfile=async()=>{};window.closeUserProfile=()=>document.querySelector('#user-profile-modal').classList.remove('show');
   const body=document.querySelector('.user-profile-body');
   document.querySelector('#view-profile-name').textContent='creator';document.querySelector('#view-profile-nick').textContent='@creator';
-  document.querySelector('#view-profile-seen').textContent='● сейчас в сети';document.querySelector('#view-profile-status').textContent='Занят. Создаю что-то интересное';document.querySelector('#view-profile-bio').innerHTML='Мой tg: NexOri_0<br>Люблю tele.chat<br>Создаю tele.chat';
+  document.querySelector('#view-profile-seen').classList.add('listening-v145');document.querySelector('#view-profile-seen').innerHTML='<svg class="listening-icon-v145" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 14v-3a8 8 0 0 1 16 0v3M4 12H3v7h4v-7H4Zm16 0h1v7h-4v-7h3Z"/></svg>Слушает музыку';document.querySelector('#view-profile-status').textContent='Занят. Создаю что-то интересное';document.querySelector('#view-profile-bio').innerHTML='Мой tg: NexOri_0<br>Люблю tele.chat<br>Создаю tele.chat';
   const svg='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400"><rect width="600" height="400" fill="#314642"/><path d="M0 320L160 30 340 340 490 90 600 300V400H0" fill="#152b29"/></svg>');
   document.querySelector('#view-profile-cover').classList.add('banner-photo');document.querySelector('#view-profile-cover').style.backgroundImage=`url("${svg}")`;
   document.querySelector('.user-profile-card').classList.add('profile-photo-background-v84');document.querySelector('.user-profile-card').style.setProperty('--profile-card-photo-v84',`url("${svg}")`);
@@ -30,6 +30,7 @@ const root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f
   const bounds=await card.evaluate(e=>{const r=e.getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,height:innerHeight,width:innerWidth};});
   assert(bounds.left>=0&&bounds.right<=bounds.width+1&&bounds.top>=0&&bounds.bottom<=bounds.height+1,'card bounds '+width+' '+JSON.stringify(bounds));
   const name=await page.locator('#view-profile-name').boundingBox(),avatar=await page.locator('#view-profile-avatar').boundingBox();assert(name.y>=avatar.y+avatar.height,'header overlap');
+  const musicLabel=await page.locator('#view-profile-seen').boundingBox();assert(name.x+name.width<=musicLabel.x+1,'listening badge does not overlap name');
   assert.equal(await page.locator('#profile-follow-compact-v102').evaluate(e=>e.previousElementSibling.id),'view-profile-nick');
   assert.equal(await page.locator('.activity-badge-v124').count(),1);
   assert(await page.locator('.profile-music-v97').evaluate(e=>e.clientWidth>e.parentElement.clientWidth*.75),'music full width');

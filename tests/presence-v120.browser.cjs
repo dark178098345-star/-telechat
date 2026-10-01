@@ -1,7 +1,7 @@
 const fs=require('fs'),path=require('path'),assert=require('assert/strict');
 const {chromium}=require('playwright');const root=path.resolve(__dirname,'..');
 const db=new Map(),users=new Map(),clients=new Map(),pages=new Set(),errors=[],requests=[];
-let delayBackground=false,failWrites=false;const failReads=new Set();
+let delayBackground=false,delayMusicInit=false,failWrites=false;const failReads=new Set();
 const dbKey=r=>r.nick+'|'+r.chat_key;
 const matches=(r,filters)=>filters.every(([op,k,v])=>op==='eq'?r[k]===v:op==='in'?v.includes(r[k]):op==='lt'?Number(r[k])<Number(v):op==='gte'?Number(r[k])>=Number(v):op==='like'?String(r[k]).startsWith(v.slice(0,-1)):true);
 async function broadcast(){const state={};for(const item of clients.values())if(item.payload)state[item.payload.key]=[item.payload];await Promise.all([...pages].filter(p=>!p.isClosed()).map(p=>p.evaluate(s=>window.fixtureChannel?.apply(s),state)));}
@@ -22,7 +22,7 @@ function init({nick,device}){
   if(method==='OPTIONS')return route.fulfill({status:200,headers:{'Access-Control-Allow-Origin':'*','Access-Control-Allow-Methods':'GET,POST,PATCH','Access-Control-Allow-Headers':'*'}});
   const headers={'Access-Control-Allow-Origin':'*','Access-Control-Expose-Headers':'Date',Date:new Date().toUTCString()};
   if(failWrites&&method!=='GET')return route.fulfill({status:503,headers,body:'offline fixture'});
-  if(method==='POST'){const row=req.postDataJSON();if(!db.has(dbKey(row)))db.set(dbKey(row),row);}
+  if(method==='POST'){const row=req.postDataJSON();if(delayMusicInit&&row.chat_key.includes(':music:'))await new Promise(r=>setTimeout(r,180));if(!db.has(dbKey(row)))db.set(dbKey(row),row);}
   if(method==='PATCH'){const row=req.postDataJSON();if(delayBackground&&row.ts%10===2)await new Promise(r=>setTimeout(r,180));const key=url.searchParams.get('nick').slice(3)+'|'+url.searchParams.get('chat_key').slice(3),old=db.get(key),max=Number(url.searchParams.get('ts').slice(3));if(old&&Number(old.ts)<max)Object.assign(old,row);}
   return route.fulfill({status:method==='GET'?200:204,headers,body:method==='GET'?'[]':''});
  });
@@ -36,8 +36,10 @@ function init({nick,device}){
  assert.equal(await observer.locator('#chat-status-text').textContent(),'в сети','Music only changes profile label');
  const musicPayload=clients.get(phone).payload;assert.equal(musicPayload.listening,true);
  assert.deepEqual(Object.keys(musicPayload).sort(),['at','device','key','listening','nick','state'],'No track identity in presence');
+ await phone.waitForTimeout(200);await observer.evaluate(()=>telechatPresenceV120.refresh(true,'alice'));
+ assert.equal(await observer.locator('#view-profile-seen .listening-icon-v145').count(),1,'Listening has a custom headphones icon');
  clients.set(phone,{payload:{...musicPayload,at:Date.now()-180000}});await broadcast();
- await observer.waitForFunction(()=>!telechatPresenceV120.state('alice').listening);
+ assert.equal(await observer.evaluate(()=>telechatPresenceV120.state('alice').listening),true,'Fresh stored lease survives stale realtime');
  clients.set(phone,{payload:musicPayload});await broadcast();await observer.waitForFunction(()=>telechatPresenceV120.state('alice').listening);
  await observer.evaluate(()=>{Object.defineProperty(navigator,'onLine',{configurable:true,value:false});window.dispatchEvent(new Event('offline'));});
  await observer.waitForFunction(()=>!document.querySelector('#view-profile-seen').textContent.includes('Слушает'));
@@ -93,5 +95,18 @@ function init({nick,device}){
  await observer.evaluate(()=>{Object.defineProperty(navigator,'onLine',{configurable:true,value:false});window.dispatchEvent(new Event('offline'));});await observer.waitForFunction(()=>!document.querySelector('#chat-status-text').classList.contains('online'));assert.equal(await observer.evaluate(()=>telechatPresenceV120.state('blank').state),'unknown');
  assert((await observer.locator('#chat-status-text').getAttribute('title')).includes('Нет соединения'));
  await observer.evaluate(()=>{delete navigator.onLine;window.dispatchEvent(new Event('online'));});await observer.waitForFunction(()=>document.querySelector('#chat-status-text').classList.contains('online'));
- assert.deepEqual(errors,[]);console.log('PASS presence browser: music start/pause/background/multidevice, private payload, stale/disconnected playback, lifecycle/privacy, source failures, preserved last seen, recovery and bounded requests.');
+ // A different account can open a profile using only the batched REST result, without any peer Realtime metadata.
+ const addStored=(nick,age=0)=>{const at=Date.now()-age,key=model.PREFIX+nick+':phone';for(const chat_key of [key,model.PREFIX+'music:'+nick+':phone']){const row={chat_key,nick,ts:model.encode(at,'online')+(chat_key.includes(':music:')?2:0)};db.set(dbKey(row),row);}return key;};
+ addStored('listener');await observer.evaluate(async()=>{viewedProfileNickV5='listener';await telechatPresenceV120.refresh(true,'listener');});
+ assert.equal(model.decode(db.get('listener|'+model.PREFIX+'music:listener:phone')),null,'Old clients cannot interpret listening marker as online');
+ await observer.waitForFunction(()=>document.querySelector('#view-profile-seen').textContent==='Слушает музыку');
+ assert.equal(await observer.locator('.listening-icon-v145').count(),1);
+ const marker=db.get('listener|'+model.PREFIX+'music:listener:phone');marker.ts=model.encode(Date.now()+1,'offline');
+ await observer.evaluate(()=>telechatPresenceV120.refresh(true,'listener'));await observer.waitForFunction(()=>!document.querySelector('#view-profile-seen').textContent.includes('Слушает'));
+ assert.equal(await observer.locator('.listening-icon-v145').count(),0,'Pause removes headphones');
+ addStored('expired_listener',180000);await observer.evaluate(async()=>{viewedProfileNickV5='expired_listener';await telechatPresenceV120.refresh(true,'expired_listener');});
+ assert.equal(await observer.evaluate(()=>telechatPresenceV120.state('expired_listener').listening),false,'Stored listening lease expires');
+ delayMusicInit=true;const race=await pageFor('race');await music(race,true);await music(race,false);await race.waitForTimeout(350);delayMusicInit=false;
+ const raceMarkers=[...db.values()].filter(r=>r.nick==='race'&&r.chat_key.includes(':music:'));assert.equal(raceMarkers.length,1);assert.equal(raceMarkers[0].ts%10,0,'Rapid first play/pause cannot leave delayed active lease');
+ assert.deepEqual(errors,[]);console.log('PASS presence browser: headphones, cross-account REST fallback, lease expiry, first-play race, music lifecycle/multidevice/privacy, source failures, recovery and bounded requests.');
  }finally{await browser.close();}})().catch(e=>{console.error(e);process.exit(1)});
