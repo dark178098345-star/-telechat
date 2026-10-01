@@ -1,5 +1,7 @@
-const CACHE_NAME='telechat-shell-v140-profile-loading';
+const CACHE_NAME='telechat-shell-v141-attachments';
 const APP_SHELL=[
+  './attachments-v141.js?v=141',
+  './attachments-v141.css?v=141',
   './mobile-interface-v138.css?v=138',
   './mobile-interface-v138.js?v=138',
   './chat-scroll-v132.js?v=134',
@@ -36,7 +38,7 @@ const APP_SHELL=[
   './room-media-v113.js?v=113',
   './app-performance-v17.js?v=140',
   './chat-open-loader-v44.js?v=113',
-  './message-context-v36.js?v=126',
+  './message-context-v36.js?v=141',
   './navigation-readers-v109.js?v=109',
   './navigation-readers-v109.css?v=109',
   './performance-v107.js?v=108',

@@ -1,0 +1,46 @@
+/* Attachments reuse the existing composer, durable sender and context menu. */
+(()=>{'use strict';
+ const $=id=>document.getElementById(id),esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const icon=name=>window.telechatIconsV125?.html(name)||'';
+ const max=20*1024*1024;let uploading=false;
+ const unpackBefore=unpackMedia,renderBefore=renderMessageContent,previewBefore=messagePreviewText,pendingBefore=renderPendingMedia,sendBefore=sendMsg;
+ const descriptor=raw=>{try{const d=JSON.parse(raw);return d&&/^[0-9a-f-]{36}$/i.test(d.id)&&typeof d.name==='string'&&d.name.length<=180&&Number.isFinite(d.size)&&d.size>0&&d.size<=max?d:null;}catch(_){return null;}};
+ unpackMedia=function(text){const old=unpackBefore(text);if(old)return old;try{if(!String(text).startsWith(MEDIA_PREFIX))return null;const m=JSON.parse(text.slice(MEDIA_PREFIX.length));return m.kind==='file'&&descriptor(m.data)?m:null;}catch(_){return null;}};
+ messagePreviewText=function(text){const m=unpackMedia(text);return m?.kind==='file'?'Файл: '+descriptor(m.data).name:previewBefore(text);};
+ const size=n=>n>=1048576?(n/1048576).toFixed(1)+' МБ':Math.max(1,Math.ceil(n/1024))+' КБ';
+ renderMessageContent=function(text){const m=unpackMedia(text);if(m?.kind!=='file')return renderBefore(text);const d=descriptor(m.data);return '<button type="button" class="attachment-file-v141" data-file-v141="'+esc(d.id)+'" aria-label="Сохранить файл '+esc(d.name)+'">'+icon('file')+'<span><strong>'+esc(d.name)+'</strong><small>'+size(d.size)+' · Скачать</small></span>'+icon('download')+'</button>'+(m.caption?'<div class="media-caption">'+esc(m.caption)+'</div>':'');};
+ async function api(action,data){const owner=me?.nick;if(!owner)throw Error('Сначала войди в аккаунт');const pass=me.pass||($('l-login')?.value.trim().toLowerCase()===owner?$('l-pass')?.value:'');const r=await sb.rpc('telechat_files_v141',{p_nick:owner,p_pass:pass||'',p_action:action,p_data:data});if(r.error)throw r.error;if(me?.nick!==owner)throw Error('Аккаунт изменился');return r.data;}
+ const storage=ticket=>window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{global:{headers:{'x-telechat-file-token':ticket.token}},auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}}).storage.from('chat-files');
+ function errorToast(error){showToast(/PGRST202|function.*does not exist/i.test((error?.code||'')+' '+(error?.message||''))?'Хранилище файлов ещё не подключено':error?.message||'Не удалось загрузить файл');}
+ function selected(file){if(!file||uploading)return;if(!conversationKey()||!canWriteCurrent()){showToast('Здесь нельзя отправлять файлы');return;}if(file.size<=0||file.size>max){showToast('Выбери непустой файл до 20 МБ');return;}
+  window.telechatVoiceV125?.cancel();pendingMedia={kind:'file',data:'',duration:0,_fileV141:file};renderPendingMedia();
+ }
+ renderPendingMedia=function(){if(pendingMedia?.kind!=='file')return pendingBefore();const file=pendingMedia._fileV141||descriptor(pendingMedia.data);if(!file)return;const box=$('pending-media');box.classList.add('show');box.innerHTML=icon('file')+'<div class="pending-label">'+esc(file.name)+'<small>'+size(file.size)+(uploading?' · Загружаем…':' · Готов к отправке')+'</small></div><button type="button" class="pending-remove" aria-label="Убрать файл">×</button>';box.querySelector('button').onclick=()=>cancelPendingMedia();};
+ sendMsg=async function(...args){if(uploading)return;if(!pendingMedia?._fileV141)return sendBefore.apply(this,args);const media=pendingMedia,file=media._fileV141,key=conversationKey(),owner=me?.nick;if(!key||!canWriteCurrent())return;uploading=true;renderPendingMedia();let ticket=null,client=null,uploaded=false,handedOff=false;
+  try{ticket=await api('reserve',{chat_key:key,name:file.name.slice(0,180),size:file.size,mime:file.type||'application/octet-stream'});client=storage(ticket);const result=await client.upload(ticket.id+'/file',file,{contentType:'application/octet-stream',upsert:false});if(result.error)throw result.error;uploaded=true;
+   if(pendingMedia!==media||conversationKey()!==key||me?.nick!==owner)throw Error('Загрузка отменена: чат или вложение изменились');
+   media.data=JSON.stringify({id:ticket.id,name:ticket.name,size:ticket.size,mime:ticket.mime});delete media._fileV141;handedOff=true;await sendBefore.apply(this,args);
+  }catch(error){errorToast(error);}finally{if(ticket&&!handedOff&&me?.nick===owner){try{if(uploaded){const removed=await client.remove([ticket.id+'/file']);if(removed.error)throw removed.error;}await api('cancel',{id:ticket.id});}catch(_){/* Never risk deleting an accepted attachment. */}}uploading=false;if(pendingMedia===media)renderPendingMedia();}
+ };
+ async function saveBlob(blob,name){
+  const filename=String(name||'telechat-file').replace(/[\\/:*?"<>|\x00-\x1f]/g,'_').slice(0,180);
+  if(window.TelechatAndroid?.isApp?.()&&navigator.canShare?.({files:[new File([blob],filename,{type:blob.type})]})){await navigator.share({files:[new File([blob],filename,{type:blob.type})]});return;}
+  const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=filename;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
+ }
+ const downloads=new Set();
+ async function download(id){if(downloads.has(id))return;downloads.add(id);try{const ticket=await api('read',{id}),result=await storage(ticket).download(id+'/file');if(result.error)throw result.error;await saveBlob(result.data,ticket.name);}catch(e){if(e.name!=='AbortError')errorToast(e);}finally{downloads.delete(id);}}
+ async function saveMessage(message){const m=unpackMedia(message?.text);if(!m)return;if(m.kind==='file')return download(descriptor(m.data).id);if(!['image','voice'].includes(m.kind))return;try{const response=await fetch(m.data),blob=await response.blob();const ext=({'image/jpeg':'jpg','image/png':'png','image/webp':'webp','audio/ogg':'ogg','audio/mp4':'m4a','audio/mpeg':'mp3','audio/wav':'wav'})[blob.type.split(';')[0]]||'webm';await saveBlob(blob,'telechat-'+(message.id||Date.now())+'.'+ext);}catch(e){if(e.name!=='AbortError')errorToast(e);}}
+ $('messages')?.addEventListener('click',event=>{const button=event.target.closest('[data-file-v141]');if(button){event.preventDefault();download(button.dataset.fileV141);}});
+ const tools=document.querySelector('.composer-tools');if(!tools)return;
+ const oldPhoto=tools.querySelector('[onclick*="chat-photo-input"]'),poll=tools.querySelector('[onclick*="openPollModal"]');oldPhoto?.remove();poll?.remove();
+ const trigger=document.createElement('button');trigger.type='button';trigger.id='attach-button-v141';trigger.className='composer-tool';trigger.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 12V6a4 4 0 0 1 8 0v11a6 6 0 0 1-12 0V7m8-1v11a2 2 0 0 1-4 0v-5"/></svg>';trigger.setAttribute('aria-label','Прикрепить');trigger.setAttribute('aria-expanded','false');trigger.setAttribute('aria-controls','attachment-menu-v141');tools.prepend(trigger);
+ const menu=document.createElement('div');menu.id='attachment-menu-v141';menu.hidden=true;menu.setAttribute('role','dialog');menu.setAttribute('aria-label','Вложения');menu.innerHTML=[['photo','image','Фото'],['video','video','Видео как файл'],['file','file','Файл до 20 МБ'],['poll','chart','Опрос']].map(([action,symbol,label])=>'<button type="button" data-attach="'+action+'">'+icon(symbol)+'<span>'+label+'</span></button>').join('');document.body.append(menu);
+ const fileInput=document.createElement('input');fileInput.type='file';fileInput.hidden=true;fileInput.id='attachment-input-v141';document.body.append(fileInput);fileInput.onchange=()=>{const file=fileInput.files?.[0];fileInput.value='';selected(file);};
+ function close(focus=false){menu.hidden=true;trigger.setAttribute('aria-expanded','false');if(focus)trigger.focus();}
+ function position(){const r=trigger.getBoundingClientRect(),v=window.visualViewport,h=v?.height||innerHeight,top=v?.offsetTop||0;menu.style.left=Math.max(8,Math.min(r.left,innerWidth-240))+'px';menu.style.top=Math.max(top+8,Math.min(r.top-menu.offsetHeight-8,top+h-menu.offsetHeight-8))+'px';}
+ trigger.onclick=()=>{if(!menu.hidden){close();return;}menu.hidden=false;trigger.setAttribute('aria-expanded','true');position();menu.querySelector('button').focus();};
+ menu.onclick=event=>{const action=event.target.closest('[data-attach]')?.dataset.attach;if(!action)return;close();if(action==='photo')$('chat-photo-input').click();else if(action==='poll')openPollModal();else{fileInput.accept=action==='video'?'video/*':'';fileInput.click();}};
+ document.addEventListener('pointerdown',event=>{if(!menu.contains(event.target)&&!trigger.contains(event.target))close();});document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!menu.hidden){event.preventDefault();close(true);}});addEventListener('resize',()=>close());window.visualViewport?.addEventListener('resize',()=>close());
+ const record=$('record-btn');record?.classList.add('voice-button-v141');if(record){if(!record.querySelector('svg'))record.innerHTML=icon('mic');tools.append(record);}
+ window.telechatAttachmentsV141={saveMessage,canSave:message=>!!unpackMedia(message?.text),selectFile:selected};
+})();

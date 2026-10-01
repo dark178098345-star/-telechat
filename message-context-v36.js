@@ -102,6 +102,7 @@
       <button type="button" class="ctx-item ctx-button-v36" id="ctx-edit-v36" data-action-v36="edit"><span class="ctx-icon-v36">✎</span><span>Изменить</span></button>
       <button type="button" class="ctx-item ctx-button-v36" id="ctx-pin-v36" data-action-v36="pin"><span class="ctx-icon-v36">⌖</span><span id="ctx-pin-label-v36">Закрепить</span></button>
       <button type="button" class="ctx-item ctx-button-v36" data-action-v36="copy"><span class="ctx-icon-v36">▣</span><span>Копировать</span></button>
+      <button type="button" class="ctx-item ctx-button-v36" id="ctx-save-v141" data-action-v36="save" hidden><span class="ctx-icon-v36">↓</span><span>Сохранить на устройство</span></button>
       <button type="button" class="ctx-item ctx-button-v36" id="ctx-forward-v36" data-action-v36="forward"><span class="ctx-icon-v36">➜</span><span>Переслать</span></button>
       <button type="button" class="ctx-item ctx-button-v36" data-action-v36="select"><span class="ctx-icon-v36">◉</span><span>Выбрать</span></button>
       <div class="ctx-sep"></div>
@@ -124,6 +125,7 @@
       if (action === 'edit') openEditMessageV36(message);
       if (action === 'pin') pinMessageV36(message);
       if (action === 'copy') copyMessagesV36(message ? [message] : []);
+      if (action === 'save') { closeContextMenuV36(); window.telechatAttachmentsV141?.saveMessage(message); }
       if (action === 'forward') openForwardModalV36(message ? [message] : []);
       if (action === 'select') enterSelectionModeV36(message);
       if (action === 'delete') deleteContextMessageV36(message);
@@ -169,6 +171,8 @@
     event?.preventDefault?.();
     event?.stopPropagation?.();
     ctxMsg = message;
+    const saveButton=document.getElementById('ctx-save-v141');
+    if(saveButton)saveButton.hidden=!!message.deleted||!window.telechatAttachmentsV141?.canSave(message);
     contextOpenedAtV36 = Date.now();
     const menu = document.getElementById('ctx-menu');
     if (!menu) return;
@@ -424,6 +428,7 @@
   }
 
   function openForwardModalV36(messages) {
+    if(messages.some(message=>typeof unpackMedia==='function'&&unpackMedia(message?.text)?.kind==='file')){showToast('Для другого чата скачай файл и прикрепи его заново');return;}
     closeContextMenuV36();
     forwardMessagesV36 = messages.filter(message => message && !message.deleted);
     if (!forwardMessagesV36.length) return;
