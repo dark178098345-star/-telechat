@@ -1,0 +1,9 @@
+/* Isolated, ephemeral broadcast transport check. No user/database writes. */
+const fs=require('fs'),path=require('path'),assert=require('assert/strict'),{chromium}=require('playwright');
+const root=path.resolve(__dirname,'..'),html=fs.readFileSync(path.join(root,'index.html'),'utf8');const url=html.match(/const SUPABASE_URL='([^']+)'/)[1],key=html.match(/const SUPABASE_KEY='([^']+)'/)[1];
+(async()=>{const b=await chromium.launch({channel:'msedge',headless:true});try{const p=await b.newPage();await p.goto('https://dark178098345-star.github.io/-telechat/',{waitUntil:'domcontentloaded'});
+ const result=await p.evaluate(async({url,key})=>{const options={auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}},a=supabase.createClient(url,key,options),b=supabase.createClient(url,key,options),topic='telechat-listen-transport-test-'+crypto.randomUUID(),x=a.channel(topic,{config:{broadcast:{ack:true}}}),y=b.channel(topic,{config:{broadcast:{ack:true}}});let received=null;y.on('broadcast',{event:'state'},({payload})=>received=payload);
+  const sub=c=>new Promise((resolve,reject)=>{const t=setTimeout(()=>reject(Error('subscribe timeout')),15000);c.subscribe(s=>{if(s==='SUBSCRIBED'){clearTimeout(t);resolve();}if(s==='CHANNEL_ERROR'){clearTimeout(t);reject(Error(s));}});});
+  try{await Promise.all([sub(x),sub(y)]);const sent=await x.send({type:'broadcast',event:'state',payload:{raw:JSON.stringify({track:'fixture',time:12,paused:false}),signature:'fixture'}});for(let i=0;i<30&&!received;i++)await new Promise(r=>setTimeout(r,100));return {sent,received};}finally{await Promise.all([a.removeAllChannels(),b.removeAllChannels()]);}
+ },{url,key});assert.equal(result.sent,'ok');assert.equal(JSON.parse(result.received.raw).time,12);console.log('PASS live two-client broadcast and ack; no user rows changed');
+ }finally{await b.close();}})().catch(e=>{console.error(e.message);process.exitCode=1;});

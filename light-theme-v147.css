@@ -1,0 +1,89 @@
+/* Complete light palette. Personal media is preserved; only surfaces and overlays change. */
+html body.theme-light{color-scheme:light;--bg:#f3f5fa;--bg2:#fff;--bg3:#f0f2f8;--border:#dfe3ed;--text:#202638;--text2:#58627a;--text3:#69748a;--accent:#7052cd;--accent2:#6445c4;--accent3:#6644bf;--msg-me:#7558d4;--msg-them:#fff;--green:#168450;background:#f3f5fa!important;color:#202638}
+html body.theme-light #chat-screen.active{background:#f3f5fa!important}
+html body.theme-light #sidebar,html body.theme-light .chat-main,html body.theme-light .sidebar-top,html body.theme-light .sidebar-tabs,html body.theme-light .sidebar-footer,html body.theme-light .chat-header,html body.theme-light .input-area{background:#fff!important;border-color:#dfe3ed!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+html body.theme-light #sidebar::before,html body.theme-light #sidebar::after{background:#f0f2f8!important;box-shadow:none!important}
+html body.theme-light #sidebar .section-rail-v109,html body.theme-light #sidebar>.sidebar-footer{background:#f0f2f8!important}
+html body.theme-light #messages:not(.has-wallpaper-v119){background:#f3f5fa!important}
+html body.theme-light #contacts-list:not(.has-wallpaper-v119){background:#fff!important}
+html body.theme-light #chat-screen #messages.has-wallpaper-v119,html body.theme-light #chat-screen #contacts-list.has-wallpaper-v119{background-image:linear-gradient(rgba(245,247,252,var(--wallpaper-shade-v119,.45)),rgba(245,247,252,var(--wallpaper-shade-v119,.45))),var(--wallpaper-photo-v119)!important}
+html body.theme-light #chat-screen #contacts-list .contact,html body.theme-light #chat-screen #contacts-list.has-wallpaper-v119 .contact{background:#ffffffeb!important;border:1px solid transparent!important;box-shadow:none!important}
+html body.theme-light #chat-screen #contacts-list .contact:hover{background:#f0edf9!important}
+html body.theme-light #chat-screen #contacts-list .contact.active{background:#e8e1fa!important;border-color:#d6cbf1!important}
+html body.theme-light #chat-screen #contacts-list .contact-name,html body.theme-light .chat-name,html body.theme-light .sidebar-logo{color:#252b3e!important;text-shadow:none!important}
+html body.theme-light #chat-screen #contacts-list .contact-last,html body.theme-light #chat-screen #contacts-list .contact-preview,html body.theme-light #chat-screen #contacts-list .contact-time,html body.theme-light #chat-screen #contacts-list .list-section-title{color:#5e687c!important;text-shadow:none!important}
+html body.theme-light .section-rail-v109 button,html body.theme-light .telechat-nav-btn,html body.theme-light .hdr-btn,html body.theme-light .back-btn,html body.theme-light .composer-tool{color:#59657e!important}
+html body.theme-light .section-rail-v109 button.active,html body.theme-light .telechat-nav-btn.active{background:#e5ddf7!important;color:#6544b7!important}
+html body.theme-light .sidebar-tab.active{background:#eae3f8!important;color:#6544b7!important;border-color:#d7ccef!important}
+html body.theme-light .search-wrap,html body.theme-light .search-input,html body.theme-light .composer-shell,html body.theme-light #msg-input,html body.theme-light .composer-tools{background:#f3f5fa!important;color:#273047!important;border-color:#dfe3ed!important;box-shadow:none!important}
+html body.theme-light input::placeholder,html body.theme-light textarea::placeholder{color:#788298!important;opacity:1}
+html body.theme-light #search-inp,html body.theme-light .chat-header-actions{background:#f3f5fa!important;border-color:#dfe3ed!important;color:#273047!important;box-shadow:none!important}
+html body.theme-light .create-room-btn{background:#f0ebfa!important;color:#6846bc!important;border-color:#dcd2ef!important;box-shadow:none!important}
+html body.theme-light .msg.them .msg-bubble{background:#fff!important;color:#273047!important;border:1px solid #e2e6ef!important;box-shadow:0 2px 5px #26324a05!important;backdrop-filter:none!important}
+html body.theme-light .msg.me .msg-bubble{background:#7558d4!important;color:#fff!important;border-color:transparent!important;box-shadow:none!important}
+html body.theme-light .msg.me .msg-bubble a{color:#fff!important;text-decoration:underline}
+html body.theme-light .msg.them .msg-bubble a{color:#6144b3!important}
+html body.theme-light #chat-screen #messages .msg-time,html body.theme-light #chat-screen #messages .msg-check{color:#59677d!important;text-shadow:none!important}
+html body.theme-light #chat-screen #messages .msg-check.read{color:#355db0!important}
+html body.theme-light .msg-sender,html body.theme-light .msg-name{color:#6447b2!important}
+html body.theme-light .date-divider span,html body.theme-light .date-separator,html body.theme-light .reply-bar{background:#edf0f8!important;color:#59647b!important;border-color:#dfe3ed!important;text-shadow:none!important}
+html body.theme-light #stories-strip-v115{background:#fafbfe!important;box-shadow:none!important;border-color:#e2e6ef!important}
+html body.theme-light .story-chip-avatar-v115{background:#e9eaf4;border-color:#fff;color:#645480}
+html body.theme-light .story-segments-v146 circle{stroke:#7958d5}html body.theme-light .story-segments-v146 circle.viewed-v146{stroke:#a9afbf;stroke-opacity:.85}
+html body.theme-light .stories-add-v115{background:#f0ebfa;color:#6543b8;border-color:#d8ceee}
+html body.theme-light .music-player-v96,html body.theme-light #music-dialog-v96{background:#f5f1ff!important;border-color:#ded4f3!important;color:#2b2840!important;box-shadow:none!important}
+html body.theme-light .music-player-title,html body.theme-light .music-now-title-v97{color:#302842!important}
+html body.theme-light .music-player-v96 button{color:#6849b8!important}
+html body.theme-light .panel,html body.theme-light .modal:not(.user-profile-card),html body.theme-light #settings-panel,html body.theme-light #profile-panel,html body.theme-light #ctx-menu,html body.theme-light #emoji-picker,html body.theme-light #mobile-media-v138{background:#fff!important;color:#273047!important;border-color:#dde2ed!important;box-shadow:0 12px 40px #23304a14!important}
+html body.theme-light #settings-panel .panel-section,html body.theme-light #profile-panel .panel-section,html body.theme-light #profile-panel .ps-control-card,html body.theme-light #profile-panel .ps-preview,html body.theme-light .profile-background-editor-v84{background:#f6f7fb!important;border-color:#e0e4ef!important;box-shadow:none!important}
+html body.theme-light .panel-title,html body.theme-light .panel-section-title,html body.theme-light .profile-card-title,html body.theme-light .ctx-item{color:#34405a!important}
+html body.theme-light #settings-panel input:not([type=range]):not([type=checkbox]),html body.theme-light #profile-panel input:not([type=range]):not([type=checkbox]),html body.theme-light #profile-panel textarea,html body.theme-light .modal input,html body.theme-light .modal textarea{background:#fff!important;color:#273047!important;border-color:#dbe1ed!important}
+html body.theme-light #settings-panel label,html body.theme-light #settings-panel p,html body.theme-light #profile-panel label{color:#566179!important}
+html body.theme-light #profile-quick-v91{background:#fff!important;color:#252b3d!important;border-color:#dfe3ed!important}
+html body.theme-light #profile-quick-v91 :is(.pq-name,.pq-status,.pq-action){color:#252b3d!important}
+html body.theme-light #profile-quick-v91 :is(.pq-actions,.pq-switch,.pq-status){background:#f1f3f9!important;border-color:#e1e5ef!important}
+html body.theme-light #user-profile-modal .user-profile-card:not(.profile-photo-background-v84){background:#fff!important;border-color:#dfe3ed!important}
+html body.theme-light #user-profile-modal .user-profile-body{background:linear-gradient(#fffffff0,#ffffffe8)!important;color:#273047!important}
+html body.theme-light #user-profile-modal .user-profile-avatar{border-color:#fff!important}
+html body.theme-light #user-profile-modal :is(.user-profile-name,.user-profile-bio,.user-profile-status,.follow-count,.profile-details-title){color:#273047!important}
+html body.theme-light #user-profile-modal :is(.user-profile-nick,.user-profile-section-label,.profile-details-subtitle,.follow-label){color:#665a81!important}
+html body.theme-light #user-profile-modal :is(.profile-details-group,.profile-music-v97,.activity-badge-v124){background:#f0ebf8!important;border-color:#ded5ec!important;color:#644b8e!important}
+html body.theme-light #user-profile-modal :is(.profile-music-copy-v97 strong,.moon-showcase-head strong){color:#30283d!important}
+html body.theme-light #user-profile-modal :is(.moon-showcase-head small,.moon-showcase-head em,.profile-music-copy-v97 small){color:#726280!important}
+html body.theme-light #user-profile-modal .moon-showcase-star{background:#f1edf8!important;color:#71539c!important;border-color:#d7cde7!important}
+html body.theme-light #user-profile-modal .moon-showcase-star small{color:#685e76!important}
+html body.theme-light #user-profile-modal :is(.user-profile-section,#moon-profile-showcase-v29){border-bottom-color:#dfe3ed!important}
+html body.theme-light #user-profile-modal #view-profile-seen.listening-v145{color:#13714c!important;background:#dff3e9!important}
+html body.theme-light #user-profile-modal .user-profile-role.creator{color:#166380!important;background:#e3f1f8!important;border-color:#bad9e8!important}
+html body.theme-light #music-hub-v117{--mh-bg:#fff;--mh-panel:#f7f8fc;--mh-line:#e2e5ef;--mh-muted:#69728a;--mh-text:#272c3f;--mh-accent:#7050c5;color-scheme:light;background:#fff!important}
+html body.theme-light #music-hub-v117 :is(.mh-nav,.mh-top,.mh-listening,.mh-player,.mh-sheet){background:#f9fafe!important;border-color:#e2e5ef!important}
+html body.theme-light #music-hub-v117 :is(input,textarea,select){background:#fff!important;color:#283047!important;border-color:#dce1ee!important}
+html body.theme-light #music-hub-v117 .mh-hero{background:linear-gradient(120deg,#f1eafa,#f7f8ff)!important;border-color:#e1d8ef!important;color:#2b2440!important}
+html body.theme-light #music-hub-v117 .mh-hero h1 em{color:#7050c5!important}
+html body.theme-light #music-hub-v117 :is(.mh-hero p,.mh-icon,.mh-artist-link,.mh-side-note,.mh-support span){color:#687089!important}
+html body.theme-light #music-hub-v117 :is(.mh-primary,.mh-play-main){background:#7654ce!important;color:#fff!important}
+html body.theme-light #music-hub-v117 .mh-track{border-color:#e8ebf2!important}html body.theme-light #music-hub-v117 .mh-track:hover{background:#f5f1fc!important}
+html body.theme-light #music-hub-v117 .mh-track.is-playing{background:#eee7fb!important}
+html body.theme-light #music-hub-v117 .mh-subtle{background:#eeebf6!important;color:#654b98!important}
+html body.theme-light #music-hub-v117 .mh-support img{filter:brightness(.4)}
+html body.theme-light #music-hub-v117 .mh-workspace{background:#fff!important}
+html body.theme-light #music-hub-v117 .mh-nav nav button{color:#647089!important}
+html body.theme-light #music-hub-v117 .mh-nav nav button.is-active{background:#eae3f8!important;color:#6845b5!important;border-color:#d9cff0!important}
+html body.theme-light #music-hub-v117 .mh-nav nav button.is-active svg{color:#6845b5!important}
+html body.theme-light #music-hub-v117 .mh-tabs{background:#f0eef6!important;border-color:#ded8eb!important}
+html body.theme-light #music-hub-v117 .mh-tabs button{color:#677187!important}
+html body.theme-light #music-hub-v117 .mh-tabs button.is-active{background:#fff!important;color:#6547a5!important;box-shadow:0 1px 4px #40305a12!important}
+html body.theme-light #music-hub-v117 .mh-art{background:radial-gradient(ellipse at 15% 85%,#c2afe466,transparent 65%),linear-gradient(140deg,#f0eafa,#e7e7f3)!important;color:#8770b3!important;border-color:#e0d9ee!important}
+html body.theme-light #music-hub-v117 :is(.mh-self,.mh-profile-avatar){background:#e9e2f5!important;border-color:#d4c7e9!important;color:#715895!important}
+html body.theme-light #music-hub-v117 .mh-profile-hero:not([style*="background-image"]){background:linear-gradient(120deg,#eee7f8,#f7f8fc)!important;border-color:#e0d8ee!important}
+html body.theme-light #music-hub-v117 input[type=range]{background:#ded7ec!important}
+html body.theme-light #music-hub-v117 :is(.mh-eyebrow,.mh-nav-label,.mh-side-heading,.mh-queue-heading,.mh-release-artist){color:#69718a!important}
+html body.theme-light :is(#activity-dialog-v124,#together-v147){background:#fff!important;color:#283047!important;border-color:#dce1ed!important}
+html body.theme-light #activity-dialog-v124 :is(p,span,small,summary){color:#59627b!important}
+html body.theme-light :is(.stats-hero-v124,.stats-grid-v124 section,.stats-storage-box-v124){background:#f6f3fc!important;border-color:#e2d9ef!important}
+html body.theme-light #story-viewer-v115 .story-card-v115,html body.theme-light .story-compose-card-v115{background:#fff!important;color:#273047!important;border-color:#e0e4ef!important}
+html body.theme-light :is(.story-head-name-v115,.story-caption-v115){color:#273047!important}
+html body.theme-light :is(.story-head-time-v115,.story-compose-subtitle-v115,.story-compose-hint-v115){color:#68718a!important}
+html body.theme-light .story-caption-input-v115{background:#f4f6fb!important;color:#273047!important}
+html body.theme-light .modal-btn.secondary{background:#f0edf7!important;color:#614692!important;border-color:#ddd4ed!important}
+html body.theme-light :is(.modal-btn.primary,#send-btn){color:#fff!important}

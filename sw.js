@@ -1,5 +1,8 @@
-const CACHE_NAME='telechat-shell-v146-story-rings';
+const CACHE_NAME='telechat-shell-v147-light-together';
 const APP_SHELL=[
+  './music-together-v147.js?v=147',
+  './music-together-v147.css?v=147',
+  './light-theme-v147.css?v=147',
   './listening-v145.css?v=145',
   './profile-card-v143.css?v=143',
   './attachments-v141.js?v=141',
@@ -33,7 +36,7 @@ const APP_SHELL=[
   './chat-wallpaper-v119.css?v=119',
   './music-intro-v118.js?v=118',
   './music-intro-v118.css?v=118',
-  './music-hub-v117.js?v=119',
+  './music-hub-v117.js?v=147',
   './music-hub-v117.css?v=119',
   './stories-v115.css?v=146',
   './stories-v115.js?v=146',
@@ -58,7 +61,7 @@ const APP_SHELL=[
   './branding/soundcloud-white.png',
   './music-card-v97.css?v=97',
   './profile-music-v97.js?v=99',
-  './music-library-v96.js?v=124',
+  './music-library-v96.js?v=147',
   './music-library-v96.css?v=96',
   './appearance-mode-v95.js?v=95',
   './chat-foundation-v94.css?v=94',

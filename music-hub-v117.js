@@ -68,7 +68,9 @@
     $('mh-sc-dark').addEventListener('change',()=>{root.classList.toggle('mh-original-sc',!$('mh-sc-dark').checked);localStorage.setItem('telechat_sc_original_v117',$('mh-sc-dark').checked?'0':'1');});
     root.classList.toggle('mh-original-sc',!$('mh-sc-dark').checked);
     $('mh-local-files').onchange=importTracks;
+    const together=document.createElement('button');together.className='mh-together-v147';together.dataset.action='together';together.setAttribute('aria-label','Слушать вместе');together.innerHTML=icon('music')+'<span>Слушать вместе</span>';root.querySelector('.mh-publish-top').before(together);
     document.addEventListener('keydown',e=>{
+      if(document.getElementById('together-v147')?.open)return;
       if(!state.opened)return;
       if(e.key==='Escape'){e.preventDefault();e.stopImmediatePropagation();if(!$('mh-sheet').hidden)closeSheet();else if(root.classList.contains('mh-show-now'))root.classList.remove('mh-show-now');else close();}
       if(e.key==='Tab'){const scope=!$('mh-sheet').hidden?$('mh-sheet'):root;const focus=[...scope.querySelectorAll('button:not(:disabled),a[href],input:not([hidden]),textarea,select')].filter(el=>el.getClientRects().length);if(!focus.length)return;const first=focus[0],last=focus.at(-1);if(e.shiftKey&&(document.activeElement===first||!scope.contains(document.activeElement))){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}
@@ -211,6 +213,7 @@
     if(b.dataset.playlist){state.view='playlist';state.selectedPlaylist=b.dataset.playlist;return render();}
     const a=b.dataset.action,id=b.dataset.id;
     try{
+      if(a==='together')window.telechatTogetherV147?.open();
       if(a==='close')close();if(a==='sheet-close')closeSheet();if(a==='publish')composer();if(a==='publish-local')composer(resolveTrack(id));if(a==='discover'){state.view='home';render();}
       if(a==='play')await play(id);if(a==='play-all'){const t=shownTracks()[0];if(t)await play(t.id);else toast('Добавь первый трек — и включай свою волну');}
       if(a==='toggle'){if(currentTrack())await core().toggle();else if(shownTracks()[0])await play(shownTracks()[0].id);}

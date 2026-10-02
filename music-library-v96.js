@@ -181,12 +181,13 @@
       status('Ссылка сохранена. Для прослушивания нужен интернет.');
     } catch (error) {status(errorText(error),true);} finally {setBusy(false);}
   }
-  async function play(track) {
+  async function play(track, autoplay = true) {
     if (!track || owner() !== track.owner) return;
     if (inCall()) {notify('Музыка на паузе во время звонка.');return;}
+    if (!autoplay && current?.id === track.id) { pauseMusic();return; }
     if(isCloud(track)) {
       if(current?.id===track.id&&cloudPlayer){if(!cloudPlayer.paused)pauseMusic();else await cloudPlayer.play();return;}
-      stop();const token=playToken;current=track;pendingAutoPlay=true;cloudAbort=new AbortController();
+      stop();const token=playToken;current=track;pendingAutoPlay=autoplay;cloudAbort=new AbortController();
       ensureDialog();dialog.classList.add('has-soundcloud-v98');updatePlayers();position();
       try {
         cloudPlayer=await soundcloud.create(track.url,byId('music-soundcloud-widget-v98'),{
@@ -219,7 +220,7 @@
       if (token !== playToken || owner() !== track.owner) return;
       current = track;audio.src = src;updatePlayers();
       if ('mediaSession' in navigator && 'MediaMetadata' in window) navigator.mediaSession.metadata = new MediaMetadata({title:track.title,artist:'Моя музыка · tele.chat'});
-      await audio.play();
+      if (autoplay) await audio.play();
     } catch (error) {
       if (token !== playToken) return;
       notify(error.name === 'NotAllowedError' ? 'Трек готов. Нажми ▶ для воспроизведения.' : errorText(error));
@@ -422,7 +423,7 @@
   window.telechatMusicV96 = {
     async getTracks(){ensureDialog();await loadLibrary();return tracks.map(t=>({...t}));},
     getState(){const media=player();return {track:current?{...current}:null,paused:media.paused,time:media.currentTime||0,duration:media.duration||current?.duration||0,repeat,shuffle};},
-    async playTrack(track,items=[]){ensureDialog();await loadLibrary();queue=items.map(t=>({...t,owner:owner()}));return play({...track,owner:owner()});},
+    async playTrack(track,items=[],options={}){ensureDialog();await loadLibrary();queue=items.map(t=>({...t,owner:owner()}));return play({...track,owner:owner()},options.autoplay!==false);},
     async getFile(id){await loadLibrary();if(!tracks.some(t=>t.id===id))throw new Error('Трек не найден');return read('files',id);},
     async importFiles(files){ensureDialog();await addFiles(files);window.dispatchEvent(new Event('telechat-music-library-v117'));return tracks.map(t=>({...t}));},
     async importFilesReport(files){ensureDialog();const result=await addFiles(files);window.dispatchEvent(new Event('telechat-music-library-v117'));return result;},
