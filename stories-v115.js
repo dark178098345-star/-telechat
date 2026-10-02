@@ -84,23 +84,45 @@
     catch (_) { target.textContent = '👤'; }
   }
 
+  function renderStoryRing(button, items, own = false) {
+    const ring = button.querySelector('.story-chip-ring-v115');
+    if (!items.length) { ring.classList.add('empty-v146'); return; }
+    const unread = items.filter(story => !state.viewed.has(String(story.id))).length;
+    button.classList.toggle('seen-v115', !own && unread === 0);
+    const description = 'Историй: ' + items.length + (own ? '' : '. Непросмотренных: ' + unread);
+    button.title = description; button.setAttribute('aria-label', button.getAttribute('aria-label') + '. ' + description);
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '0 0 52 52'); svg.setAttribute('aria-hidden', 'true'); svg.classList.add('story-segments-v146');
+    const step = 360 / items.length, gap = items.length === 1 ? 0 : Math.min(8, step * .22);
+    items.forEach((story, index) => {
+      const arc = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      arc.setAttribute('cx', '26'); arc.setAttribute('cy', '26'); arc.setAttribute('r', '24'); arc.setAttribute('pathLength', '360');
+      arc.setAttribute('stroke-dasharray', (step - gap) + ' ' + (360 - step + gap));
+      arc.setAttribute('transform', 'rotate(' + (-90 + index * step + gap / 2) + ' 26 26)');
+      arc.classList.toggle('viewed-v146', !own && state.viewed.has(String(story.id))); svg.appendChild(arc);
+    });
+    ring.appendChild(svg);
+  }
+
   function renderStories() {
     ensureUi();
     const list = byId('stories-list-v115'); if (!list) return;
     list.replaceChildren();
-    const latest = new Map();
-    state.stories.forEach(story => { const nick = safeNick(story.author_nick); if (!latest.has(nick)) latest.set(nick, story); });
-    const own = latest.get(safeNick(currentUser()?.nick));
-    const ownButton = document.createElement('button'); ownButton.type = 'button'; ownButton.className = 'story-chip-v115' + (own && state.viewed.has(String(own.id)) ? ' seen-v115' : ''); ownButton.setAttribute('aria-label', own ? 'Открыть мою историю' : 'Добавить историю');
-    ownButton.innerHTML = '<span class="story-chip-ring-v115"><span class="story-chip-avatar-v115">＋</span><span class="story-chip-plus-v115">＋</span></span><span class="story-chip-name-v115">Моя история</span>';
-    if (own) { renderAvatar(ownButton.querySelector('.story-chip-avatar-v115'), storyUser(own.author_nick)); ownButton.querySelector('.story-chip-plus-v115').textContent = '＋'; ownButton.onclick = () => showStoryByAuthor(own.author_nick); }
+    const groups = new Map();
+    state.stories.forEach(story => { if (Number(story.expires_at) <= now()) return; const nick = safeNick(story.author_nick); if (!groups.has(nick)) groups.set(nick, []); groups.get(nick).push(story); });
+    const ownItems = groups.get(safeNick(currentUser()?.nick)) || [], own = ownItems[0];
+    const ownButton = document.createElement('button'); ownButton.type = 'button'; ownButton.className = 'story-chip-v115'; ownButton.setAttribute('aria-label', own ? 'Открыть мою историю' : 'Добавить историю');
+    ownButton.innerHTML = '<span class="story-chip-ring-v115"><span class="story-chip-avatar-v115">＋</span></span><span class="story-chip-name-v115">Моя история</span>';
+    if (own) { renderAvatar(ownButton.querySelector('.story-chip-avatar-v115'), storyUser(own.author_nick)); ownButton.onclick = () => showStoryByAuthor(own.author_nick); }
     else ownButton.onclick = openComposer;
+    renderStoryRing(ownButton, ownItems, true);
     list.appendChild(ownButton);
-    [...latest.values()].filter(story => safeNick(story.author_nick) !== safeNick(currentUser()?.nick)).forEach(story => {
+    [...groups.values()].filter(items => safeNick(items[0].author_nick) !== safeNick(currentUser()?.nick)).forEach(items => {
+      const story = items[0];
       const user = storyUser(story.author_nick), nick = safeNick(story.author_nick), button = document.createElement('button');
       button.type = 'button'; button.className = 'story-chip-v115' + (state.viewed.has(String(story.id)) ? ' seen-v115' : ''); button.setAttribute('aria-label', 'Открыть историю @' + nick);
       button.innerHTML = '<span class="story-chip-ring-v115"><span class="story-chip-avatar-v115"></span></span><span class="story-chip-name-v115"></span>';
-      renderAvatar(button.querySelector('.story-chip-avatar-v115'), user); button.querySelector('.story-chip-name-v115').textContent = user.name || nick; button.onclick = () => showStoryByAuthor(nick); list.appendChild(button);
+      renderAvatar(button.querySelector('.story-chip-avatar-v115'), user); renderStoryRing(button, items); button.querySelector('.story-chip-name-v115').textContent = user.name || nick; button.onclick = () => showStoryByAuthor(nick); list.appendChild(button);
     });
     const status = byId('story-status-v115');
     if (status) { status.hidden = true; status.textContent = ''; }

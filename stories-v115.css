@@ -16,13 +16,16 @@
 .stories-list-v115::-webkit-scrollbar{display:none}
 .story-chip-v115{display:flex;flex:0 0 58px;width:58px;flex-direction:column;align-items:center;gap:4px;border:0;padding:0;background:none;color:var(--text2);font:700 10px/1.1 inherit;cursor:pointer;min-width:0}
 .story-chip-v115:focus-visible{outline:2px solid var(--accent3);outline-offset:3px;border-radius:10px}
-.story-chip-ring-v115{position:relative;width:50px;height:50px;padding:2px;border-radius:50%;background:conic-gradient(from 12deg,#a78bfa,#5eead4,#60a5fa,#a78bfa);box-shadow:0 5px 16px rgba(91,77,224,.20);transition:transform .2s ease,filter .2s ease}
+.story-chip-ring-v115{position:relative;width:50px;height:50px;padding:4px;border-radius:50%;background:none;transition:transform .2s ease,filter .2s ease}
 .story-chip-v115:hover .story-chip-ring-v115{transform:translateY(-2px) scale(1.04);filter:brightness(1.08)}
-.story-chip-v115.seen-v115 .story-chip-ring-v115{background:rgba(144,144,168,.30);box-shadow:none}
+.story-chip-v115.seen-v115 .story-chip-ring-v115{background:none;box-shadow:none}
+.story-segments-v146{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+.story-segments-v146 circle{fill:none;stroke:#b6a0ff;stroke-width:2.2;stroke-linecap:butt}
+.story-segments-v146 circle.viewed-v146{stroke:#727387;stroke-opacity:.6}
+.story-chip-ring-v115.empty-v146{border:1px dashed #77738d;padding:3px}
 .story-chip-avatar-v115{display:grid;place-items:center;width:100%;height:100%;overflow:hidden;border:2px solid var(--bg2);border-radius:50%;background:var(--bg3);font-size:22px}
 .story-chip-avatar-v115 img{width:100%;height:100%;object-fit:cover;border-radius:50%}
 .story-chip-avatar-v115 .avatar-photo{width:100%;height:100%;object-fit:cover;border-radius:50%}
-.story-chip-plus-v115{position:absolute;right:-1px;bottom:-1px;display:grid;place-items:center;width:18px;height:18px;border:2px solid var(--bg2);border-radius:50%;background:var(--accent);color:#fff;font-size:12px;line-height:1}
 .story-chip-name-v115{width:100%;overflow:hidden;color:var(--text2);text-overflow:ellipsis;white-space:nowrap;text-align:center}
 .story-status-v115{padding:7px 2px 2px;color:var(--text3);font-size:10px}
 

@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v145-listening-sync';
+const CACHE_NAME='telechat-shell-v146-story-rings';
 const APP_SHELL=[
   './listening-v145.css?v=145',
   './profile-card-v143.css?v=143',
@@ -35,8 +35,8 @@ const APP_SHELL=[
   './music-intro-v118.css?v=118',
   './music-hub-v117.js?v=119',
   './music-hub-v117.css?v=119',
-  './stories-v115.css?v=116',
-  './stories-v115.js?v=116',
+  './stories-v115.css?v=146',
+  './stories-v115.js?v=146',
   './room-media-v113.js?v=113',
   './app-performance-v17.js?v=140',
   './chat-open-loader-v44.js?v=113',
