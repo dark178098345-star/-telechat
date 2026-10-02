@@ -1,6 +1,6 @@
-const CACHE_NAME='telechat-shell-v148-room-invites';
+const CACHE_NAME='telechat-shell-v149-room-playback';
 const APP_SHELL=[
-  './music-together-v147.js?v=148',
+  './music-together-v147.js?v=149',
   './music-together-v147.css?v=148',
   './music-room-invites-v148.js?v=148',
   './light-theme-v147.css?v=147',
@@ -62,7 +62,7 @@ const APP_SHELL=[
   './branding/soundcloud-white.png',
   './music-card-v97.css?v=97',
   './profile-music-v97.js?v=99',
-  './music-library-v96.js?v=147',
+  './music-library-v96.js?v=149',
   './music-library-v96.css?v=96',
   './appearance-mode-v95.js?v=95',
   './chat-foundation-v94.css?v=94',

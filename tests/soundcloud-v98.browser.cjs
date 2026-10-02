@@ -12,7 +12,7 @@ const mock=`(() => {
   const widget={frame,source,paused:true,plays:0,bind(name,fn){callbacks[name]=fn},unbind(name){delete callbacks[name]},
    emit(name,data){callbacks[name]?.(data)},
    getCurrentSound(fn){setTimeout(()=>fn({title:'Тысячи этажей',duration:180000}),5)},
-   play(){this.paused=false;this.plays++;this.emit('PLAY')},pause(){this.paused=true;this.emit('PAUSE')},seekTo(ms){this.emit('SEEK',{currentPosition:ms})}};
+   play(){const start=()=>{this.paused=false;this.plays++;this.emit('PLAY')};if(source.includes('delayed'))setTimeout(start,350);else start();},pause(){this.paused=true;this.emit('PAUSE')},seekTo(ms){this.emit('SEEK',{currentPosition:ms})}};
   widgets.push(widget);
   setTimeout(()=>widget.emit(source.includes('unavailable')?'ERROR':'READY'),source.includes('slow')?700:20);
   return widget;
@@ -108,6 +108,11 @@ const mock=`(() => {
   await page.waitForTimeout(60);await page.evaluate(()=>document.body.classList.add('voice-call-full-v32'));
   await page.waitForTimeout(850);assert.equal(await page.evaluate(()=>widgets.at(-1).plays),0,'Call while loading must prevent delayed autoplay');
   await page.evaluate(()=>document.body.classList.remove('voice-call-full-v32'));
+  await page.evaluate(()=>{window.slowTask=telechatMusicV96.playTrack({id:'slow-test',kind:'link',url:'https://soundcloud.com/artist/slow',title:'Slow loading'});});
+  await page.waitForFunction(()=>telechatMusicV96.getState().loading);await page.evaluate(()=>slowTask);assert.equal(await page.evaluate(()=>telechatMusicV96.getState().loading),false);
+  await page.evaluate(()=>telechatMusicV96.playTrack({id:'delayed-test',kind:'link',url:'https://soundcloud.com/artist/delayed',title:'Delayed PLAY'}));
+  assert.equal(await page.evaluate(()=>telechatMusicV96.getState().error),null);await page.waitForFunction(()=>!telechatMusicV96.getState().paused);
+  await page.evaluate(async()=>{await telechatMusicV96.resume();await telechatMusicV96.resume();});assert.equal(await page.evaluate(()=>telechatMusicV96.getState().paused),false,'Resume must never toggle a playing track into pause');
   assert.deepEqual(errors,[]);
   console.log('PASS: branding, lazy SDK, canonical links, metadata, duplicates, errors, profile, playback, seek, call interruption, responsive layout, delayed autoplay guard.');
  }finally{await browser.close();}
