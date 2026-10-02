@@ -78,6 +78,7 @@
     element.querySelector('.msg-meta')?.insertAdjacentHTML('beforeend',deliveryMarkup('sending'));liveRows.set(item.clientId,item);
   }
   async function deliver(item,{silent=false}={}){
+    if(item.expiresAt&&Date.now()>item.expiresAt){await outboxDelete(item.clientId);setDeliveryState(item,'failed');return false;}
     setDeliveryState(item,'sending');await outboxWrite(item);
     const saved=await persistMessage(item.row);
     if(!saved.ok){setDeliveryState(item,'failed');await outboxWrite({...item,state:'failed'});if(!silent)showToast(friendlyError(saved.error));return false;}
@@ -115,5 +116,13 @@
   doLogin=async function(){const result=await previousLogin();if(me)setTimeout(drainOutbox,250);return result;};
   window.addEventListener('online',()=>setTimeout(drainOutbox,200));
   window.telechatPersistMessageV24=persistMessage;
-  window.telechatDeliveryV72={retry:retryMessage,drain:drainOutbox};
+  // Explicit-target messages do not change the open chat or consume its draft.
+  async function sendDirect(nick,text,{expiresAt}={}){
+    const owner=me?.nick;if(!owner||nick===owner||!/^[a-zA-Z0-9_]{1,64}$/.test(nick)||typeof text!=='string'||!text.trim()||text.length>8000)throw Error('Не удалось отправить приглашение.');
+    const item={clientId:crypto.randomUUID(),state:'sending',createdAt:Date.now(),expiresAt,row:{chat_key:chatKey(owner,nick),from_nick:owner,text,ts:nextTimestamp(),reply_text:null,read_by:[],deleted:false}};
+    optimisticQueue=optimisticQueue.then(async()=>{if(me?.nick===owner&&conversationKey()===item.row.chat_key)await renderOptimistic(item);}).catch(()=>{});
+    await optimisticQueue;if(me?.nick!==owner)throw Error('Аккаунт изменился. Повтори отправку.');
+    try{return await deliver(item,{silent:true});}catch(error){setDeliveryState(item,'failed');await outboxWrite({...item,state:'failed'});return false;}
+  }
+  window.telechatDeliveryV72={retry:retryMessage,drain:drainOutbox,sendDirect};
 })();

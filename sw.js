@@ -1,7 +1,8 @@
-const CACHE_NAME='telechat-shell-v147-light-together';
+const CACHE_NAME='telechat-shell-v148-room-invites';
 const APP_SHELL=[
-  './music-together-v147.js?v=147',
-  './music-together-v147.css?v=147',
+  './music-together-v147.js?v=148',
+  './music-together-v147.css?v=148',
+  './music-room-invites-v148.js?v=148',
   './light-theme-v147.css?v=147',
   './listening-v145.css?v=145',
   './profile-card-v143.css?v=143',
@@ -98,7 +99,7 @@ const APP_SHELL=[
   './profile-details-v22.js',
   './profile-card-v29.css',
   './chat-reliability-v24.css',
-  './chat-reliability-v24.js?v=136',
+  './chat-reliability-v24.js?v=148',
   './delivery-v72.css?v=72',
   './message-send-animation-v35.css?v=54',
   './message-send-animation-v35.js?v=54',
