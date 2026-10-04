@@ -1,5 +1,7 @@
-const CACHE_NAME='telechat-shell-v149-room-playback';
+const CACHE_NAME='telechat-shell-v150-conversation-design';
 const APP_SHELL=[
+  './conversation-design-v150.css?v=150',
+  './conversation-design-v150.js?v=150',
   './music-together-v147.js?v=149',
   './music-together-v147.css?v=148',
   './music-room-invites-v148.js?v=148',
@@ -118,7 +120,7 @@ const APP_SHELL=[
   './gpu-safe-panels-v46.css?v=47',
   './liquid-glass-v50.css?v=50',
   './chat-speed-v51.css?v=64',
-  './chat-speed-v51.js?v=137',
+  './chat-speed-v51.js?v=150',
   './chat-actions-v52.css?v=59',
   './chat-actions-v52.js?v=105',
   './sound-studio-v53.css?v=53',

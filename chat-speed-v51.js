@@ -332,7 +332,7 @@
               element=added.find(child=>child.classList?.contains('msg'));
               if(element){element.classList.add('v51-hydrated');element.dataset.messageKeyV105=key;renderedRowsV105.set(element,mark);}
             }
-            if(element)desired.push(element);
+            if(element){if(element._messageSourceV136)Object.assign(element._messageSourceV136,item);else element._messageSourceV136=item;desired.push(element);}
           }
         }
         if(token!==renderTokenV51||state.key!==activeKeyV51())return false;
@@ -342,6 +342,7 @@
         state.lastPaintAt = Date.now();
         syncReadReceiptsV51(visibleItems);
         window.telechatSyncVisibleMessagesV105?.(visibleItems);
+        window.telechatMessageLayoutV150?.sync(box);
         if (!options.keepScroll) scrollToBottom();
         else if(anchor?.isConnected)box.scrollTop=oldTop+anchor.getBoundingClientRect().top-anchorTop;
         else box.scrollTop=oldTop;
@@ -481,6 +482,7 @@
     const element=messageElementV51(message)||document.getElementById('messages')?.lastElementChild;
     if(element?.classList?.contains('msg')){element.dataset.messageKeyV105=normalizedKey;element._messageSourceV136=message;renderedRowsV105.set(element,stateMarkV51([normalized]));}
     window.telechatReadReceiptV109?.(element, normalized);
+    window.telechatMessageLayoutV150?.sync(document.getElementById('messages'));
     return value;
   };
 

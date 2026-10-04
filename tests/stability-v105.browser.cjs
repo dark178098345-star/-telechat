@@ -28,6 +28,7 @@ const source=name=>fs.readFileSync(path.join(root,name),'utf8');
       });
     });
     await page.addScriptTag({content:source('chat-speed-v51.js')});
+    await page.addScriptTag({content:source('conversation-design-v150.js')});
     await page.addScriptTag({content:source('navigation-readers-v109.js')});
     await page.evaluate(async()=>{
       const row={id:1,chat_key:conversationKey(),from_nick:'friend',text:'first',ts:100,read_by:[]};

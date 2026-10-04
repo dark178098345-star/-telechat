@@ -1,0 +1,59 @@
+/* A flatter conversation list and a quieter reading rhythm. Personal backgrounds remain intact. */
+body{--flow-selected:#8e75dc24;--flow-hover:#aaa0d210;--flow-unread:#9d82ee0b;--flow-incoming:#202130;--flow-outgoing:#6e58bd;--flow-secondary:#a7a5b9}
+body.theme-light{--flow-selected:#eae4fa;--flow-hover:#f3f1f8;--flow-unread:#f6f3fc;--flow-incoming:#fff;--flow-outgoing:#7558d4;--flow-secondary:#687085}
+html body #chat-screen #contacts-list{padding:8px 6px!important}
+html body #chat-screen #contacts-list .contact,
+html body.theme-light #chat-screen #contacts-list .contact,
+html body #chat-screen #contacts-list.has-wallpaper-v119 .contact,
+html body.theme-light #chat-screen #contacts-list.has-wallpaper-v119 .contact{
+ min-height:74px!important;margin:0!important;padding:11px 10px!important;gap:12px!important;
+ border:0!important;border-radius:10px!important;background:transparent!important;box-shadow:none!important;
+ transform:none!important;animation:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+ transition:background-color 120ms ease!important;
+}
+html body #chat-screen #contacts-list .contact.has-chat-actions-v52{padding-right:36px!important}
+html body #chat-screen #contacts-list .contact.has-unread-v62{background:var(--flow-unread)!important}
+html body #chat-screen #contacts-list .contact:hover,
+html body.theme-light #chat-screen #contacts-list .contact:hover{background:var(--flow-hover)!important}
+html body #chat-screen #contacts-list .contact.active,
+html body.theme-light #chat-screen #contacts-list .contact.active,
+html body #chat-screen #contacts-list.has-wallpaper-v119 .contact.active{background:var(--flow-selected)!important}
+html body #chat-screen #contacts-list .contact::before,html body #chat-screen #contacts-list .contact::after{display:none!important}
+html body #chat-screen #contacts-list .contact .contact-info{min-width:0;flex:1}
+html body #chat-screen #contacts-list .contact-name{font-size:14px!important;font-weight:650!important;line-height:1.4;letter-spacing:-.15px}
+html body #chat-screen #contacts-list .contact-last{margin-top:4px;font-size:12px;line-height:1.45;color:var(--flow-secondary)!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html body #chat-screen #contacts-list .has-unread-v62 .contact-name{font-weight:750!important}
+html body #chat-screen #contacts-list .contact-time{font-size:10px;color:var(--flow-secondary)!important}
+html body #chat-screen #contacts-list .list-section-title{padding:18px 10px 6px!important;font-size:9px!important;font-weight:650;letter-spacing:.1em!important;opacity:.8}
+html body #chat-screen #contacts-list .list-section-title::after{display:none}
+html body #chat-screen #contacts-list .chat-unread-v62{box-shadow:none!important;min-width:19px;font-size:10px;animation:none!important}
+html body #chat-screen #contacts-list .contact .av,html body #chat-screen #contacts-list .contact .room-avatar{box-shadow:none!important;border-width:1px}
+html body #chat-screen #messages{gap:3px!important;padding:22px clamp(14px,2.5vw,40px)!important}
+html body #chat-screen #messages>.msg{max-width:min(76%,620px);margin-top:9px;animation:none!important;transition:none!important}
+html body #chat-screen #messages>.msg.flow-joined-v150{margin-top:0!important}
+html body #chat-screen #messages>.msg>.msg-bubble{border-radius:17px!important;padding:10px 14px!important;line-height:1.55!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+html body #chat-screen #messages>.msg.them>.msg-bubble{background:var(--flow-incoming)!important;border:1px solid var(--border)!important}
+html body #chat-screen #messages>.msg.me>.msg-bubble{background:var(--flow-outgoing)!important;color:#fff!important;border:1px solid transparent!important}
+html body #chat-screen #messages>.msg.flow-next-v150.them>.msg-bubble{border-bottom-left-radius:6px!important}
+html body #chat-screen #messages>.msg.flow-joined-v150.them>.msg-bubble{border-top-left-radius:6px!important}
+html body #chat-screen #messages>.msg.flow-next-v150.me>.msg-bubble{border-bottom-right-radius:6px!important}
+html body #chat-screen #messages>.msg.flow-joined-v150.me>.msg-bubble{border-top-right-radius:6px!important}
+html body #chat-screen #messages>.msg>.msg-bubble::after{display:none!important}
+html body #chat-screen #messages>.msg>.msg-sender-name{margin:0 4px 5px;font-size:11px;color:var(--accent3);font-weight:650}
+html body #chat-screen #messages>.msg.flow-joined-v150>.msg-sender-name{display:none!important}
+html body #chat-screen #messages .msg-meta{margin-top:3px;gap:5px;opacity:1}
+html body #chat-screen #messages .msg-time{font-size:10px;color:var(--flow-secondary)}
+html body #chat-screen #messages .flow-time-shared-v150>.msg-meta>.msg-time{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+html body #chat-screen #messages .flow-time-shared-v150>.msg-meta:not(:has(> :not(.msg-time))){position:absolute;overflow:hidden;width:1px;height:1px;clip-path:inset(50%)}
+/* Rich cards keep their own borderless surfaces and actions. */
+html body #chat-screen #messages>.msg>.msg-bubble:has(>.tele-emoji-run-v127),
+html body #chat-screen #messages>.msg>.msg-bubble:has(>.chat-gift-card){background:transparent!important;border:0!important;padding:4px 0!important}
+html body #chat-screen #messages .date-divider{margin:16px auto 10px;font-size:10px;padding:4px 11px;background:var(--bg2)!important;color:var(--flow-secondary)!important;border:1px solid var(--border);box-shadow:none!important}
+html body #chat-screen #messages .msg-reply-ref{padding:7px 10px;margin:0 0 5px;border-left:2px solid var(--accent3);border-radius:7px;background:var(--flow-hover)!important;color:var(--text2)!important;font-size:11px;line-height:1.45;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:720px){
+ html body #chat-screen #contacts-list .contact{min-height:74px!important;padding:11px 9px!important;gap:11px!important}
+ html body #chat-screen #messages{padding:14px 12px!important}
+ html body #chat-screen #messages>.msg{max-width:88%!important}
+ html body #chat-screen #messages>.msg>.msg-bubble{padding:9px 12px!important;font-size:var(--font-size,14px)}
+}
+@media(prefers-reduced-motion:reduce){html body #chat-screen #contacts-list .contact{transition:none!important}}
