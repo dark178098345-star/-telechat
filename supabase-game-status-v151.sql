@@ -10,6 +10,7 @@ alter table public.game_status_private_v151 enable row level security;
 revoke all on public.game_status_private_v151 from public,anon,authenticated;
 create or replace view public.game_status_v151 as
  select nick,kind,title,updated_at from public.game_status_private_v151;
+revoke all on public.game_status_v151 from public,anon,authenticated;
 grant select on public.game_status_v151 to anon,authenticated;
 create or replace function public.telechat_game_status_v151(p_nick text,p_pass text,p_kind text,p_title text)
 returns jsonb language plpgsql security definer set search_path=public as $$
