@@ -38,6 +38,15 @@ function init({nick,device}){
  assert.deepEqual(Object.keys(musicPayload).sort(),['at','device','key','listening','nick','state'],'No track identity in presence');
  await phone.waitForTimeout(200);await observer.evaluate(()=>telechatPresenceV120.refresh(true,'alice'));
  assert.equal(await observer.locator('#view-profile-seen .listening-icon-v145').count(),1,'Listening has a custom headphones icon');
+ // Manual activity wins over music but not privacy/offline. No DOM churn on a no-op repaint.
+ await observer.addScriptTag({path:path.join(root,'game-status-v151.js')});
+ await observer.evaluate(()=>{const api=telechatGameStatusV151;window.fixtureGame={kind:'game',title:'Minecraft'};window.telechatGameStatusV151={...api,get:()=>fixtureGame,refresh:()=>{}};telechatPresenceV120.paintProfile();});
+ assert.equal(await observer.locator('#view-profile-seen').textContent(),'Играет в Minecraft');assert.equal(await observer.locator('.listening-icon-v145').count(),0);assert.equal(await observer.locator('.game-icon-v151').count(),1);
+ assert.equal(await observer.evaluate(()=>{const n=document.getElementById('view-profile-seen'),o=new MutationObserver(()=>{});o.observe(n,{attributes:true,childList:true,subtree:true});telechatPresenceV120.paintProfile();const count=o.takeRecords().length;o.disconnect();return count;}),0);
+ await observer.evaluate(()=>{fixtureGame={kind:'app',title:'Blender'};telechatPresenceV120.paintProfile();});assert.equal(await observer.locator('#view-profile-seen').textContent(),'Использует Blender');
+ await observer.evaluate(()=>{blocked=true;telechatPresenceV120.paintProfile();});assert.equal(await observer.locator('.game-icon-v151').count(),0);
+ await observer.evaluate(()=>{blocked=false;Object.defineProperty(navigator,'onLine',{configurable:true,value:false});telechatPresenceV120.paintProfile();});assert.equal(await observer.locator('.game-icon-v151').count(),0);
+ await observer.evaluate(()=>{delete navigator.onLine;fixtureGame=null;telechatPresenceV120.paintProfile();});assert.equal(await observer.locator('#view-profile-seen').textContent(),'Слушает музыку');
  clients.set(phone,{payload:{...musicPayload,at:Date.now()-180000}});await broadcast();
  assert.equal(await observer.evaluate(()=>telechatPresenceV120.state('alice').listening),true,'Fresh stored lease survives stale realtime');
  clients.set(phone,{payload:musicPayload});await broadcast();await observer.waitForFunction(()=>telechatPresenceV120.state('alice').listening);

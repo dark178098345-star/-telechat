@@ -144,20 +144,23 @@
     if(!node)return;
     const hint=v.state==='unknown'?(v.lastSeen?'Последняя подтверждённая активность. ':'')+(v.reason==='offline'?'Нет соединения с интернетом.':v.reason==='loading'?'Обновляем текущий статус.':'Текущий статус пока не получен.') : '';
     if(node.title!==hint)node.title=hint;
-    const text=blocked(nick)?'был давно':isProfile&&v.listening?'Слушает музыку':(isProfile&&v.state==='online'?'● сейчас в сети':model.label(v,now()));const signature=[nick,v.state,v.device,text].join('|');
-    const musicBadge=isProfile&&v.listening&&!blocked(nick);
-    if(node.dataset.presenceV120===signature&&!!node.querySelector('.listening-icon-v145')===!!musicBadge&&node.textContent===text+(v.state==='background'?'☾':'')&&node.classList.contains('background-v101')===(v.state==='background')&&node.classList.contains('online')===(v.state==='online')&&(!v.device||isProfile||v.state!=='online'||node.querySelector('.device-presence-v72')))return;
+    const activity=isProfile&&!blocked(nick)&&['online','background'].includes(v.state)?window.telechatGameStatusV151?.get(nick):null;
+    const text=blocked(nick)?'был давно':activity?window.telechatGameStatusV151.label(activity):isProfile&&v.listening?'Слушает музыку':(isProfile&&v.state==='online'?'● сейчас в сети':model.label(v,now()));const signature=[nick,v.state,v.device,text,activity?.kind||''].join('|');
+    const musicBadge=isProfile&&v.listening&&!blocked(nick)&&!activity;
+    if(node.dataset.presenceV120===signature&&!!node.querySelector('.game-icon-v151')===!!activity&&!!node.querySelector('.listening-icon-v145')===!!musicBadge&&node.textContent===text+(v.state==='background'?'☾':'')&&node.classList.contains('background-v101')===(v.state==='background')&&node.classList.contains('online')===(v.state==='online')&&(!v.device||isProfile||v.state!=='online'||node.querySelector('.device-presence-v72')))return;
     node.dataset.presenceV120=signature;node.textContent=text;node.classList.toggle('online',v.state==='online');node.classList.toggle('offline',v.state!=='online');node.classList.toggle('background-v101',v.state==='background');
     if(isProfile)node.style.color=v.state==='online'?'var(--green)':v.state==='background'?'#e6c981':'var(--text3)';
     node.classList.toggle('listening-v145',!!musicBadge);
+    node.classList.toggle('gaming-v151',!!activity);
+    if(activity)node.prepend(window.telechatGameStatusV151.icon(activity.kind));
     if(musicBadge){const icon=document.createElementNS('http://www.w3.org/2000/svg','svg');icon.setAttribute('viewBox','0 0 24 24');icon.setAttribute('aria-hidden','true');icon.setAttribute('class','listening-icon-v145');icon.innerHTML='<path d="M4 14v-3a8 8 0 0 1 16 0v3M4 12H3v7h4v-7H4Zm16 0h1v7h-4v-7h3Z"/>';node.prepend(icon);}
     badge(node,v);
     if(v.state==='online'&&v.device&&!isProfile){const icon=document.createElement('span');icon.className='device-presence-v72 '+v.device;icon.title=v.device==='phone'?'С телефона':'С компьютера';icon.setAttribute('aria-label',icon.title);icon.innerHTML=v.device==='phone'?'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="2.5" width="11" height="19" rx="2.4"></rect><path d="M10 18.2h4"></path></svg>':'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3.5" width="18" height="12.5" rx="2.2"></rect><path d="M8 20h8M12 16v4"></path></svg>';node.append(icon);}
   }
   function paintHeader(nick=chat(),lastSeen=0){if(!nick||chat()!==normalize(nick))return;const node=$('chat-status-text');if(node?.classList.contains('typing')&&!blocked(nick))return;if(blocked(nick))node?.classList.remove('typing');node?.classList.toggle('v74-blocked-status',blocked(nick));const v=value(nick,lastSeen);status(node,v,false,nick);avatar($('chat-av'),v);}
-  function paintProfile(nick=profile(),lastSeen=0){if(!nick||profile()!==normalize(nick))return;const v=value(nick,lastSeen);status($('view-profile-seen'),v,true,nick);avatar($('view-profile-avatar'),v);}
+  function paintProfile(nick=profile(),lastSeen=0){if(!nick||profile()!==normalize(nick))return;if(!blocked(nick))window.telechatGameStatusV151?.refresh(nick);const v=value(nick,lastSeen);status($('view-profile-seen'),v,true,nick);avatar($('view-profile-avatar'),v);}
   function paint(){paintHeader();paintProfile();document.querySelectorAll('.contact[data-contact-nick]').forEach(row=>{const nick=normalize(row.dataset.contactNick),v=value(nick);avatar(row.querySelector('.av'),v);badge(row.querySelector('.contact-name'),v);});
-    const quick=$('profile-quick-v91');if(quick&&!quick.hidden){const own=value(account()),label=navigator.onLine===false?'Нет соединения':own.state==='online'?'В сети':own.state==='background'?'В фоне':'Подключение…',node=quick.querySelector('.pq-online');if(node&&node.dataset.presenceLabel!==label){node.dataset.presenceLabel=label;node.textContent=label;const dot=document.createElement('i');dot.setAttribute('aria-hidden','true');dot.style.background=own.state==='online'?'var(--green)':own.state==='background'?'#e6c981':'var(--text3)';node.prepend(dot);quick.querySelector('.pq-dot')?.style.setProperty('background',dot.style.background);}}
+    const quick=$('profile-quick-v91');if(quick&&!quick.hidden){const own=value(account()),activity=navigator.onLine!==false&&['online','background'].includes(own.state)?window.telechatGameStatusV151?.get(account()):null,label=navigator.onLine===false?'Нет соединения':activity?window.telechatGameStatusV151.label(activity):own.state==='online'?'В сети':own.state==='background'?'В фоне':'Подключение…',node=quick.querySelector('.pq-online');if(node&&node.dataset.presenceLabel!==label){node.dataset.presenceLabel=label;node.textContent=label;node.classList.toggle('gaming-v151',!!activity);const dot=document.createElement('i');dot.setAttribute('aria-hidden','true');dot.style.background=own.state==='online'?'var(--green)':own.state==='background'?'#e6c981':'var(--text3)';node.prepend(activity?window.telechatGameStatusV151.icon(activity.kind):dot);quick.querySelector('.pq-dot')?.style.setProperty('background',dot.style.background);}}
   }
   function wake(){shutdown=false;ensureAccount();if(connectionFailed)disconnect();if(session&&!channel)connect();publish(true);refresh(true);}
   function leave(){if(!session)return Promise.resolve();shutdown=true;clearTimeout(retryTimer);clearTimeout(reconnectTimer);const job=publish(true);disconnect();return job;}
@@ -170,6 +173,7 @@
   window.addEventListener('telechat-music-state-v97',event=>{
     musicPlaying=event.detail?.playing===true;musicOwner=account();publish();schedulePaint();
   });
+  window.addEventListener('telechat-game-status-v151',schedulePaint);
   document.addEventListener('visibilitychange',()=>{publish(true);if(!document.hidden)wake();});
   window.addEventListener('pagehide',event=>{if(event.persisted){nativeHidden=true;publish(true);}else leave();},{passive:true});
   window.addEventListener('pageshow',()=>{nativeHidden=false;wake();},{passive:true});

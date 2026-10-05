@@ -1,0 +1,29 @@
+#game-status-v151{color:var(--text,#efedf8);background:var(--bg2,#191826);border:1px solid var(--border,#39344e);border-radius:24px;padding:24px;margin:auto;width:min(490px,calc(100vw - 24px));max-height:calc(100dvh - 24px);box-sizing:border-box;overflow:auto;box-shadow:0 24px 90px #0005;overscroll-behavior:contain}
+#game-status-v151::backdrop{background:#090914aa}
+#game-status-v151 *{box-sizing:border-box}
+#game-status-v151 button,#game-status-v151 input{font:inherit;color:inherit}
+#game-status-v151 button{cursor:pointer;border:1px solid transparent;border-radius:12px;background:transparent}
+#game-status-v151 button:focus-visible,#game-status-v151 input:focus-visible{outline:2px solid #bca5ff;outline-offset:2px}
+#game-status-v151 button:disabled{opacity:.5;cursor:wait}
+#game-status-v151 [hidden]{display:none!important}
+.gs-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}.gs-eyebrow{font-size:9px;letter-spacing:2px;color:var(--text3,#aba1be)}
+#game-status-v151 h2{font-size:24px;margin:6px 0 0;font-weight:750;letter-spacing:-.5px}
+#game-status-v151 .gs-close{font-size:26px;width:40px;height:40px;background:#a990ed12}
+.gs-help,.gs-note{font-size:12px;line-height:1.65;color:var(--text2,#b5aec6);margin:16px 0}
+.gs-current{display:flex;align-items:center;gap:12px;background:#a990ed14;border:1px solid #a990ed30;border-radius:14px;padding:14px;font-size:13px;overflow-wrap:anywhere}
+.game-icon-v151{width:21px;height:21px;flex:0 0 21px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+#game-status-v151 .gs-clear{padding:9px 2px;color:#bda8f5;font-size:12px}
+.gs-search{display:block;margin-top:18px}.gs-search>span{display:block;font-size:11px;color:var(--text2,#b5aec6);margin-bottom:8px}
+#game-status-v151 input{width:100%;background:var(--bg3,#222032);border:1px solid var(--border,#39344e);border-radius:12px;height:46px;padding:0 14px;font-size:16px}
+.gs-filters{display:flex;gap:6px;margin:14px 0 12px}#game-status-v151 .gs-filters button{padding:8px 13px;font-size:12px;background:#a990ed0b}#game-status-v151 .gs-filters [aria-pressed=true]{background:#a990ed25;border-color:#a990ed50;color:var(--text,#e6dbff)}
+.gs-count{font-size:10px;color:var(--text3,#aba1be);min-height:24px}.gs-results{max-height:290px;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin}
+#game-status-v151 .gs-option{display:flex;align-items:center;text-align:left;gap:12px;width:100%;padding:11px 10px;min-height:46px}.gs-option>span{flex:1;font-size:13px;overflow-wrap:anywhere}.gs-option>small{font-size:9px;color:var(--text3,#aba1be)}
+#game-status-v151 .gs-option:hover{background:#a990ed16}.gs-option .game-icon-v151{color:#b7a1e9;width:19px;height:19px;flex-basis:19px}
+.gs-custom{margin-top:12px;padding:12px;border:1px dashed #a990ed55;border-radius:12px;font-size:12px;overflow-wrap:anywhere}.gs-custom>div{display:flex;gap:8px;margin-top:8px}#game-status-v151 .gs-custom button{padding:8px 12px;background:#a990ed25}
+.gs-error{font-size:12px;line-height:1.5;color:#fa9cab;margin:10px 0}.gs-error:empty{display:none}.gs-note{font-size:10px;margin:14px 0 0}
+#user-profile-modal #view-profile-seen.gaming-v151{display:flex;align-items:center;justify-content:flex-end;gap:6px;max-width:190px;padding:6px 8px;border-radius:10px;background:#a990ed18;color:#c8b6f3!important;font-size:11px;line-height:1.45;overflow-wrap:anywhere}
+#view-profile-seen.gaming-v151 .game-icon-v151{width:17px;height:17px;flex-basis:17px}
+#profile-quick-v91 .pq-online.gaming-v151{max-width:185px;display:flex;align-items:center;gap:5px;line-height:1.4;text-align:right;overflow-wrap:anywhere;color:#c8b6f3}
+#profile-quick-v91 .pq-online.gaming-v151 .game-icon-v151{width:17px;height:17px;flex-basis:17px}
+body.theme-light #game-status-v151{background:#fff;color:#292538;border-color:#e4dff0}body.theme-light #game-status-v151 input{background:#f8f6fc;border-color:#e4dff0}body.theme-light #game-status-v151 .gs-clear{color:#7150ac}body.theme-light #user-profile-modal #view-profile-seen.gaming-v151,body.theme-light #profile-quick-v91 .pq-online.gaming-v151{color:#7150ac!important}
+@media(max-width:480px){#game-status-v151{padding:18px;border-radius:20px}.gs-results{max-height:35dvh}.gs-help{font-size:11px}#user-profile-modal #view-profile-seen.gaming-v151{max-width:155px;font-size:10px}}

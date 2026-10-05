@@ -50,6 +50,7 @@
         <h2 class="pq-name"></h2><div class="pq-nick"></div>
         <button type="button" class="pq-status"></button>
         <div class="pq-actions">
+          <button type="button" data-pq="game">${icon('<path d="M7 7h10c2 0 3 2 3.5 4l1 5c.5 3-2 4-4 2l-2-2h-7l-2 2c-2 2-4.5 1-4-2l1-5C4 9 5 7 7 7Z"/><path d="M6 11v4m-2-2h4m7-2h.01M18 14h.01"/>')}<span>Добавить игровой статус</span><b aria-hidden="true">›</b></button>
           <button type="button" data-pq="edit">${pen}<span>Редактировать профиль</span><b aria-hidden="true">›</b></button>
           <button type="button" data-pq="view">${eye}<span>Посмотреть профиль</span><b aria-hidden="true">›</b></button>
         </div>
@@ -59,6 +60,7 @@
     card.querySelector('.pq-close').addEventListener('click',()=>close(true));
     const edit=()=>{close();navigate.call(window,'profile');};
     card.querySelector('.pq-status').addEventListener('click',edit);
+    card.querySelector('[data-pq="game"]').addEventListener('click',()=>{close();window.telechatGameStatusV151?.open();});
     card.querySelector('[data-pq="edit"]').addEventListener('click',edit);
     card.querySelector('[data-pq="view"]').addEventListener('click',()=>{close();window.previewMyProfile?.();});
     card.querySelector('[data-pq="switch"]').addEventListener('click',()=>{close();window.openLogoutDialogV76?.('switch');});
@@ -81,6 +83,8 @@
     else avatar.textContent='👤';
     window.applyProfileBanner?.(card.querySelector('.pq-cover'),user.banner);
     opened=true;card.hidden=false;
+    window.telechatGameStatusV151?.paintQuick(card);
+    window.telechatGameStatusV151?.refresh(user.nick,true);
     trigger.setAttribute('aria-expanded','true');
     position();
     card.querySelector('[data-pq="edit"]').focus({preventScroll:true});

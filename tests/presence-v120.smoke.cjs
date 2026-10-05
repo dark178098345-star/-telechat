@@ -1,6 +1,6 @@
 const fs=require('fs'),path=require('path'),assert=require('assert/strict');const read=file=>fs.readFileSync(path.join(__dirname,'..',file),'utf8');
 const index=read('index.html'),sw=read('sw.js'),logout=read('smooth-ui-v76.js'),native=read('android-app/app/src/main/java/chat/tele/app/MainActivity.java');
-for(const asset of ['presence-model-v120.js?v=129','presence-v120.js?v=145','listening-v145.css?v=145','smooth-ui-v76.js?v=133','chat-speed-v51.js?v=137']){assert.ok(index.includes(asset));assert.ok(sw.includes(asset));}
+for(const asset of ['presence-model-v120.js?v=129','presence-v120.js?v=151','listening-v145.css?v=145','smooth-ui-v76.js?v=133','chat-speed-v51.js?v=150','game-status-v151.js?v=151','game-status-catalog-v151.js?v=151','game-status-v151.css?v=151']){assert.ok(index.includes(asset),asset);assert.ok(sw.includes(asset),asset);}
 assert.doesNotMatch(index,/<script[^>]+(?:device-presence-v72|background-presence-v101)\.js/,'Old competing writers are no longer loaded');
 assert.match(sw,/telechat-shell-v\d+/);assert.match(logout,/telechatPresenceV120\.leave/);assert.doesNotMatch(logout,/delete\(\)\.eq\('nick',user\.nick\),/,'Logout must not erase other devices or privacy markers');
 for(const asset of ['background-presence-v101.css?v=101','device-presence-v72.css?v=72']){assert.ok(index.includes(asset));assert.ok(sw.includes(asset));}
