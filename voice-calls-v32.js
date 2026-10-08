@@ -306,6 +306,7 @@
     byId('voice-call-count').textContent=Math.max(1,joined)+'\u0020\u0432\u0020\u0437\u0432\u043e\u043d\u043a\u0435';
     const remoteJoined=visible.filter(item=>item.status==='joined'&&!sameNickV32(item.nick,me?.nick));
     byId('call-mixer-btn').disabled=!remoteJoined.length;
+    window.dispatchEvent(new CustomEvent('telechat-call-ui-v152'));
     if(state.peopleSignatureV69===signature&&box.children.length)return;
     state.peopleSignatureV69=signature;
     box.innerHTML='';
@@ -470,6 +471,7 @@
     byId('call-sheet-backdrop')?.classList.remove('show');
     byId('call-invite-sheet')?.classList.remove('show');
     byId('call-mixer-sheet')?.classList.remove('show');
+    window.telechatCallChatV152?.closePanel();
   }
 
   async function showCallUiV32(mode,statusText,state=displayStateV32()){
@@ -485,6 +487,7 @@
   function hideCallUiV32(){
     byId('voice-call-overlay')?.classList.remove('show');byId('voice-call-mini')?.classList.remove('show');
     document.body.classList.remove('voice-call-full-v32');closeCallSheetsV32();
+    window.dispatchEvent(new CustomEvent('telechat-call-ui-v152'));
   }
 
   function minimizeCallV32(){
@@ -631,6 +634,7 @@
     const pc=new PeerConnectionV55(RTC_CONFIG);
     const peer={nick,pc,pendingCandidates:[],remoteStream:null,audio:null,connected:false,disconnectTimer:null,connectTimer:null,retryCount:0,meterStarted:false};
     state.peers.set(nick,peer);
+    window.telechatCallChatV152?.attach(state,peer,shouldCreateOfferV49(nick),()=>callState===state&&!state.closing&&state.peers.get(nick)===peer);
     for(const track of state.localStream?.getTracks?.()||[])pc.addTrack(track,state.localStream);
     pc.onicecandidate=event=>{
       if(!event.candidate)return;
@@ -691,6 +695,7 @@
   function removePeerV32(state,nick){
     const peer=state?.peers?.get(nick);if(!peer)return;
     clearTimeout(peer.disconnectTimer);clearTimeout(peer.connectTimer);
+    try{peer.chatChannelV152?.close();}catch(error){}
     try{peer.pc.close();}catch(error){}
     if(peer.audio){peer.audio.pause();peer.audio.srcObject=null;peer.audio.remove();}
     removeSpeakingMeterV32(nick);state.peers.delete(nick);
@@ -1230,7 +1235,9 @@
   window.restoreCallV31=restoreCallV32;
   window.telechatCallsV32={
     init:initCallsV32,preview:previewCallV32,closePreview:cleanupCallV32,
-    pack:packCallV32,unpack:unpackCallV32,formatDuration:formatCallTimeV32
+    pack:packCallV32,unpack:unpackCallV32,formatDuration:formatCallTimeV32,
+    snapshot:()=>callState?{id:callState.id,status:callState.status,preview:!!callState.preview,members:[...callState.members.values()].map(m=>({nick:m.nick,name:m.user?.name||m.nick,status:m.status}))}:null,
+    sendText:text=>window.telechatCallChatV152?.send(callState,text)
   };
   window.telechatCallsV31=window.telechatCallsV32;
   if(me)initCallsV32();

@@ -224,6 +224,7 @@
     byId('story-prev-v115').hidden = state.viewerIndex === 0; byId('story-next-v115').hidden = state.viewerIndex === state.viewerItems.length - 1;
     const stage = byId('story-stage-v115'); stage.querySelectorAll('img,video,.story-backdrop-v116').forEach(node => node.remove()); stage.classList.toggle('video-v116', story.media_type === 'video'); const backdrop = document.createElement('div'); backdrop.className = 'story-backdrop-v116'; backdrop.style.backgroundImage = 'url(' + JSON.stringify(story.media_url) + ')'; stage.insertBefore(backdrop, byId('story-prev-v115')); const media = document.createElement(story.media_type === 'video' ? 'video' : 'img'); media.src = story.media_url; media.alt = 'История ' + (user.name || story.author_nick); if (media.tagName === 'VIDEO') { media.controls = true; media.playsInline = true; media.autoplay = true; media.addEventListener('error', () => showToast?.('Видео истории недоступно')); } stage.insertBefore(media, byId('story-prev-v115'));
     const own = safeNick(story.author_nick) === safeNick(currentUser()?.nick); const viewButton = byId('story-views-btn-v115'); viewButton.hidden = !own; byId('story-add-more-v115').hidden = !own; byId('story-delete-v115').hidden = !own; byId('story-viewers-v115').classList.remove('open-v115'); renderLikeControl(story);
+    window.telechatStoryRepliesV152?.mount(story);
     if (own) { const views = await loadViewers(story.id); viewButton.textContent = '👁 ' + views.length + ' просмотров'; }
     else markStoryViewed(story);
   }
