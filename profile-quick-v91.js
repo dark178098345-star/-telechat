@@ -5,7 +5,13 @@
   if(typeof navigate!=='function')return;
   const trigger=document.querySelector('[data-nav="profile"]');
   if(!trigger)return;
-  let card=null,opened=false;
+  let card=null,opened=false,positionFrame=0;
+  const mediaPaints=new WeakMap();
+  function paintMedia(element,key,render){
+    const previous=mediaPaints.get(element);
+    if(previous?.key===key&&previous.child===element.firstChild)return;
+    render();mediaPaints.set(element,{key,child:element.firstChild});
+  }
   const icon=path=>'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+path+'</svg>';
   const pen=icon('<path d="m15 5 4 4M4 20l4-1L20 7a2.8 2.8 0 0 0-4-4L4 15z"/>');
   const eye=icon('<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>');
@@ -17,9 +23,12 @@
   function close(restoreFocus=false){
     if(!opened)return;
     opened=false;card.hidden=true;
+    cancelAnimationFrame(positionFrame);positionFrame=0;
     trigger.setAttribute('aria-expanded','false');
     // Release media when hidden, including decoders used by animated avatars.
     card.querySelectorAll('video').forEach(video=>{
+      mediaPaints.delete(card.querySelector('.pq-avatar'));
+      mediaPaints.delete(card.querySelector('.pq-cover'));
       video.pause();video.removeAttribute('src');video.load();video.remove();
     });
     if(restoreFocus)trigger.focus({preventScroll:true});
@@ -36,6 +45,10 @@
     const rect=card.getBoundingClientRect();
     card.style.left=Math.max(left+12,Math.min(anchor.left,left+width-rect.width-12))+'px';
     card.style.top=Math.max(top+12,Math.min(anchor.top-rect.height-12,top+height-rect.height-12))+'px';
+  }
+  function schedulePosition(){
+    if(!opened||positionFrame)return;
+    positionFrame=requestAnimationFrame(()=>{positionFrame=0;position();});
   }
 
   function ensure(){
@@ -79,9 +92,10 @@
     statusButton.classList.toggle('pq-status-empty',!status);
     window.telechatProfileMusicV97?.renderAfter(statusButton,user);
     const avatar=card.querySelector('.pq-avatar');
-    if(typeof window.setAvatarElement==='function')window.setAvatarElement(avatar,user);
+    if(typeof window.setAvatarElement==='function')paintMedia(avatar,JSON.stringify([user.nick,user.av,user.status,user.avatar_video,user.animated_profile]),()=>window.setAvatarElement(avatar,user));
     else avatar.textContent='👤';
-    window.applyProfileBanner?.(card.querySelector('.pq-cover'),user.banner);
+    const cover=card.querySelector('.pq-cover');
+    paintMedia(cover,JSON.stringify([user.nick,user.banner,user.animated_profile]),()=>window.applyProfileBanner?.(cover,user.banner));
     opened=true;card.hidden=false;
     window.telechatGameStatusV151?.paintQuick(card);
     window.telechatGameStatusV151?.refresh(user.nick,true);
@@ -104,6 +118,7 @@
     if(opened&&!card.contains(event.target)&&!trigger.contains(event.target))close();
   });
   document.addEventListener('visibilitychange',()=>{if(document.hidden)close();});
-  window.addEventListener('resize',position);
-  window.visualViewport?.addEventListener('resize',position);
+  window.addEventListener('resize',schedulePosition);
+  window.visualViewport?.addEventListener('resize',schedulePosition);
+  window.visualViewport?.addEventListener('scroll',schedulePosition);
 })();

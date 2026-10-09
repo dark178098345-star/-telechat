@@ -3,7 +3,7 @@ html body #user-profile-modal{padding:16px;background:rgba(5,6,12,.8)}
 html body #user-profile-modal .user-profile-card{
   width:min(500px,100%);max-width:500px;max-height:calc(100dvh - 32px);
   margin:auto;padding:0!important;border:1px solid #ffffff24;border-radius:28px;
-  overflow:auto;overflow-x:hidden;background:#12131e;color:#f5f3fb;
+  overflow:auto;overflow-x:hidden;overscroll-behavior:contain;background:#12131e;color:#f5f3fb;
   box-shadow:0 28px 90px #0008;scrollbar-width:thin;scrollbar-gutter:stable;
 }
 html body #user-profile-modal .user-profile-cover{height:166px!important;max-height:none!important;border:0}
@@ -28,7 +28,7 @@ html body #user-profile-modal .activity-badge-v124{
   padding:7px 11px;background:#282139;color:#e0d3ff;border-color:#bca1f533;font-size:11px;
 }
 html body #user-profile-modal .user-profile-name{
-  grid-area:2/1;margin:0;min-width:0;font-size:26px;line-height:1.2;letter-spacing:-.6px;color:#fff;
+  grid-area:2/1;margin:0;min-width:0;overflow-wrap:anywhere;font-size:26px;line-height:1.2;letter-spacing:-.6px;color:#fff;
 }
 html body #user-profile-modal .user-profile-seen{
   grid-area:2/2;align-self:center;margin:0;font-size:10px;line-height:1.4;color:#b8c4ba;
@@ -103,7 +103,7 @@ html body #user-profile-modal .user-profile-actions .modal-btn{min-height:44px;b
 html body #user-profile-modal :is(button,a):focus-visible{outline:2px solid #c2a6ff;outline-offset:3px}
 @media(max-width:520px){
   html body #user-profile-modal{padding:6px}
-  html body #user-profile-modal .user-profile-card{max-height:calc(100dvh - 12px);border-radius:23px;scrollbar-gutter:auto}
+  html body #user-profile-modal .user-profile-card{max-height:calc(min(100dvh,var(--v100-height,100dvh)) - 12px);border-radius:23px;scrollbar-gutter:auto}
   html body #user-profile-modal .user-profile-cover{height:140px!important}
   html body #user-profile-modal .user-profile-body{padding:0 18px max(18px,env(safe-area-inset-bottom));column-gap:8px}
   html body #user-profile-modal .user-profile-avatar{width:88px;height:88px;margin-top:-38px;border-radius:27px}
@@ -113,6 +113,8 @@ html body #user-profile-modal :is(button,a):focus-visible{outline:2px solid #c2a
   html body #user-profile-modal #follow-stats{gap:12px}
   html body #user-profile-modal .moon-showcase-head em{font-size:9px}
 }
+/* Do not keep invisible profile loading decorations running. */
+#profile-load:not(.show) .profile-load-orbit,#profile-load:not(.show) .profile-load-orbit::before{animation-play-state:paused}
 @media(max-width:350px){
   html body #user-profile-modal .user-profile-body{padding-left:14px;padding-right:14px}
   html body #user-profile-modal .user-profile-name{font-size:21px}

@@ -27,6 +27,16 @@
   }
   function mode(type,text){const load=document.getElementById('profile-load'),refresh=document.getElementById('profile-refresh');if(!load)return;load.classList.remove('show','error');refresh.classList.remove('show');if(type==='load')load.classList.add('show');if(type==='refresh')refresh.classList.add('show');if(type==='error'){load.classList.add('show','error');document.getElementById('profile-load-text').textContent=text||'Не удалось загрузить профиль';}}
   const mediaPaints=new WeakMap();
+  const suspendedMedia=new Set();
+  function syncMedia(){
+    const visible=!document.hidden&&document.getElementById('user-profile-modal')?.classList.contains('show');
+    card?.querySelectorAll('video').forEach(video=>{
+      if(!visible){if(!video.paused||video.autoplay)suspendedMedia.add(video);video.pause();}
+      else if(suspendedMedia.delete(video))video.play()?.catch(()=>{});
+    });
+    for(const video of suspendedMedia)if(!video.isConnected)suspendedMedia.delete(video);
+  }
+  document.addEventListener('visibilitychange',syncMedia);
   function paintMedia(element,key,render){
     const previous=mediaPaints.get(element);
     if(previous&&previous.key===key&&previous.child===element.firstChild)return;
@@ -53,8 +63,9 @@
     const complete=!!saved||!!preview&&Object.hasOwn(preview,'bio');
     if(preview){paint(preview,complete);mode('idle');}else{mode('load');document.getElementById('view-profile-name').textContent='';document.getElementById('view-profile-nick').textContent='@'+nick;applyProfileBanner(document.getElementById('view-profile-cover'),'preset:cosmos');mediaPaints.delete(document.getElementById('view-profile-cover'));}
     modal.classList.add('show');
-    const started=performance.now();try{const user=await full(nick,force);if(request!==token)return;const wait=preview?0:Math.max(0,260-(performance.now()-started));if(wait)await new Promise(r=>setTimeout(r,wait));if(request!==token)return;paint(user,true);mode('idle');}catch(e){if(request!==token)return;if(preview){mode('idle');showToast('Показана сохранённая версия профиля');}else mode('error',String(e.message||'Ошибка загрузки'));}
+    syncMedia();
+    try{const user=await full(nick,force);if(request!==token)return;paint(user,true);syncMedia();mode('idle');}catch(e){if(request!==token)return;if(preview){mode('idle');showToast('Показана сохранённая версия профиля');}else mode('error',String(e.message||'Ошибка загрузки'));}
   };
-  closeUserProfile=function(){token++;document.getElementById('user-profile-modal').classList.remove('show');viewedProfileNickV5='';mode('idle');};
+  closeUserProfile=function(){token++;document.getElementById('user-profile-modal').classList.remove('show');viewedProfileNickV5='';mode('idle');syncMedia();};
   document.getElementById('profile-load-retry').onclick=()=>openUserProfile(lastNick,true);
 })();

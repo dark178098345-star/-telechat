@@ -309,32 +309,38 @@
     window.dispatchEvent(new CustomEvent('telechat-call-ui-v152'));
     if(state.peopleSignatureV69===signature&&box.children.length)return;
     state.peopleSignatureV69=signature;
-    box.innerHTML='';
+    if(box._renderState!==state){box.replaceChildren();box._renderState=state;}
+    const existing=new Map([...box.querySelectorAll('.voice-call-person')].map(person=>[person.dataset.nick,person]));
+    const ordered=[];
     visible.forEach((item,index)=>{
-      const person=document.createElement('article');
+      const person=existing.get(item.nick)||document.createElement('article');existing.delete(item.nick);
       const isLocal=sameNickV32(item.nick,me?.nick);
-      person.className='voice-call-person'+(isLocal?' local':'')+(item.status==='invited'?' pending':'');
+      person.classList.add('voice-call-person');person.classList.toggle('local',isLocal);person.classList.toggle('pending',item.status==='invited');
       person.id=memberDomIdV32(item.nick);
       person.dataset.nick=item.nick;
-      const avatar=document.createElement('div');avatar.className='voice-call-avatar';
-      setAvatarV32(avatar,item.user);
-      if(state.mutedMembers?.has(item.nick)){
+      const avatar=person.querySelector('.voice-call-avatar')||document.createElement('div');avatar.className='voice-call-avatar';
+      const user=item.user||{},avatarKey=JSON.stringify([user.av,user.status,user.avatar_video,user.animated_profile]);
+      if(avatar._mediaKey!==avatarKey){setAvatarV32(avatar,item.user);avatar._mediaKey=avatarKey;}
+      if(!state.mutedMembers?.has(item.nick))avatar.querySelector('.voice-call-muted-v72')?.remove();
+      if(state.mutedMembers?.has(item.nick)&&!avatar.querySelector('.voice-call-muted-v72')){
         const mutedBadge=document.createElement('span');mutedBadge.className='voice-call-muted-v72';mutedBadge.title='Микрофон выключен';mutedBadge.setAttribute('aria-label','Микрофон выключен');
         mutedBadge.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 9v3a3 3 0 0 0 5.1 2.1M15 10V5a3 3 0 0 0-5.8-1M5 10v2a7 7 0 0 0 11.7 5.2M19 10v2c0 1.1-.3 2.2-.7 3.1M12 19v3M8 22h8M3 3l18 18"></path></svg>';
         avatar.appendChild(mutedBadge);
       }
-      const name=document.createElement('div');name.className='voice-call-person-name';name.textContent=item.user?.name||item.nick;
-      const hint=document.createElement('div');hint.className='voice-call-person-hint';
+      const name=person.querySelector('.voice-call-person-name')||document.createElement('div');name.className='voice-call-person-name';name.textContent=item.user?.name||item.nick;
+      const hint=person.querySelector('.voice-call-person-hint')||document.createElement('div');hint.className='voice-call-person-hint';
       hint.textContent=isLocal?'ты':item.status==='invited'?'ожидаем ответа':'в звонке';
-      person.append(avatar,name,hint);
-      box.appendChild(person);
+      if(!person.firstChild)person.append(avatar,name,hint);
+      ordered.push(person);
       if(visible.length===2&&index===0){
-        const connector=document.createElement('div');connector.className='voice-call-connector';
+        const connector=box.querySelector('.voice-call-connector')||document.createElement('div');connector.className='voice-call-connector';
         connector.setAttribute('aria-label','Соединение');
         connector.innerHTML='<i class="voice-call-connector-dot"></i><i class="voice-call-connector-dot"></i><i class="voice-call-connector-dot"></i>';
-        box.appendChild(connector);
+        ordered.push(connector);
       }
     });
+    for(const child of [...box.children])if(!ordered.includes(child))child.remove();
+    ordered.forEach((child,index)=>{if(box.children[index]!==child)box.insertBefore(child,box.children[index]||null);});
     renderMiniCallV32(visible);
     renderCallMixerV32();
   }
@@ -343,10 +349,13 @@
     const joined=items.filter(item=>item.status==='joined');
     const remotes=joined.filter(item=>!sameNickV32(item.nick,me?.nick));
     const avatarBox=byId('voice-call-mini-avatars');if(!avatarBox)return;
-    avatarBox.innerHTML='';
-    (remotes.length?remotes:items.filter(item=>!sameNickV32(item.nick,me?.nick))).slice(0,3).forEach(item=>{
-      const el=document.createElement('div');el.className='voice-call-mini-avatar';setAvatarV32(el,item.user);avatarBox.appendChild(el);
-    });
+    const miniItems=(remotes.length?remotes:items.filter(item=>!sameNickV32(item.nick,me?.nick))).slice(0,3);
+    const miniKey=JSON.stringify(miniItems.map(item=>[item.nick,item.user?.av,item.user?.status,item.user?.avatar_video,item.user?.animated_profile]));
+    if(avatarBox._mediaKey!==miniKey){
+      avatarBox.replaceChildren();miniItems.forEach(item=>{
+        const el=document.createElement('div');el.className='voice-call-mini-avatar';setAvatarV32(el,item.user);avatarBox.appendChild(el);
+      });avatarBox._mediaKey=miniKey;
+    }
     const total=Math.max(1,joined.length);
     byId('voice-call-mini-name').textContent=total>2?'Групповой звонок · '+total:(remotes[0]?'Звонок с '+(remotes[0].user?.name||'@'+remotes[0].nick):'Активный звонок');
   }
@@ -485,7 +494,13 @@
   }
 
   function hideCallUiV32(){
+    ++renderToken;
     byId('voice-call-overlay')?.classList.remove('show');byId('voice-call-mini')?.classList.remove('show');
+    for(const id of ['voice-call-parties','voice-call-mini-avatars','call-mixer-list']){
+      const box=byId(id);if(!box)continue;
+      box.querySelectorAll('video').forEach(video=>{video.pause();video.removeAttribute('src');video.load();});
+      box.replaceChildren();box._renderState=null;box._mediaKey=null;
+    }
     document.body.classList.remove('voice-call-full-v32');closeCallSheetsV32();
     window.dispatchEvent(new CustomEvent('telechat-call-ui-v152'));
   }

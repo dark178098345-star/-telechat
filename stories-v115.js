@@ -80,7 +80,12 @@
 
   function renderAvatar(target, user) {
     if (!target) return;
-    try { target.innerHTML = typeof avatarMarkup === 'function' ? avatarMarkup(user) : '👤'; }
+    try {
+      const markup = typeof avatarMarkup === 'function' ? avatarMarkup(user) : '👤';
+      if (target._storyMarkup === markup && target.firstChild) return;
+      target.innerHTML = markup; target._storyMarkup = markup;
+      target.querySelectorAll('img').forEach(img => { img.decoding = 'async'; img.loading = 'lazy'; });
+    }
     catch (_) { target.textContent = '👤'; }
   }
 
@@ -107,31 +112,57 @@
   function renderStories() {
     ensureUi();
     const list = byId('stories-list-v115'); if (!list) return;
-    list.replaceChildren();
+    const existing = new Map([...list.children].map(button => [button.dataset.author, button]));
     const groups = new Map();
     state.stories.forEach(story => { if (Number(story.expires_at) <= now()) return; const nick = safeNick(story.author_nick); if (!groups.has(nick)) groups.set(nick, []); groups.get(nick).push(story); });
-    const ownItems = groups.get(safeNick(currentUser()?.nick)) || [], own = ownItems[0];
-    const ownButton = document.createElement('button'); ownButton.type = 'button'; ownButton.className = 'story-chip-v115'; ownButton.setAttribute('aria-label', own ? 'Открыть мою историю' : 'Добавить историю');
-    ownButton.innerHTML = '<span class="story-chip-ring-v115"><span class="story-chip-avatar-v115">＋</span></span><span class="story-chip-name-v115">Моя история</span>';
-    if (own) { renderAvatar(ownButton.querySelector('.story-chip-avatar-v115'), storyUser(own.author_nick)); ownButton.onclick = () => showStoryByAuthor(own.author_nick); }
-    else ownButton.onclick = openComposer;
-    renderStoryRing(ownButton, ownItems, true);
-    list.appendChild(ownButton);
-    [...groups.values()].filter(items => safeNick(items[0].author_nick) !== safeNick(currentUser()?.nick)).forEach(items => {
-      const story = items[0];
-      const user = storyUser(story.author_nick), nick = safeNick(story.author_nick), button = document.createElement('button');
-      button.type = 'button'; button.className = 'story-chip-v115' + (state.viewed.has(String(story.id)) ? ' seen-v115' : ''); button.setAttribute('aria-label', 'Открыть историю @' + nick);
-      button.innerHTML = '<span class="story-chip-ring-v115"><span class="story-chip-avatar-v115"></span></span><span class="story-chip-name-v115"></span>';
-      renderAvatar(button.querySelector('.story-chip-avatar-v115'), user); renderStoryRing(button, items); button.querySelector('.story-chip-name-v115').textContent = user.name || nick; button.onclick = () => showStoryByAuthor(nick); list.appendChild(button);
+    const self = safeNick(currentUser()?.nick);
+    const ordered = [[self, groups.get(self) || []], ...[...groups].filter(([nick]) => nick !== self)];
+    ordered.forEach(([nick, items], index) => {
+      const own = index === 0, user = storyUser(nick);
+      let button = existing.get(nick);
+      if (!button) {
+        button = document.createElement('button'); button.type = 'button'; button.className = 'story-chip-v115'; button.dataset.author = nick;
+        button.innerHTML = '<span class="story-chip-ring-v115"><span class="story-chip-avatar-v115"></span></span><span class="story-chip-name-v115"></span>';
+      }
+      existing.delete(nick);
+      const avatar = button.querySelector('.story-chip-avatar-v115');
+      if (own && !items.length) { if (avatar.textContent !== '＋') avatar.textContent = '＋'; avatar._storyMarkup = null; }
+      else renderAvatar(avatar, user);
+      const signature = JSON.stringify([own, items.map(item => [item.id, state.viewed.has(String(item.id))])]);
+      if (button._storyRing !== signature) {
+        button.setAttribute('aria-label', own ? (items.length ? 'Открыть мою историю' : 'Добавить историю') : 'Открыть историю @' + nick);
+        button.removeAttribute('title');button.classList.remove('seen-v115');
+        const ring = button.querySelector('.story-chip-ring-v115');ring.classList.remove('empty-v146');ring.querySelector('svg')?.remove();
+        renderStoryRing(button, items, own);button._storyRing = signature;
+      }
+      const name = own ? 'Моя история' : user.name || nick;
+      const label = button.querySelector('.story-chip-name-v115');if (label.textContent !== name) label.textContent = name;
+      button.onclick = own && !items.length ? openComposer : () => showStoryByAuthor(nick);
+      if (list.children[index] !== button) list.insertBefore(button, list.children[index] || null);
     });
+    existing.forEach(button => button.remove());
     const status = byId('story-status-v115');
     if (status) { status.hidden = true; status.textContent = ''; }
   }
 
-  async function loadStories(silent = false) {
+  let loadJob = null, loadOwner = '', refreshAgain = false, loadGeneration = 0;
+  function loadStories(silent = false) {
+    const owner = safeNick(currentUser()?.nick);if (!owner) return Promise.resolve();
+    if (loadJob && loadOwner === owner) { refreshAgain = true; return loadJob; }
+    loadOwner = owner;
+    const generation = ++loadGeneration;
+    const job = (async () => {
+      do { refreshAgain = false; await fetchStories(silent, generation); }
+      while (refreshAgain && safeNick(currentUser()?.nick) === owner && loadJob === job);
+    })().catch(error => { if (!silent) console.warn('Stories unavailable', error); }).finally(() => { if (loadJob === job) loadJob = null; });
+    loadJob = job;return job;
+  }
+  async function fetchStories(silent = false, generation = loadGeneration) {
     const user = currentUser(); if (!user) return;
+    const valid = () => generation === loadGeneration && safeNick(currentUser()?.nick) === safeNick(user.nick);
     ensureUi();
     const result = await sb.from('stories').select('*').gt('expires_at', now()).order('created_at', { ascending: false }).limit(300);
+    if (!valid()) return;
     if (result.error) {
       state.available = false;
       renderStories();
@@ -141,16 +172,21 @@
     state.available = true; state.stories = (result.data || []).filter(story => isStoryMediaUrl(story.media_url));
     const nicks = [...new Set(state.stories.map(story => safeNick(story.author_nick)).filter(Boolean))];
     if (nicks.length) {
-      const users = await sb.from('users').select('*').in('nick', nicks);
-      (users.data || []).forEach(item => { state.users.set(safeNick(item.nick), item); try { userCache[item.nick] = item; } catch (_) {} });
+      const users = window.telechatUserCacheV123
+        ? { data: await window.telechatUserCacheV123.many(nicks, true) }
+        : await sb.from('users').select('nick,name,av,status,avatar_video,animated_profile').in('nick', nicks);
+      if (!valid()) return;
+      state.users = new Map((users.data || []).map(item => [safeNick(item.nick), item]));
     }
     const ids = state.stories.map(story => story.id).filter(Boolean);
     state.viewed = new Set();
     if (ids.length) {
       const views = await sb.from('story_views').select('story_id').eq('viewer_nick', user.nick).in('story_id', ids);
+      if (!valid()) return;
       (views.data || []).forEach(item => state.viewed.add(String(item.story_id)));
     }
-    await loadStoryLikes(ids, user);
+    await loadStoryLikes(ids, user, valid);
+    if (!valid()) return;
     renderStories();
     const openedStory = state.viewerItems[state.viewerIndex];
     if (openedStory) {
@@ -159,13 +195,13 @@
     }
   }
 
-  async function loadStoryLikes(ids, user = currentUser()) {
+  async function loadStoryLikes(ids, user = currentUser(), valid = () => true) {
     state.likes = new Map(); state.liked = new Set();
     ids.forEach(id => state.likes.set(String(id), 0));
     if (!ids.length || !user) return;
     const request = ++state.likesRequest;
     const result = await sb.from('story_likes').select('story_id,liker_nick').in('story_id', ids);
-    if (request !== state.likesRequest || result.error) return;
+    if (!valid() || request !== state.likesRequest || safeNick(currentUser()?.nick) !== safeNick(user.nick) || result.error) return;
     (result.data || []).forEach(row => {
       const key = String(row.story_id);
       state.likes.set(key, (state.likes.get(key) || 0) + 1);
@@ -252,7 +288,17 @@
     }
     showToast?.(wasLiked ? 'Лайк убран' : 'Истории поставлен лайк ❤️');
   }
-  function closeViewer() { byId('story-viewer-v115')?.classList.remove('open-v115'); byId('story-stage-v115')?.querySelectorAll('video').forEach(video => { video.pause(); video.removeAttribute('src'); }); }
+  function closeViewer() {
+    byId('story-viewer-v115')?.classList.remove('open-v115');
+    state.viewsRequest++;
+    byId('story-stage-v115')?.querySelectorAll('video').forEach(video => { video.pause(); video.removeAttribute('src'); video.load(); });
+    byId('story-stage-v115')?.querySelectorAll('img,video,.story-backdrop-v116').forEach(node => node.remove());
+    const avatar = byId('story-head-avatar-v115');
+    avatar?.querySelectorAll('video').forEach(video => { video.pause(); video.removeAttribute('src'); video.load(); });
+    avatar?.replaceChildren();if (avatar) avatar._storyMarkup = null;
+    byId('story-viewers-v115')?.replaceChildren();state.viewerViews.clear();
+    state.viewerItems = [];
+  }
   function storagePathFromStoryUrl(value) {
     try { const url = new URL(String(value || '')); const marker = '/storage/v1/object/public/' + BUCKET + '/'; const index = url.pathname.indexOf(marker); return index >= 0 ? decodeURIComponent(url.pathname.slice(index + marker.length)) : ''; } catch (_) { return ''; }
   }

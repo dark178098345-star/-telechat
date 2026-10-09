@@ -6,7 +6,7 @@ const root=path.resolve(__dirname,'..');
 (async()=>{
   const browser=await chromium.launch({channel:'msedge',headless:true});
   try{
-    for(const width of [1280,390]){
+    for(const width of [1280,390,320]){
       const page=await browser.newPage({viewport:{width,height:800}});
       await page.route('**/*',route=>route.abort());
       let html=fs.readFileSync(path.join(root,'index.html'),'utf8').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'');
@@ -34,6 +34,7 @@ const root=path.resolve(__dirname,'..');
       assert.equal(await page.locator('.pq-cover').getAttribute('data-banner'),'preset:aurora');
       assert.equal(await page.locator('.pq-status').textContent(),'Делаем tele.chat ✨');
       assert.equal(await trigger.getAttribute('aria-expanded'),'true');
+      await page.evaluate(()=>{window.savedAvatar=document.querySelector('.pq-avatar').firstChild;window.savedCover=document.querySelector('.pq-cover').firstChild;});
       const rect=await card.boundingBox();
       assert(rect.x>=0&&rect.y>=0&&rect.x+rect.width<=width&&rect.y+rect.height<=800,JSON.stringify(rect));
       assert(await card.evaluate(el=>el.scrollWidth<=el.clientWidth));
@@ -42,7 +43,9 @@ const root=path.resolve(__dirname,'..');
       await page.keyboard.press('Escape');
       assert(!(await card.isVisible()));
       assert(await trigger.evaluate(el=>document.activeElement===el));
-      await trigger.click();await trigger.click();assert(!(await card.isVisible()));
+      await trigger.click();
+      assert(await page.evaluate(()=>savedAvatar===document.querySelector('.pq-avatar').firstChild&&savedCover===document.querySelector('.pq-cover').firstChild),'Unchanged media survives reopening');
+      await trigger.click();assert(!(await card.isVisible()));
       await trigger.click();await page.locator('[data-pq="edit"]').click();
       assert.equal(await page.evaluate(()=>window.lastNavigation),'profile');assert(!(await card.isVisible()));
       await trigger.click();await page.locator('[data-pq="view"]').click();assert(await page.evaluate(()=>window.previewOpened));
