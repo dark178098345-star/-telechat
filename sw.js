@@ -1,5 +1,7 @@
-const CACHE_NAME='telechat-shell-v153-stable-cards';
+const CACHE_NAME='telechat-shell-v154-quick-jump';
 const APP_SHELL=[
+  './quick-jump-v154.css?v=154',
+  './quick-jump-v154.js?v=154',
   './social-v152.css?v=152',
   './call-design-v152.css?v=152',
   './shared-media-v152.js?v=152',
