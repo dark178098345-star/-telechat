@@ -26,3 +26,22 @@ body.theme-light #pixel-eyes-dialog-v155{--pe-bg:#fff;--pe-block:#f5f2fa;--pe-te
 @keyframes pe-open-v155{from{opacity:0;transform:translateY(6px) scale(.985)}to{opacity:1;transform:none}}
 @media(max-width:480px){#pixel-eyes-dialog-v155{padding:17px;border-radius:20px}#pixel-eyes-dialog-v155 h2{font-size:22px}#pixel-eyes-dialog-v155 .pe-catalog-v155{gap:7px}#pixel-eyes-dialog-v155 .pe-catalog-v155 canvas{width:96px;height:48px}#pixel-eyes-dialog-v155 .pe-catalog-v155 button{min-height:82px}#pixel-eyes-dialog-v155 .pe-motion-v155{align-items:flex-start;flex-direction:column}#pixel-eyes-stage-v155{flex-basis:64px;height:64px;min-height:64px}#pixel-eyes-stage-v155 canvas{width:128px;height:64px}#pixel-eyes-stage-v155 .pe-settings-v155{top:10px}}
 @media(prefers-reduced-motion:reduce){#pixel-eyes-dialog-v155[open]{animation:none}}
+/* Smooth emotional silhouettes behind the original pixel eyes. */
+.pe-aura-v158{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:0;width:144px;height:112px;overflow:visible}
+.pe-aura-v158[hidden]{display:none!important}.pe-aura-v158 path{transition:fill .2s ease}
+#pixel-eyes-stage-v155 .pe-character-v155{position:relative;isolation:isolate}
+#pixel-eyes-stage-v155 canvas{position:relative;z-index:1}
+#pixel-eyes-stage-v155.pe-has-aura-v158{height:116px;min-height:116px;flex-basis:116px}
+#pixel-eyes-stage-v155.pe-has-aura-v158 .pe-character-v155{height:112px;width:176px}
+#pixel-eyes-stage-v155.pe-has-aura-v158 .pe-settings-v155{top:36px}
+#pixel-eyes-dialog-v155 .pe-scene-v158{position:relative;display:grid;place-items:center;width:220px;max-width:100%;height:96px;isolation:isolate}
+#pixel-eyes-dialog-v155 .pe-scene-v158 canvas{position:relative;z-index:1}
+#pixel-eyes-dialog-v155.pe-has-aura-v158 .pe-scene-v158{height:180px}
+#pixel-eyes-dialog-v155 .pe-scene-v158 .pe-aura-v158{width:188px;height:176px}
+#pixel-eyes-dialog-v155 .pe-mini-scene-v158{position:relative;display:grid;place-items:center;width:112px;max-width:100%;height:56px;isolation:isolate}
+#pixel-eyes-dialog-v155 .pe-mini-scene-v158 canvas{position:relative;z-index:1}
+#pixel-eyes-dialog-v155 .pe-mini-scene-v158 .pe-aura-v158{width:100px;height:76px}
+#pixel-eyes-dialog-v155.pe-has-aura-v158 .pe-mini-scene-v158{height:76px}
+#pixel-eyes-dialog-v155.pe-has-aura-v158 .pe-catalog-v155 button{min-height:110px}
+@media(max-width:480px){#pixel-eyes-stage-v155.pe-has-aura-v158{height:108px;min-height:108px;flex-basis:108px}#pixel-eyes-stage-v155.pe-has-aura-v158 .pe-character-v155{height:104px}#pixel-eyes-stage-v155 .pe-aura-v158{width:138px;height:104px}#pixel-eyes-stage-v155.pe-has-aura-v158 .pe-settings-v155{top:32px}#pixel-eyes-dialog-v155 .pe-mini-scene-v158{width:96px}#pixel-eyes-dialog-v155 .pe-mini-scene-v158 .pe-aura-v158{width:94px;height:74px}}
+@media(prefers-reduced-motion:reduce){.pe-aura-v158 path{transition:none}}

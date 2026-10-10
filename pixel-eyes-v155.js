@@ -6,12 +6,34 @@
  const styles=[['classic','Классика','#8793b2'],['anime','Аниме','#a68aff'],['kawaii','Кавай','#ed8fc5'],['cat','Котик','#b9d958'],['robot','Робот','#60dbed'],['demon','Демон','#f18b54'],['cyclops','Циклоп','#a8db83']];
  const eyeIcon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3-6 10-6 10 6 10 6-3 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>';
  const active=$('active-chat'),messages=$('messages'),input=$('msg-input');if(!active||!messages||!input)return;
- let owner='',prefs={enabled:true,style:'classic',shake:false},stage,canvas,dialog,preview,focusBefore;
+ let owner='',prefs={enabled:true,style:'classic',shake:false,aura:true},stage,canvas,dialog,preview,focusBefore,stageAura,previewAura;
  let frame=0,lastFrame=0,running=false,nativeHidden=false,mood='idle',until=0,moodStart=0,typingUntil=0,remoteTyping=false;
  let typingX=0,readingUntil=0,readingY=0,scrollIntentUntil=0,lastScroll=0;
  let previewMood='',previewUntil=0,previewStart=0;
  let welcomePending=false;
  const artCanvases=new WeakMap();
+ function flower(lobes,depth,phase=0,asymmetry=0){
+  const points=Array.from({length:120},(_,i)=>{const a=i*Math.PI*2/120,r=40+depth*Math.cos(lobes*a+phase)+asymmetry*Math.sin(3*a+phase);return [50+Math.cos(a)*r,50+Math.sin(a)*r];});
+  const mid=(a,b)=>[(a[0]+b[0])/2,(a[1]+b[1])/2].map(n=>n.toFixed(2)).join(' ');
+  let path='M '+mid(points.at(-1),points[0]);points.forEach((point,i)=>{path+=' Q '+point.map(n=>n.toFixed(2)).join(' ')+' '+mid(point,points[(i+1)%points.length]);});return path+' Z';
+ }
+ const auraShapes=new Map(Object.entries({
+  idle:['#AA98FA',flower(11,3.8,.2,1)],happy:['#FFC64D',flower(5,7,.5)],laugh:['#FFD66E',flower(7,5,.15,1)],angry:['#EF818A',flower(9,8,.25)],
+  love:['#EDA3C4','M50 26 C29 2 2 20 9 44 C15 66 36 79 50 92 C64 79 85 66 91 44 C98 20 71 2 50 26 Z'],
+  sad:['#85B4F1','M50 5 C43 20 9 42 9 63 C9 83 27 94 50 94 C73 94 91 83 91 63 C91 42 57 20 50 5 Z'],
+  dizzy:['#78D7CC',flower(4,6,.6,3)],surprised:['#F3C57E',flower(6,8,.2)],
+  sleep:['#98A5DE','M18 76 C4 70 6 49 20 45 C16 24 42 14 51 32 C65 13 87 29 81 45 C99 51 97 76 79 80 C58 87 37 87 18 76 Z'],
+  think:['#BBAAE8',flower(8,3,.9,2)],wink:['#C6A1E7',flower(10,2.8,.4)],excited:['#F3AD92',flower(12,5.5,.1)],
+  curious:['#9CA9EF',flower(7,3.8,.7)],typing:['#B3A4E2',flower(6,3,.5,1)],focus:['#BAADD9',flower(10,2,.2)],
+  read:['#94C7D3',flower(5,2.7,.4,1)],record:['#E5A3B5',flower(4,3.7,.3)],attach:['#A1CFB7',flower(4,5,.7)],welcome:['#AD9DF7',flower(9,4.8,.3)]
+ }));
+ const auraMarkup=()=>'<svg class="pe-aura-v158" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path></path></svg>';
+ function paintAura(svg,expression,animate=true){
+  if(!svg)return;svg.toggleAttribute('hidden',!prefs.aura);if(!prefs.aura){svg._peMotion?.cancel();return;}
+  const state=auraShapes.has(expression)?expression:'idle';if(svg.dataset.emotion===state)return;
+  const [color,path]=auraShapes.get(state);svg.dataset.emotion=state;const shape=svg.querySelector('path');shape.setAttribute('d',path);shape.setAttribute('fill',color);
+  if(animate&&svg.isConnected&&!matchMedia('(prefers-reduced-motion:reduce)').matches){svg._peMotion?.cancel();svg._peMotion=svg.animate?.([{transform:'translate(-50%,-50%) scale(.94)'},{transform:'translate(-50%,-50%) scale(1)'}],{duration:220,easing:'ease-out'});}
+ }
  let key='',primed=false,primeTimer=0,scanQueued=false,seen=new Set(),look={x:0,y:0},motionOn=false,motionAllowed=false,lastMotion=null,lastShake=0;
  const emotions=new Map();
  for(const [expression,tokens] of Object.entries({angry:['😡','😠','😤','🤬','👿','😾','💢'],laugh:['😀','😃','😄','😁','😆','😅','😂','🤣','😊','☺','🙂','🙃','😋','😛','😜','😝','🤪','😸','😹'],sad:['😢','😭','😥','😞','😔','😟','😩','☹','🙁','😿'],love:['❤','♥','💕','💖','💗','💘','💝','💜','💙','💚','💛','🧡','🤍','🖤','🤎','🩷','🩵','🩶','😍','🥰','😘','<3'],surprised:['😮','😯','😲','😳','😱','😨','😰','🤯'],sleep:['😴','🥱','😪','💤'],think:['🤔','🧐','🤨'],wink:['😉'],dizzy:['😵','🥴'],excited:['🥳','🎉','🔥','👍','👏','🤩']}))for(const token of tokens)emotions.set(token,expression);
@@ -29,7 +51,7 @@
  }
  const emotionDuration=expression=>({angry:2300,laugh:2500,sad:2400,love:2400,sleep:2200,dizzy:2400,surprised:1800,think:1800,excited:1800})[expression]||1600;
  const storageKey=nick=>'telechat.pixel-eyes.v155.'+nick;
- function read(){try{const p=JSON.parse(localStorage.getItem(storageKey(owner))||'null');prefs={enabled:p?.enabled!==false,style:styles.some(([id])=>id===p?.style)?p.style:'classic',shake:p?.shake===true};}catch(_){prefs={enabled:true,style:'classic',shake:false};}}
+ function read(){try{const p=JSON.parse(localStorage.getItem(storageKey(owner))||'null');prefs={enabled:p?.enabled!==false,style:styles.some(([id])=>id===p?.style)?p.style:'classic',shake:p?.shake===true,aura:p?.aura!==false};}catch(_){prefs={enabled:true,style:'classic',shake:false,aura:true};}}
  function save(){try{localStorage.setItem(storageKey(owner),JSON.stringify(prefs));}catch(_){}sync();scheduleScan();paintSettings();}
  function pixel(ctx,color,x,y,w=1,h=1){ctx.fillStyle=color;ctx.fillRect(Math.round(x),Math.round(y),w,h);}
  function heartPixels(ctx,x,y,color,scale=1){['0110110','1111111','1111111','0111110','0011100','0001000'].forEach((row,yy)=>[...row].forEach((v,xx)=>{if(v==='1')pixel(ctx,color,x+xx*scale,y+yy*scale,scale,scale);}));}
@@ -102,8 +124,8 @@
  function tick(now){
   if(!running)return;frame=requestAnimationFrame(tick);if(now-lastFrame<50)return;lastFrame=now;
   const state=currentMood(now),pointer={x:look.x||Math.round(Math.sin(now/1900)*2),y:look.y};
-  if(!stage.hidden)draw(canvas,prefs.style,state,now-moodStart,pointer);
-  if(dialog?.open)draw(preview,prefs.style,now<previewUntil?previewMood:state,now<previewUntil?now-previewStart:now-moodStart,pointer);
+  if(!stage.hidden){paintAura(stageAura,state);draw(canvas,prefs.style,state,now-moodStart,pointer);}
+  if(dialog?.open){const previewState=now<previewUntil?previewMood:state;paintAura(previewAura,previewState);draw(preview,prefs.style,previewState,now<previewUntil?now-previewStart:now-moodStart,pointer);}
  }
  function react(expression,duration=1700,force=false){
   if(!owner||owner!==self()||!prefs.enabled||stage.hidden)return;
@@ -114,6 +136,8 @@
  function resetConversation(){clearTimeout(primeTimer);primeTimer=0;key=conversation();welcomePending=!!key;primed=false;seen.clear();mood='idle';until=typingUntil=readingUntil=0;remoteTyping=$('chat-status-text')?.classList.contains('typing')||false;stage.dataset.mood='idle';scheduleScan();}
  function sync(){
   const account=self();if(account!==owner){owner=account;read();resetConversation();if(dialog?.open)dialog.close();paintSettings();}
+  stage.classList.toggle('pe-has-aura-v158',prefs.aura);dialog?.classList.toggle('pe-has-aura-v158',prefs.aura);
+  if(!prefs.aura){stageAura?.setAttribute('hidden','');previewAura?.setAttribute('hidden','');}
   if(key!==conversation())resetConversation();
   const visible=!!owner&&prefs.enabled&&!document.hidden&&!nativeHidden&&$('chat-screen')?.classList.contains('active')&&active.getClientRects().length>0&&!!conversation();
   const wasHidden=stage.hidden;stage.hidden=!visible;if(visible&&(wasHidden||welcomePending)){welcomePending=false;scheduleScan();react('welcome',800);}
@@ -153,6 +177,8 @@
  }
  function paintSettings(){
   if(!dialog)return;$('pe-enabled-v155').checked=prefs.enabled;
+  $('pe-aura-v158').checked=prefs.aura;dialog.classList.toggle('pe-has-aura-v158',prefs.aura);
+  dialog.querySelectorAll('[data-pe-style] .pe-aura-v158').forEach(svg=>paintAura(svg,'idle',false));paintAura(previewAura,'idle',false);
   dialog.querySelectorAll('[data-pe-style]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.peStyle===prefs.style)));
   $('pe-shake-v155').textContent=prefs.shake?'Встряска включена':'Включить встряску';$('pe-shake-v155').setAttribute('aria-pressed',String(prefs.shake));
   draw(preview,prefs.style,'idle',0);
@@ -161,8 +187,11 @@
   if(dialog)return;dialog=document.createElement('dialog');dialog.id='pixel-eyes-dialog-v155';dialog.setAttribute('aria-labelledby','pe-title-v155');
   dialog.innerHTML='<header><div><small>МАЛЕНЬКИЙ ХАРАКТЕР ТВОЕГО ЧАТА</small><h2 id="pe-title-v155">Живые глазки</h2></div><button type="button" class="pe-close-v155" aria-label="Закрыть">×</button></header><div class="pe-preview-v155"><canvas width="64" height="32" aria-hidden="true"></canvas><span>Смотрят, радуются и переживают вместе с тобой</span></div><label class="pe-toggle-v155"><span>Показывать в чатах<small>Нажми на глазки в чате, чтобы изменить их</small></span><input id="pe-enabled-v155" type="checkbox"></label><div class="pe-catalog-v155" role="group" aria-label="Внешность глазок"></div><div class="pe-motion-v155"><div><strong>Встряска телефона</strong><p id="pe-shake-note-v155">Встряхни телефон — глазки закружатся.</p></div><button type="button" id="pe-shake-v155"></button></div><footer>Выбор сохраняется для твоего аккаунта на этом устройстве.</footer>';
   document.body.append(dialog);preview=dialog.querySelector('.pe-preview-v155 canvas');
+  const scene=document.createElement('div');scene.className='pe-scene-v158';preview.before(scene);scene.innerHTML=auraMarkup();scene.append(preview);previewAura=scene.querySelector('svg');
+  const auraControl=document.createElement('label');auraControl.className='pe-toggle-v155';auraControl.innerHTML='<span>Цветная обводка<small>Своя форма и цвет для каждой эмоции</small></span><input id="pe-aura-v158" type="checkbox">';dialog.querySelector('.pe-toggle-v155').after(auraControl);
+  $('pe-aura-v158').onchange=event=>{prefs.aura=event.target.checked;save();};
   const catalog=dialog.querySelector('.pe-catalog-v155');styles.forEach(([id,label])=>{
-   const button=document.createElement('button');button.type='button';button.dataset.peStyle=id;button.innerHTML='<canvas width="64" height="32" aria-hidden="true"></canvas><span></span>';button.querySelector('span').textContent=label;draw(button.querySelector('canvas'),id,'idle',0);button.onclick=()=>{prefs.style=id;mood='idle';until=previewUntil=0;save();};catalog.append(button);
+   const button=document.createElement('button');button.type='button';button.dataset.peStyle=id;button.innerHTML='<div class="pe-mini-scene-v158">'+auraMarkup()+'<canvas width="64" height="32" aria-hidden="true"></canvas></div><span></span>';button.querySelector('span').textContent=label;draw(button.querySelector('canvas'),id,'idle',0);paintAura(button.querySelector('svg'),'idle',false);button.onclick=()=>{prefs.style=id;mood='idle';until=previewUntil=0;save();};catalog.append(button);
   });
   const demos=document.createElement('div');demos.className='pe-demos-v156';demos.setAttribute('role','group');demos.setAttribute('aria-label','Попробовать анимации');
   for(const [expression,label] of [['happy','Отправка'],['love','Сердечко'],['sad','Удаление'],['typing','Набор'],['record','Запись'],['dizzy','Встряска'],['angry','Злость'],['laugh','Смех'],['surprised','Удивление'],['sleep','Сон']]){const button=document.createElement('button');button.type='button';button.dataset.peDemo=expression;button.textContent=label;button.onclick=()=>{previewMood=expression;previewStart=performance.now();previewUntil=previewStart+2600;};demos.append(button);}
@@ -173,8 +202,8 @@
  }
  function open(){if(!self())return;sync();ensureDialog();focusBefore=document.activeElement;paintSettings();if(!dialog.open)dialog.showModal();sync();}
  stage=document.createElement('section');stage.id='pixel-eyes-stage-v155';stage.hidden=true;
- stage.innerHTML='<button type="button" class="pe-character-v155" aria-label="Настроить живые глазки" title="Настроить живые глазки"><canvas width="64" height="32" aria-hidden="true"></canvas></button><button type="button" class="pe-settings-v155" aria-label="Внешность глазок" title="Внешность глазок">'+eyeIcon+'</button>';
- active.insertBefore(stage,messages);canvas=stage.querySelector('canvas');stage.querySelectorAll('button').forEach(button=>button.onclick=open);
+ stage.innerHTML='<button type="button" class="pe-character-v155" aria-label="Настроить живые глазки" title="Настроить живые глазки">'+auraMarkup()+'<canvas width="64" height="32" aria-hidden="true"></canvas></button><button type="button" class="pe-settings-v155" aria-label="Внешность глазок" title="Внешность глазок">'+eyeIcon+'</button>';
+ active.insertBefore(stage,messages);canvas=stage.querySelector('canvas');stageAura=stage.querySelector('.pe-aura-v158');stage.querySelectorAll('button').forEach(button=>button.onclick=open);
  const settings=$('settings-panel');if(settings){const section=document.createElement('section');section.className='panel-section';section.id='pixel-eyes-settings-v155';section.innerHTML='<div class="panel-section-title">Живые глазки</div><button type="button" class="pe-settings-entry-v155">'+eyeIcon+'<span><strong>Пиксельный характер</strong><small>Внешность, анимации и встряска</small></span><span aria-hidden="true">›</span></button>';settings.append(section);section.querySelector('button').onclick=open;}
  input.addEventListener('input',()=>{sync();if(mood==='welcome')until=0;typingX=Math.max(-2,Math.min(2,Math.floor((input.selectionStart||input.value.length)%24/5)-2));typingUntil=input.value?performance.now()+1800:0;});
  input.addEventListener('focus',()=>{sync();});
@@ -193,5 +222,5 @@
  if($('chat-status-text'))new MutationObserver(()=>{remoteTyping=$('chat-status-text').classList.contains('typing');}).observe($('chat-status-text'),{attributes:true,attributeFilter:['class']});
  document.addEventListener('visibilitychange',sync);window.addEventListener('pagehide',()=>{nativeHidden=true;sync();});window.addEventListener('pageshow',()=>{nativeHidden=false;sync();});window.addEventListener('telechat-native-visibility',event=>{nativeHidden=event.detail?.background===true;sync();});
  document.addEventListener('keydown',event=>{if(dialog?.open&&event.key==='Escape'){event.preventDefault();event.stopImmediatePropagation();dialog.close();}},true);
- window.telechatPixelEyesV155=Object.freeze({open,react,getState:()=>({owner,enabled:prefs.enabled,style:prefs.style,shake:prefs.shake,mood:currentMood(performance.now()),running})});sync();scheduleScan();
+ window.telechatPixelEyesV155=Object.freeze({open,react,getState:()=>({owner,enabled:prefs.enabled,style:prefs.style,shake:prefs.shake,aura:prefs.aura,mood:currentMood(performance.now()),running})});sync();scheduleScan();
 })();
