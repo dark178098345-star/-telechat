@@ -1,7 +1,7 @@
-const CACHE_NAME='telechat-shell-v156-pixel-eyes-motion';
+const CACHE_NAME='telechat-shell-v157-emoji-moods';
 const APP_SHELL=[
   './pixel-eyes-v155.css?v=156',
-  './pixel-eyes-v155.js?v=156',
+  './pixel-eyes-v155.js?v=157',
   './quick-jump-v154.css?v=154',
   './quick-jump-v154.js?v=154',
   './social-v152.css?v=152',
