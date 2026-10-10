@@ -373,10 +373,12 @@
   async function deleteContextMessageV36(message) {
     closeContextMenuV36();
     if (!message?.id || message.deleted || (message.from_nick !== me?.nick && me?.nick !== SUPER_ADMIN_V36)) return;
+    const actionOwner=me.nick,actionKey=message.chat_key||conversationKey();
     const prompt = me?.nick === SUPER_ADMIN_V36 && message.from_nick !== me.nick ? 'Удалить это сообщение как creator?' : 'Удалить сообщение у всех?';
     if (!confirm(prompt)) return;
     const result = await sb.from('messages').update({ deleted: true, text: 'Сообщение удалено', edited_at: Date.now(), pinned: false }).eq('id', message.id).select('id').maybeSingle();
     if (result.error || !result.data) { showToast('Не удалось удалить сообщение'); return; }
+    window.dispatchEvent(new CustomEvent('telechat-chat-action-v155',{detail:{action:'delete',owner:actionOwner,key:actionKey}}));
     showToast('Сообщение удалено');
     if (String(pinnedMsgId) === String(message.id)) showPinnedBarV36(null);
     await renderMessages();
@@ -538,8 +540,10 @@
     const allowed = messages.filter(message => message.id && !message.deleted && (message.from_nick === me?.nick || me?.nick === SUPER_ADMIN_V36));
     if (!allowed.length) { showToast('Среди выбранных нет сообщений, которые можно удалить'); return; }
     if (!confirm(`Удалить сообщений: ${allowed.length}?`)) return;
+    const actionOwner=me.nick,actionKey=conversationKey();
     const result = await sb.from('messages').update({ deleted: true, text: 'Сообщение удалено', edited_at: Date.now(), pinned: false }).in('id', allowed.map(message => message.id));
     if (result.error) { showToast('Не удалось удалить выбранные сообщения'); return; }
+    window.dispatchEvent(new CustomEvent('telechat-chat-action-v155',{detail:{action:'delete',owner:actionOwner,key:actionKey}}));
     const skipped = messages.length - allowed.length;
     exitSelectionModeV36();
     showToast(skipped ? `Удалено: ${allowed.length}, пропущено: ${skipped}` : `Удалено сообщений: ${allowed.length}`);

@@ -1,5 +1,7 @@
-const CACHE_NAME='telechat-shell-v154-quick-jump';
+const CACHE_NAME='telechat-shell-v155-pixel-eyes';
 const APP_SHELL=[
+  './pixel-eyes-v155.css?v=155',
+  './pixel-eyes-v155.js?v=155',
   './quick-jump-v154.css?v=154',
   './quick-jump-v154.js?v=154',
   './social-v152.css?v=152',
@@ -56,7 +58,7 @@ const APP_SHELL=[
   './room-media-v113.js?v=113',
   './app-performance-v17.js?v=140',
   './chat-open-loader-v44.js?v=113',
-  './message-context-v36.js?v=141',
+  './message-context-v36.js?v=155',
   './navigation-readers-v109.js?v=109',
   './navigation-readers-v109.css?v=109',
   './performance-v107.js?v=108',
@@ -111,7 +113,7 @@ const APP_SHELL=[
   './profile-details-v22.js',
   './profile-card-v29.css',
   './chat-reliability-v24.css',
-  './chat-reliability-v24.js?v=148',
+  './chat-reliability-v24.js?v=155',
   './delivery-v72.css?v=72',
   './message-send-animation-v35.css?v=54',
   './message-send-animation-v35.js?v=54',

@@ -108,6 +108,7 @@
     const clientId=crypto.randomUUID?.()||('m-'+Date.now()+'-'+Math.random().toString(16).slice(2));
     const item={clientId,state:'sending',createdAt:Date.now(),row:{chat_key:key,from_nick:me.nick,text,ts:nextTimestamp(),reply_text:reply?reply.text:null,read_by:[],deleted:false}};
     input.value='';input.style.height='';cancelReply();cancelPendingMedia();
+    window.dispatchEvent(new CustomEvent('telechat-chat-action-v155',{detail:{action:'send',owner:me.nick,key,text}}));
     try{sb.from('typing').delete().eq('chat_key',key).eq('nick',me.nick).then(()=>{});}catch(error){}
     optimisticQueue=optimisticQueue.then(()=>renderOptimistic(item)).catch(()=>{});
     await optimisticQueue;renderContacts();deliver(item).catch(error=>{setDeliveryState(item,'failed');outboxWrite({...item,state:'failed'});showToast(friendlyError(error));});
