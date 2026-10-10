@@ -263,10 +263,12 @@
     const button = document.getElementById('message-edit-save-v36');
     button.disabled = true;
     button.textContent = 'Сохраняем…';
+    const actionOwner=me.nick,actionKey=editMessageV36.chat_key||conversationKey();
     const result = await sb.from('messages').update({ text, edited_at: Date.now() }).eq('id', editMessageV36.id).eq('from_nick', me.nick).select('id').maybeSingle();
     button.disabled = false;
     button.textContent = 'Сохранить';
     if (result.error || !result.data) { showToast('Не удалось изменить сообщение'); return; }
+    window.dispatchEvent(new CustomEvent('telechat-chat-action-v155',{detail:{action:'edit',owner:actionOwner,key:actionKey,text}}));
     closeEditMessageV36();
     showToast('Сообщение изменено ✎');
     await renderMessages();
@@ -694,6 +696,7 @@
         ? await sb.from('message_reactions').delete().eq('message_id', messageId).eq('user_nick', owner)
         : await sb.from('message_reactions').upsert({message_id:messageId, user_nick:owner, emoji, created_at:Date.now()}, {onConflict:'message_id,user_nick'});
       if (result.error) throw result.error;
+      window.dispatchEvent(new CustomEvent('telechat-chat-action-v155',{detail:{action:'reaction',owner,key,text:selected||''}}));
     } catch (error) {
       if (key === conversationKey() && owner === me?.nick) {
         const current = (reactionRowsV36.get(id) || []).filter(row => row.user_nick !== owner);

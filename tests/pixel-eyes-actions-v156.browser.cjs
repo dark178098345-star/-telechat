@@ -1,0 +1,18 @@
+const fs=require('fs'),path=require('path'),assert=require('assert/strict'),{chromium}=require('playwright');
+const root=path.resolve(__dirname,'..');
+(async()=>{const browser=await chromium.launch({channel:'msedge',headless:true});try{
+ const page=await browser.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));await page.route('**/*',r=>r.abort());await page.setContent(fs.readFileSync(path.join(root,'index.html'),'utf8').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,''));
+ await page.evaluate(()=>{
+  Object.assign(window,{me:{nick:'alice'},currentChat:'bob',currentRoom:null,ctxMsg:null,pinnedMsgId:null,pinnedMsgText:'',showCtxMenu:()=>{},ctxCopy:()=>{},ctxReply:()=>{},ctxPin:()=>{},ctxDelete:()=>{},loadPinned:()=>{},unpinMsg:()=>{},appendMessage:async()=>{},renderMessages:async()=>{},renderContacts:()=>{},showToast:()=>{},escHtml:s=>String(s),conversationKey:()=> 'alice_'+currentChat});
+  window.actions=[];window.fail=false;window.delay=false;window.addEventListener('telechat-chat-action-v155',event=>actions.push(event.detail));
+  window.sb={from(){let operation='select';const q={select(){return q},eq(){return q},in(){return q},maybeSingle(){return q},update(){operation='update';return q},upsert(){operation='upsert';return q},delete(){operation='delete';return q},then(resolve){const result=fail?{error:{message:'fixture error'}}:{data:operation==='select'?[]:{id:10},error:null};return new Promise(done=>{if(delay)window.release=()=>done(result);else done(result);}).then(resolve);}};return q;},channel(){const channel={on(){return channel},subscribe(){return channel}};return channel;},removeChannel:()=>{}};
+ });
+ const source=fs.readFileSync(path.join(root,'message-context-v36.js'),'utf8').replace('const appendMessageBeforeV36 = appendMessage;',`window.testReactionV156=toggleMessageReactionV36;window.testEditV156=async(message,text)=>{editMessageV36=message;document.getElementById('message-edit-input-v36').value=text;await saveEditMessageV36({preventDefault(){}});};const appendMessageBeforeV36 = appendMessage;`);
+ await page.addScriptTag({content:source});
+ await page.evaluate(()=>testReactionV156(10,'❤️'));assert.deepEqual(await page.evaluate(()=>actions.at(-1)),{action:'reaction',owner:'alice',key:'alice_bob',text:'❤️'});
+ await page.evaluate(()=>testReactionV156(10,'❤️'));assert.equal(await page.evaluate(()=>actions.at(-1).text),'');
+ await page.evaluate(async()=>{fail=true;await testReactionV156(11,'👍');await testEditV156({id:20,from_nick:'alice',chat_key:'alice_bob',text:'old'},'new');});assert.equal(await page.evaluate(()=>actions.length),2,'Failed writes do not animate success');
+ await page.evaluate(async()=>{fail=false;await testEditV156({id:20,from_nick:'alice',chat_key:'alice_bob',text:'old'},'new');});assert.deepEqual(await page.evaluate(()=>actions.at(-1)),{action:'edit',owner:'alice',key:'alice_bob',text:'new'});
+ await page.evaluate(()=>{delay=true;window.editTask=testEditV156({id:21,from_nick:'alice',chat_key:'alice_bob',text:'old'},'later');});await page.waitForFunction(()=>!!window.release);await page.evaluate(async()=>{me={nick:'eve'};currentChat='other';release();await editTask;});assert.deepEqual(await page.evaluate(()=>actions.at(-1)),{action:'edit',owner:'alice',key:'alice_bob',text:'later'},'Late result keeps original account and conversation');
+ assert.deepEqual(errors,[]);console.log('PASS v156 real edit/reaction handlers: success/add/remove, failed writes emit nothing, late results retain original account/chat');
+ }finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

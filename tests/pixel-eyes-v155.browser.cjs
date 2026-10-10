@@ -8,22 +8,33 @@ const root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f
   window.me={nick:'alice'};window.currentChat='bob';window.currentRoom=null;window.conversationKey=()=>currentChat?'alice_'+currentChat:'';window.autoResize=()=>{};window.sendTyping=()=>{};window.DeviceMotionEvent=undefined;
   window.addRow=(id,text,from='bob',ts=Date.now())=>{const row=document.createElement('div');row.className='msg '+(from==='alice'?'me':'them');row.dataset.id=id;row.textContent=text;row._messageSourceV136={id,text,from_nick:from,ts,chat_key:conversationKey()};document.getElementById('messages').append(row);return row;};addRow('old','История чата','bob',Date.now()-60000);
   document.getElementById('chat-name-hdr').textContent='Максим';document.getElementById('chat-status-text').textContent='В сети';
+  const edit=document.createElement('div');edit.id='message-edit-overlay-v36';document.body.append(edit);
  });
  await page.addScriptTag({content:read('pixel-eyes-v155.js')});await page.waitForTimeout(250);
- const state=()=>page.evaluate(()=>telechatPixelEyesV155.getState());assert.equal((await state()).mood,'idle');assert((await state()).running);
+ const state=()=>page.evaluate(()=>telechatPixelEyesV155.getState());assert.equal((await state()).mood,'welcome');await page.waitForTimeout(600);assert.equal((await state()).mood,'idle');assert((await state()).running);
  assert(await page.locator('#pixel-eyes-stage-v155').isVisible());
  const original=await page.evaluate(()=>({text:document.getElementById('messages').textContent,count:document.getElementById('messages').children.length}));
  await page.locator('#msg-input').fill('Пишем');assert.equal((await state()).mood,'typing');
  const action=(action,text='',owner='alice',key='alice_bob')=>page.evaluate(data=>window.dispatchEvent(new CustomEvent('telechat-chat-action-v155',{detail:data})),{action,text,owner,key});
  await action('send','hello','other');assert.equal((await state()).mood,'typing');await action('send','hello');assert.equal((await state()).mood,'happy');
  await action('send','❤️');assert.equal((await state()).mood,'love');await action('delete');assert.equal((await state()).mood,'sad');
- await page.evaluate(()=>{document.getElementById('msg-input').value='';telechatPixelEyesV155.react('idle',1);addRow('new','Привет');});await page.waitForTimeout(80);assert.equal((await state()).mood,'curious');
+ await page.evaluate(()=>{document.getElementById('msg-input').value='';document.getElementById('msg-input').blur();telechatPixelEyesV155.react('idle',1);addRow('new','Привет');});await page.waitForTimeout(80);assert.equal((await state()).mood,'curious');
  await page.evaluate(()=>{telechatPixelEyesV155.react('idle',1);const row=document.querySelector('.msg[data-id="new"]');document.getElementById('messages').append(row);});await page.waitForTimeout(50);assert.equal((await state()).mood,'idle','Rerender does not replay incoming reaction');
  await page.evaluate(()=>addRow('heart','💕'));await page.waitForTimeout(50);assert.equal((await state()).mood,'love');
  await page.evaluate(()=>{telechatPixelEyesV155.react('idle',1);addRow('history','Old heart ❤️','bob',Date.now()-60000);});await page.waitForTimeout(50);assert.equal((await state()).mood,'idle','Older history does not animate');
  await page.locator('.pe-character-v155').click();assert(await page.locator('#pixel-eyes-dialog-v155').isVisible());assert.equal(await page.locator('[data-pe-style]').count(),7);
  assert.equal(await page.locator('[data-pe-style] canvas').evaluateAll(nodes=>new Set(nodes.map(n=>n.toDataURL())).size),7,'Seven distinct original pixel designs');
  for(const style of ['classic','anime','kawaii','cat','robot','demon','cyclops']){await page.locator('[data-pe-style="'+style+'"]').click();assert.equal((await state()).style,style);assert.equal(await page.locator('[data-pe-style="'+style+'"]').getAttribute('aria-pressed'),'true');}
+ assert.equal(await page.locator('[data-pe-demo]').count(),6);
+ for(const demo of ['happy','love','sad','typing','record','dizzy']){await page.locator('[data-pe-demo="'+demo+'"]').click();const frames=[];for(const delay of [100,220,310]){await page.waitForTimeout(delay);frames.push(await page.locator('.pe-preview-v155 canvas').evaluate(c=>c.toDataURL()));}assert(new Set(frames).size>1,'Moving preview '+demo);}
+ await page.locator('.pe-close-v155').click();
+ const clear=async()=>{await page.evaluate(()=>{document.activeElement?.blur();telechatPixelEyesV155.react('idle',1);});await page.waitForTimeout(25);};
+ await clear();await page.locator('#msg-input').focus();assert.equal((await state()).mood,'focus');await clear();
+ for(const [id,flag,expected] of [['reply-bar','show','think'],['pending-media','show','attach'],['emoji-picker','open','excited'],['message-edit-overlay-v36','show','think']]){await clear();await page.evaluate(([id,flag])=>document.getElementById(id).classList.add(flag),[id,flag]);await page.waitForTimeout(30);assert.equal((await state()).mood,expected,id);await page.evaluate(([id,flag])=>document.getElementById(id).classList.remove(flag),[id,flag]);}
+ await clear();await action('edit','changed');assert.equal((await state()).mood,'wink');await clear();await action('reaction','❤️');assert.equal((await state()).mood,'love');await clear();await action('reaction','👍');assert.equal((await state()).mood,'excited');await clear();await action('reaction','');assert.equal((await state()).mood,'wink');
+ await clear();await page.evaluate(()=>{document.getElementById('record-btn').dataset.voiceState='recording';});assert.equal((await state()).mood,'record');await page.evaluate(()=>document.getElementById('record-btn').dataset.voiceState='idle');
+ await clear();await page.evaluate(()=>{const box=document.getElementById('messages');window.beforeScroll=box.scrollTop;box.dispatchEvent(new WheelEvent('wheel',{deltaY:80}));box.dispatchEvent(new Event('scroll'));});assert.equal((await state()).mood,'read');assert(await page.evaluate(()=>beforeScroll===document.getElementById('messages').scrollTop),'Eyes never change scroll position');
+ await clear();await page.locator('.pe-character-v155').click();
  for(const theme of ['','theme-light','theme-green'])for(const [width,height] of [[320,640],[390,800],[740,360],[1440,900]]){
   await page.setViewportSize({width,height});await page.evaluate(theme=>{document.body.classList.remove('theme-light','theme-green');if(theme)document.body.classList.add(theme);document.body.classList.toggle('telechat-mobile-v100',innerWidth<=720);},theme);
   assert(await page.locator('#pixel-eyes-dialog-v155').evaluate(e=>{const r=e.getBoundingClientRect();return r.left>=0&&r.top>=0&&r.right<=innerWidth+1&&r.bottom<=innerHeight+1&&e.scrollWidth<=e.clientWidth+1;}),'Settings bounds '+width+' '+theme);
