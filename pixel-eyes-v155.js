@@ -139,7 +139,8 @@
   stage.classList.toggle('pe-has-aura-v158',prefs.aura);dialog?.classList.toggle('pe-has-aura-v158',prefs.aura);
   if(!prefs.aura){stageAura?.setAttribute('hidden','');previewAura?.setAttribute('hidden','');}
   if(key!==conversation())resetConversation();
-  const visible=!!owner&&prefs.enabled&&!document.hidden&&!nativeHidden&&$('chat-screen')?.classList.contains('active')&&active.getClientRects().length>0&&!!conversation();
+  const phoneSuppressed=document.body.classList.contains('telechat-phone-v159')&&(document.body.classList.contains('telechat-mobile-cramped-v159')||document.body.classList.contains('music-hub-open-v117'));
+  const visible=!!owner&&prefs.enabled&&!phoneSuppressed&&!document.hidden&&!nativeHidden&&$('chat-screen')?.classList.contains('active')&&active.getClientRects().length>0&&!!conversation();
   const wasHidden=stage.hidden;stage.hidden=!visible;if(visible&&(wasHidden||welcomePending)){welcomePending=false;scheduleScan();react('welcome',800);}
   const shouldRun=!document.hidden&&!nativeHidden&&(visible||dialog?.open);
   if(shouldRun&&!running){running=true;frame=requestAnimationFrame(tick);}
@@ -222,5 +223,5 @@
  if($('chat-status-text'))new MutationObserver(()=>{remoteTyping=$('chat-status-text').classList.contains('typing');}).observe($('chat-status-text'),{attributes:true,attributeFilter:['class']});
  document.addEventListener('visibilitychange',sync);window.addEventListener('pagehide',()=>{nativeHidden=true;sync();});window.addEventListener('pageshow',()=>{nativeHidden=false;sync();});window.addEventListener('telechat-native-visibility',event=>{nativeHidden=event.detail?.background===true;sync();});
  document.addEventListener('keydown',event=>{if(dialog?.open&&event.key==='Escape'){event.preventDefault();event.stopImmediatePropagation();dialog.close();}},true);
- window.telechatPixelEyesV155=Object.freeze({open,react,getState:()=>({owner,enabled:prefs.enabled,style:prefs.style,shake:prefs.shake,aura:prefs.aura,mood:currentMood(performance.now()),running})});sync();scheduleScan();
+ window.telechatPixelEyesV155=Object.freeze({open,react,refresh:sync,getState:()=>({owner,enabled:prefs.enabled,style:prefs.style,shake:prefs.shake,aura:prefs.aura,mood:currentMood(performance.now()),running})});sync();scheduleScan();
 })();

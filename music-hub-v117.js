@@ -85,7 +85,7 @@
     const changed=state.owner!==user().nick;
     if(changed){state.owner=user().nick;state.catalog.clear();state.feed=[];state.saved.clear();state.liked.clear();state.playlists=[];state.view='home';state.query='';state.profile=state.owner;state.local=[];$('mh-search').value='';}
     const self=root.querySelector('.mh-self');try{self.innerHTML=typeof avatarMarkup==='function'?avatarMarkup(user()):icon('user');}catch(_){self.innerHTML=icon('user');}
-    render();syncPlayer(core()?.getState());$('mh-search').focus({preventScroll:true});
+    render();syncPlayer(core()?.getState());if(!document.body.classList.contains('telechat-phone-v159'))$('mh-search').focus({preventScroll:true});
     if(firstOpen)window.telechatMusicIntroV118?.enter(root,state.owner,core()?.getState());
     const results=await Promise.allSettled([core().getTracks(),loadLibrary(),loadFeed(true)]);
     if(user()?.nick!==state.owner)return close();

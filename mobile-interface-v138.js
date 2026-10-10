@@ -1,12 +1,13 @@
 /* Mobile-only direct media editing. Existing upload/save handlers remain owners. */
 (()=>{
   'use strict';
-  const mobile=matchMedia('(max-width:720px), ((max-width:900px) and (pointer:coarse))');
+  const mobile=matchMedia('(max-width:720px), ((max-width:900px) and (pointer:coarse)), ((max-width:1100px) and (max-height:600px) and (pointer:coarse))');
+  const phoneMode=()=>mobile.matches||/telechat-android/i.test(navigator.userAgent);
   const avatar='#prof-av-prev,.profile-avatar-thumb-v89,.pq-avatar,#view-profile-avatar';
   const banner='#profile-banner-preview,.profile-banner-thumb-v89,.pq-cover,#view-profile-cover';
   let sheet=null;
   function choose(target){
-    if(!mobile.matches)return;
+    if(!phoneMode())return;
     const isPublic=target.matches('#view-profile-avatar,#view-profile-cover');
     if(isPublic&&(typeof me==='undefined'||typeof viewedProfileNickV5==='undefined'||viewedProfileNickV5!==me?.nick))return;
     if(target.closest('#profile-quick-v91'))document.querySelector('[data-pq="edit"]')?.click();
@@ -35,9 +36,9 @@
   // Static editor previews are keyboard-accessible too. No document-wide observer.
   for(const el of document.querySelectorAll('#prof-av-prev,.profile-avatar-thumb-v89,#profile-banner-preview,.profile-banner-thumb-v89')){
     const original={role:el.getAttribute('role'),tabindex:el.getAttribute('tabindex'),'aria-label':el.getAttribute('aria-label')};
-    const update=()=>{for(const [name,value] of Object.entries(mobile.matches?{role:'button',tabindex:'0','aria-label':el.matches(avatar)?'Изменить аватарку':'Изменить баннер'}:original)){if(value===null)el.removeAttribute(name);else el.setAttribute(name,value);}};
+    const update=()=>{for(const [name,value] of Object.entries(phoneMode()?{role:'button',tabindex:'0','aria-label':el.matches(avatar)?'Изменить аватарку':'Изменить баннер'}:original)){if(value===null)el.removeAttribute(name);else el.setAttribute(name,value);}};
     update();mobile.addEventListener('change',update);
-    el.addEventListener('keydown',event=>{if(mobile.matches&&(event.key==='Enter'||event.key===' ')){event.preventDefault();choose(el);}});
+    el.addEventListener('keydown',event=>{if(phoneMode()&&(event.key==='Enter'||event.key===' ')){event.preventDefault();choose(el);}});
   }
-  mobile.addEventListener('change',()=>{if(!mobile.matches)sheet?.close();});
+  mobile.addEventListener('change',()=>{if(!phoneMode())sheet?.close();});
 })();
