@@ -1,6 +1,8 @@
-const CACHE_NAME='telechat-shell-v159-phone-interface';
+const CACHE_NAME='telechat-shell-v160-keyboard-settings';
 const APP_SHELL=[
-  './phone-shell-v159.css?v=159',
+  './settings-navigation-v160.css?v=160',
+  './settings-navigation-v160.js?v=160',
+  './phone-shell-v159.css?v=160',
   './phone-shell-v159.js?v=159',
   './pixel-eyes-v155.css?v=158',
   './pixel-eyes-v155.js?v=159',

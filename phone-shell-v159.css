@@ -76,14 +76,14 @@ html body.telechat-phone-v159 .chat-header-actions{display:flex;gap:0!important;
 html body.telechat-phone-v159 .chat-header-actions>[onclick*="toggleChatSearch"],html body.telechat-phone-v159 .chat-header-actions>#clear-chat-btn,html body.telechat-phone-v159 .chat-header-actions>#room-info-btn{display:none!important}
 #phone-chat-more-v159{display:none}html body.telechat-phone-v159 #phone-chat-more-v159{display:grid!important;place-items:center}#phone-chat-more-v159 svg{width:21px;height:21px}
 html body.telechat-phone-v159 #messages{flex:1!important;min-height:0!important;padding:12px 12px 10px!important;contain:layout style;content-visibility:visible!important;overflow:auto!important;overscroll-behavior:contain;scroll-behavior:auto!important}
-html body.telechat-phone-v159 .msg{max-width:88%!important;animation:none!important;gap:5px}
+html body.telechat-phone-v159 .msg{max-width:88%!important;animation:none!important;gap:5px;flex-shrink:0!important}
 html body.telechat-phone-v159 .msg-bubble{padding:11px 13px!important;border-radius:18px!important;font-size:15px!important;line-height:1.5!important;box-shadow:none!important;background:var(--phone-card);backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 html body.telechat-phone-v159 .msg.me .msg-bubble{background:#7460cb!important;color:#fff!important}
 html body.theme-green.telechat-phone-v159 .msg.me .msg-bubble{background:#387764!important}
 html body.theme-light.telechat-phone-v159 .msg.them .msg-bubble{background:#fff!important;color:var(--phone-text)!important}
 html body.telechat-phone-v159 .msg-meta{font-size:9px;color:var(--phone-muted)}
 html body.telechat-phone-v159 .input-area{align-items:flex-end!important;gap:5px!important;padding:8px 9px calc(8px + env(safe-area-inset-bottom,0px))!important;border-top:1px solid var(--phone-line)!important;background:var(--phone-bg)!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;min-height:64px!important;flex:none}
-html body.telechat-phone-v159 .composer-shell{position:relative;min-width:0;flex:1;border:1px solid var(--phone-line)!important;border-radius:23px!important;background:var(--phone-card)!important;box-shadow:none!important;overflow:visible!important}
+html body.telechat-phone-v159 .composer-shell{position:relative;min-width:0;min-height:48px!important;padding:0!important;flex:1;border:1px solid var(--phone-line)!important;border-radius:23px!important;background:var(--phone-card)!important;box-shadow:none!important;overflow:visible!important}
 html body.telechat-phone-v159 .composer-shell .msg-input{display:block!important;width:100%!important;min-height:46px!important;max-height:140px!important;padding:12px 47px 12px 14px!important;border:0!important;border-radius:23px!important;background:transparent!important;color:var(--phone-text)!important;font-size:16px!important;line-height:1.4!important;box-shadow:none!important}
 html body.telechat-phone-v159 .composer-tools{display:none!important}
 #phone-composer-tools-v159{display:none}html body.telechat-phone-v159 #phone-composer-tools-v159{position:absolute;display:flex;right:2px;bottom:1px;align-items:center}
@@ -250,3 +250,15 @@ html body.telechat-phone-v159 #recording-status.show{display:flex!important}
 html body.telechat-phone-v159 #recording-time{flex:1;min-width:0}
 html body.telechat-phone-v159 #voice-cancel-v125{display:grid;place-items:center;width:44px!important;min-width:44px!important;height:44px!important;min-height:44px!important;padding:10px!important;border:0;border-radius:12px;background:transparent;color:var(--phone-muted);flex:none}
 html body.telechat-phone-v159 #voice-cancel-v125[hidden]{display:none!important}
+/* The keyboard reduces the reading viewport, never the messages themselves. */
+html body.telechat-phone-v159 #messages> *{flex-shrink:0!important}
+html body.telechat-phone-v159.telechat-mobile-keyboard-v100 .chat-header{min-height:56px!important;padding-top:6px!important;padding-bottom:6px!important}
+html body.telechat-phone-v159.telechat-mobile-keyboard-v100 .chat-header-actions{padding:0!important}
+html body.telechat-phone-v159.telechat-mobile-keyboard-v100 .input-area{min-height:60px!important;padding:6px 8px!important;gap:4px!important}
+html body.telechat-phone-v159.telechat-mobile-keyboard-v100 .composer-shell .msg-input{min-height:46px!important;max-height:clamp(46px,calc(var(--phone-scene-height) - 260px),86px)!important;overflow-y:auto!important;overscroll-behavior:contain;resize:none}
+html body.telechat-phone-v159.telechat-mobile-keyboard-v100 :is(.reply-bar,.pinned-bar){flex-shrink:0;max-height:38px!important;min-height:0!important;padding-top:4px!important;padding-bottom:4px!important;overflow:hidden}
+html body.telechat-phone-v159.telechat-mobile-keyboard-v100 #pending-media.show{min-height:0!important;max-height:50px;overflow:hidden;padding:4px 8px}
+html body.telechat-phone-v159.telechat-mobile-keyboard-v100 #pending-media img{height:32px;width:32px}
+html body.telechat-phone-v159.telechat-mobile-keyboard-v100:has(#voice-call-mini.show){--phone-call-space:48px}
+html body.telechat-phone-v159.telechat-mobile-keyboard-v100 #voice-call-mini{height:48px!important;min-height:48px!important;padding-top:3px!important;padding-bottom:3px!important}
+html body.telechat-phone-v159.telechat-mobile-keyboard-v100 #messages{padding-top:8px!important;padding-bottom:8px!important}
