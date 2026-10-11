@@ -10,7 +10,7 @@ const root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f
   document.getElementById('chat-name-hdr').textContent='Максим';document.getElementById('chat-status-text').textContent='В сети';
   const edit=document.createElement('div');edit.id='message-edit-overlay-v36';document.body.append(edit);
  });
- await page.addScriptTag({content:read('pixel-eyes-v155.js')});await page.waitForTimeout(250);
+ await page.addScriptTag({content:read('pixel-emotions-v163.js')});await page.addScriptTag({content:read('pixel-eyes-v155.js')});await page.waitForTimeout(250);
  const state=()=>page.evaluate(()=>telechatPixelEyesV155.getState());assert.equal((await state()).mood,'welcome');await page.waitForTimeout(600);assert.equal((await state()).mood,'idle');assert((await state()).running);
  assert(await page.locator('#pixel-eyes-stage-v155').isVisible());
  const original=await page.evaluate(()=>({text:document.getElementById('messages').textContent,count:document.getElementById('messages').children.length}));
@@ -40,6 +40,14 @@ const root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f
  await action('send','__telechat_media_v1__:'+JSON.stringify({kind:'file',data:JSON.stringify({name:'angry😡.txt'}),caption:'Я рад 😂'}));assert.equal((await state()).mood,'laugh','Use media caption, not metadata');
  await action('send','__telechat_media_v1__:'+JSON.stringify({kind:'file',data:'angry😡.txt',caption:''}));assert.equal((await state()).mood,'happy','Ignore emoji in attachment metadata');
  await action('send','https://example.com/😡');assert.equal((await state()).mood,'happy','Ignore emoji inside URL');
+ for(const [text,expected] of [['Я тебя люблю','love'],['Настроения нет','sad'],['Нет настроения','sad'],['Хахаха','laugh'],['Меня это бесит','angry'],['Хочу спать','sleep'],['Ничего себе!','surprised'],['Не знаю','think'],['Я люблю тебя, но мне грустно','sad'],['Не люблю','happy']]){
+  await action('send',text);assert.equal((await state()).mood,expected,'Sent phrase '+text);
+  await clear();await page.evaluate(([text,id])=>addRow(id,text),[text,'phrase-'+text]);await page.waitForTimeout(40);assert.equal((await state()).mood,expected==='happy'?'curious':expected,'Incoming phrase '+text);
+ }
+ await action('send','__telechat_media_v1__:'+JSON.stringify({kind:'file',data:'я тебя люблю.mp3',caption:'настроения нет'}));assert.equal((await state()).mood,'sad','Read caption phrases, not file name');
+ await action('send','__telechat_media_v1__:'+JSON.stringify({kind:'file',data:'я тебя люблю.mp3',caption:''}));assert.equal((await state()).mood,'happy','Ignore phrases in file metadata');
+ await action('send','__telechat_story_reply_v152__:'+JSON.stringify({text:'я тебя люблю'}));assert.equal((await state()).mood,'love','Story reply text reacts');
+ await action('send','я тебя люблю 😢');assert.equal((await state()).mood,'sad','Explicit emoji keeps precedence');
  await clear();await page.locator('#msg-input').focus();assert.equal((await state()).mood,'focus');await clear();
  for(const [id,flag,expected] of [['reply-bar','show','think'],['pending-media','show','attach'],['emoji-picker','open','excited'],['message-edit-overlay-v36','show','think']]){await clear();await page.evaluate(([id,flag])=>document.getElementById(id).classList.add(flag),[id,flag]);await page.waitForTimeout(30);assert.equal((await state()).mood,expected,id);await page.evaluate(([id,flag])=>document.getElementById(id).classList.remove(flag),[id,flag]);}
  await clear();await action('edit','changed');assert.equal((await state()).mood,'wink');await clear();await action('reaction','❤️');assert.equal((await state()).mood,'love');await clear();await action('reaction','👍');assert.equal((await state()).mood,'excited');await clear();await action('reaction','');assert.equal((await state()).mood,'wink');

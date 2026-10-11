@@ -38,16 +38,14 @@
  const emotions=new Map();
  for(const [expression,tokens] of Object.entries({angry:['😡','😠','😤','🤬','👿','😾','💢'],laugh:['😀','😃','😄','😁','😆','😅','😂','🤣','😊','☺','🙂','🙃','😋','😛','😜','😝','🤪','😸','😹'],sad:['😢','😭','😥','😞','😔','😟','😩','☹','🙁','😿'],love:['❤','♥','💕','💖','💗','💘','💝','💜','💙','💚','💛','🧡','🤍','🖤','🤎','🩷','🩵','🩶','😍','🥰','😘','<3'],surprised:['😮','😯','😲','😳','😱','😨','😰','🤯'],sleep:['😴','🥱','😪','💤'],think:['🤔','🧐','🤨'],wink:['😉'],dizzy:['😵','🥴'],excited:['🥳','🎉','🔥','👍','👏','🤩']}))for(const token of tokens)emotions.set(token,expression);
  const emotionPattern=new RegExp('(?:'+[...emotions.keys()].join('|')+')[\\uFE0E\\uFE0F]?','gu');
- const emotionCandidate=new RegExp([...emotions.keys()].join('|'),'u');
  function emotion(text){
   let value=String(text||'');
-  if(!emotionCandidate.test(value))return '';
   if(value.startsWith('__telechat_story_reply_v152__:')){try{value=JSON.parse(value.slice('__telechat_story_reply_v152__:'.length)).text||'';}catch(_){return '';}}
   else if(value.startsWith('__telechat_media_v1__:')){try{const media=JSON.parse(value.slice('__telechat_media_v1__:'.length));value=['image','voice','file'].includes(media.kind)?String(media.caption||''):'';}catch(_){return '';}}
   else if(value.startsWith('__telechat_'))return '';
   value=value.replace(/https?:\/\/\S+/gi,'');let found='';
   for(const match of value.matchAll(emotionPattern))found=emotions.get(match[0].replace(/[\uFE0E\uFE0F]/g,''))||found;
-  return found;
+  return found||window.telechatPixelEmotionsV163?.detect(value)||'';
  }
  const emotionDuration=expression=>({angry:2300,laugh:2500,sad:2400,love:2400,sleep:2200,dizzy:2400,surprised:1800,think:1800,excited:1800})[expression]||1600;
  const storageKey=nick=>'telechat.pixel-eyes.v155.'+nick;

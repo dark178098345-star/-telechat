@@ -1,11 +1,12 @@
-const CACHE_NAME='telechat-shell-v162-fixed-phone-header';
+const CACHE_NAME='telechat-shell-v163-phrase-emotions';
 const APP_SHELL=[
   './settings-navigation-v160.css?v=160',
   './settings-navigation-v160.js?v=161',
   './phone-shell-v159.css?v=162',
   './phone-shell-v159.js?v=161',
   './pixel-eyes-v155.css?v=158',
-  './pixel-eyes-v155.js?v=159',
+  './pixel-emotions-v163.js?v=163',
+  './pixel-eyes-v155.js?v=163',
   './quick-jump-v154.css?v=154',
   './quick-jump-v154.js?v=161',
   './social-v152.css?v=152',
