@@ -88,6 +88,7 @@
   const attachment=$('attachment-menu-v141');if(attachment&&!attachment.hidden){attachment.hidden=true;$('attach-button-v141')?.setAttribute('aria-expanded','false');return true;}
   const transient=document.querySelector('.ctx-menu.show,.emoji-picker.open');if(transient){transient.classList.remove('show','open');return true;}
   const modal=document.querySelector('.modal-overlay.show,.message-modal-overlay-v36.show');if(modal){const close=modal.querySelector('button[onclick^="close"],button[aria-label*="Закрыть"],button[id*="close"]');if(close)close.click();else{modal.classList.remove('show');modal.querySelectorAll('video,audio').forEach(media=>media.pause());}return true;}
+  if($('settings-panel')?.classList.contains('open')&&$('settings-panel').dataset.settingsView!=='home'&&window.telechatSettingsV160){window.telechatSettingsV160.openSection('home');return true;}
   if(document.querySelector('.side-panel.open')){closePanels();return true;}
   if(document.body.classList.contains('music-hub-open-v117')){const music=$('music-hub-v117');if(music?.classList.contains('mh-show-now'))music.querySelector('.mh-now-toggle')?.click();else call(()=>window.telechatMusicHubV117?.close());return true;}
   if(sidebar.classList.contains('hidden')){call(()=>window.goBack?.());return true;}

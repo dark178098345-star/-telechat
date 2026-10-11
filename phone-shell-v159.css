@@ -98,11 +98,11 @@ html body.telechat-phone-v159 #pending-media img{width:45px;height:45px;object-f
 html body.telechat-phone-v159 #pending-media .pending-label{font-size:11px;min-width:0}
 html body.telechat-phone-v159 :is(.reply-bar,.pinned-bar,.chat-search-bar){background:var(--phone-card)!important;border-color:var(--phone-line)!important;color:var(--phone-text);box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;font-size:12px}
 html body.telechat-phone-v159 .chat-search-inp{min-height:42px;font-size:16px;background:var(--phone-raised);border-radius:12px}
-html body.telechat-phone-v159 #pixel-eyes-stage-v155.pe-has-aura-v158{height:86px;min-height:86px;flex-basis:86px}
-html body.telechat-phone-v159 #pixel-eyes-stage-v155.pe-has-aura-v158 .pe-character-v155{height:84px}
-html body.telechat-phone-v159 #pixel-eyes-stage-v155 .pe-aura-v158{width:114px;height:84px}
-html body.telechat-phone-v159 #pixel-eyes-stage-v155 canvas{width:108px;height:54px}
-html body.telechat-phone-v159 #pixel-eyes-stage-v155.pe-has-aura-v158 .pe-settings-v155{top:21px}
+html body.telechat-phone-v159 #pixel-eyes-stage-v155.pe-has-aura-v158{height:64px;min-height:64px;flex-basis:64px}
+html body.telechat-phone-v159 #pixel-eyes-stage-v155.pe-has-aura-v158 .pe-character-v155{height:64px}
+html body.telechat-phone-v159 #pixel-eyes-stage-v155 .pe-aura-v158{width:96px;height:58px}
+html body.telechat-phone-v159 #pixel-eyes-stage-v155 canvas{width:88px;height:44px}
+html body.telechat-phone-v159 #pixel-eyes-stage-v155.pe-has-aura-v158 .pe-settings-v155{top:10px}
 html body.telechat-phone-v159 #voice-call-mini{position:fixed!important;top:var(--v100-offset,0px)!important;left:0!important;right:0!important;width:100%!important;height:var(--phone-call-space);min-height:64px;z-index:130!important;border-radius:0!important;background:var(--phone-card)!important;box-shadow:none!important;transform:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 html body.telechat-phone-v159 .side-panel.open,html body.telechat-phone-v159 #settings-panel.v65-full-panel.open,html body.telechat-phone-v159 #profile-panel.v65-full-panel.open{position:fixed!important;inset:var(--v100-offset,0px) 0 auto!important;width:100%!important;max-width:none!important;height:var(--v100-height,100dvh)!important;max-height:var(--v100-height,100dvh)!important;padding:0 14px calc(18px + env(safe-area-inset-bottom,0px))!important;border:0!important;border-radius:0!important;background:var(--phone-bg)!important;box-shadow:none!important;overflow:auto!important;overscroll-behavior:contain;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;z-index:160!important}
 html body.telechat-phone-v159 .side-panel .panel-head{position:sticky!important;top:0!important;z-index:3;display:flex!important;align-items:center;gap:12px;margin:0 -14px 16px!important;padding:calc(11px + env(safe-area-inset-top,0px)) 15px 11px!important;min-height:64px!important;background:var(--phone-bg)!important;border-bottom:1px solid var(--phone-line)!important;box-shadow:none!important}
