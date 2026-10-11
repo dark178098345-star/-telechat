@@ -2,7 +2,7 @@
 (()=>{
  'use strict';
  const panel=document.getElementById('settings-panel');if(!panel)return;
- const groups=[['appearance','Внешний вид tele.chat','Тема, размер текста, фотофон и живые глазки','palette'],['notifications','Уведомления и звуки','Звуки сообщений и уведомления приложения','bell'],['account','Аккаунт','Текущий сеанс и выход из аккаунта','user'],['app','Приложение','Установка и дополнительные параметры','phone']];
+ const groups=[['appearance','Внешний вид ExstraChat','Тема, размер текста, фотофон и живые глазки','palette'],['notifications','Уведомления и звуки','Звуки сообщений и уведомления приложения','bell'],['account','Аккаунт','Текущий сеанс и выход из аккаунта','user'],['app','Приложение','Установка и дополнительные параметры','phone']];
  const icon=name=>window.telechatIconsV125?.html(name)||'';
  const nav=document.createElement('nav');nav.id='settings-home-v160';nav.setAttribute('aria-label','Разделы настроек');
  for(const [id,title,note,symbol] of groups){const b=document.createElement('button');b.type='button';b.dataset.settingsSection=id;b.innerHTML=icon(symbol)+'<span><strong>'+title+'</strong><small>'+note+'</small></span><span aria-hidden="true">›</span>';b.onclick=()=>select(id);nav.append(b);}

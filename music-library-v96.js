@@ -45,7 +45,7 @@
         resolve(request.result);
       };
       request.onerror = () => { dbPromise = null; reject(request.error); };
-      request.onblocked = () => { dbPromise = null; reject(new Error('Закрой другие вкладки tele.chat и попробуй снова.')); };
+      request.onblocked = () => { dbPromise = null; reject(new Error('Закрой другие вкладки ExstraChat и попробуй снова.')); };
     });
     return dbPromise;
   }
@@ -208,7 +208,7 @@
         if(token!==playToken||owner()!==track.owner){cloudPlayer?.destroy();cloudPlayer=null;return;}
         current.duration=cloudPlayer.duration;
         cloudPlayer.setVolume?.(audio.volume);
-        if('mediaSession' in navigator&&'MediaMetadata' in window)navigator.mediaSession.metadata=new MediaMetadata({title:track.title,artist:'SoundCloud · tele.chat'});
+        if('mediaSession' in navigator&&'MediaMetadata' in window)navigator.mediaSession.metadata=new MediaMetadata({title:track.title,artist:'SoundCloud · ExstraChat'});
         updatePlayers();position();
         if(pendingAutoPlay&&!inCall())await cloudPlayer.play();
       } catch(error){if(token===playToken&&error.name!=='AbortError'){playError={name:error.name,message:error.message};stop();notify(errorText(error));}}
@@ -230,7 +230,7 @@
       }
       if (token !== playToken || owner() !== track.owner) return;
       current = track;audio.src = src;updatePlayers();
-      if ('mediaSession' in navigator && 'MediaMetadata' in window) navigator.mediaSession.metadata = new MediaMetadata({title:track.title,artist:'Моя музыка · tele.chat'});
+      if ('mediaSession' in navigator && 'MediaMetadata' in window) navigator.mediaSession.metadata = new MediaMetadata({title:track.title,artist:'Моя музыка · ExstraChat'});
       if (autoplay) await audio.play();
     } catch (error) {
       if (token !== playToken) return;

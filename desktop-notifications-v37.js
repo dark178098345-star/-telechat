@@ -128,7 +128,7 @@
     if (!button) return;
     button.textContent = '✅ Работают в фоне';
     button.style.color = 'var(--green)';
-    button.title = 'После закрытия окна tele.chat остаётся в системном трее';
+    button.title = 'После закрытия окна ExstraChat остаётся в системном трее';
   }
 
   try {

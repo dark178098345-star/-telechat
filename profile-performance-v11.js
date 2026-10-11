@@ -8,7 +8,7 @@
   const card=document.querySelector('.user-profile-card');
   if(card&&!document.getElementById('profile-load')){
     const refresh=document.createElement('div');refresh.id='profile-refresh';refresh.className='profile-refresh';refresh.textContent='◌ обновляем профиль';card.appendChild(refresh);
-    const load=document.createElement('div');load.id='profile-load';load.className='profile-load';load.innerHTML='<div class="profile-load-box"><div class="profile-load-orbit"></div><div class="profile-load-logo">tele.chat</div><div class="profile-load-text" id="profile-load-text">Загружаем профиль…</div><div class="profile-load-sub">аватарка · баннер · информация</div><button class="profile-load-retry" id="profile-load-retry">Повторить</button></div>';card.appendChild(load);
+    const load=document.createElement('div');load.id='profile-load';load.className='profile-load';load.innerHTML='<div class="profile-load-box"><div class="profile-load-orbit"></div><div class="profile-load-logo">ExstraChat</div><div class="profile-load-text" id="profile-load-text">Загружаем профиль…</div><div class="profile-load-sub">аватарка · баннер · информация</div><button class="profile-load-retry" id="profile-load-retry">Повторить</button></div>';card.appendChild(load);
   }
 
   const lightFields='nick,name,av,status,last_seen,avatar_video,animated_profile',profileFields='nick,name,av,status,bio,banner,last_seen,avatar_video,animated_profile';

@@ -13,8 +13,8 @@
   if (sidebar) {
     const rail = document.createElement('nav');
     rail.className = 'section-rail-v109';
-    rail.setAttribute('aria-label', 'Разделы tele.chat');
-    rail.innerHTML = '<span class="rail-brand-v109" aria-hidden="true">t<span>.</span></span>';
+    rail.setAttribute('aria-label', 'Разделы ExstraChat');
+    rail.innerHTML = '<span class="rail-brand-v109" aria-hidden="true">E<span>.</span></span>';
     for (const [filter, title] of [['all', 'Все чаты'], ['group', 'Группы'], ['channel', 'Каналы']]) {
       const button = document.createElement('button');
       button.type = 'button';button.dataset.railFilter = filter;

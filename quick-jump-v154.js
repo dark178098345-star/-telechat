@@ -13,7 +13,7 @@
       ['Мой профиль','Твой маленький мир','user','профиль profile аккаунт',()=>window.previewMyProfile?.()],
       ['Моя статистика','Посмотри, как растёт твой уровень','chart','статистика stats уровень level',()=>window.telechatActivityV124?.open()],
       ['Мой QR','Встретимся одним сканированием','qr','qr куар код сканировать',()=>window.telechatQrV131?.open()],
-      ['Настройки','Сделай tele.chat своим','settings','настройки settings тема уведомления',()=>window.telechatNavigate?.('settings')]
+      ['Настройки','Сделай ExstraChat своим','settings','настройки settings тема уведомления',()=>window.telechatNavigate?.('settings')]
     ].map(([name,description,symbol,search,run])=>({name,description,symbol,search,run,type:'Раздел'}));
     const chats=[...document.querySelectorAll('#contacts-list .contact')].slice(0,300).map(row=>{
       const label=row.querySelector('.contact-name')?.cloneNode(true);label?.querySelectorAll('svg,button,small,.room-type-badge,.room-owner-star,.verified-badge,.user-role-badge').forEach(n=>n.remove());

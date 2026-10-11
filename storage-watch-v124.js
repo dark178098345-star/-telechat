@@ -7,7 +7,7 @@
     const now=Date.now();if(now-lastNotice<15*60000&&notice?.hidden&&(!full||lastFull))return;
     lastNotice=now;lastFull=full;
     if(!notice){notice=document.createElement('aside');notice.id='storage-notice-v124';notice.setAttribute('role','alert');notice.innerHTML='<strong></strong><p></p><button type="button">Понятно</button>';notice.querySelector('button').onclick=()=>{notice.hidden=true;};document.body.append(notice);}
-    notice.hidden=false;notice.querySelector('strong').textContent=full?'Хранилище tele.chat заполнено':'Хранилище tele.chat почти заполнено';
+    notice.hidden=false;notice.querySelector('strong').textContent=full?'Хранилище ExstraChat заполнено':'Хранилище ExstraChat почти заполнено';
     notice.querySelector('p').textContent=full?'Не удалось сохранить данные на устройстве. Удали ненужные скачанные треки или освободи место. Чаты на сервере не удалены.':'Для новых файлов скоро может не хватить места. Проверь раздел «Статистика» и удали ненужные скачанные треки.';
   }
   async function check(force=false){

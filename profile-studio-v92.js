@@ -5,7 +5,7 @@
   if(!hero||panel.classList.contains('profile-studio-v92'))return;
   panel.classList.add('profile-studio-v92');
   panel.querySelector('.panel-title').textContent='Настроить профиль';
-  panel.querySelector('.panel-subtitle').textContent='Твой образ в tele.chat';
+  panel.querySelector('.panel-subtitle').textContent='Твой образ в ExstraChat';
   const layout=document.createElement('div');layout.className='ps-layout';
   const controls=document.createElement('div');controls.className='ps-controls';
   const scroll=document.createElement('div');scroll.className='ps-controls-scroll';

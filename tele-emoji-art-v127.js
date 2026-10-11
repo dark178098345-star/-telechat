@@ -1,4 +1,4 @@
-/* Original tele.chat artwork. Unicode is the portable message/storage format. */
+/* Original ExstraChat artwork. Unicode is the portable message/storage format. */
 (()=>{
  'use strict';
  const ink='#33283f';

@@ -23,7 +23,7 @@
       master.gain.value=.13;filter.type='lowpass';filter.frequency.value=2100;filter.Q.value=.35;
       filter.connect(master);master.connect(context.destination);sound={context,master};
       const start=context.currentTime+.035;
-      // A warm open chord and two light, ascending overtones, composed for tele.music.
+      // A warm open chord and two light, ascending overtones, composed for ExstraMusic.
       const notes=[[146.83,0,3.2,.48],[220,.12,3,.28],[293.66,.28,2.9,.22],[587.33,.64,2.4,.12],[880,1.03,2.05,.07]];
       for(const [hz,delay,length,level] of notes){
         const oscillator=context.createOscillator(),envelope=context.createGain(),at=start+delay;
@@ -57,7 +57,7 @@
     const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
     const node=document.createElement('section');node.className='mh-intro-v118'+(reduced?' is-reduced':'');
     node.setAttribute('role','dialog');node.setAttribute('aria-modal','true');node.setAttribute('aria-labelledby','mh-intro-title-v118');
-    node.innerHTML=`<div class="mh-intro-halo" aria-hidden="true"><i></i><i></i><i></i></div><div class="mh-intro-brand" aria-hidden="true">tele<span>.</span>music</div><div class="mh-intro-center"><span class="mh-intro-eyebrow" aria-hidden="true">ТВОЙ КРУГ ЗВУКА</span><h1 id="mh-intro-title-v118"><span>Ну что,</span><span>готов попасть</span><span>в мир музыки?</span></h1><div class="mh-intro-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div></div><footer class="mh-intro-footer"><button type="button" data-intro-sound></button><button type="button" data-intro-skip>Пропустить <span aria-hidden="true">→</span></button></footer>`;
+    node.innerHTML=`<div class="mh-intro-halo" aria-hidden="true"><i></i><i></i><i></i></div><div class="mh-intro-brand" aria-hidden="true">Exstra<span>Music</span></div><div class="mh-intro-center"><span class="mh-intro-eyebrow" aria-hidden="true">ТВОЙ КРУГ ЗВУКА</span><h1 id="mh-intro-title-v118"><span>Ну что,</span><span>готов попасть</span><span>в мир музыки?</span></h1><div class="mh-intro-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div></div><footer class="mh-intro-footer"><button type="button" data-intro-sound></button><button type="button" data-intro-skip>Пропустить <span aria-hidden="true">→</span></button></footer>`;
     const blocks=[...root.children].map(el=>[el,el.inert]);blocks.forEach(([el])=>el.inert=true);
     const focus=document.activeElement;root.append(node);
     const observer=new MutationObserver(()=>{if(root.hidden||inCall())dismiss(true);});

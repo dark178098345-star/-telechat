@@ -27,7 +27,7 @@ import android.webkit.WebViewClient;
 import android.widget.Toast;
 
 public class MainActivity extends Activity {
-    private static final String TELECHAT_URL = "https://dark178098345-star.github.io/-telechat/?app=android&v=131";
+    private static final String TELECHAT_URL = "https://dark178098345-star.github.io/-telechat/?app=android&v=161";
     private static final String TELECHAT_HOST = "dark178098345-star.github.io";
     private static final String NOTIFICATION_CHANNEL = "telechat-messages";
     private static final int FILE_CHOOSER_REQUEST = 401;
@@ -70,7 +70,7 @@ public class MainActivity extends Activity {
         settings.setAllowContentAccess(true);
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
         settings.setCacheMode(WebSettings.LOAD_DEFAULT);
-        settings.setUserAgentString(settings.getUserAgentString() + " telechat-android/1.2.5");
+        settings.setUserAgentString(settings.getUserAgentString() + " telechat-android/1.2.6");
 
         CookieManager.getInstance().setAcceptCookie(true);
         CookieManager.getInstance().setAcceptThirdPartyCookies(webView, false);
@@ -124,7 +124,7 @@ public class MainActivity extends Activity {
     private void createNotificationChannel() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return;
         NotificationChannel channel = new NotificationChannel(
-                NOTIFICATION_CHANNEL, "Сообщения tele.chat", NotificationManager.IMPORTANCE_DEFAULT);
+                NOTIFICATION_CHANNEL, "Сообщения ExstraChat", NotificationManager.IMPORTANCE_DEFAULT);
         channel.setDescription("Уведомления о новых сообщениях");
         getSystemService(NotificationManager.class).createNotificationChannel(channel);
     }
@@ -134,7 +134,7 @@ public class MainActivity extends Activity {
                 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, NOTIFICATION_PERMISSION_REQUEST);
         } else {
-            Toast.makeText(this, "Уведомления tele.chat включены", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Уведомления ExstraChat включены", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -148,7 +148,7 @@ public class MainActivity extends Activity {
                 ? new Notification.Builder(this, NOTIFICATION_CHANNEL)
                 : new Notification.Builder(this);
         builder.setSmallIcon(chat.tele.app.R.drawable.telechat_icon)
-                .setContentTitle(title == null || title.isEmpty() ? "tele.chat" : title)
+                .setContentTitle(title == null || title.isEmpty() ? "ExstraChat" : title)
                 .setContentText(body == null ? "" : body)
                 .setAutoCancel(true).setContentIntent(pending).setPriority(Notification.PRIORITY_DEFAULT);
         getSystemService(NotificationManager.class).notify((int) (System.currentTimeMillis() & 0x7fffffff), builder.build());

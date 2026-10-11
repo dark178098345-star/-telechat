@@ -57,7 +57,7 @@
     card.classList.toggle('unlocked',allowed);
     card.classList.toggle('schema-missing',!schemaReady);
     if(allowed){
-      note.textContent=isPrivileged(user)?'Особый доступ tele.chat':'Доступ открыт навсегда';
+      note.textContent=isPrivileged(user)?'Особый доступ ExstraChat':'Доступ открыт навсегда';
       button.textContent='✓ Доступ открыт';
       button.disabled=true;
     }else if(!schemaReady){

@@ -13,7 +13,7 @@
         android:allowBackup="false"
         android:hardwareAccelerated="true"
         android:icon="@drawable/telechat_icon"
-        android:label="tele.chat"
+        android:label="ExstraChat"
         android:roundIcon="@drawable/telechat_icon"
         android:supportsRtl="true"
         android:theme="@style/Theme.Telechat"

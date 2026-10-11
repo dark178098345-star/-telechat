@@ -88,7 +88,7 @@
       });tabs.appendChild(button);
     });
     const grid=document.createElement('div');grid.className='emoji-grid-v80';grid.setAttribute('role','grid');
-    const foot=document.createElement('div');foot.className='emoji-studio-foot-v80';foot.innerHTML='<strong>Смайлики tele.chat</strong><span>'+(customArt?customArt.all.length+' своих · ':'')+total+' символов</span>';
+    const foot=document.createElement('div');foot.className='emoji-studio-foot-v80';foot.innerHTML='<strong>Смайлики ExstraChat</strong><span>'+(customArt?customArt.all.length+' своих · ':'')+total+' символов</span>';
     picker.append(head,tabs,grid,foot);
     head.querySelector('input').addEventListener('input',event=>renderGrid(event.target.value));
     head.querySelector('.emoji-close-v80').addEventListener('click',()=>picker.classList.remove('open'));

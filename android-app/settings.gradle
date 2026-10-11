@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = 'tele.chat'
+rootProject.name = 'ExstraChat'
 include ':app'

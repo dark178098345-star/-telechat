@@ -21,7 +21,7 @@
     loader.setAttribute('aria-hidden', 'true');
     loader.innerHTML = `
       <div class="chat-boot-card-v41">
-        <div class="chat-boot-brand-v41">tele<span>.</span>chat</div>
+        <div class="chat-boot-brand-v41">Exstra<span>Chat</span></div>
         <div class="chat-boot-avatars-v41" aria-hidden="true">
           <span class="chat-boot-avatar-v41"></span>
           <span class="chat-boot-avatar-v41"></span>

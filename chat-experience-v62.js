@@ -408,6 +408,6 @@
     window.telechatExperienceV62.ready = true;
   } catch (error) {
     window.telechatExperienceV62.error = String(error?.message || error || 'Неизвестная ошибка');
-    console.warn('tele.chat experience v62 started in safe mode:', error);
+    console.warn('ExstraChat experience v62 started in safe mode:', error);
   }
 })();

@@ -1,6 +1,6 @@
-# tele.chat Android
+# ExstraChat Android
 
-Нативная Android WebView-оболочка для живого сайта tele.chat.
+Нативная Android WebView-оболочка для живого сайта ExstraChat.
 
 - Android 7.0 (API 24) и новее.
 - Загрузка фото и видео через системный выбор файлов.

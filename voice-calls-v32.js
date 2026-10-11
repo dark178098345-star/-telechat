@@ -82,7 +82,7 @@
             <header class="voice-call-topbar">
               <button class="voice-call-minimize" id="call-minimize-btn" type="button" onclick="minimizeCallV32()" aria-label="Свернуть звонок">⌄</button>
               <div>
-                <div class="voice-call-brand">tele<span>.chat</span></div>
+                <div class="voice-call-brand">Exstra<span>Chat</span></div>
                 <div class="voice-call-status-row"><div class="voice-call-status" id="voice-call-status">Соединяем…</div><span class="voice-call-quality-v72" id="voice-call-quality-v72" hidden><i></i><i></i><i></i><b>Связь</b></span></div>
               </div>
               <div class="voice-call-top-actions">
@@ -162,7 +162,7 @@
       showToast('Голосовые звонки не поддерживаются этим браузером');return true;
     }
     if(!window.isSecureContext){
-      showToast('Для звонков открой tele.chat по защищённой ссылке HTTPS');return true;
+      showToast('Для звонков открой ExstraChat по защищённой ссылке HTTPS');return true;
     }
     return false;
   }
@@ -201,7 +201,7 @@
     if(/NotAllowedError|SecurityError/i.test(name))showToast('Разреши микрофон в настройках сайта или приложения');
     else if(/NotFoundError/i.test(name))showToast('Телефон не нашёл доступный микрофон');
     else if(/NotReadableError|AbortError/i.test(name))showToast('Микрофон занят другим приложением — закрой его и повтори');
-    else showToast('Не удалось включить микрофон — попробуй открыть tele.chat в Chrome или Safari');
+    else showToast('Не удалось включить микрофон — попробуй открыть ExstraChat в Chrome или Safari');
     throw error;
   }
 
@@ -614,7 +614,7 @@
           return;
         }
         await sendSignalV32(state,peer.nick,'restart-request',{attempt:peer.retryCount});
-      }catch(error){console.warn('tele.chat call reconnect',error);}
+      }catch(error){console.warn('ExstraChat call reconnect',error);}
       armPeerConnectionTimeoutV42(state,peer,7000+peer.retryCount*3500);
       return;
     }
@@ -776,7 +776,7 @@
         }else peer.pendingCandidates.push(row.payload);
       }
     }catch(error){
-      console.warn('tele.chat call signal',row.kind,error);
+      console.warn('ExstraChat call signal',row.kind,error);
     }
   }
 
