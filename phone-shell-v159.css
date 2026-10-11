@@ -252,8 +252,6 @@ html body.telechat-phone-v159 #voice-cancel-v125{display:grid;place-items:center
 html body.telechat-phone-v159 #voice-cancel-v125[hidden]{display:none!important}
 /* The keyboard reduces the reading viewport, never the messages themselves. */
 html body.telechat-phone-v159 #messages> *{flex-shrink:0!important}
-html body.telechat-phone-v159.telechat-mobile-keyboard-v100 .chat-header{min-height:56px!important;padding-top:6px!important;padding-bottom:6px!important}
-html body.telechat-phone-v159.telechat-mobile-keyboard-v100 .chat-header-actions{padding:0!important}
 html body.telechat-phone-v159.telechat-mobile-keyboard-v100 .input-area{min-height:60px!important;padding:6px 8px!important;gap:4px!important}
 html body.telechat-phone-v159.telechat-mobile-keyboard-v100 .composer-shell .msg-input{min-height:46px!important;max-height:clamp(46px,calc(var(--phone-scene-height) - 260px),86px)!important;overflow-y:auto!important;overscroll-behavior:contain;resize:none}
 html body.telechat-phone-v159.telechat-mobile-keyboard-v100 :is(.reply-bar,.pinned-bar){flex-shrink:0;max-height:38px!important;min-height:0!important;padding-top:4px!important;padding-bottom:4px!important;overflow:hidden}

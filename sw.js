@@ -1,8 +1,8 @@
-const CACHE_NAME='telechat-shell-v161-exstrachat';
+const CACHE_NAME='telechat-shell-v162-fixed-phone-header';
 const APP_SHELL=[
   './settings-navigation-v160.css?v=160',
   './settings-navigation-v160.js?v=161',
-  './phone-shell-v159.css?v=160',
+  './phone-shell-v159.css?v=162',
   './phone-shell-v159.js?v=161',
   './pixel-eyes-v155.css?v=158',
   './pixel-eyes-v155.js?v=159',
