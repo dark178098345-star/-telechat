@@ -1,12 +1,12 @@
-const CACHE_NAME='telechat-shell-v165-dancing-talking-eyes';
+const CACHE_NAME='telechat-shell-v166-local-companion';
 const APP_SHELL=[
   './settings-navigation-v160.css?v=165',
   './settings-navigation-v160.js?v=165',
   './phone-shell-v159.css?v=165',
   './phone-shell-v159.js?v=165',
   './pixel-eyes-v155.css?v=165',
-  './pixel-emotions-v163.js?v=163',
-  './pixel-eyes-v155.js?v=165',
+  './pixel-emotions-v163.js?v=166',
+  './pixel-eyes-v155.js?v=166',
   './quick-jump-v154.css?v=154',
   './quick-jump-v154.js?v=161',
   './social-v152.css?v=152',

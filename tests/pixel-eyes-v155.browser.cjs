@@ -18,7 +18,7 @@ const root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f
  const action=(action,text='',owner='alice',key='alice_bob')=>page.evaluate(data=>window.dispatchEvent(new CustomEvent('telechat-chat-action-v155',{detail:data})),{action,text,owner,key});
  await action('send','hello','other');assert.equal((await state()).mood,'typing');await action('send','hello');assert.equal((await state()).mood,'happy');
  await action('send','❤️');assert.equal((await state()).mood,'love');await action('delete');assert.equal((await state()).mood,'sad');
- await page.evaluate(()=>{document.getElementById('msg-input').value='';document.getElementById('msg-input').blur();telechatPixelEyesV155.react('idle',1);addRow('new','Привет');});await page.waitForTimeout(80);assert.equal((await state()).mood,'curious');
+ await page.evaluate(()=>{document.getElementById('msg-input').value='';document.getElementById('msg-input').blur();telechatPixelEyesV155.react('idle',1);addRow('new','Привет');});await page.waitForTimeout(80);assert.equal((await state()).mood,'happy','Greeting now has a local happy reaction');
  await page.evaluate(()=>{telechatPixelEyesV155.react('idle',1);const row=document.querySelector('.msg[data-id="new"]');document.getElementById('messages').append(row);});await page.waitForTimeout(50);assert.equal((await state()).mood,'idle','Rerender does not replay incoming reaction');
  await page.evaluate(()=>addRow('heart','💕'));await page.waitForTimeout(50);assert.equal((await state()).mood,'love');
  await page.evaluate(()=>{telechatPixelEyesV155.react('idle',1);addRow('history','Old heart ❤️','bob',Date.now()-60000);});await page.waitForTimeout(50);assert.equal((await state()).mood,'idle','Older history does not animate');

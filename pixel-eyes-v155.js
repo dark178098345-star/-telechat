@@ -7,7 +7,7 @@
  const eyeIcon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3-6 10-6 10 6 10 6-3 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>';
  const active=$('active-chat'),messages=$('messages'),input=$('msg-input');if(!active||!messages||!input)return;
  let owner='',prefs={enabled:true,style:'classic',shake:false,aura:true,speech:true},stage,canvas,dialog,preview,focusBefore,stageAura,previewAura,speech;
- let musicPlaying=false,speechUntil=0,lastSpeech=-Infinity;const replyCounts=new Map();
+ let musicPlaying=false,speechUntil=0,lastSpeech=-Infinity;const replyCounts=new Map(),recentReplies=new Map();
  const replies={love:['Да у вас любовь)','Сердечки уже не помещаются)'],sad:['Побуду с тобой тихонько.','Давай немного выдохнем.'],laugh:['Ну всё, я тоже смеюсь)','Заразительный смех)'],angry:['Выдохнем? Я рядом.'],happy:['Вот это настроение!','Забираю немного твоего позитива)'],sleep:['Пора отдыхать. Я потише.'],surprised:['Ого! Глаза ещё шире)'],think:['Думаем вместе)']};
  let frame=0,lastFrame=0,running=false,nativeHidden=false,mood='idle',until=0,moodStart=0,typingUntil=0,remoteTyping=false;
  let typingX=0,readingUntil=0,readingY=0,scrollIntentUntil=0,lastScroll=0;
@@ -40,14 +40,17 @@
  const emotions=new Map();
  for(const [expression,tokens] of Object.entries({angry:['😡','😠','😤','🤬','👿','😾','💢'],laugh:['😀','😃','😄','😁','😆','😅','😂','🤣','😊','☺','🙂','🙃','😋','😛','😜','😝','🤪','😸','😹'],sad:['😢','😭','😥','😞','😔','😟','😩','☹','🙁','😿'],love:['❤','♥','💕','💖','💗','💘','💝','💜','💙','💚','💛','🧡','🤍','🖤','🤎','🩷','🩵','🩶','😍','🥰','😘','<3'],surprised:['😮','😯','😲','😳','😱','😨','😰','🤯'],sleep:['😴','🥱','😪','💤'],think:['🤔','🧐','🤨'],wink:['😉'],dizzy:['😵','🥴'],excited:['🥳','🎉','🔥','👍','👏','🤩']}))for(const token of tokens)emotions.set(token,expression);
  const emotionPattern=new RegExp('(?:'+[...emotions.keys()].join('|')+')[\\uFE0E\\uFE0F]?','gu');
- function emotion(text){
+ function messageText(text){
   let value=String(text||'');
   if(value.startsWith('__telechat_story_reply_v152__:')){try{value=JSON.parse(value.slice('__telechat_story_reply_v152__:'.length)).text||'';}catch(_){return '';}}
   else if(value.startsWith('__telechat_media_v1__:')){try{const media=JSON.parse(value.slice('__telechat_media_v1__:'.length));value=['image','voice','file'].includes(media.kind)?String(media.caption||''):'';}catch(_){return '';}}
   else if(value.startsWith('__telechat_'))return '';
-  value=value.replace(/https?:\/\/\S+/gi,'');let found='';
+  return String(value||'').slice(0,8000).replace(/https?:\/\/\S+|```[\s\S]*?```|`[^`]*`/gi,'');
+ }
+ function emotion(text){
+  const value=messageText(text);let found='';
   for(const match of value.matchAll(emotionPattern))found=emotions.get(match[0].replace(/[\uFE0E\uFE0F]/g,''))||found;
-  return found||window.telechatPixelEmotionsV163?.detect(value)||'';
+  return found||window.telechatPixelEmotionsV163?.analyze?.(value).mood||window.telechatPixelEmotionsV163?.detect(value)||'';
  }
  const emotionDuration=expression=>({angry:2300,laugh:2500,sad:2400,love:2400,sleep:2200,dizzy:2400,surprised:1800,think:1800,excited:1800})[expression]||1600;
  const storageKey=nick=>'telechat.pixel-eyes.v155.'+nick;
@@ -124,8 +127,16 @@
  }
  function currentMood(now){if(now<until)return mood;if($('record-btn')?.dataset.voiceState==='recording')return 'record';if(document.activeElement?.id==='message-edit-input-v36')return 'think';if(musicPlaying)return 'dance';if(now<typingUntil)return 'typing';if(now<readingUntil)return 'read';if(document.activeElement===input)return 'focus';return remoteTyping?'curious':'idle';}
  function clearSpeech(){speechUntil=0;if(speech){speech.hidden=true;speech.textContent='';}stage?.classList.remove('pe-talking-v165');}
- function say(text){if(!prefs.speech||!prefs.enabled||stage.hidden||performance.now()-lastSpeech<3000)return;lastSpeech=performance.now();speechUntil=lastSpeech+4200;speech.textContent=text;speech.hidden=false;stage.classList.add('pe-talking-v165');}
- function reply(expression){const list=replies[expression];if(!list)return;const count=replyCounts.get(expression)||0;say(list[count%list.length]);replyCounts.set(expression,count+1);}
+ function say(text){const now=performance.now();if(!prefs.speech||!prefs.enabled||stage.hidden||now<speechUntil||now-lastSpeech<3000)return false;lastSpeech=now;speechUntil=lastSpeech+4200;speech.textContent=text;speech.hidden=false;stage.classList.add('pe-talking-v165');return true;}
+ function reply(expression,text){
+  const model=window.telechatPixelEmotionsV163,value=messageText(text),analysis=model?.analyze?.(value);
+  const topic=analysis?.mood===expression?analysis.topic:expression,list=model?.replies?.[topic]||replies[expression];if(!list)return;
+  // Keep only bounded, short-lived fingerprints, never the message itself.
+  let fingerprint=2166136261;for(const char of value.normalize('NFKC').toLowerCase().replace(/\s+/g,' ').trim())fingerprint=Math.imul(fingerprint^char.codePointAt(0),16777619);
+  const now=performance.now(),id=topic+':'+(fingerprint>>>0);for(const [item,ts] of recentReplies)if(now-ts>=30000)recentReplies.delete(item);
+  if(recentReplies.has(id))return;const count=replyCounts.get(topic)||0;
+  if(say(list[count%list.length])){replyCounts.set(topic,count+1);recentReplies.set(id,now);if(recentReplies.size>32)recentReplies.delete(recentReplies.keys().next().value);}
+ }
  function tick(now){
   if(!running)return;frame=requestAnimationFrame(tick);if(now-lastFrame<50)return;lastFrame=now;
   if(speechUntil&&now>=speechUntil)clearSpeech();
@@ -140,7 +151,7 @@
   if(!force&&expression!=='idle'&&performance.now()<until&&priority(mood)>priority(expression))return;
   mood=expression;moodStart=performance.now();until=moodStart+duration;stage.dataset.mood=expression;sync();
  }
- function resetConversation(){clearSpeech();lastSpeech=-Infinity;clearTimeout(primeTimer);primeTimer=0;key=conversation();welcomePending=!!key;primed=false;seen.clear();mood='idle';until=typingUntil=readingUntil=0;remoteTyping=$('chat-status-text')?.classList.contains('typing')||false;stage.dataset.mood='idle';scheduleScan();}
+ function resetConversation(){clearSpeech();lastSpeech=-Infinity;recentReplies.clear();clearTimeout(primeTimer);primeTimer=0;key=conversation();welcomePending=!!key;primed=false;seen.clear();mood='idle';until=typingUntil=readingUntil=0;remoteTyping=$('chat-status-text')?.classList.contains('typing')||false;stage.dataset.mood='idle';scheduleScan();}
  function sync(){
   const account=self();if(account!==owner){owner=account;read();replyCounts.clear();const player=window.telechatMusicV96?.getState?.();musicPlaying=!!player?.track&&!player.paused;resetConversation();if(dialog?.open)dialog.close();paintSettings();}
   stage.classList.toggle('pe-has-aura-v158',prefs.aura);dialog?.classList.toggle('pe-has-aura-v158',prefs.aura);
@@ -164,7 +175,7 @@
    const source=row._messageSourceV136;if(!source)continue;
    const id=String(source.id||source.client_id||row.dataset.messageKeyV105||row.dataset.id||'');if(!id||seen.has(id))continue;seen.add(id);
    if(first||source.from_nick===owner||source.deleted||source.chat_key&&source.chat_key!==key||!Number.isFinite(Number(source.ts))||Math.abs(Date.now()-Number(source.ts))>30000)continue;
-   const expression=emotion(source.text);react(expression||'curious',expression?emotionDuration(expression):1500,!!expression);if(expression)reply(expression);
+   const expression=emotion(source.text);react(expression||'curious',expression?emotionDuration(expression):1500,!!expression);if(expression)reply(expression,source.text);
   }
   if(rows.length){primed=true;clearTimeout(primeTimer);primeTimer=0;}
   else if(!primeTimer){const initialKey=key;primeTimer=setTimeout(()=>{primeTimer=0;if(initialKey===key&&!stage.hidden)primed=true;},200);}
@@ -200,7 +211,7 @@
   const scene=document.createElement('div');scene.className='pe-scene-v158';preview.before(scene);scene.innerHTML=auraMarkup();scene.append(preview);previewAura=scene.querySelector('svg');
   const auraControl=document.createElement('label');auraControl.className='pe-toggle-v155';auraControl.innerHTML='<span>Цветная обводка<small>Своя форма и цвет для каждой эмоции</small></span><input id="pe-aura-v158" type="checkbox">';dialog.querySelector('.pe-toggle-v155').after(auraControl);
   $('pe-aura-v158').onchange=event=>{prefs.aura=event.target.checked;save();};
-  const speechControl=document.createElement('label');speechControl.className='pe-toggle-v155';speechControl.innerHTML='<span>Реплики глазок<small>Короткий текст рядом с глазками, без звука</small></span><input id="pe-speech-v165" type="checkbox">';auraControl.after(speechControl);
+  const speechControl=document.createElement('label');speechControl.className='pe-toggle-v155';speechControl.innerHTML='<span>Реплики глазок<small>Локальные реакции на фразы. Без звука и отправки текста на сервер ИИ</small></span><input id="pe-speech-v165" type="checkbox">';auraControl.after(speechControl);
   $('pe-speech-v165').onchange=event=>{prefs.speech=event.target.checked;if(!prefs.speech)clearSpeech();save();};
   const catalog=dialog.querySelector('.pe-catalog-v155');styles.forEach(([id,label])=>{
    const button=document.createElement('button');button.type='button';button.dataset.peStyle=id;button.innerHTML='<div class="pe-mini-scene-v158">'+auraMarkup()+'<canvas width="64" height="32" aria-hidden="true"></canvas></div><span></span>';button.querySelector('span').textContent=label;draw(button.querySelector('canvas'),id,'idle',0);paintAura(button.querySelector('svg'),'idle',false);button.onclick=()=>{prefs.style=id;mood='idle';until=previewUntil=0;save();};catalog.append(button);
@@ -222,7 +233,7 @@
  input.addEventListener('focus',()=>{sync();});
  input.addEventListener('paste',event=>{if([...event.clipboardData?.items||[]].some(item=>item.kind==='file'))react('attach',1200);});
  document.addEventListener('pointermove',event=>{if(!running||stage.hidden||event.pointerType==='touch')return;const r=canvas.getBoundingClientRect();look={x:Math.max(-2,Math.min(2,Math.round((event.clientX-r.left-r.width/2)/110))),y:Math.max(-1,Math.min(1,Math.round((event.clientY-r.top-r.height/2)/130)))};},{passive:true});
- window.addEventListener('telechat-chat-action-v155',event=>{sync();const data=event.detail;if(!data||data.owner!==owner||data.key!==conversation())return;if(data.action==='send')typingUntil=0;const detected=emotion(data.text),expression=data.action==='delete'?'sad':data.action==='edit'||data.action==='reaction'&&!data.text?'wink':detected||(data.action==='reaction'?'excited':'happy');react(expression,emotionDuration(expression),true);if(data.action==='send'&&detected)reply(detected);});
+ window.addEventListener('telechat-chat-action-v155',event=>{sync();const data=event.detail;if(!data||data.owner!==owner||data.key!==conversation())return;if(data.action==='send')typingUntil=0;const detected=emotion(data.text),expression=data.action==='delete'?'sad':data.action==='edit'||data.action==='reaction'&&!data.text?'wink':detected||(data.action==='reaction'?'excited':'happy');react(expression,emotionDuration(expression),true);if(data.action==='send'&&detected)reply(detected,data.text);});
  window.addEventListener('telechat-music-state-v97',event=>{const next=event.detail?.playing===true;if(next===musicPlaying)return;musicPlaying=next;sync();if(next)say('Поймал ритм)');});
  function observeFlag(id,name,expression){const node=$(id);if(!node)return;let was=node.classList.contains(name);new MutationObserver(()=>{const value=node.classList.contains(name);if(value&&!was)react(expression,1000);was=value;}).observe(node,{attributes:true,attributeFilter:['class']});}
  observeFlag('reply-bar','show','think');observeFlag('message-edit-overlay-v36','show','think');observeFlag('pending-media','show','attach');observeFlag('emoji-picker','open','excited');observeFlag('poll-modal','show','think');
