@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v163-phrase-emotions';
+const CACHE_NAME='telechat-shell-v164-smooth-send';
 const APP_SHELL=[
   './settings-navigation-v160.css?v=160',
   './settings-navigation-v160.js?v=161',
@@ -118,10 +118,10 @@ const APP_SHELL=[
   './profile-details-v22.js',
   './profile-card-v29.css',
   './chat-reliability-v24.css',
-  './chat-reliability-v24.js?v=155',
+  './chat-reliability-v24.js?v=164',
   './delivery-v72.css?v=72',
-  './message-send-animation-v35.css?v=54',
-  './message-send-animation-v35.js?v=54',
+  './message-send-animation-v35.css?v=164',
+  './message-send-animation-v35.js?v=164',
   './voice-calls-v32.css?v=72',
   './voice-calls-v32.js?v=161',
   './glass-context-v36.css?v=36',

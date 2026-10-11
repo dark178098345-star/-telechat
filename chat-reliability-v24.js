@@ -68,7 +68,7 @@
     const old=element.querySelector('.v72-delivery');if(old)old.replaceWith(next);else element.querySelector('.msg-meta')?.append(next);
     if(state==='failed')next.onclick=()=>retryMessage(item.clientId);
   }
-  async function renderOptimistic(item){
+  async function renderOptimistic(item,animate=false){
     const box=document.getElementById('messages');box?.querySelector('.v51-empty-chat')?.remove();
     const result=await appendMessage({...item.row});
     if(item.row.chat_key!==conversationKey())return;
@@ -76,6 +76,7 @@
     const element=result?.classList?.contains('msg')?result:[...(box?.querySelectorAll('.msg')||[])].find(row=>row.dataset.messageKeyV105===key);if(!element)return;
     item.element=element;element.dataset.clientId=item.clientId;element.classList.add('v72-pending-message');element.querySelector('.msg-check')?.remove();
     element.querySelector('.msg-meta')?.insertAdjacentHTML('beforeend',deliveryMarkup('sending'));liveRows.set(item.clientId,item);
+    if(animate)window.dispatchEvent(new CustomEvent('telechat-message-sent-v164',{detail:{element,owner:item.row.from_nick,key:item.row.chat_key}}));
   }
   async function deliver(item,{silent=false}={}){
     if(item.expiresAt&&Date.now()>item.expiresAt){await outboxDelete(item.clientId);setDeliveryState(item,'failed');return false;}
@@ -110,7 +111,7 @@
     input.value='';input.style.height='';cancelReply();cancelPendingMedia();
     window.dispatchEvent(new CustomEvent('telechat-chat-action-v155',{detail:{action:'send',owner:me.nick,key,text}}));
     try{sb.from('typing').delete().eq('chat_key',key).eq('nick',me.nick).then(()=>{});}catch(error){}
-    optimisticQueue=optimisticQueue.then(()=>renderOptimistic(item)).catch(()=>{});
+    optimisticQueue=optimisticQueue.then(()=>renderOptimistic(item,true)).catch(()=>{});
     await optimisticQueue;renderContacts();deliver(item).catch(error=>{setDeliveryState(item,'failed');outboxWrite({...item,state:'failed'});showToast(friendlyError(error));});
   };
   const previousLogin=doLogin;
@@ -121,7 +122,7 @@
   async function sendDirect(nick,text,{expiresAt}={}){
     const owner=me?.nick;if(!owner||nick===owner||!/^[a-zA-Z0-9_]{1,64}$/.test(nick)||typeof text!=='string'||!text.trim()||text.length>8000)throw Error('Не удалось отправить приглашение.');
     const item={clientId:crypto.randomUUID(),state:'sending',createdAt:Date.now(),expiresAt,row:{chat_key:chatKey(owner,nick),from_nick:owner,text,ts:nextTimestamp(),reply_text:null,read_by:[],deleted:false}};
-    optimisticQueue=optimisticQueue.then(async()=>{if(me?.nick===owner&&conversationKey()===item.row.chat_key)await renderOptimistic(item);}).catch(()=>{});
+    optimisticQueue=optimisticQueue.then(async()=>{if(me?.nick===owner&&conversationKey()===item.row.chat_key)await renderOptimistic(item,true);}).catch(()=>{});
     await optimisticQueue;if(me?.nick!==owner)throw Error('Аккаунт изменился. Повтори отправку.');
     try{return await deliver(item,{silent:true});}catch(error){setDeliveryState(item,'failed');await outboxWrite({...item,state:'failed'});return false;}
   }
