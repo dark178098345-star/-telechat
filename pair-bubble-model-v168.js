@@ -1,0 +1,16 @@
+/* Personal profile decoration, not a mutual relationship or consent record. */
+(()=>{
+ const PREFIX='__telechat_profile_v1__:',FIELD='pair_bubble_v168';
+ const types={couple:{label:'Для пары',colors:{rose:['Розовый','#d58aab'],cherry:['Бордовый','#cc778b'],lilac:['Лиловый','#b99ada']},icons:['heart','rings','spark','none'],text:'Рядом с тобой'},friends:{label:'Для друзей',colors:{blue:['Синий','#82b8e2'],cyan:['Бирюзовый','#76c8cf'],navy:['Стальной','#99aecb']},icons:['game','bolt','rocket','link','none'],text:'На одной волне'}};
+ const paths={heart:'<path d="M12 20 4 12C-2 6 7-1 12 6c5-7 14 0 8 6Z"/>',rings:'<circle cx="8" cy="13" r="5"/><circle cx="16" cy="13" r="5"/><path d="m6 5 2-2 2 2m4 0 2-2 2 2"/>',spark:'<path d="m12 2 3 7 7 3-7 3-3 7-3-7-7-3 7-3Z"/>',game:'<path d="M7 7h10c2 0 3 2 3.5 4l1 5c.5 3-2 4-4 2l-2-2h-7l-2 2c-2 2-4.5 1-4-2l1-5C4 9 5 7 7 7Z"/><path d="M6 11v4m-2-2h4m7-2h.01M18 14h.01"/>',bolt:'<path d="m13 2-9 12h7l-1 8 10-13h-8Z"/>',rocket:'<path d="M8 15c-5 0-5 4-5 6 2 0 6 0 6-5M8 13l-4-2 5-4M11 16l2 4 4-5M7 13C11 5 16 2 22 2c0 6-3 11-11 15Z"/><circle cx="16" cy="8" r="2"/>',link:'<path d="m10 14 4-4m-5 7-2 2a4 4 0 0 1-6-6l5-5a4 4 0 0 1 6 0m0 0 3-3a4 4 0 0 1 6 6l-5 5a4 4 0 0 1-6 0"/>'};
+ const labels={heart:'Сердце',rings:'Кольца',spark:'Искра',game:'Геймпад',bolt:'Молния',rocket:'Ракета',link:'Связь',none:'Без значка'};
+ const nick=v=>String(v||'').trim().replace(/^@/,'').toLowerCase();
+ function clean(value){if(!value||typeof value!=='object'||Array.isArray(value)||!Object.hasOwn(types,value.kind))return null;const t=types[value.kind],peer=nick(value.peer);if(!/^[a-z0-9_.-]{1,64}$/.test(peer))return null;const text=Array.from(String(value.text||'').replace(/[\x00-\x1f\x7f]/g,'').trim()).slice(0,44).join('');return {v:1,kind:value.kind,peer,text:text||t.text,size:value.size==='small'?'small':'normal',color:Object.hasOwn(t.colors,value.color)?value.color:Object.keys(t.colors)[0],left:t.icons.includes(value.left)?value.left:t.icons[0],right:t.icons.includes(value.right)?value.right:t.icons[0]};}
+ function data(raw){if(typeof raw==='string'&&raw.startsWith(PREFIX)){try{const d=JSON.parse(raw.slice(PREFIX.length));if(d&&typeof d==='object'&&!Array.isArray(d))return d;}catch(_){}}return {status:typeof raw==='string'?raw:''};}
+ const reads=new Map();let bytes=0;
+ function get(raw){if(reads.has(raw))return reads.get(raw);const value=clean(data(raw)[FIELD]),result=value?Object.freeze(value):null;if(typeof raw==='string'&&raw.length<1500000){reads.set(raw,result);bytes+=raw.length;while(reads.size>32||bytes>3000000){const first=reads.keys().next().value;bytes-=first.length;reads.delete(first);}}return result;}
+ function encode(raw,value){const d=data(raw);d[FIELD]=value===null?null:clean(value);return PREFIX+JSON.stringify(d);}
+ function defaults(kind='couple'){const t=types[kind]||types.couple;return {v:1,kind:Object.hasOwn(types,kind)?kind:'couple',peer:'',text:t.text,size:'normal',color:Object.keys(t.colors)[0],left:t.icons[0],right:t.icons[0]};}
+ const svg=id=>Object.hasOwn(paths,id)?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+paths[id]+'</svg>':'';
+ window.exstraPairModelV168=Object.freeze({types,labels,nick,clean,get,encode,defaults,svg,FIELD});
+})();

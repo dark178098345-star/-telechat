@@ -1,0 +1,10 @@
+const fs=require('fs'),vm=require('vm'),path=require('path'),assert=require('assert/strict'),ctx={window:{}};
+vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../pair-bubble-model-v168.js'),'utf8'),ctx);const m=ctx.window.exstraPairModelV168;
+const raw='__telechat_profile_v1__:'+JSON.stringify({status:'Busy',photo:'picture',music:{title:'Music',url:'https://test/song'},future:{keep:true}});
+const value={kind:'couple',peer:'@BOB',text:' Together ',size:'normal',color:'rose',left:'heart',right:'rings'};
+const packed=m.encode(raw,value),pair=m.get(packed);assert.equal(pair.peer,'bob');assert.equal(pair.text,'Together');assert(Object.isFrozen(pair));
+const parsed=JSON.parse(packed.slice('__telechat_profile_v1__:'.length));assert.equal(parsed.status,'Busy');assert.equal(parsed.photo,'picture');assert.equal(parsed.music.title,'Music');assert(parsed.future.keep);
+assert.equal(m.get(m.encode(packed,null)),null);assert.equal(m.get(raw),null);assert.equal(m.clean({...value,kind:'__proto__'}),null);assert.equal(m.clean({...value,peer:'<img>'}),null);assert.equal(m.clean({...value,peer:''}),null);
+const friends=m.clean({...value,kind:'friends',color:'rose',left:'heart',right:'rings'});assert.equal(friends.color,'blue');assert.equal(friends.left,'game');assert.equal(friends.right,'game');assert.equal(m.clean({...value,text:'x'.repeat(80)}).text.length,44);assert.equal(m.clean({...value,text:'\nHello\t'}).text,'Hello');
+for(const kind of Object.keys(m.types))for(const icon of m.types[kind].icons){assert(!m.svg(icon).includes('script'));assert(!m.svg(icon).includes('http'));}assert.equal(m.svg('<img>'),'');
+console.log('PASS pair model: type-specific styles, bounded text, metadata preservation, removal, immutable cached values and static trusted SVG');

@@ -2548,6 +2548,7 @@ saveProfile=async function(){
   const originalText=button.textContent;
   button.disabled=true;button.innerHTML='<span class="spinner"></span>Сохраняем...';
   try{
+    const profileOwner=me;if(!profileOwner?.nick)return;
     const allowed=canUseProfileVideo(me);
     const oldAvatarVideo=me.avatar_video||'';
     const oldAppearance=window.telechatProfileAppearanceV84?window.telechatProfileAppearanceV84.decode(me.banner):{banner:String(me.banner||'')};
@@ -2564,9 +2565,12 @@ saveProfile=async function(){
     const nextStatus=packProfileData(document.getElementById('prof-status-inp').value.trim(),profAvatarPhoto);
     const nextBio=document.getElementById('prof-bio-inp').value.trim().slice(0,220);
     const storedBanner=window.telechatProfileAppearanceV84?window.telechatProfileAppearanceV84.encode(nextBanner,window.telechatProfileAppearanceV84.getSelected()):nextBanner;
-    const result=await sb.from('users').update({av:profAvIdx,name:nextName,status:nextStatus,bio:nextBio,banner:storedBanner,avatar_video:nextAvatarVideo}).eq('nick',me.nick);
+    if(me!==profileOwner)return;
+    const result=await sb.from('users').update({av:profAvIdx,name:nextName,status:nextStatus,bio:nextBio,banner:storedBanner,avatar_video:nextAvatarVideo}).eq('nick',profileOwner.nick).select('nick,status').maybeSingle();
     if(result.error)throw result.error;
-    me.av=profAvIdx;me.name=nextName;me.status=nextStatus;me.bio=nextBio;me.banner=storedBanner;me.avatar_video=nextAvatarVideo;
+    if(!result.data||typeof result.data.status!=='string')throw Error('Профиль не найден');
+    if(me!==profileOwner)return;
+    me.av=profAvIdx;me.name=nextName;me.status=result.data.status;me.bio=nextBio;me.banner=storedBanner;me.avatar_video=nextAvatarVideo;
     userCache[me.nick]=me;
     if(oldAvatarVideo&&oldAvatarVideo!==nextAvatarVideo)removeOldProfileVideo(oldAvatarVideo);
     if(oldBanner.startsWith('video:')&&oldBanner!==nextBanner)removeOldProfileVideo(oldBanner.slice(6));
@@ -2618,7 +2622,7 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 </script>
 <script src="./storage-watch-v124.js?v=161"></script>
 <script src="./user-cache-v123.js?v=140"></script>
-<script src="./profile-performance-v11.js?v=167"></script>
+<script src="./profile-performance-v11.js?v=168"></script>
 <script src="./followers-v12.js?v=167"></script>
 <script src="./room-media-v113.js?v=113"></script>
 <script src="./app-performance-v17.js?v=140"></script>
@@ -2650,10 +2654,10 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <script src="./emoji-motion-v80.js?v=161"></script>
 <script src="./profile-background-v84.js?v=93"></script>
 <script src="./profile-editor-v88.js?v=167"></script>
-<script src="./profile-quick-v91.js?v=167"></script>
+<script src="./profile-quick-v91.js?v=168"></script>
 <script src="./profile-studio-v92.js?v=167"></script>
 <script src="./soundcloud-v98.js?v=117"></script>
-<script src="./profile-music-v97.js?v=99"></script>
+<script src="./profile-music-v97.js?v=168"></script>
 <script src="./music-library-v96.js?v=161"></script>
 <script src="./profile-follow-compact-v102.js?v=167"></script>
 <script src="./message-core-v104.js?v=121"></script>
@@ -2702,12 +2706,15 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <script src="./pixel-emotions-v163.js?v=166"></script>
 <script src="./pixel-eyes-v155.js?v=167"></script>
 <link rel="stylesheet" href="./phone-shell-v159.css?v=167">
-<script src="./phone-shell-v159.js?v=165"></script>
+<script src="./phone-shell-v159.js?v=168"></script>
 <link rel="stylesheet" href="./settings-navigation-v160.css?v=165">
 <script src="./settings-navigation-v160.js?v=167"></script>
 <link rel="stylesheet" href="./chat-comfort-v167.css?v=167">
 <script src="./chat-comfort-v167.js?v=167"></script>
 <script src="./message-archive-v167.js?v=167"></script>
+<script src="./pair-bubble-model-v168.js?v=168"></script>
+<link rel="stylesheet" href="./pair-bubble-v168.css?v=168">
+<script src="./pair-bubble-v168.js?v=168"></script>
 <style id="plain-background-v142">html body,html body #chat-screen.active,#startup-loader{background:#090a12!important}</style>
 </body>
 </html>

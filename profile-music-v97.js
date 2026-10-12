@@ -52,15 +52,16 @@
       if(!latest.data)throw new Error('Профиль не найден.');
       if(meNow()?.nick!==nick)throw new Error('Аккаунт изменился. Повтори действие.');
       if(user.status!==initialStatus)throw new Error('Профиль успел измениться. Нажми ещё раз — сохраним свежую версию.');
-      const before=latest.data.status,next=encode(before,music);
+      const before=latest.data.status,next=encode(before,music);let stored=next;
       if(next!==before){
         // Status may include a large avatar: never put it in a URL filter.
         const result=await sb.from('users').update({status:next}).eq('nick',nick).select('nick,status').maybeSingle();
         if(result.error)throw result.error;
         if(!result.data)throw new Error('Не удалось сохранить профиль. Повтори действие.');
+        if(typeof result.data.status==='string')stored=result.data.status;
       }
-      user.status=next;
-      if(typeof userCache!=='undefined')userCache[nick]={...(userCache[nick]||{}),...user,status:next};
+      user.status=stored;
+      if(typeof userCache!=='undefined')userCache[nick]={...(userCache[nick]||{}),...user,status:stored};
       document.querySelectorAll('.profile-music-v97').forEach(node=>{if(node.dataset.nick===nick)renderAfter(node.previousElementSibling,user);});
       window.dispatchEvent(new CustomEvent('telechat-profile-music-updated-v97',{detail:{nick}}));
       return music;

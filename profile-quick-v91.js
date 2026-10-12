@@ -66,6 +66,7 @@
           <button type="button" data-pq="game">${icon('<path d="M7 7h10c2 0 3 2 3.5 4l1 5c.5 3-2 4-4 2l-2-2h-7l-2 2c-2 2-4.5 1-4-2l1-5C4 9 5 7 7 7Z"/><path d="M6 11v4m-2-2h4m7-2h.01M18 14h.01"/>')}<span>Добавить игровой статус</span><b aria-hidden="true">›</b></button>
           <button type="button" data-pq="edit">${pen}<span>Редактировать профиль</span><b aria-hidden="true">›</b></button>
           <button type="button" data-pq="view">${eye}<span>Посмотреть профиль</span><b aria-hidden="true">›</b></button>
+          <button type="button" data-pq="pair">${icon('<circle cx="8" cy="8" r="3"/><circle cx="17" cy="9" r="3"/><path d="M2 21v-2a6 6 0 0 1 12 0v2m1-7a6 6 0 0 1 7 5v2"/>')}<span>Парный пузырёк</span><b aria-hidden="true">›</b></button>
         </div>
         <button type="button" class="pq-switch" data-pq="switch">${swap}<span>Сменить аккаунт<small>Открыть список аккаунтов</small></span><b aria-hidden="true">›</b></button>
       </div>`;
@@ -76,6 +77,7 @@
     card.querySelector('[data-pq="game"]').addEventListener('click',()=>{close();window.telechatGameStatusV151?.open();});
     card.querySelector('[data-pq="edit"]').addEventListener('click',edit);
     card.querySelector('[data-pq="view"]').addEventListener('click',()=>{close();window.previewMyProfile?.();});
+    card.querySelector('[data-pq="pair"]').addEventListener('click',()=>{close();window.exstraPairV168?.open();});
     card.querySelector('[data-pq="switch"]').addEventListener('click',()=>{close();window.openLogoutDialogV76?.('switch');});
   }
 
@@ -90,6 +92,7 @@
     if(statusButton.textContent!==(status||'Добавить статус'))statusButton.textContent=status||'Добавить статус';
     statusButton.classList.toggle('pq-status-empty',!status);
     window.telechatProfileMusicV97?.renderAfter(statusButton,user);
+    window.exstraPairV168?.renderQuick(card,user);
     const avatar=card.querySelector('.pq-avatar');
     if(typeof window.setAvatarElement==='function')paintMedia(avatar,JSON.stringify([user.nick,user.av,window.unpackProfileData?.(user.status)?.photo||'',user.avatar_video]),()=>window.setAvatarElement(avatar,user));
     else avatar.textContent='👤';

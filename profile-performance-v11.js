@@ -62,6 +62,7 @@
     if(appearance)appearance.applyBackground(appearance.decode(banner).background);
     if(typeof enhanceVerifiedBadges==='function')enhanceVerifiedBadges();
     window.telechatPresenceV120?.paintProfile(user.nick,user.last_seen);
+    window.exstraPairV168?.renderProfile(user);
   }
   openUserProfile=async function(nick,force=false){
     nick=String(nick||'').toLowerCase();if(!nick)return;lastNick=nick;
@@ -75,4 +76,5 @@
   };
   closeUserProfile=function(){token++;document.getElementById('user-profile-modal').classList.remove('show');viewedProfileNickV5='';mode('idle');syncMedia();};
   document.getElementById('profile-load-retry').onclick=()=>openUserProfile(lastNick,true);
+  window.addEventListener('telechat-user-updated-v123',event=>{const nick=String(event.detail?.nick||'').toLowerCase();if(nick)cache.delete(nick);});
 })();
