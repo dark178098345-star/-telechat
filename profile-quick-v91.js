@@ -83,16 +83,15 @@
     const user=typeof me!=='undefined'?me:null;
     if(!user)return;
     ensure();
-    card.querySelector('.pq-name').textContent=user.name||user.nick||'Мой профиль';
-    card.querySelector('.pq-nick').textContent=user.nick?'@'+user.nick:'';
+    const name=card.querySelector('.pq-name'),nick=card.querySelector('.pq-nick');if(name.textContent!==(user.name||user.nick||'Мой профиль'))name.textContent=user.name||user.nick||'Мой профиль';if(nick.textContent!==(user.nick?'@'+user.nick:''))nick.textContent=user.nick?'@'+user.nick:'';
     let status='';
     try{status=window.unpackProfileData?.(user.status)?.status||'';}catch(error){}
     const statusButton=card.querySelector('.pq-status');
-    statusButton.textContent=status||'＋ Добавить статус';
+    if(statusButton.textContent!==(status||'Добавить статус'))statusButton.textContent=status||'Добавить статус';
     statusButton.classList.toggle('pq-status-empty',!status);
     window.telechatProfileMusicV97?.renderAfter(statusButton,user);
     const avatar=card.querySelector('.pq-avatar');
-    if(typeof window.setAvatarElement==='function')paintMedia(avatar,JSON.stringify([user.nick,user.av,user.status,user.avatar_video,user.animated_profile]),()=>window.setAvatarElement(avatar,user));
+    if(typeof window.setAvatarElement==='function')paintMedia(avatar,JSON.stringify([user.nick,user.av,window.unpackProfileData?.(user.status)?.photo||'',user.avatar_video]),()=>window.setAvatarElement(avatar,user));
     else avatar.textContent='👤';
     const cover=card.querySelector('.pq-cover');
     paintMedia(cover,JSON.stringify([user.nick,user.banner,user.animated_profile]),()=>window.applyProfileBanner?.(cover,user.banner));

@@ -966,7 +966,7 @@
     const statusText=joinedCount>1?hostName+' и ещё '+(joinedCount-1)+' участник'+(joinedCount-1===1?'':'а')+' звонят':hostName+' звонит';
     incomingInvite={member:memberRow,call,view,statusText};
     await showCallUiV32('incoming',statusText,view);startRingtoneV32();
-    try{sendPushNotification('Входящий групповой звонок',statusText);}catch(error){}
+    try{sendPushNotification('Входящий групповой звонок',statusText,{allowDuringFocus:true});}catch(error){}
   }
 
   async function acceptCallV32(){

@@ -1,0 +1,26 @@
+.comfort-note-v167{font-size:12px;line-height:1.65;color:var(--text3);margin:8px 0 18px}
+.comfort-preview-v167{display:flex;flex-direction:column;gap:5px;padding:18px;background:var(--bg);border:1px solid var(--border);border-radius:12px;margin:14px 0 22px}
+.comfort-preview-v167>div{max-width:88%;padding:10px 14px;font-size:12px;line-height:1.5;border-radius:var(--chat-radius-v167,16px)}
+.comfort-them-v167{align-self:flex-start;background:var(--bg3);color:var(--text)}.comfort-me-v167{align-self:flex-end;background:var(--chat-outgoing-v167,#7057ba);color:#fff}
+.comfort-colors-v167{border:0;padding:0;margin:0 0 22px;display:flex;gap:12px;flex-wrap:wrap}.comfort-colors-v167 legend{font-size:13px;color:var(--text);margin-bottom:12px}
+.comfort-colors-v167 button{width:38px;height:38px;background:var(--swatch);border:3px solid var(--bg2);border-radius:50%;outline:1px solid var(--border);cursor:pointer}.comfort-colors-v167 button[aria-pressed=true]{outline:2px solid var(--text2);outline-offset:2px}
+.comfort-field-v167{display:flex;flex-direction:column;gap:12px;margin:20px 0;font-size:13px;color:var(--text)}.comfort-field-v167>span{display:flex;justify-content:space-between}.comfort-field-v167 output{color:var(--text3)}.comfort-field-v167 input{width:100%;accent-color:var(--accent)}.comfort-field-v167 select{padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--bg3);color:var(--text);font:inherit}
+.comfort-secondary-v167,.focus-options-v167 button{min-height:44px;padding:11px 14px;border:1px solid var(--border);border-radius:10px;background:var(--bg3);color:var(--text);font:inherit;cursor:pointer}.focus-options-v167{display:flex;gap:10px;margin:12px 0 16px}.focus-options-v167 button{flex:1}.comfort-secondary-v167[hidden],#focus-status-v167[hidden]{display:none!important}
+#focus-status-v167{color:var(--accent3);width:34px;height:34px}#focus-status-v167 svg{width:20px;height:20px}
+html body #settings-panel [data-settings-group][hidden]{display:none!important}
+html body[data-chat-color-v167] #chat-screen #messages>.msg.me>.msg-bubble{background:var(--chat-outgoing-v167)!important;color:#fff!important}
+html body[data-chat-color-v167] #chat-screen #messages>.msg>.msg-bubble{border-radius:var(--chat-radius-v167)!important}
+html body[data-chat-color-v167] #chat-screen #messages>.msg.flow-next-v150.them>.msg-bubble{border-bottom-left-radius:6px!important}
+html body[data-chat-color-v167] #chat-screen #messages>.msg.flow-joined-v150.them>.msg-bubble{border-top-left-radius:6px!important}
+html body[data-chat-color-v167] #chat-screen #messages>.msg.flow-next-v150.me>.msg-bubble{border-bottom-right-radius:6px!important}
+html body[data-chat-color-v167] #chat-screen #messages>.msg.flow-joined-v150.me>.msg-bubble{border-top-right-radius:6px!important}
+html body[data-chat-density-v167=compact] #chat-screen #messages>.msg{margin-top:6px!important}html body[data-chat-density-v167=compact] #chat-screen #messages>.msg>.msg-bubble{padding:7px 11px!important;line-height:1.45!important}
+html body[data-chat-density-v167=spacious] #chat-screen #messages>.msg{margin-top:12px!important}html body[data-chat-density-v167=spacious] #chat-screen #messages>.msg>.msg-bubble{padding:14px 17px!important;line-height:1.65!important}
+html body[data-chat-density-v167] #chat-screen #messages>.msg.flow-joined-v150{margin-top:0!important}
+html body[data-chat-color-v167] #chat-screen #messages>.msg:is(.me,.them)>.msg-bubble:has(> .tele-emoji-run-v127){background:transparent!important;border:0!important;border-radius:0!important;padding:5px 8px!important}
+html body.focus-v167 #stories-strip-v115,html body.focus-v167 #pixel-eyes-stage-v155{display:none!important}
+body.focus-v167 .comfort-preview-v167,body.focus-v167 #contacts-list{background-image:none!important}
+body.focus-v167 #messages{background-image:none!important}
+body[data-chat-density-v167=compact] .comfort-preview-v167>div{padding:7px 11px;line-height:1.45}
+body[data-chat-density-v167=spacious] .comfort-preview-v167>div{padding:14px 17px;line-height:1.65}
+@media(prefers-reduced-motion:reduce){.comfort-section-v167 *{transition:none!important}}

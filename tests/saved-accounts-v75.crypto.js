@@ -119,7 +119,7 @@ const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
   assert.equal(accounts.length, 1);
   assert.equal(accounts[0].nick, 'creator_test');
   assert.equal(accounts[0].profile.name, 'Creator Test');
-  assert.equal(accounts[0].profile.moons, 4321);
+  assert.equal(Object.hasOwn(accounts[0].profile,'moons'), false, 'Retired balance is not included in saved account cards');
 
   const second = makeContext();
   vm.runInContext(source, second.context);

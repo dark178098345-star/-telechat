@@ -1,123 +1,72 @@
-/* Public profile only. Keep existing nodes and handlers: no layout observers. */
-html body #user-profile-modal{padding:16px;background:rgba(5,6,12,.8)}
-html body #user-profile-modal .user-profile-card{
-  width:min(500px,100%);max-width:500px;max-height:calc(100dvh - 32px);
-  margin:auto;padding:0!important;border:1px solid #ffffff24;border-radius:28px;
-  overflow:auto;overflow-x:hidden;overscroll-behavior:contain;background:#12131e;color:#f5f3fb;
-  box-shadow:0 28px 90px #0008;scrollbar-width:thin;scrollbar-gutter:stable;
-}
-html body #user-profile-modal .user-profile-cover{height:166px!important;max-height:none!important;border:0}
-html body #user-profile-modal .user-profile-cover::after{background:linear-gradient(180deg,#0001 40%,#11121e70)}
-html body #user-profile-modal .user-profile-close{
-  top:12px;right:12px;width:36px;height:36px;border-radius:50%;background:#11121ed9;
-  display:grid;place-items:center;color:#fff;box-shadow:none;backdrop-filter:none;
-}
-html body #user-profile-modal .user-profile-body{
-  display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:12px;row-gap:0;
-  padding:0 24px 22px;overflow:visible;text-align:left;text-shadow:none;
-  background:linear-gradient(180deg,rgba(16,17,27,.58),rgba(16,17,27,.78) 200px);
-}
-html body #user-profile-modal .user-profile-avatar{
-  grid-area:1/1;position:relative;z-index:1;width:100px;height:100px;
-  margin:-42px 0 16px;border:4px solid #191a26;border-radius:30px;
-  box-shadow:0 6px 20px #0004;justify-self:start;
-}
-html body #user-profile-modal .user-profile-avatar .avatar-photo{border-radius:25px}
-html body #user-profile-modal .activity-badge-v124{
-  grid-area:1/2;align-self:end;justify-self:end;margin:0 0 19px;
-  padding:7px 11px;background:#282139;color:#e0d3ff;border-color:#bca1f533;font-size:11px;
-}
-html body #user-profile-modal .user-profile-name{
-  grid-area:2/1;margin:0;min-width:0;overflow-wrap:anywhere;font-size:26px;line-height:1.2;letter-spacing:-.6px;color:#fff;
-}
-html body #user-profile-modal .user-profile-seen{
-  grid-area:2/2;align-self:center;margin:0;font-size:10px;line-height:1.4;color:#b8c4ba;
-  max-width:130px;text-align:right;
-}
-html body #user-profile-modal .user-profile-nick{
-  grid-area:3/1;margin:6px 0 0;min-width:0;overflow-wrap:anywhere;font-size:12px;color:#b5a6ee;
-}
-html body #user-profile-modal .user-profile-role{
-  grid-area:3/2;justify-self:end;align-self:center;margin:5px 0 0;padding:4px 7px;
-  font-size:9px;line-height:1.3;box-shadow:none;
-}
-html body #user-profile-modal #profile-follow-compact-v102{
-  grid-area:4/1/5/-1;width:100%;max-width:100%;margin:16px 0 0;padding:0;
-  flex-wrap:wrap;gap:10px 12px;border:0;background:none;box-shadow:none;
-}
-html body #user-profile-modal #follow-stats{gap:18px;flex:1}
-html body #user-profile-modal .follow-count{font-size:15px;color:#f6f3ff}
-html body #user-profile-modal .follow-label{font-size:10px;color:#bdb9cd}
-html body #user-profile-modal #follow-btn{min-height:34px;padding:7px 12px;font-size:11px;color:#fff;box-shadow:none}
-html body #user-profile-modal .user-profile-status{
-  grid-area:5/1/6/-1;margin:15px 0 0;padding:0 0 0 11px;justify-self:stretch;
-  border:0;border-left:2px solid #a38ae0!important;border-radius:0;background:none!important;
-  box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;color:#e3dfee;font-size:13px;line-height:1.6;
-}
-html body #user-profile-modal .profile-music-v97{
-  grid-area:6/1/7/-1;width:100%;margin:18px 0 0;padding:12px;
-  border:1px solid #c1a7ff25;border-radius:16px;background:linear-gradient(110deg,#30283fbb,#1f1e2cbb);
-  color:#f5f1ff;gap:12px;
-}
-html body #user-profile-modal .profile-music-play-v97{width:42px;height:42px;flex-basis:42px;border-radius:50%;background:#bda0f52b;color:#e0ccff}
-html body #user-profile-modal .profile-music-copy-v97{flex:1;min-width:0}
-html body #user-profile-modal .profile-music-copy-v97 small{font-size:9px;letter-spacing:1px;color:#b9abcd}
-html body #user-profile-modal .profile-music-copy-v97 strong{font-size:14px;color:#f4efff;margin-top:4px}
-html body #user-profile-modal #moon-profile-showcase-v29{
-  grid-area:7/1/8/-1;margin:20px 0 0;padding:0 0 18px;border:0;border-bottom:1px solid #ffffff13!important;
-  border-radius:0;background:none!important;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;
-}
-html body #user-profile-modal .moon-showcase-head{padding:0 0 4px;border:0}
-html body #user-profile-modal .moon-showcase-head small{font-size:8px;color:#c1b492}
-html body #user-profile-modal .moon-showcase-head strong{font-size:13px;margin-top:3px}
-html body #user-profile-modal .moon-showcase-head em{font-size:10px;color:#c3b4ec}
-html body #user-profile-modal .moon-profile-showcase-list{gap:9px;padding-top:12px}
-html body #user-profile-modal .moon-showcase-star{
-  flex:1 0 64px;width:auto!important;height:73px!important;max-width:86px;
-  border-radius:16px;box-shadow:none;animation:none;
-}
-html body #user-profile-modal .moon-showcase-star small{font-size:8px}
-html body #user-profile-modal .user-profile-section{
-  grid-area:8/1/9/-1;margin:18px 0 0;padding:0 0 18px;border:0;border-bottom:1px solid #ffffff13!important;
-  border-radius:0;background:none!important;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;
-}
-html body #user-profile-modal .user-profile-section-label{font-size:9px;letter-spacing:1.4px;color:#afa5c6;margin-bottom:9px}
-html body #user-profile-modal .user-profile-bio{font-size:13px;line-height:1.75;color:#e0dce9;overflow-wrap:anywhere}
-html body #user-profile-modal .profile-details-toggle{
-  grid-area:9/1/10/-1;margin:8px 0 0;padding:10px 0;border:0;border-radius:0;
-  background:none!important;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;
-}
-html body #user-profile-modal .profile-details-copy{display:flex;flex-direction:column;gap:3px}
-html body #user-profile-modal .profile-details-title{font-size:12px;color:#eee9f6}
-html body #user-profile-modal .profile-details-subtitle{font-size:10px;line-height:1.4;color:#afa7c0;white-space:normal}
-html body #user-profile-modal .profile-details-icon{width:36px;height:36px;background:#ffffff07;border-color:#ffffff12;color:#c5b3e9}
-html body #user-profile-modal .profile-details-shell{
-  grid-area:10/1/11/-1;background:none!important;border:0;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;
-}
-html body #user-profile-modal .profile-details-group{background:#10111dbb;border-color:#ffffff12;border-radius:14px}
-html body #user-profile-modal .user-profile-actions{
-  grid-area:11/1/12/-1;position:static!important;width:100%;margin:12px 0 0!important;padding:0!important;
-  border:0!important;background:none!important;box-shadow:none!important;
-}
-html body #user-profile-modal .user-profile-actions .modal-btn{min-height:44px;border-radius:13px}
-html body #user-profile-modal :is(button,a):focus-visible{outline:2px solid #c2a6ff;outline-offset:3px}
-@media(max-width:520px){
-  html body #user-profile-modal{padding:6px}
-  html body #user-profile-modal .user-profile-card{max-height:calc(min(100dvh,var(--v100-height,100dvh)) - 12px);border-radius:23px;scrollbar-gutter:auto}
-  html body #user-profile-modal .user-profile-cover{height:140px!important}
-  html body #user-profile-modal .user-profile-body{padding:0 18px max(18px,env(safe-area-inset-bottom));column-gap:8px}
-  html body #user-profile-modal .user-profile-avatar{width:88px;height:88px;margin-top:-38px;border-radius:27px}
-  html body #user-profile-modal .user-profile-avatar .avatar-photo{border-radius:22px}
-  html body #user-profile-modal .user-profile-name{font-size:24px}
-  html body #user-profile-modal .user-profile-seen{max-width:105px;font-size:9px}
-  html body #user-profile-modal #follow-stats{gap:12px}
-  html body #user-profile-modal .moon-showcase-head em{font-size:9px}
-}
-/* Do not keep invisible profile loading decorations running. */
-#profile-load:not(.show) .profile-load-orbit,#profile-load:not(.show) .profile-load-orbit::before{animation-play-state:paused}
-@media(max-width:350px){
-  html body #user-profile-modal .user-profile-body{padding-left:14px;padding-right:14px}
-  html body #user-profile-modal .user-profile-name{font-size:21px}
-  html body #user-profile-modal .follow-label{font-size:9px}
-  html body #user-profile-modal #follow-btn{padding:7px 9px;font-size:10px}
-}
+/* v167: one quiet profile surface; no shimmer, blur or animated borders. */
+body{--pc-bg:#171b22;--pc-line:#ffffff14;--pc-text:#edf0f5;--pc-muted:#959eac;--pc-block:#202630}
+body.theme-light{--pc-bg:#fff;--pc-line:#1720351c;--pc-text:#202b3c;--pc-muted:#6d7887;--pc-block:#f3f5f8}
+body.theme-green{--pc-bg:#15231e;--pc-line:#e8fff018;--pc-text:#edf5ef;--pc-muted:#98aea1;--pc-block:#203029}
+html body #user-profile-modal{padding:20px;background:#080b12b8;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;animation:none!important}
+html body #user-profile-modal .user-profile-card{position:relative;width:min(440px,100%);max-width:440px;max-height:calc(100dvh - 40px);padding:0!important;margin:auto;border:1px solid var(--pc-line);border-radius:18px;overflow:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-width:thin;background:var(--pc-bg)!important;color:var(--pc-text);box-shadow:0 16px 48px #0005;animation:none!important;transform:none!important;isolation:isolate}
+html body #user-profile-modal .user-profile-card::before,html body #user-profile-modal .user-profile-card::after{display:none!important}
+html body #user-profile-modal .user-profile-card *{animation:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;text-shadow:none!important;box-shadow:none!important}
+html body #user-profile-modal .user-profile-card,html body #user-profile-modal .user-profile-card *,html body #user-profile-modal .user-profile-card *::before,html body #user-profile-modal .user-profile-card *::after{transition:none!important;animation:none!important}
+html body #user-profile-modal .user-profile-card,html body #profile-quick-v91,html body #phone-you-v159 .phone-self-card-v159{font-family:system-ui,-apple-system,'Segoe UI',sans-serif!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+html body #user-profile-modal .user-profile-card *,html body #profile-quick-v91 *,html body #phone-you-v159 .phone-self-card-v159 *{font-family:inherit!important}
+html body #user-profile-modal .user-profile-name,html body #profile-quick-v91 .pq-name,html body #phone-you-v159 .phone-self-name-v159{font-weight:650!important}
+html body #user-profile-modal .user-profile-card :is(button,a):focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+html body #user-profile-modal .user-profile-cover{height:130px!important;max-height:none!important;border:0;position:relative;overflow:hidden;background-color:var(--pc-block)}
+html body #user-profile-modal .user-profile-cover.banner-preset-cosmos,html body #profile-quick-v91 .pq-cover.banner-preset-cosmos{background-image:linear-gradient(135deg,#253348,#1b2636)!important}
+html body #user-profile-modal .user-profile-cover::after{background:linear-gradient(transparent 65%,#0002);animation:none}
+html body #user-profile-modal .user-profile-close{position:absolute;z-index:5;top:12px;right:12px;width:34px;height:34px;border:1px solid #fff3;border-radius:9px;background:#111820cc;display:grid;place-items:center;color:#fff;font-size:18px;line-height:1}
+html body #user-profile-modal .user-profile-body{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:12px;row-gap:0;padding:0 24px 22px;text-align:left;overflow:visible;background:none!important}
+html body #user-profile-modal .profile-photo-background-v84 .user-profile-body{background:linear-gradient(#171b22ed,#171b22f5),var(--profile-card-photo-v84)!important;background-size:cover!important;background-position:center!important}
+html body.theme-light #user-profile-modal .profile-photo-background-v84 .user-profile-body{background:linear-gradient(#ffffffed,#fffffff5),var(--profile-card-photo-v84)!important}
+html body #user-profile-modal .user-profile-avatar{grid-area:1/1;position:relative;display:grid;place-items:center;overflow:hidden;font-size:36px;width:76px;height:76px;justify-self:start;margin:-30px 0 16px;border:4px solid var(--pc-bg);border-radius:20px;background:var(--pc-block);z-index:1}
+html body #user-profile-modal .user-profile-avatar :is(img,video){border-radius:15px;width:100%;height:100%;object-fit:cover}
+html body #user-profile-modal .activity-badge-v124{grid-area:1/2;align-self:end;justify-self:end;margin:0 0 18px;padding:6px 9px;border:1px solid var(--pc-line);border-radius:7px;background:none;color:var(--pc-muted);font-size:10px;letter-spacing:0}
+html body #user-profile-modal .user-profile-name{grid-area:2/1/3/-1;margin:0;color:var(--pc-text);font-size:23px;line-height:1.3;font-weight:650;letter-spacing:-.4px;overflow-wrap:anywhere}
+html body #user-profile-modal .user-profile-nick{grid-area:3/1;margin:5px 0 0;color:var(--pc-muted);font-size:12px;line-height:1.5;overflow-wrap:anywhere;min-width:0}
+html body #user-profile-modal .user-profile-seen{grid-area:3/2;align-self:center;margin:5px 0 0;font-size:10px;line-height:1.5;color:var(--pc-muted);max-width:150px;text-align:right}
+html body #user-profile-modal .user-profile-role{grid-area:4/1/5/-1;justify-self:start;align-self:start;margin:10px 0 0;padding:4px 7px;border:1px solid var(--pc-line);border-radius:6px;background:none!important;font-size:9px;line-height:1.3;letter-spacing:.03em}
+html body #user-profile-modal .user-profile-role:not(.show){display:none!important}
+html body #user-profile-modal #profile-follow-compact-v102{grid-area:5/1/6/-1;display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin:18px 0 0;padding:14px 0;border:0;border-top:1px solid var(--pc-line);border-bottom:1px solid var(--pc-line);border-radius:0;background:none!important;width:100%;max-width:100%}
+html body #user-profile-modal #follow-stats{display:flex;flex:1;gap:24px;margin:0}
+html body #user-profile-modal .follow-stat{background:none;border:0;padding:0;text-align:left;transform:none}
+html body #user-profile-modal .follow-count{display:block;font-size:15px;line-height:1.3;font-weight:650;color:var(--pc-text);background:none!important}
+html body #user-profile-modal .follow-count.loading{color:var(--pc-muted)!important}
+html body #user-profile-modal .follow-label{font-size:10px;line-height:1.4;font-weight:400;text-transform:none;letter-spacing:0;color:var(--pc-muted);margin-top:3px}
+html body #user-profile-modal #follow-btn{min-height:36px;padding:8px 12px;border:1px solid var(--pc-line)!important;border-radius:8px;background:var(--pc-block)!important;color:var(--pc-text)!important;font-size:11px;font-weight:550}
+html body #user-profile-modal .user-profile-status{grid-area:6/1/7/-1;margin:18px 0 0;padding:0;border:0;background:none!important;border-radius:0;font-size:13px;font-weight:450;color:var(--pc-text);line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere}
+html body #user-profile-modal .profile-music-v97{grid-area:7/1/8/-1;margin:18px 0 0;padding:12px;display:flex;gap:12px;border:1px solid var(--pc-line);border-radius:10px;background:var(--pc-block);width:100%;color:var(--pc-text)}
+html body #user-profile-modal .profile-music-play-v97{width:36px;height:36px;flex:0 0 36px;border:1px solid var(--pc-line);border-radius:9px;background:none;color:var(--pc-text)}
+html body #user-profile-modal .profile-music-copy-v97{flex:1;min-width:0}.profile-music-copy-v97 strong{overflow:hidden;text-overflow:ellipsis}
+html body #user-profile-modal .profile-music-copy-v97 small{font-size:8px;letter-spacing:.08em;color:var(--pc-muted)}
+html body #user-profile-modal .profile-music-copy-v97 strong{font-size:13px;font-weight:550;color:var(--pc-text);margin-top:4px}
+html body #user-profile-modal .user-profile-section{grid-area:8/1/9/-1;margin:20px 0 0;padding:18px 0 0;border:0;border-top:1px solid var(--pc-line);border-radius:0;background:none!important}
+html body #user-profile-modal .user-profile-section-label{font-size:9px;letter-spacing:.08em;font-weight:500;color:var(--pc-muted);margin-bottom:10px}
+html body #user-profile-modal .user-profile-bio{font-size:13px;line-height:1.75;color:var(--pc-text);white-space:pre-wrap;overflow-wrap:anywhere}
+html body #user-profile-modal .user-profile-actions{grid-area:9/1/10/-1;position:static!important;display:flex;flex-wrap:wrap;gap:8px;margin:20px 0 0!important;padding:0!important;border:0!important;background:none!important;width:100%}
+html body #user-profile-modal .user-profile-actions .modal-btn{flex:1;min-height:44px;border-radius:9px;background:var(--pc-block);border:1px solid var(--pc-line);color:var(--pc-text);font-size:12px;font-weight:550}
+html body #user-profile-modal .user-profile-actions .modal-btn.primary{background:var(--accent);color:#fff;border:0}
+html body #user-profile-modal .user-profile-actions [hidden]{display:none!important}
+html body.theme-light #user-profile-modal .user-profile-actions .modal-btn.secondary{background:#f3f5f8!important;color:#425064!important;border-color:#dae0e8!important}
+html body #user-profile-modal .user-profile-body>[hidden]{display:none!important}
+html body #profile-load{background:var(--pc-bg);transition:none!important}html body #profile-load .profile-load-orbit{display:none}html body #profile-load .profile-load-logo{font-size:16px;font-weight:600;color:var(--pc-text)}html body #profile-refresh{display:none!important}
+html body #profile-quick-v91{--pq-surface:var(--pc-bg);--pq-block:var(--pc-block);--pq-line:var(--pc-line);--pq-text:var(--pc-text);--pq-muted:var(--pc-muted);position:fixed;z-index:12000;box-sizing:border-box;width:328px;overflow:auto;overscroll-behavior:contain;border:1px solid var(--pq-line);border-radius:14px;background:var(--pq-surface);color:var(--pq-text);font-family:inherit;animation:none!important;box-shadow:0 12px 36px #0004}
+html body #profile-quick-v91[hidden]{display:none!important}#profile-quick-v91 *{box-sizing:border-box}#profile-quick-v91 button{font-family:inherit;cursor:pointer;text-align:left;color:inherit;scale:1!important;letter-spacing:normal}
+html body #profile-quick-v91 .pq-cover{position:relative;overflow:hidden;background-size:cover;background-position:center;background-color:var(--pc-block)}#profile-quick-v91 .pq-cover video{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
+html body #profile-quick-v91 .pq-close{position:absolute;right:10px;top:10px;display:grid;place-items:center;width:30px;height:30px;border:1px solid #fff3;border-radius:8px;padding:0;background:#111820cc;color:#fff;font-size:20px;line-height:1}
+html body #profile-quick-v91 .pq-top{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;position:relative}#profile-quick-v91 .pq-avatar-wrap{position:relative;flex-shrink:0}#profile-quick-v91 .pq-avatar{display:flex;align-items:center;justify-content:center;border:4px solid var(--pq-surface);overflow:hidden;background:var(--pc-block);font-size:32px}#profile-quick-v91 .pq-avatar :is(img,video){width:100%;height:100%;object-fit:cover}#profile-quick-v91 .pq-dot{position:absolute;border-style:solid;border-color:var(--pq-surface);border-radius:50%;background:#53c990}
+html body #profile-quick-v91 .pq-online{display:flex;align-items:center;gap:6px;padding-bottom:10px;font-size:10px;color:var(--pq-muted)}#profile-quick-v91 .pq-online i{width:6px;height:6px;border-radius:50%;background:#53c990}#profile-quick-v91 .pq-name{margin:0 0 4px;line-height:1.3;overflow-wrap:anywhere;color:var(--pq-text)}#profile-quick-v91 .pq-nick{font-size:12px;line-height:1.5;color:var(--pq-muted);overflow-wrap:anywhere}#profile-quick-v91 .pq-status{display:block;width:100%;font-size:12px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere;max-height:78px;overflow:auto}
+html body #profile-quick-v91 .pq-actions button,html body #profile-quick-v91 .pq-switch{display:flex;align-items:center;gap:10px;min-height:44px;width:100%;border:0;background:transparent;font-size:12px;line-height:1.4}#profile-quick-v91 svg{width:18px;height:18px;flex:0 0 18px}#profile-quick-v91 button span{flex:1;min-width:0}#profile-quick-v91 button b{font-size:18px;font-weight:400;color:var(--pq-muted)}#profile-quick-v91 .pq-switch{padding:12px}#profile-quick-v91 small{display:block;margin-top:3px;font-size:10px;color:var(--pq-muted)}#profile-quick-v91 button:hover{background-color:var(--pq-block)}#profile-quick-v91 button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+html body #profile-quick-v91 *{animation:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;box-shadow:none!important}
+html body #profile-quick-v91 .pq-cover{height:100px}html body #profile-quick-v91 .pq-body{padding:0 18px 18px}html body #profile-quick-v91 .pq-avatar,html body #profile-quick-v91 .pq-avatar-wrap{width:70px;height:70px;border-radius:18px}html body #profile-quick-v91 .pq-avatar :is(img,video){border-radius:13px}
+html body #profile-quick-v91 .pq-top{margin-top:-26px;margin-bottom:14px}html body #profile-quick-v91 .pq-dot{width:15px;height:15px;border-width:3px;right:0;bottom:0}
+html body #profile-quick-v91 .pq-name{font-size:20px;font-weight:650}html body #profile-quick-v91 .pq-status{padding:0;margin:16px 0;border:0;border-radius:0;background:none;color:var(--pc-text)}
+html body #profile-quick-v91 .pq-actions{margin-top:18px;padding:0;border-radius:0;background:none;border-top:1px solid var(--pc-line)}html body #profile-quick-v91 .pq-actions button{border-radius:0;border-bottom:1px solid var(--pc-line);padding:12px 0;min-height:45px}html body #profile-quick-v91 .pq-switch{border-radius:8px;background:var(--pc-block);margin-top:16px}
+html body #profile-quick-v91 svg{color:var(--pc-muted)}html body #profile-quick-v91 .activity-badge-v124{background:none;border:1px solid var(--pc-line);border-radius:6px;color:var(--pc-muted)}
+html body #phone-you-v159 .phone-self-card-v159{border-radius:14px;border:1px solid var(--pc-line);background:var(--pc-bg);box-shadow:none}
+html body #phone-you-v159 .phone-self-cover-v159{height:134px;border-radius:0;box-shadow:none}html body #phone-you-v159 .phone-self-body-v159{background:var(--pc-bg);padding:0 20px 20px}
+html body #phone-you-v159 .phone-self-avatar-v159{width:76px!important;height:76px!important;border-radius:20px!important;border:4px solid var(--pc-bg)!important;box-shadow:none!important}
+html body #phone-you-v159 .phone-self-name-v159{font-size:23px;font-weight:650;color:var(--pc-text)}html body #phone-you-v159 .phone-self-nick-v159{color:var(--pc-muted)}html body #phone-you-v159 .phone-self-status-v159{padding:0;border:0;border-radius:0;background:none;color:var(--pc-text);font-size:13px;margin:18px 0}
+html body #phone-you-v159 .phone-profile-edit-v159{background:var(--pc-block);border:1px solid var(--pc-line);border-radius:9px;color:var(--pc-text)}
+html body .follow-list-overlay{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;animation:none!important}html body .follow-list-card{border-radius:16px;background:var(--pc-bg);border-color:var(--pc-line);box-shadow:0 16px 48px #0005}
+html body .follow-list-card *{animation:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+@media(max-width:520px){html body #user-profile-modal{padding:10px}html body #user-profile-modal .user-profile-card{max-height:calc(min(100dvh,var(--v100-height,100dvh)) - 20px);border-radius:16px}html body #user-profile-modal .user-profile-body{padding:0 18px max(20px,env(safe-area-inset-bottom));column-gap:8px}html body #user-profile-modal .user-profile-cover{height:122px!important}html body #user-profile-modal .user-profile-name{font-size:21px}html body #user-profile-modal .user-profile-seen{font-size:9px;max-width:108px}html body #user-profile-modal #follow-stats{gap:18px}}

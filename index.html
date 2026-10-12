@@ -235,22 +235,6 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
 #profile-panel .field-input:focus{border-color:var(--accent);background:rgba(30,30,48,.90);box-shadow:0 0 0 3px rgba(124,110,247,.10),0 8px 24px rgba(0,0,0,.14);}
 #profile-panel .profile-bio-input{width:100%;min-height:92px;max-height:150px;resize:vertical;margin:0 0 6px;padding:12px 14px;border:1px solid rgba(124,110,247,.14);border-radius:12px;background:rgba(26,26,40,.72);color:var(--text);font:14px 'Nunito',sans-serif;line-height:1.5;outline:none;}
 #profile-panel .profile-bio-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(124,110,247,.10);}
-.user-profile-card{position:relative;width:min(390px,92vw);padding:0;overflow:hidden;border-color:rgba(167,139,250,.24);background:linear-gradient(165deg,rgba(28,27,48,.98),rgba(16,17,29,.99));}
-.user-profile-cover{height:104px;background:radial-gradient(circle at 20% 20%,rgba(124,110,247,.38),transparent 40%),radial-gradient(circle at 85% 30%,rgba(56,189,248,.18),transparent 38%),linear-gradient(135deg,#201d42,#111527);position:relative;overflow:hidden;}
-.user-profile-cover::before{content:'✦  ·  ✧  ·  ✦';position:absolute;inset:20px 0 auto;text-align:center;color:rgba(255,255,255,.2);font-size:15px;letter-spacing:20px;}
-.user-profile-close{position:absolute;z-index:2;right:12px;top:12px;width:34px;height:34px;border:1px solid rgba(255,255,255,.12);border-radius:11px;background:rgba(10,10,18,.42);color:#fff;font-size:18px;cursor:pointer;backdrop-filter:blur(8px);}
-.user-profile-body{padding:0 20px 20px;text-align:center;}
-.user-profile-avatar{width:92px;height:92px;margin:-48px auto 12px;position:relative;display:grid;place-items:center;overflow:hidden;border:4px solid #171725;border-radius:30px;background:var(--bg3);font-size:40px;box-shadow:0 15px 34px rgba(0,0,0,.38);}
-.user-profile-avatar .avatar-photo{width:100%;height:100%;display:block;object-fit:cover;border-radius:26px;}
-.user-profile-name{font-size:21px;font-weight:900;color:var(--text);}
-.user-profile-nick{margin-top:2px;color:#9c8cff;font-size:12px;font-weight:800;}
-.user-profile-seen{margin-top:7px;color:var(--text3);font-size:11px;}
-.user-profile-status{display:inline-flex;max-width:100%;margin-top:12px;padding:7px 11px;border-radius:10px;background:rgba(124,110,247,.12);color:#d8d4ff;font-size:12px;font-weight:700;overflow-wrap:anywhere;}
-.user-profile-section{margin-top:15px;padding:13px 14px;border:1px solid rgba(255,255,255,.055);border-radius:14px;background:rgba(14,15,25,.42);text-align:left;}
-.user-profile-section-label{margin-bottom:6px;color:var(--text3);font-size:9px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;}
-.user-profile-bio{min-height:20px;color:var(--text2);font-size:13px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere;}
-.user-profile-actions{display:flex;gap:8px;margin-top:16px;}
-.user-profile-actions .modal-btn{min-height:44px;}
 .member-info,.member-item .av{cursor:pointer;}
 #my-nick-display{padding:10px 12px!important;border-radius:10px;background:rgba(124,110,247,.07);border:1px solid rgba(124,110,247,.10);color:var(--text2)!important;}
 #profile-panel .auth-btn{margin-top:4px;border-radius:12px;padding:14px;background:linear-gradient(135deg,var(--accent),#6d5cf6);box-shadow:0 10px 26px rgba(124,110,247,.24);transition:transform .22s ease,box-shadow .22s ease,filter .22s ease;}
@@ -455,10 +439,6 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
 </style>
 <link rel="stylesheet" href="./ui-polish-v16.css">
 <link rel="stylesheet" href="./moderation-v19.css">
-<link rel="stylesheet" href="./moons-v20.css">
-<link rel="stylesheet" href="./animated-profile-v26.css">
-<link rel="stylesheet" href="./profile-details-v22.css">
-<link rel="stylesheet" href="./profile-card-v29.css">
 <link rel="stylesheet" href="./chat-reliability-v24.css">
 <link rel="stylesheet" href="./delivery-v72.css?v=72">
 <link rel="stylesheet" href="./message-send-animation-v35.css?v=164">
@@ -483,11 +463,10 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
 <link rel="stylesheet" href="./chat-stability-v78.css?v=78">
 <link rel="stylesheet" href="./mobile-experience-v79.css?v=79">
 <link rel="stylesheet" href="./emoji-motion-v80.css?v=82">
-<link rel="stylesheet" href="./profile-background-v84.css?v=86">
+<link rel="stylesheet" href="./profile-background-v84.css?v=167">
 <link rel="stylesheet" href="./profile-editor-v87.css?v=87">
-<link rel="stylesheet" href="./profile-editor-v88.css?v=90">
-<link rel="stylesheet" href="./profile-quick-v91.css?v=91">
-<link rel="stylesheet" href="./profile-studio-v92.css?v=92">
+<link rel="stylesheet" href="./profile-editor-v88.css?v=167">
+<link rel="stylesheet" href="./profile-studio-v92.css?v=167">
 <link id="calm-style-v95" rel="stylesheet" href="./chat-foundation-v94.css?v=94" media="not all">
 <script src="./appearance-mode-v95.js?v=95"></script>
 <link rel="stylesheet" href="./music-library-v96.css?v=96">
@@ -495,8 +474,6 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
 <link rel="stylesheet" href="./soundcloud-v98.css?v=99">
 <link rel="stylesheet" href="./mobile-adaptation-v100.css?v=100">
 <link rel="stylesheet" href="./background-presence-v101.css?v=101">
-<link rel="stylesheet" href="./profile-follow-compact-v102.css?v=102">
-<link rel="stylesheet" href="./profile-follow-compact-v103.css?v=103">
 <link rel="stylesheet" href="./stories-v115.css?v=153">
 <link rel="stylesheet" href="./music-hub-v117.css?v=119">
 <link rel="stylesheet" href="./chat-wallpaper-v119.css?v=119">
@@ -968,7 +945,7 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
         <div class="user-profile-bio" id="view-profile-bio"></div>
       </div>
       <div class="user-profile-actions">
-        <button class="modal-btn secondary" onclick="closeUserProfile()">Закрыть</button>
+        <button class="modal-btn secondary" id="view-profile-edit-btn" hidden>Редактировать</button>
         <button class="modal-btn primary" id="view-profile-message-btn">Написать</button>
       </div>
     </div>
@@ -1071,10 +1048,12 @@ function playTone(ctx,freq,delay,duration,volume,type='sine'){
   o.start(start);o.stop(start+duration+.02);
 }
 function playPing(){
+  if(window.telechatComfortV167?.isQuiet())return;
   if(!document.getElementById('sound-toggle').checked)return;
   try{const ctx=getSoundContext();if(ctx)playTone(ctx,880,0,.28,.16,'sine');}catch(e){}
 }
 function playSendSound(){
+  if(window.telechatComfortV167?.isQuiet())return;
   if(!document.getElementById('sound-toggle').checked)return;
   try{
     const ctx=getSoundContext();if(!ctx)return;
@@ -1112,7 +1091,8 @@ function autoRequestAndroidNotifications(){
 }
 autoRequestAndroidNotifications();
 
-function sendPushNotification(title,body){
+function sendPushNotification(title,body,options={}){
+  if(window.telechatComfortV167?.isQuiet()&&!options.allowDuringFocus)return;
   try{
     if(window.TelechatAndroid&&typeof window.TelechatAndroid.notify==='function'&&document.hidden){window.TelechatAndroid.notify(String(title||'ExstraChat'),String(body||''));return;}
     if(typeof Notification==='undefined')return;
@@ -2343,7 +2323,6 @@ saveProfile=async function(){
 
 <script>
 /* TELECHAT PROFILE VIDEO + CREATOR BADGE V10 */
-const PROFILE_VIDEO_NICKS=['creator','tele'];
 const PROFILE_VIDEO_BUCKET='profile-media';
 const PROFILE_VIDEO_MAX_SECONDS=10;
 const PROFILE_VIDEO_MAX_BYTES=12*1024*1024;
@@ -2355,9 +2334,7 @@ let pendingBannerVideoPreview='';
 
 function canUseProfileVideo(userOrNick){
   const nick=String(typeof userOrNick==='object'&&userOrNick?userOrNick.nick:userOrNick||'').toLowerCase();
-  if(PROFILE_VIDEO_NICKS.includes(nick))return true;
-  const user=typeof userOrNick==='object'&&userOrNick?userOrNick:(me&&String(me.nick).toLowerCase()===nick?me:userCache[nick]);
-  return user?.animated_profile===true;
+  return !!nick;
 }
 function isCreatorVerified(nick){return String(nick||'').toLowerCase()==='creator';}
 function verifiedBadgeHtml(nick,large=false){
@@ -2479,7 +2456,7 @@ handleProfileBannerFile=function(input){
 
 async function handleProfileAvatarVideo(input){
   const file=input.files&&input.files[0];input.value='';
-  if(!canUseProfileVideo(me)){showToast('Открой анимированный профиль за 4 000 Лун');return;}
+  if(!canUseProfileVideo(me))return;
   const preview=await validateProfileVideo(file);
   if(!preview)return;
   clearObjectPreview('avatar');
@@ -2492,7 +2469,7 @@ async function handleProfileAvatarVideo(input){
 }
 async function handleProfileBannerVideo(input){
   const file=input.files&&input.files[0];input.value='';
-  if(!canUseProfileVideo(me)){showToast('Открой анимированный профиль за 4 000 Лун');return;}
+  if(!canUseProfileVideo(me))return;
   const preview=await validateProfileVideo(file);
   if(!preview)return;
   clearObjectPreview('banner');
@@ -2641,22 +2618,19 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 </script>
 <script src="./storage-watch-v124.js?v=161"></script>
 <script src="./user-cache-v123.js?v=140"></script>
-<script src="./profile-performance-v11.js?v=161"></script>
-<script src="./followers-v12.js"></script>
+<script src="./profile-performance-v11.js?v=167"></script>
+<script src="./followers-v12.js?v=167"></script>
 <script src="./room-media-v113.js?v=113"></script>
 <script src="./app-performance-v17.js?v=140"></script>
 <script src="./ui-polish-v16.js"></script>
 <script src="./moderation-v19.js"></script>
-<script src="./moons-v20.js?v=161"></script>
-<script src="./animated-profile-v26.js?v=161"></script>
-<script src="./profile-details-v22.js"></script>
 <script src="./chat-reliability-v24.js?v=164"></script>
 <script src="./message-send-animation-v35.js?v=164"></script>
-<script src="./voice-calls-v32.js?v=161"></script>
+<script src="./voice-calls-v32.js?v=167"></script>
 <script src="./tele-emoji-art-v127.js?v=161"></script>
 <script src="./reaction-art-v126.js?v=128"></script>
 <script src="./message-context-v36.js?v=156"></script>
-<script src="./desktop-notifications-v37.js?v=161"></script>
+<script src="./desktop-notifications-v37.js?v=167"></script>
 <script src="./ui-symbols-v125.js?v=125"></script>
 <script src="./voice-send-v38.js?v=125"></script>
 <script src="./media-compat-v40.js?v=40"></script>
@@ -2665,23 +2639,23 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <script src="./chat-open-loader-v44.js?v=113"></script>
 <script src="./chat-speed-v51.js?v=150"></script>
 <script src="./chat-actions-v52.js?v=105"></script>
-<script src="./sound-studio-v53.js?v=53"></script>
+<script src="./sound-studio-v53.js?v=167"></script>
 <script src="./chat-experience-v62.js?v=161"></script>
 <script src="./chat-flow-v64.js?v=74"></script>
 <script src="./interaction-v65.js?v=66"></script>
-<script src="./saved-accounts-v75.js?v=75"></script>
+<script src="./saved-accounts-v75.js?v=167"></script>
 <script src="./chat-privacy-v74.js?v=74"></script>
 <script src="./smooth-ui-v76.js?v=133"></script>
 <script src="./mobile-optimization-v100.js?v=159"></script>
 <script src="./emoji-motion-v80.js?v=161"></script>
 <script src="./profile-background-v84.js?v=93"></script>
-<script src="./profile-editor-v88.js?v=90"></script>
-<script src="./profile-quick-v91.js?v=153"></script>
-<script src="./profile-studio-v92.js?v=161"></script>
+<script src="./profile-editor-v88.js?v=167"></script>
+<script src="./profile-quick-v91.js?v=167"></script>
+<script src="./profile-studio-v92.js?v=167"></script>
 <script src="./soundcloud-v98.js?v=117"></script>
 <script src="./profile-music-v97.js?v=99"></script>
 <script src="./music-library-v96.js?v=161"></script>
-<script src="./profile-follow-compact-v102.js?v=102"></script>
+<script src="./profile-follow-compact-v102.js?v=167"></script>
 <script src="./message-core-v104.js?v=121"></script>
 <link rel="stylesheet" href="./mentions-v106.css?v=106">
 <script src="./mentions-v106.js?v=106"></script>
@@ -2706,10 +2680,10 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <script src="./mobile-interface-v138.js?v=159"></script>
 <link rel="stylesheet" href="./attachments-v141.css?v=141">
 <script src="./attachments-v141.js?v=141"></script>
-<link rel="stylesheet" href="./profile-card-v143.css?v=153">
+<link rel="stylesheet" href="./profile-card-v143.css?v=167">
 <link rel="stylesheet" href="./listening-v145.css?v=145">
 <link rel="stylesheet" href="./music-together-v147.css?v=148">
-<link rel="stylesheet" href="./light-theme-v147.css?v=147">
+<link rel="stylesheet" href="./light-theme-v147.css?v=167">
 <script src="./music-together-v147.js?v=149"></script>
 <script src="./music-room-invites-v148.js?v=148"></script>
 <link rel="stylesheet" href="./conversation-design-v150.css?v=150">
@@ -2726,11 +2700,14 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <script src="./quick-jump-v154.js?v=161"></script>
 <link rel="stylesheet" href="./pixel-eyes-v155.css?v=165">
 <script src="./pixel-emotions-v163.js?v=166"></script>
-<script src="./pixel-eyes-v155.js?v=166"></script>
-<link rel="stylesheet" href="./phone-shell-v159.css?v=165">
+<script src="./pixel-eyes-v155.js?v=167"></script>
+<link rel="stylesheet" href="./phone-shell-v159.css?v=167">
 <script src="./phone-shell-v159.js?v=165"></script>
 <link rel="stylesheet" href="./settings-navigation-v160.css?v=165">
-<script src="./settings-navigation-v160.js?v=165"></script>
+<script src="./settings-navigation-v160.js?v=167"></script>
+<link rel="stylesheet" href="./chat-comfort-v167.css?v=167">
+<script src="./chat-comfort-v167.js?v=167"></script>
+<script src="./message-archive-v167.js?v=167"></script>
 <style id="plain-background-v142">html body,html body #chat-screen.active,#startup-loader{background:#090a12!important}</style>
 </body>
 </html>

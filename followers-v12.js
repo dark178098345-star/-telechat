@@ -51,8 +51,8 @@
   }
   function render(){
     ensureUi();
-    document.getElementById('followers-count').textContent=String(Math.max(0,state.followers));
-    document.getElementById('following-count').textContent=String(Math.max(0,state.followingCount));
+    document.getElementById('followers-count').textContent=state.ready?String(Math.max(0,state.followers)):'—';
+    document.getElementById('following-count').textContent=state.ready?String(Math.max(0,state.followingCount)):'—';
     const button=document.getElementById('follow-btn'),own=!me||state.target===me.nick;
     button.style.display=own?'none':'';button.classList.toggle('following',state.following);button.textContent=state.following?'✓ Вы подписаны':'Подписаться';
   }

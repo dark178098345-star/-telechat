@@ -113,6 +113,7 @@
 
   function play(category, options = {}) {
     if (!PRESETS[category]) return false;
+    if (!options.preview && category !== 'call' && window.telechatComfortV167?.isQuiet()) return false;
     if (!options.preview && !soundsEnabled()) return false;
     const now = performance.now();
     const throttle = category === 'incoming' ? 240 : category === 'send' ? 90 : 160;

@@ -67,7 +67,7 @@
 
   async function notifyIncomingV37(message) {
     const nick = currentNickV37();
-    if (!nick || nick !== activeNickV37 || !message || message.deleted || message.from_nick === nick || !rememberMessageV37(message.id)) return;
+    if (!nick || nick !== activeNickV37 || !message || message.deleted || message.from_nick === nick || !rememberMessageV37(message.id) || window.telechatComfortV167?.isQuiet()) return;
     const key = String(message.chat_key || '');
     const roomId = roomIdFromKeyV37(key);
     const peer = directPeerV37(key, nick);
@@ -84,6 +84,7 @@
     } catch (error) {}
 
     const roomName = roomId ? roomNamesV37.get(roomId) : '';
+    if (window.telechatComfortV167?.isQuiet()) return;
     desktop.notify({
       id: String(message.id || `${message.from_nick}:${message.ts || Date.now()}`),
       title: roomName ? `${roomName} · ${senderName}` : senderName,

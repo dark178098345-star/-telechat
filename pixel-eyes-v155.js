@@ -158,7 +158,7 @@
   if(!prefs.aura){stageAura?.setAttribute('hidden','');previewAura?.setAttribute('hidden','');}
   if(key!==conversation())resetConversation();
   const phoneSuppressed=document.body.classList.contains('telechat-phone-v159')&&(document.body.classList.contains('telechat-mobile-cramped-v159')||document.body.classList.contains('music-hub-open-v117'));
-  const visible=!!owner&&prefs.enabled&&!phoneSuppressed&&!document.hidden&&!nativeHidden&&$('chat-screen')?.classList.contains('active')&&active.getClientRects().length>0&&!!conversation();
+  const visible=!!owner&&prefs.enabled&&!phoneSuppressed&&!window.telechatComfortV167?.isFocused()&&!document.hidden&&!nativeHidden&&$('chat-screen')?.classList.contains('active')&&active.getClientRects().length>0&&!!conversation();
   const wasHidden=stage.hidden;stage.hidden=!visible;if(visible&&(wasHidden||welcomePending)){welcomePending=false;scheduleScan();react('welcome',800);}
   if(!visible||!prefs.speech)clearSpeech();
   const shouldRun=!document.hidden&&!nativeHidden&&(visible||dialog?.open);

@@ -32,7 +32,7 @@
       return value;
     };
   }
-  new MutationObserver(schedule).observe(document.body,{childList:true,subtree:true});
+  // Reorganize only on profile opens, not on every mutation in the app.
   ensure();
   window.telechatFollowCompactV102={ensure};
 })();

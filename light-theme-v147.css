@@ -41,20 +41,6 @@ html body.theme-light #settings-panel input:not([type=range]):not([type=checkbox
 html body.theme-light #settings-panel label,html body.theme-light #settings-panel p,html body.theme-light #profile-panel label{color:#566179!important}
 html body.theme-light #profile-quick-v91{background:#fff!important;color:#252b3d!important;border-color:#dfe3ed!important}
 html body.theme-light #profile-quick-v91 :is(.pq-name,.pq-status,.pq-action){color:#252b3d!important}
-html body.theme-light #profile-quick-v91 :is(.pq-actions,.pq-switch,.pq-status){background:#f1f3f9!important;border-color:#e1e5ef!important}
-html body.theme-light #user-profile-modal .user-profile-card:not(.profile-photo-background-v84){background:#fff!important;border-color:#dfe3ed!important}
-html body.theme-light #user-profile-modal .user-profile-body{background:linear-gradient(#fffffff0,#ffffffe8)!important;color:#273047!important}
-html body.theme-light #user-profile-modal .user-profile-avatar{border-color:#fff!important}
-html body.theme-light #user-profile-modal :is(.user-profile-name,.user-profile-bio,.user-profile-status,.follow-count,.profile-details-title){color:#273047!important}
-html body.theme-light #user-profile-modal :is(.user-profile-nick,.user-profile-section-label,.profile-details-subtitle,.follow-label){color:#665a81!important}
-html body.theme-light #user-profile-modal :is(.profile-details-group,.profile-music-v97,.activity-badge-v124){background:#f0ebf8!important;border-color:#ded5ec!important;color:#644b8e!important}
-html body.theme-light #user-profile-modal :is(.profile-music-copy-v97 strong,.moon-showcase-head strong){color:#30283d!important}
-html body.theme-light #user-profile-modal :is(.moon-showcase-head small,.moon-showcase-head em,.profile-music-copy-v97 small){color:#726280!important}
-html body.theme-light #user-profile-modal .moon-showcase-star{background:#f1edf8!important;color:#71539c!important;border-color:#d7cde7!important}
-html body.theme-light #user-profile-modal .moon-showcase-star small{color:#685e76!important}
-html body.theme-light #user-profile-modal :is(.user-profile-section,#moon-profile-showcase-v29){border-bottom-color:#dfe3ed!important}
-html body.theme-light #user-profile-modal #view-profile-seen.listening-v145{color:#13714c!important;background:#dff3e9!important}
-html body.theme-light #user-profile-modal .user-profile-role.creator{color:#166380!important;background:#e3f1f8!important;border-color:#bad9e8!important}
 html body.theme-light #music-hub-v117{--mh-bg:#fff;--mh-panel:#f7f8fc;--mh-line:#e2e5ef;--mh-muted:#69728a;--mh-text:#272c3f;--mh-accent:#7050c5;color-scheme:light;background:#fff!important}
 html body.theme-light #music-hub-v117 :is(.mh-nav,.mh-top,.mh-listening,.mh-player,.mh-sheet){background:#f9fafe!important;border-color:#e2e5ef!important}
 html body.theme-light #music-hub-v117 :is(input,textarea,select){background:#fff!important;color:#283047!important;border-color:#dce1ee!important}

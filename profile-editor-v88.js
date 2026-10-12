@@ -22,8 +22,6 @@
   identity.innerHTML='<strong id="profile-editor-name-v88"></strong><span id="profile-editor-nick-v88"></span>';
   avatarControls.replaceWith(identity);
   hero.append(preview);
-  const animated=panel.querySelector('#animated-profile-card');
-  if(animated)hero.after(animated);
 
   const tabs=document.createElement('div');
   tabs.className='profile-tabs-v88';

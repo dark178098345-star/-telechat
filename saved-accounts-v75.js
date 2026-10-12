@@ -90,8 +90,7 @@
       nick,
       name:String(profile.name||nick).slice(0,48),
       av:Math.max(0,Math.min(23,Number(profile.av)||0)),
-      status:typeof profile.status==='string'?profile.status:'',
-      moons:Number.isFinite(Number(profile.moons))?Math.max(0,Number(profile.moons)):0
+      status:typeof profile.status==='string'?profile.status:''
     };
   }
 
@@ -117,7 +116,7 @@
     try{accounts=sanitizeAccounts(await decryptRecord(ACCOUNTS_ID));}catch(error){}
     if(!accounts.length){
       try{
-        const legacy=await decryptRecord(LEGACY_LOGIN_ID),account=safeAccount(legacy&&{...legacy,profile:{nick:legacy.nick,name:legacy.nick,av:0,moons:0},savedAt:legacy.savedAt});
+        const legacy=await decryptRecord(LEGACY_LOGIN_ID),account=safeAccount(legacy&&{...legacy,profile:{nick:legacy.nick,name:legacy.nick,av:0},savedAt:legacy.savedAt});
         if(account)accounts=[account];
       }catch(error){}
     }
@@ -133,12 +132,6 @@
     await encryptRecord(ACCOUNTS_ID,{version:1,accounts:accountsCache});
     const latest=accountsCache[0];
     await encryptRecord(LEGACY_LOGIN_ID,{nick:latest.nick,password:latest.password,savedAt:latest.savedAt});
-  }
-
-  function balanceText(account){
-    if(account.nick==='creator')return '∞ 🌙';
-    const value=Math.max(0,Number(account.profile?.moons)||0);
-    return new Intl.NumberFormat('ru-RU',{notation:value>=10000?'compact':'standard',maximumFractionDigits:1}).format(value)+' 🌙';
   }
 
   function avatarInto(element,account){
@@ -161,9 +154,8 @@
       const name=document.createElement('strong');name.textContent=account.profile?.name||account.nick;
       const nick=document.createElement('small');nick.textContent='@'+account.nick;
       copy.append(name,nick);
-      const balance=document.createElement('span');balance.className='saved-account-balance-v75';balance.textContent=balanceText(account);
       const arrow=document.createElement('span');arrow.className='saved-account-arrow-v75';arrow.textContent='›';arrow.setAttribute('aria-hidden','true');
-      main.append(avatar,copy,balance,arrow);main.onclick=()=>useAccount(account.nick);
+      main.append(avatar,copy,arrow);main.onclick=()=>useAccount(account.nick);
       const remove=document.createElement('button');remove.type='button';remove.className='saved-account-remove-v75';remove.textContent='×';remove.title='Убрать аккаунт';remove.setAttribute('aria-label','Убрать @'+account.nick+' из списка');
       remove.onclick=event=>{event.stopPropagation();removeAccount(account.nick);};
       card.append(main,remove);list.appendChild(card);

@@ -45,16 +45,23 @@
   function paint(user,complete){
     viewedProfileNickV5=user.nick;
     const avatar=document.getElementById('view-profile-avatar');
-    paintMedia(avatar,avatarMarkup(user),()=>setAvatarElement(avatar,user));
-    document.getElementById('view-profile-name').textContent=user.name||user.nick;document.getElementById('view-profile-nick').innerHTML='@'+escHtml(user.nick)+(typeof verifiedBadgeHtml==='function'?verifiedBadgeHtml(user.nick,true):'');
-    const online=isOnline(user.last_seen),seen=document.getElementById('view-profile-seen');seen.textContent=online?'● сейчас в сети':formatLastSeen(user.last_seen);seen.style.color=online?'var(--green)':'var(--text3)';const data=unpackProfileData(user.status);document.getElementById('view-profile-status').textContent=data.status.trim()||'Статус не указан';document.getElementById('view-profile-bio').textContent=complete?((user.bio||'').trim()||'Пользователь пока ничего о себе не рассказал.'):'Загружаем информацию…';
+    const data=unpackProfileData(user.status);
+    paintMedia(avatar,JSON.stringify([user.nick,user.av,data.photo||'',user.avatar_video]),()=>setAvatarElement(avatar,user));
+    const name=document.getElementById('view-profile-name');if(name.textContent!==(user.name||user.nick))name.textContent=user.name||user.nick;
+    const handle=document.getElementById('view-profile-nick'),identity=JSON.stringify([user.nick,user.role,user.verified]);
+    if(handle.dataset.identityV167!==identity){handle.dataset.identityV167=identity;handle.innerHTML='@'+escHtml(user.nick)+(typeof verifiedBadgeHtml==='function'?verifiedBadgeHtml(user.nick,true):'');}
+    if(!window.telechatPresenceV120){const online=isOnline(user.last_seen),seen=document.getElementById('view-profile-seen'),label=online?'● сейчас в сети':formatLastSeen(user.last_seen);if(seen.textContent!==label)seen.textContent=label;seen.style.color=online?'var(--green)':'var(--text3)';}
+    const status=document.getElementById('view-profile-status'),statusText=String(data.status||'').trim();if(status.textContent!==statusText)status.textContent=statusText;status.hidden=!statusText;
+    const bio=document.getElementById('view-profile-bio'),bioText=complete?String(user.bio||'').trim():'';if(bio.textContent!==bioText)bio.textContent=bioText;bio.closest('.user-profile-section').hidden=!bioText;
     window.telechatProfileMusicV97?.renderAfter(document.getElementById('view-profile-status'),user);
     const button=document.getElementById('view-profile-message-btn');button.style.display=user.nick===me.nick?'none':'block';button.onclick=()=>{closeUserProfile();openChat(user.nick);};
+    const edit=document.getElementById('view-profile-edit-btn');if(edit){edit.hidden=user.nick!==me.nick;edit.onclick=()=>{closeUserProfile();window.buildProfPanel?.();window.openPanel?.('profile-panel');};}
     const cover=document.getElementById('view-profile-cover'),banner=user.banner||'preset:cosmos';
     paintMedia(cover,JSON.stringify([user.nick,banner,user.animated_profile]),()=>applyProfileBanner(cover,banner));
     const appearance=window.telechatProfileAppearanceV84;
     if(appearance)appearance.applyBackground(appearance.decode(banner).background);
     if(typeof enhanceVerifiedBadges==='function')enhanceVerifiedBadges();
+    window.telechatPresenceV120?.paintProfile(user.nick,user.last_seen);
   }
   openUserProfile=async function(nick,force=false){
     nick=String(nick||'').toLowerCase();if(!nick)return;lastNick=nick;
@@ -62,7 +69,7 @@
     const request=++token,modal=document.getElementById('user-profile-modal'),saved=cache.get(nick),preview=saved?.user||userCache[nick];
     const complete=!!saved||!!preview&&Object.hasOwn(preview,'bio');
     if(preview){paint(preview,complete);mode('idle');}else{mode('load');document.getElementById('view-profile-name').textContent='';document.getElementById('view-profile-nick').textContent='@'+nick;applyProfileBanner(document.getElementById('view-profile-cover'),'preset:cosmos');mediaPaints.delete(document.getElementById('view-profile-cover'));}
-    modal.classList.add('show');
+    modal.classList.add('show');modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');modal.setAttribute('aria-labelledby','view-profile-name');
     syncMedia();
     try{const user=await full(nick,force);if(request!==token)return;paint(user,true);syncMedia();mode('idle');}catch(e){if(request!==token)return;if(preview){mode('idle');showToast('Показана сохранённая версия профиля');}else mode('error',String(e.message||'Ошибка загрузки'));}
   };

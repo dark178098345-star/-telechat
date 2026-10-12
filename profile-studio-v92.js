@@ -15,8 +15,6 @@
   const tabs=panel.querySelector('.profile-tabs-v88');
   controls.append(tabs,scroll);
   scroll.append(panel.querySelector('#profile-pane-about-v88'),panel.querySelector('#profile-pane-style-v88'));
-  const premium=panel.querySelector('#animated-profile-card');
-  if(premium)scroll.append(premium);
   preview.append(hero);
   const details=document.createElement('div');details.className='ps-preview-details';
   details.innerHTML='<div class="ps-status"></div><section class="ps-bio"><h3>ОБО МНЕ</h3><p></p></section>';

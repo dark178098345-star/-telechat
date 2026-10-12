@@ -20,7 +20,6 @@ html body #profile-panel.v65-full-panel.profile-studio-v92 .profile-pane-v88 .pr
 html body #profile-panel.v65-full-panel.profile-studio-v92 .profile-pane-v88 .profile-editor-card,
 html body #profile-panel.v65-full-panel.profile-studio-v92 .profile-avatar-card-v88{padding:16px!important;border-radius:15px!important;background:#ffffff03!important;border-color:#ffffff10!important}
 html body #profile-panel.v65-full-panel.profile-studio-v92 .profile-fields-card{border:0!important;background:transparent!important;padding:2px!important}
-#profile-panel.profile-studio-v92 #animated-profile-card{margin-top:18px!important}
 #profile-panel.profile-studio-v92 .ps-preview{padding:22px 28px;overflow:auto;min-width:0;scrollbar-width:thin;scrollbar-color:#4f476c transparent;background:radial-gradient(ellipse at 70% 20%,#5c4b8d14,transparent 65%)}
 #profile-panel.profile-studio-v92 .ps-preview-label{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px;font-size:10px;letter-spacing:1.1px;font-weight:800;color:#a39eb9}
 #profile-panel.profile-studio-v92 .ps-live{display:flex;align-items:center;gap:6px;letter-spacing:0;font-weight:600;font-size:10px;color:#ada8c1}
