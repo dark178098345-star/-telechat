@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v168-personal-pair-bubble';
+const CACHE_NAME='telechat-shell-v169-compact-pair-bubble';
 const APP_SHELL=[
   './settings-navigation-v160.css?v=165',
   './settings-navigation-v160.js?v=167',
@@ -11,7 +11,7 @@ const APP_SHELL=[
   './chat-comfort-v167.js?v=167',
   './message-archive-v167.js?v=167',
   './pair-bubble-model-v168.js?v=168',
-  './pair-bubble-v168.css?v=168',
+  './pair-bubble-v168.css?v=169',
   './pair-bubble-v168.js?v=168',
   './quick-jump-v154.css?v=154',
   './quick-jump-v154.js?v=161',
