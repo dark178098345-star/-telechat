@@ -73,6 +73,7 @@
         const message=payload?.new;if(token!==generation||!sameKey(key)||!message||message.deleted)return;
         if(message.id!==undefined&&message.id!==null)latestByKey.set(key,String(message.id));
         if(!currentRoom&&window.telechatIsBlockedV74?.(message.from_nick))return;
+        window.exstraChatStreakV170?.onMessage(message);
         if(message.from_nick===me.nick){scheduleRefresh(key);return;}
         if(seen(message))return;
         try{await appendMessage({...message,chat_key:key});}catch(_){seenEvents.delete(eventKey(message));scheduleRefresh(key);return;}
@@ -84,6 +85,7 @@
       })
       .on('postgres_changes',{event:'UPDATE',schema:'public',table:'messages',filter:'chat_key=eq.'+key},payload=>{
         if(token!==generation||!sameKey(key))return;
+        if(payload.new?.deleted)window.exstraChatStreakV170?.invalidate(key);
         if(window.telechatChatSpeedV51?.applyRealtimeUpdate?.(payload.new||{})!==false)scheduleRefresh(key);
       })
       .subscribe(status=>channelStatus(status,key,token,'messages'));

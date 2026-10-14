@@ -35,7 +35,7 @@ end $$;
 
 create or replace function public.exstra_pair_bubble_v168(p_nick text,p_pass text,p_pair jsonb)
 returns jsonb language plpgsql security definer set search_path='' as $$
-declare actor text; raw text; d jsonb; kind text; peer text; label text; shade text; lhs text; rhs text; result text; allowed_icons text[]; allowed_colors text[];
+declare actor text; raw text; d jsonb; kind text; peer text; label text; shade text; lhs text; rhs text; result text; allowed_icons text[]; allowed_colors text[]; since_text text; since_date date; pair_value jsonb;
 begin
  -- Compatibility with the current legacy login. Does not claim Supabase Auth
  -- session security and does not establish consent by the mentioned person.
@@ -53,7 +53,15 @@ begin
   else allowed_icons:=array['game','bolt','rocket','link','none'];allowed_colors:=array['blue','cyan','navy']; end if;
   shade:=p_pair->>'color';lhs:=p_pair->>'left';rhs:=p_pair->>'right';
   if shade is null or not(shade=any(allowed_colors)) or lhs is null or not(lhs=any(allowed_icons)) or rhs is null or not(rhs=any(allowed_icons)) or coalesce(p_pair->>'size','') not in ('small','normal') then raise exception 'Выбери оформление из списка'; end if;
-  d:=d||jsonb_build_object('pair_bubble_v168',jsonb_build_object('v',1,'kind',kind,'peer',peer,'text',label,'color',shade,'left',lhs,'right',rhs,'size',p_pair->>'size'));
+  pair_value:=jsonb_build_object('v',1,'kind',kind,'peer',peer,'text',label,'color',shade,'left',lhs,'right',rhs,'size',p_pair->>'size');
+  since_text:=nullif(p_pair->>'since','');
+  if since_text is not null then
+   if since_text !~ '^\d{4}-\d{2}-\d{2}$' then raise exception 'Проверь дату знакомства';end if;
+   begin since_date:=since_text::date;exception when others then raise exception 'Проверь дату знакомства';end;
+   if since_date<'1900-01-01'::date or since_date>(statement_timestamp() at time zone 'Asia/Bishkek')::date then raise exception 'Выбери дату знакомства не позже сегодняшнего дня';end if;
+   pair_value:=pair_value||jsonb_build_object('since',since_text);
+  end if;
+  d:=d||jsonb_build_object('pair_bubble_v168',pair_value);
  end if;
  perform set_config('exstrachat.pair_write_v168','yes',true);
  update public.users set status='__telechat_profile_v1__:'||d::text where nick=actor returning status into result;
