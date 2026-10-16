@@ -154,7 +154,7 @@
 
   function collectPrivateChatsV17(allMsgs){
     const seen=new Set(),chats=[];
-    if(sidebarFilter!=='all')return chats;
+    if(!['all','unread'].includes(sidebarFilter))return chats;
     for(const message of allMsgs){
       if(!message.chat_key||message.chat_key.startsWith('room_')||!message.chat_key.includes(me.nick))continue;
       const ownAtStart=me.nick+'_',ownAtEnd='_'+me.nick;
@@ -170,7 +170,7 @@
     if(!list||!me)return false;
     const roomLast={};
     for(const message of allMsgs){if(message.chat_key&&message.chat_key.startsWith('room_')&&!roomLast[message.chat_key])roomLast[message.chat_key]=message;}
-    const visibleRooms=roomRows.filter(room=>sidebarFilter==='all'||room.type===sidebarFilter);
+    const visibleRooms=roomRows.filter(room=>['all','unread'].includes(sidebarFilter)||room.type===sidebarFilter);
     const chats=collectPrivateChatsV17(allMsgs);
     if(chats.length)await batchUsersV15(chats.map(chat=>chat.nick));
     if(paint!==sidebarPaintV105||me?.nick!==owner||sidebarFilter!==filter)return false;
@@ -189,27 +189,30 @@
         element.onclick=()=>openRoom(room);fragment.appendChild(element);rendered++;
       }
     }
-    if(sidebarFilter==='all'){
+    if(['all','unread'].includes(sidebarFilter)){
       if(chats.length){const title=document.createElement('div');title.className='list-section-title';title.textContent='Личные чаты';fragment.appendChild(title);}
       for(const chat of chats){
         const user=userCache[chat.nick]||{nick:chat.nick,name:chat.nick,av:0,status:'',last_seen:0};
-        const online=isOnline(user.last_seen),element=document.createElement('div');element.className='contact'+(currentChat===chat.nick&&!currentRoom?' active':'');
+        const presence=window.telechatPresenceV120?.state(chat.nick),online=presence?presence.state==='online':isOnline(user.last_seen),element=document.createElement('div');element.className='contact'+(currentChat===chat.nick&&!currentRoom?' active':'');
         element.innerHTML='<div class="av'+(online?' av-online':'')+'">'+avatarMarkup(user)+'</div><div class="contact-info"><div class="contact-name">'+escHtml(user.name)+'</div><div class="contact-last">'+escHtml(messagePreviewText(chat.last).substring(0,38))+'</div></div><div class="contact-time">'+formatMsgTime(chat.ts)+'</div>';
         element.dataset.chatKey=chatKey(me.nick,chat.nick);
         element.dataset.chatKind='private';
         element.dataset.nick=chat.nick;
+        element.dataset.contactNick=chat.nick;
         element.dataset.originalName=user.name||chat.nick;
         element.onclick=()=>openChat(chat.nick);fragment.appendChild(element);rendered++;
       }
     }
     if(!rendered){
       const empty=document.createElement('div'),setup=!roomsAvailable?'<br><span style="color:#fbbf24">Сначала выполни файл supabase-groups.sql</span>':'';
-      empty.style.cssText='padding:22px 14px;font-size:13px;color:var(--text3);line-height:1.55';
+      empty.style.cssText='padding:22px 14px;font-size:13px;color:var(--text3);line-height:1.55';empty.hidden=sidebarFilter==='unread';
       empty.innerHTML=(sidebarFilter==='all'?'Найди друга или создай первое пространство':'Здесь пока пусто')+setup;fragment.appendChild(empty);
     }
     commitSidebarV105(list,fragment);
     if(typeof window.telechatApplySidebarCustomV52==='function')window.telechatApplySidebarCustomV52();
     if(typeof enhanceVerifiedBadges==='function')enhanceVerifiedBadges();
+    window.telechatExperienceV62?.decorate();
+    window.telechatPresenceV120?.paintContacts?.();
     return true;
   }
 
@@ -279,7 +282,7 @@
   async function renderSidebarCachedV17(){hydrateSidebarSnapshotV18();if(!sidebarCacheReadyV17)return false;return paintSidebarV17(sidebarMessagesCacheV17);}
   let tabRefreshTimerV17=null;
   setSidebarFilter=async function(filter,btn){
-    sidebarFilter=['all','group','channel'].includes(filter)?filter:'all';
+    sidebarFilter=['all','unread','group','channel'].includes(filter)?filter:'all';
     document.querySelectorAll('.sidebar-tab').forEach(element=>element.classList.toggle('active',element.dataset.filter===sidebarFilter));
     const usedCache=await renderSidebarCachedV17();
     if(!usedCache)return requestSidebarRefreshV18();

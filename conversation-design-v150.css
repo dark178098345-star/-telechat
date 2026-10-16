@@ -87,6 +87,21 @@ html body.telechat-phone-v159 #phone-nav-v159 button.active svg{background:var(-
 html body.telechat-phone-v159 .phone-action-v159{border-radius:13px;background:var(--phone-card);box-shadow:none;min-height:64px}
 html body.telechat-phone-v159 .phone-action-v159 strong{font-weight:600}
 html body.telechat-phone-v159 .phone-self-card-v159{border-radius:18px;box-shadow:none}
+/* v174: unread tabs and a layout-neutral swipe indicator. */
+html body #contacts-list :is(.contact,.list-section-title)[hidden]{display:none!important}
+#unread-empty-v174{padding:38px 20px;display:flex;align-items:center;flex-direction:column;gap:12px;text-align:center;color:var(--text3)}
+#unread-empty-v174 svg{width:32px;height:32px;color:var(--accent3)}#unread-empty-v174 strong{font-size:16px;color:var(--text)}#unread-empty-v174 p{font-size:12px;line-height:1.5}
+#unread-empty-v174 button{min-height:44px;padding:10px 18px;border:1px solid var(--border);border-radius:12px;background:var(--bg3);color:var(--text);cursor:pointer}
+html body.telechat-phone-v159 #phone-home-head-v159 .sidebar-tabs{overflow-x:auto;scrollbar-width:none;scroll-padding:12px;overscroll-behavior-x:contain}
+html body.telechat-phone-v159 #phone-home-head-v159 .sidebar-tabs::before{display:none!important}
+html body.telechat-phone-v159 #phone-home-head-v159 .sidebar-tab{flex:0 0 auto;min-width:60px;padding:0 14px;white-space:nowrap}
+html body.telechat-phone-v159 #messages>.msg{touch-action:pan-y pinch-zoom}
+html body.telechat-phone-v159 #messages>.msg>.msg-bubble{translate:0 0;transition:translate 160ms ease-out!important}
+html body.telechat-phone-v159 #messages>.msg.swipe-active-v174>.msg-bubble{transition:none!important}
+html body.telechat-phone-v159 #messages>.msg.swipe-active-v174>.msg-bubble{translate:var(--swipe-x-v174,0px) 0;will-change:translate}
+html body.telechat-phone-v159 #messages>.msg.swipe-active-v174::before{content:'↩';position:absolute;left:0;top:8px;width:32px;height:32px;display:grid;place-items:center;border-radius:50%;background:var(--bg3);color:var(--text3);font:24px/1 system-ui;pointer-events:none}
+html body.telechat-phone-v159 #messages>.msg.swipe-ready-v174::before{color:var(--accent3);background:var(--flow-selected)}
+@media(prefers-reduced-motion:reduce){html body.telechat-phone-v159 #messages>.msg>.msg-bubble{transition:none!important}}
 html body #chat-screen #contacts-list{padding:8px 6px!important}
 html body #chat-screen #contacts-list .contact,
 html body.theme-light #chat-screen #contacts-list .contact,

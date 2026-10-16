@@ -114,7 +114,9 @@
     // Only our old, expired presence rows. Never delete typing, privacy settings or another live device.
     sb.from('typing').delete().eq('nick',nick).like('chat_key',model.PREFIX+'%').lt('ts',model.encode(now()-86400000,'offline')).then(()=>{}).catch(()=>{});
   }
-  function watched(){const result=new Set([chat(),profile()]);document.querySelectorAll('.contact[data-contact-nick]').forEach(row=>result.add(normalize(row.dataset.contactNick)));result.delete('');return [...result];}
+  const contactRows=()=>document.querySelectorAll('#contacts-list .contact[data-contact-nick],#contacts-list .contact[data-chat-kind="private"][data-nick]');
+  const contactNick=row=>normalize(row.dataset.contactNick||row.dataset.nick);
+  function watched(){const result=new Set([chat(),profile()]);contactRows().forEach(row=>result.add(contactNick(row)));result.delete('');return [...result];}
   async function refresh(force=false,extra=''){
     ensureAccount();if(!session||document.hidden||navigator.onLine===false)return;if(fetchJob)return fetchJob.then(()=>refresh(false,extra));
     const nicks=[...new Set([...watched(),normalize(extra)])].filter(n=>n&&(force||(now()-(checked.get(n)||0)>20000&&now()-(attempted.get(n)||0)>10000)));if(!nicks.length){schedulePaint();return;}
@@ -162,7 +164,8 @@
   }
   function paintHeader(nick=chat(),lastSeen=0){if(!nick||chat()!==normalize(nick))return;const node=$('chat-status-text');if(node?.classList.contains('typing')&&!blocked(nick))return;if(blocked(nick))node?.classList.remove('typing');node?.classList.toggle('v74-blocked-status',blocked(nick));const v=value(nick,lastSeen);status(node,v,false,nick);avatar($('chat-av'),v);}
   function paintProfile(nick=profile(),lastSeen=0){if(!nick||profile()!==normalize(nick))return;if(!blocked(nick))window.telechatGameStatusV151?.refresh(nick);const v=value(nick,lastSeen);status($('view-profile-seen'),v,true,nick);avatar($('view-profile-avatar'),v);}
-  function paint(){paintHeader();paintProfile();document.querySelectorAll('.contact[data-contact-nick]').forEach(row=>{const nick=normalize(row.dataset.contactNick),v=value(nick);avatar(row.querySelector('.av'),v);badge(row.querySelector('.contact-name'),v);});
+  function paintContacts(){contactRows().forEach(row=>{const nick=contactNick(row),v=value(nick);avatar(row.querySelector('.av'),v);badge(row.querySelector('.contact-name'),v);});}
+  function paint(){paintHeader();paintProfile();paintContacts();
     const quick=$('profile-quick-v91');if(quick&&!quick.hidden){const own=value(account()),activity=navigator.onLine!==false&&['online','background'].includes(own.state)?window.telechatGameStatusV151?.get(account()):null,label=navigator.onLine===false?'Нет соединения':activity?window.telechatGameStatusV151.label(activity):own.state==='online'?'В сети':own.state==='background'?'В фоне':'Подключение…',node=quick.querySelector('.pq-online');if(node&&node.dataset.presenceLabel!==label){node.dataset.presenceLabel=label;node.textContent=label;node.classList.toggle('gaming-v151',!!activity);const dot=document.createElement('i');dot.setAttribute('aria-hidden','true');dot.style.background=own.state==='online'?'var(--green)':own.state==='background'?'#e6c981':'var(--text3)';node.prepend(activity?window.telechatGameStatusV151.icon(activity.kind):dot);quick.querySelector('.pq-dot')?.style.setProperty('background',dot.style.background);}}
   }
   function wake(){shutdown=false;ensureAccount();if(connectionFailed)disconnect();if(session&&!channel)connect();publish(true);refresh(true);}
@@ -189,7 +192,7 @@
   // Guard against an older cached profile renderer painting last_seen over an exact state.
   const observer=new MutationObserver(()=>{schedulePaint();clearTimeout(refreshTimer);refreshTimer=setTimeout(()=>refresh(),100);});
   for(const id of ['contacts-list','chat-status-text','view-profile-seen'])if($(id))observer.observe($(id),{childList:true,subtree:id==='contacts-list',characterData:id!=='contacts-list'});
-  window.telechatPresenceV120=Object.freeze({publish,refresh,wake,leave,state:nick=>value(nick),paintHeader,paintProfile});
+  window.telechatPresenceV120=Object.freeze({publish,refresh,wake,leave,state:nick=>value(nick),paintHeader,paintProfile,paintContacts});
   window.telechatBackgroundPresenceV101={refresh,markBackground:()=>{nativeHidden=true;return publish(true);},markActive:()=>{nativeHidden=false;wake();},state:async nick=>{await refresh(false,nick);const v=value(nick);return v.state==='offline'?'':v.state;}};
   window.telechatDevicePresenceV72={publish,refresh,device:()=>phone()?'phone':'pc'};
   request('GET','typing?select=ts&limit=0').catch(()=>{}).finally(()=>{clockReady=true;wake();});

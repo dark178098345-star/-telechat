@@ -4,6 +4,7 @@
   const svg = paths => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg>`;
   const icons = {
     all: svg('<path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5H4l-3 2 1.5-5A8.5 8.5 0 1 1 21 11.5Z"/><path d="M7 9h9M7 13h6"/>'),
+    unread: svg('<path d="M21 12v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h8M3 7l9 6 5-3"/><circle cx="19" cy="5" r="3" fill="currentColor" stroke="none"/>'),
     group: svg('<path d="M3 7V5a2 2 0 0 1 2-2h5l3 3h6a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><path d="M3 9h18"/>'),
     channel: svg('<path d="m3 10 17-6v16L3 14zM7 16l1 5h4l-2-4"/>'),
     eye: svg('<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>')
@@ -15,9 +16,10 @@
     rail.className = 'section-rail-v109';
     rail.setAttribute('aria-label', 'Разделы ExstraChat');
     rail.innerHTML = '<span class="rail-brand-v109" aria-hidden="true">E<span>.</span></span>';
-    for (const [filter, title] of [['all', 'Все чаты'], ['group', 'Группы'], ['channel', 'Каналы']]) {
+    for (const [filter, title] of [['all', 'Все чаты'], ['unread', 'Непрочит.'], ['group', 'Группы'], ['channel', 'Каналы']]) {
       const button = document.createElement('button');
       button.type = 'button';button.dataset.railFilter = filter;
+      if(filter==='unread'){button.setAttribute('aria-label','Непрочитанные');button.title='Непрочитанные';}
       button.innerHTML = icons[filter] + `<span>${title}</span>`;
       button.addEventListener('click', () => {
         window.telechatNavigate?.('chats');

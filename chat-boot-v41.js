@@ -1,4 +1,4 @@
-/* TELECHAT CHAT BOOT V41 — hide first-load avatar pop-in */
+/* Chat readiness follows the list, not image/video downloads. */
 (() => {
   'use strict';
 
@@ -6,7 +6,6 @@
   let activeTokenV41 = 0;
   let fallbackTimerV41 = 0;
 
-  const waitV41 = ms => new Promise(resolve => setTimeout(resolve, ms));
 
   function ensureLoaderV41() {
     let loader = document.getElementById('chat-boot-v41');
@@ -65,40 +64,6 @@
     loader.setAttribute('aria-hidden', 'true');
   }
 
-  function waitForElementV41(element) {
-    if (element.tagName === 'IMG') {
-      if (element.complete) return Promise.resolve();
-      return new Promise(resolve => {
-        element.addEventListener('load', resolve, { once: true });
-        element.addEventListener('error', resolve, { once: true });
-      });
-    }
-    if (element.tagName === 'VIDEO') {
-      if (element.readyState >= 1) return Promise.resolve();
-      return new Promise(resolve => {
-        element.addEventListener('loadedmetadata', resolve, { once: true });
-        element.addEventListener('error', resolve, { once: true });
-      });
-    }
-    return Promise.resolve();
-  }
-
-  async function waitForVisibleAvatarsV41() {
-    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-    const list = document.getElementById('contacts-list');
-    if (!list) return;
-    const bounds=list.getBoundingClientRect();
-    const media = [...list.querySelectorAll('img.avatar-photo,video.avatar-video,video.profile-video')].filter(element=>{
-      const rect=element.getBoundingClientRect();
-      return rect.width>0&&rect.height>0&&rect.bottom>Math.max(0,bounds.top)&&rect.top<Math.min(innerHeight,bounds.bottom);
-    }).slice(0, 12);
-    if (!media.length) return;
-    await Promise.race([
-      Promise.allSettled(media.map(waitForElementV41)),
-      waitV41(650)
-    ]);
-  }
-
   const renderContactsBeforeV41 = renderContacts;
   renderContacts = async function(...args) {
     const nick = String(me?.nick || '').toLowerCase();
@@ -111,8 +76,7 @@
 
     try {
       const value = await renderContactsBeforeV41(...args);
-      setProgressV41(76, 'Загружаем аватарки…');
-      await waitForVisibleAvatarsV41();
+      // The list is interactive now; slow avatars must not hold the whole screen.
       setProgressV41(100, 'Всё готово ✦');
       return value;
     } finally {

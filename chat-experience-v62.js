@@ -200,6 +200,13 @@
         }
       }
     });
+    // The unread view shares this source of truth; no additional request or DOM observer.
+    const onlyUnread=typeof sidebarFilter!=='undefined'&&sidebarFilter==='unread';
+    const rows=[...contactsV62.querySelectorAll('.contact[data-chat-key]')];
+    for(const row of rows)row.hidden=onlyUnread&&!(unreadV62.get(row.dataset.chatKey)?.count>0);
+    for(const title of contactsV62.querySelectorAll('.list-section-title')){let next=title.nextElementSibling,shown=false;while(next&&!next.classList.contains('list-section-title')){if(next.classList.contains('contact')&&!next.hidden)shown=true;next=next.nextElementSibling;}title.hidden=onlyUnread&&!shown;}
+    let empty=document.getElementById('unread-empty-v174');
+    if(onlyUnread&&!rows.some(row=>!row.hidden)){if(!empty){empty=document.createElement('section');empty.id='unread-empty-v174';empty.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="m5 12 4 4L20 5M3 19h18"/></svg><strong>Всё прочитано</strong><p>Новые сообщения появятся здесь.</p><button type="button">Все чаты</button>';empty.querySelector('button').onclick=()=>window.setSidebarFilter?.('all');contactsV62.append(empty);}}else empty?.remove();
   }
 
   function scheduleSidebarPaintV62() {
@@ -227,6 +234,7 @@
           .order('ts', { ascending: false })
           .limit(180)
       ]);
+      if(nick!==currentNickV62())return;
       if (result.error) return;
       const mentionIds = new Set((mentionResult.data || [])
         .filter(message => !message.deleted && !readByV62(message).includes(nick) && !window.telechatShouldHideMessageV74?.(message))
