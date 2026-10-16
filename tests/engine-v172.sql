@@ -1,0 +1,42 @@
+-- Disposable localhost fixture, never production.
+do $$ begin if inet_server_port()<>54568 or current_database()<>'engine_v172' then raise exception 'Use only the disposable engine_v172 database on localhost:54568';end if;end $$;
+create table if not exists public.users(nick text primary key,pass text,status text,last_seen bigint);
+create table if not exists public.messages(id bigserial primary key,chat_key text,from_nick text,text text default '',ts bigint,reply_text text,read_by text[] default '{}',deleted boolean default false);
+insert into public.users(nick,pass) values('alice','dummy-alice'),('bob','dummy-bob') on conflict do nothing;
+alter table public.users add column if not exists last_seen bigint;
+alter table public.messages add column if not exists reply_text text;
+alter table public.messages add column if not exists read_by jsonb default '[]';
+create table if not exists public.typing(chat_key text,nick text,ts bigint,primary key(chat_key,nick));
+create table if not exists public.rooms(id bigint primary key,owner_nick text,type text);
+create table if not exists public.room_members(room_id bigint,user_nick text);
+\ir ../supabase-engine-v172.sql
+begin;
+do $$ declare row jsonb; result jsonb; duplicate jsonb; key text:='telechat-presence-v120:00000000-0000-4000-8000-000000000001:pc';at bigint:=(extract(epoch from statement_timestamp())*1000)::bigint; begin
+ row:=jsonb_build_object('chat_key','alice_bob','from_nick','alice','text','dummy transport test','ts',at,'client_id_v172','fixture-nonce-0001');
+ result:=public.exstra_send_messages_v172('alice','dummy-alice',jsonb_build_array(row));duplicate:=public.exstra_send_messages_v172('alice','dummy-alice',jsonb_build_array(row));
+ if result->'rows'->0->>'id'<>duplicate->'rows'->0->>'id' then raise exception 'Duplicate inserted';end if;
+ if (select count(*) from public.messages where client_id_v172='fixture-nonce-0001')<>1 then raise exception 'Not idempotent';end if;
+ begin perform public.exstra_send_messages_v172('alice','dummy-alice',jsonb_build_array(row||'{"text":"different"}'));raise exception 'Nonce reuse accepted';exception when others then if sqlerrm='Nonce reuse accepted' then raise;end if;end;
+ begin perform public.exstra_send_messages_v172('alice','wrong',jsonb_build_array(row));raise exception 'Wrong password';exception when others then if sqlerrm='Wrong password' then raise;end if;end;
+ begin perform public.exstra_send_messages_v172('alice','dummy-alice',jsonb_build_array(row||'{"from_nick":"bob"}'));raise exception 'Spoof accepted';exception when others then if sqlerrm='Spoof accepted' then raise;end if;end;
+ insert into public.rooms values(900000002,'bob','channel');
+ begin perform public.exstra_send_messages_v172('alice','dummy-alice',jsonb_build_array(row||'{"chat_key":"room_900000002","client_id_v172":"fixture-nonce-0002"}'));raise exception 'Channel write accepted';exception when others then if sqlerrm='Channel write accepted' then raise;end if;end;
+ begin perform public.exstra_send_messages_v172('alice','dummy-alice',jsonb_build_array(row||'{"client_id_v172":"fixture-nonce-batch"}',row||'{"from_nick":"bob"}'));raise exception 'Invalid batch accepted';exception when others then if sqlerrm='Invalid batch accepted' then raise;end if;end;
+ if exists(select 1 from public.messages where client_id_v172='fixture-nonce-batch') then raise exception 'Partial batch committed';end if;
+ insert into public.rooms values(900000003,'bob','group');insert into public.room_members values(900000003,'alice');
+ perform public.exstra_send_messages_v172('alice','dummy-alice',jsonb_build_array(row||'{"chat_key":"room_900000003","client_id_v172":"fixture-nonce-group"}'));
+ perform public.exstra_presence_heartbeat_v172('alice','dummy-alice',key,'online',at,true);
+ result:=public.exstra_presence_snapshot_v172('bob','dummy-bob',array['alice']);
+ if jsonb_array_length(result->'modern')<>2 then raise exception 'Missing session/music in merged snapshot';end if;
+ if result->'users'->0->>'nick'<>'alice' or result->'users'->0 ? 'pass' then raise exception 'Snapshot privacy';end if;
+ perform public.exstra_presence_heartbeat_v172('alice','dummy-alice',key,'background',at+2,false);
+ perform public.exstra_presence_heartbeat_v172('alice','dummy-alice',key,'online',at+1,true);
+ if (select ts from public.typing where chat_key=key and nick='alice')<>(at+2)*10+2 then raise exception 'Delayed request overwrote state';end if;
+ if (select ts from public.typing where chat_key=replace(key,'v120:','v120:music:') and nick='alice')<>(at+2)*10 then raise exception 'Music resurrected after pause';end if;
+ perform public.exstra_presence_heartbeat_v172('alice','dummy-alice',key,'offline',at+3,false);
+ if (select ts from public.typing where chat_key=key and nick='alice')%10<>0 then raise exception 'Offline not applied';end if;
+ begin perform public.exstra_presence_snapshot_v172('alice','wrong',array['bob']);raise exception 'Snapshot unauthenticated';exception when others then if sqlerrm='Snapshot unauthenticated' then raise;end if;end;
+ if not has_function_privilege('anon','public.exstra_send_messages_v172(text,text,jsonb)','execute') then raise exception 'App permission missing';end if;
+ raise notice 'PASS v172 SQL: idempotent send, nonce/identity/channel checks, merged snapshots without secrets, monotonic multistate/music heartbeat';
+end $$;
+rollback;

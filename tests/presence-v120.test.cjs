@@ -9,10 +9,10 @@ assert.equal(reduce([row('a','online',65001)]).state,'offline','Expired online l
 assert.equal(reduce([row('a','background',120001)]).state,'offline');
 assert.equal(reduce([row('a','offline')]).state,'offline');
 assert.equal(m.label(reduce([row('a','offline')]),now),'был(а) только что');
-assert.equal(reduce([]).state,'online','Legacy fallback');
+assert.equal(reduce([]).state,'offline','A last-seen timestamp alone cannot prove online');
 assert.equal(reduce([row('a','online',-90000)],{lastSeen:now+90000}).state,'offline','Future clock cannot mean online indefinitely');
 const live={key:m.PREFIX+'a:pc',nick:'alice',state:'online',device:'pc',at:now-86400000};
-assert.equal(reduce([row('a','online',90000)],{live:[live]}).state,'online','Connected unchanged presence stays valid');
+assert.equal(reduce([row('a','online',90000)],{live:[live]}).state,'offline','A connected but frozen presence payload must expire');
 assert.equal(reduce([row('a','background')],{live:[live]}).state,'background','Newer database state supersedes a delayed live state');
 assert.equal(reduce([row('a','online',1000)],{departed:new Map([[live.key,{at:now,state:'online'}]])}).state,'offline','Confirmed disconnect overrides stale row');
 assert.equal(reduce([row('a','background',1000)],{departed:new Map([[live.key,{at:now,state:'background'}]])}).state,'background','Suspended background uses a bounded grace period');

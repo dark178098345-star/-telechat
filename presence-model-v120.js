@@ -8,14 +8,14 @@
   function decode(row){const key=String(row.chat_key||'');if(!key.startsWith(PREFIX))return null;const value=Number(row.ts),code=value%10,at=Math.floor(value/10);if(!Number.isSafeInteger(value)||at<=0||code>2)return null;return {key,nick:normalize(row.nick),device:key.endsWith(':phone')?'phone':'pc',state:['offline','online','background'][code],at};}
   const fresh=(at,now,limit)=>at>0&&at<=now+15000&&now-at<limit;
   function reduce({rows=[],live=[],departed=new Map(),lastSeen=0,now=Date.now(),available=true,reachable=true}){
-    const sessions=new Map(),newest={phone:0,pc:0};let seen=Number(lastSeen)||0,known=false;
+    const sessions=new Map(),newest={phone:0,pc:0};let seen=Number(lastSeen)||0;
     if(!Number.isFinite(seen)||seen<0||seen>now+15000)seen=0;
-    for(const row of rows){const s=decode(row);if(!s||s.at>now+15000)continue;known=true;newest[s.device]=Math.max(newest[s.device],s.at);if(s.state==='online')seen=Math.max(seen,s.at);sessions.set(s.key,s);}
-    for(const item of live){if(!item||!['online','background','offline'].includes(item.state))continue;const old=sessions.get(item.key);if(!old||item.at>=old.at)sessions.set(item.key,{...item,live:true});else if(old.state===item.state)old.live=true;known=true;}
+    for(const row of rows){const s=decode(row);if(!s||s.at>now+15000)continue;newest[s.device]=Math.max(newest[s.device],s.at);if(s.state==='online')seen=Math.max(seen,s.at);sessions.set(s.key,s);}
+    for(const item of live){if(!item||!['online','background','offline'].includes(item.state))continue;const old=sessions.get(item.key);if(!old||item.at>=old.at)sessions.set(item.key,{...item});}
     const active=[],background=[];
     for(const s of sessions.values()){
       const left=departed.get(s.key);if(left&&left.at>=s.at){if(left.state==='online')seen=Math.max(seen,left.at);if(s.state!=='offline'&&left.state==='background'&&fresh(left.at,now,BACKGROUND_MS))background.push({...s,at:left.at});continue;}
-      if(s.live||fresh(s.at,now,s.state==='background'?BACKGROUND_MS:ACTIVE_MS)){if(s.state==='online')active.push(s);if(s.state==='background')background.push(s);}
+      if(fresh(s.at,now,s.state==='background'?BACKGROUND_MS:ACTIVE_MS)){if(s.state==='online')active.push(s);if(s.state==='background')background.push(s);}
     }
     // Compatibility with older apps; an older device marker cannot override its new session.
     for(const device of ['phone','pc']){const a=rows.find(r=>r.chat_key===`__telechat_device_${device}_v72__`),b=rows.find(r=>r.chat_key===`__telechat_background_${device}_v101__`);const at=Number(a?.ts)||0,bt=Number(b?.ts)||0;
@@ -26,7 +26,7 @@
     if(!reachable)return {state:'unknown',device:'',lastSeen:Math.min(seen,now)};
     if(active.length)return {state:'online',device:active.sort((a,b)=>b.at-a.at)[0].device,lastSeen:Math.min(seen,now)};
     if(background.length)return {state:'background',device:background.sort((a,b)=>b.at-a.at)[0].device,lastSeen:Math.min(seen,now)};
-    if(!known&&available&&fresh(lastSeen,now,90000))return {state:'online',device:'',lastSeen};
+    // A recent timestamp is evidence of past activity, not proof of a live session.
     return {state:available?'offline':'unknown',device:'',lastSeen:Math.min(seen,now)};
   }
   function label(value,now=Date.now()){

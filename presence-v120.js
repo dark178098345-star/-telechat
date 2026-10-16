@@ -18,7 +18,7 @@
   let session=null,channel=null,connected=false,generation=0,fetchJob=null,paintTimer=0,refreshTimer=0,clockOffset=0,clockReady=false,shutdown=false,nativeHidden=false;
   try{nativeHidden=window.TelechatAndroid?.isInBackground?.()===true;}catch(_){}
   let pendingTrack=null,tracking=false,retryTimer=0,retryDelay=1000,lastLegacyWrite=0,reconnectTimer=0,reconnectDelay=1000,connectionFailed=false,closingChannel=null;
-  const now=()=>Date.now()+clockOffset;
+  const now=()=>window.telechatTransportV172?.now()??Date.now()+clockOffset;
   let musicPlaying=false,musicOwner='';
   function listeningHere(){
     if(musicOwner!==account())return false;
@@ -70,6 +70,8 @@
   async function persist(s,snapshot,terminal=false){
     if(navigator.onLine===false)return;
     try{
+      const modern=await window.telechatTransportV172?.heartbeat(s,snapshot,terminal);
+      if(modern){if(session===s){s.ready=true;s.persistedAt=now();retryDelay=1000;}return;}
       // Initialise offline. Even an interrupted first request cannot create a ghost online session.
       if(!s.ready){if(!s.initialising)s.initialising=request('POST','typing?on_conflict=chat_key,nick',{chat_key:s.key,nick:s.nick,ts:model.encode(s.createdAt,'offline')},terminal).then(()=>{s.ready=true;}).finally(()=>{s.initialising=null;});await s.initialising;}
       const stamp=model.encode(snapshot.at,snapshot.state);
@@ -84,13 +86,14 @@
     try{while(pendingTrack&&connected&&ownChannel===channel){const item=pendingTrack;pendingTrack=null;const result=await ownChannel.track(item);if(result!=='ok'&&ownChannel===channel){pendingTrack=pendingTrack||item;break;}}}catch(_){/* The next heartbeat or reconnect retries the latest state. */}finally{tracking=false;}
   }
   function publish(force=false){ensureAccount();const s=session;if(!s)return Promise.resolve();const kind=stateKind(),listening=kind!=='offline'&&listeningHere(),changed=s.state!==kind||s.listening!==listening;if(!force&&!changed&&now()-s.sentAt<(kind==='background'?45000:25000))return Promise.resolve();
+    if(force&&!changed&&now()-s.sentAt<250)return Promise.resolve();
     s.at=Math.max(Math.floor(now()),s.at+1);s.state=kind;s.listening=listening;s.musicUsed=s.musicUsed||listening;s.sentAt=now();const snapshot={key:s.key,nick:s.nick,device:s.device,state:kind,at:s.at,listening};
     syncOwn({chat_key:s.key,nick:s.nick,ts:model.encode(s.at,kind)});pendingTrack=snapshot;trackLatest();
     if(s.musicUsed)syncOwn({chat_key:musicKey(s.key),nick:s.nick,ts:musicStamp(s.at,listening?kind:'offline')});
     return persist(s,snapshot,document.hidden||shutdown);
   }
   function syncLive(ownChannel){if(channel!==ownChannel||!connected)return;const next=new Map();
-    for(const entries of Object.values(ownChannel.presenceState()))for(const item of entries||[]){if(typeof item.key!=='string'||!item.key.startsWith(model.PREFIX)||!normalize(item.nick)||!['online','background','offline'].includes(item.state))continue;const old=next.get(item.key);if(!old||Number(item.at)>old.at)next.set(item.key,{key:item.key,nick:normalize(item.nick),device:item.device==='phone'?'phone':'pc',state:item.state,at:Math.min(Number(item.at)||now(),now()+15000),listening:typeof item.listening==='boolean'?item.listening:undefined});}
+    for(const entries of Object.values(ownChannel.presenceState()))for(const item of entries||[]){const at=Number(item.at);if(typeof item.key!=='string'||!item.key.startsWith(model.PREFIX)||!normalize(item.nick)||!['online','background','offline'].includes(item.state)||!Number.isSafeInteger(at)||at<=0||at>now()+15000)continue;const old=next.get(item.key);if(!old||at>old.at)next.set(item.key,{key:item.key,nick:normalize(item.nick),device:item.device==='phone'?'phone':'pc',state:item.state,at,listening:typeof item.listening==='boolean'?item.listening:undefined});}
     for(const [key,old] of live){const nextItem=next.get(key);if(!nextItem){departed.set(key,{at:now(),state:old.state});if(old.state==='online')seen.set(old.nick,Math.max(seen.get(old.nick)||0,now()));}else if(old.state==='online'&&nextItem.state!=='online')seen.set(old.nick,Math.max(seen.get(old.nick)||0,nextItem.at));}
     live.clear();for(const [key,item] of next){live.set(key,item);departed.delete(key);}
     schedulePaint();
@@ -100,7 +103,7 @@
     ownChannel.on('presence',{event:'sync'},()=>syncLive(ownChannel)).subscribe(status=>{
       if(channel!==ownChannel||version!==generation)return;
       connected=status==='SUBSCRIBED';
-      if(connected){connectionFailed=false;reconnectDelay=1000;clearTimeout(reconnectTimer);syncLive(ownChannel);publish(true);refresh(true);}
+      if(connected){connectionFailed=false;reconnectDelay=1000;clearTimeout(reconnectTimer);syncLive(ownChannel);if(session?.state){pendingTrack={key:session.key,nick:session.nick,device:session.device,state:session.state,at:session.at,listening:!!session.listening};trackLatest();}publish(true);refresh(true);}
       else if(['CLOSED','CHANNEL_ERROR','TIMED_OUT'].includes(status)){connectionFailed=true;schedulePaint();clearTimeout(reconnectTimer);reconnectTimer=setTimeout(()=>{if(channel!==ownChannel||shutdown||navigator.onLine===false)return;disconnect();connect();},reconnectDelay);reconnectDelay=Math.min(30000,reconnectDelay*2);}
     });
   }
@@ -119,7 +122,7 @@
     fetchJob=(async()=>{for(let i=0;i<nicks.length;i+=80){const group=nicks.slice(i,i+80);
       const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),8000);
       for(const nick of group){attempted.set(nick,now());pending.add(nick);}
-      try{const results=await Promise.allSettled([
+      try{const snapshot=await window.telechatTransportV172?.snapshot(group);const results=snapshot?['modern','legacy','users'].map(name=>({status:'fulfilled',value:{data:snapshot[name],error:null}})):await Promise.allSettled([
         sb.from('typing').select('chat_key,nick,ts').in('nick',group).like('chat_key',model.PREFIX+'%').gte('ts',model.encode(now()-86400000,'offline')).abortSignal(controller.signal),
         sb.from('typing').select('chat_key,nick,ts').in('nick',group).in('chat_key',model.LEGACY).gte('ts',now()-120000).abortSignal(controller.signal),
         sb.from('users').select('nick,last_seen').in('nick',group).abortSignal(controller.signal)

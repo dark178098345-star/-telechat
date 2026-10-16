@@ -4,7 +4,7 @@
   const SEEN_TTL=120000,MAX_SEEN=5000,MAX_RETRY=30000;
   const seenEvents=new Map(),latestByKey=new Map();
   let probeJob=null;
-  let reconnectTimer=0,reconnectAttempt=0,refreshTimer=0,generation=0;
+  let reconnectTimer=0,reconnectAttempt=0,refreshTimer=0,generation=0,lastProbeAt=0;
   const unhealthy=new Set();
 
   const activeKey=()=>{try{return typeof conversationKey==='function'?String(conversationKey()||''):'';}catch(_){return '';}};
@@ -38,9 +38,9 @@
     },120);
   }
   function scheduleReconnect(key){
-    if(!sameKey(key)||reconnectTimer)return;
+    if(!sameKey(key)||reconnectTimer||typeof navigator!=='undefined'&&navigator.onLine===false)return;
     const delay=Math.min(MAX_RETRY,600*2**Math.min(reconnectAttempt++,6))+Math.round(Math.random()*240);
-    reconnectTimer=setTimeout(()=>{reconnectTimer=0;if(sameKey(key)&&!document.hidden)subscribeCore();},delay);
+    reconnectTimer=setTimeout(()=>{reconnectTimer=0;if(sameKey(key)&&!document.hidden&&!(typeof navigator!=='undefined'&&navigator.onLine===false))subscribeCore();},delay);
   }
   async function probeLatest(key){
     if(document.hidden||!sameKey(key)||typeof sb==='undefined'||probeJob)return;
@@ -74,7 +74,7 @@
         if(message.id!==undefined&&message.id!==null)latestByKey.set(key,String(message.id));
         if(!currentRoom&&window.telechatIsBlockedV74?.(message.from_nick))return;
         window.exstraChatStreakV170?.onMessage(message);
-        if(message.from_nick===me.nick){scheduleRefresh(key);return;}
+        if(message.from_nick===me.nick){if(window.telechatDeliveryV72?.acknowledge(message))return;if(!seen(message)){try{await appendMessage({...message,chat_key:key});window.telechatApplySidebarMessageV25?.(message);Promise.resolve(renderContacts()).catch(()=>{});}catch(_){scheduleRefresh(key);}}return;}
         if(seen(message))return;
         try{await appendMessage({...message,chat_key:key});}catch(_){seenEvents.delete(eventKey(message));scheduleRefresh(key);return;}
         if(token!==generation||!sameKey(key))return;
@@ -106,7 +106,8 @@
     if(!msgSub||unhealthy.size)subscribeCore();else scheduleRefresh(key);
   }
   window.addEventListener('online',()=>{reconnectAttempt=0;recover();});
+  window.addEventListener('telechat-native-visibility',event=>{if(event.detail?.background===false)recover();});
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)recover();},{passive:true});
-  setInterval(()=>{const key=activeKey();if(key)probeLatest(key);},7000);
+  setInterval(()=>{const key=activeKey(),at=Date.now();if(!key||document.hidden||typeof navigator!=='undefined'&&navigator.onLine===false)return;const gap=unhealthy.size?7000:30000;if(at-lastProbeAt<gap)return;lastProbeAt=at;probeLatest(key);},7000);
   window.telechatMessageCoreV104={resync:recover,reconnect:subscribeCore,seen:eventKey};
 })();

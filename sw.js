@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v171-cover-first-music';
+const CACHE_NAME='telechat-shell-v172-transport-reliability';
 const APP_SHELL=[
   './settings-navigation-v160.css?v=165',
   './settings-navigation-v160.js?v=167',
@@ -58,8 +58,8 @@ const APP_SHELL=[
   './activity-model-v124.js?v=124',
   './activity-stats-v124.js?v=161',
   './activity-stats-v124.css?v=124',
-  './presence-model-v120.js?v=129',
-  './presence-v120.js?v=151',
+  './presence-model-v120.js?v=172',
+  './presence-v120.js?v=172',
   './chat-wallpaper-v119.js?v=124',
   './chat-wallpaper-v119.css?v=119',
   './music-intro-v118.js?v=161',
@@ -77,7 +77,7 @@ const APP_SHELL=[
   './performance-v107.js?v=108',
   './mentions-v106.js?v=106',
   './mentions-v106.css?v=106',
-  './message-core-v104.js?v=170',
+  './message-core-v104.js?v=172',
   './profile-follow-compact-v102.js?v=167',
   './background-presence-v101.css?v=101',
   './mobile-adaptation-v100.css?v=100',
@@ -116,7 +116,8 @@ const APP_SHELL=[
   './moderation-v19.css',
   './moderation-v19.js',
   './chat-reliability-v24.css',
-  './chat-reliability-v24.js?v=164',
+  './transport-v172.js?v=172',
+  './chat-reliability-v24.js?v=172',
   './delivery-v72.css?v=72',
   './message-send-animation-v35.css?v=164',
   './message-send-animation-v35.js?v=164',
