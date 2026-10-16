@@ -15,7 +15,7 @@
     const rail = document.createElement('nav');
     rail.className = 'section-rail-v109';
     rail.setAttribute('aria-label', 'Разделы ExstraChat');
-    rail.innerHTML = '<span class="rail-brand-v109" aria-hidden="true">E<span>.</span></span>';
+    rail.innerHTML = '<span class="rail-brand-v109" aria-hidden="true"><img class="brand-icon-v178" src="./branding/logo-v178-128.webp" width="48" height="48" alt="" decoding="async"></span>';
     for (const [filter, title] of [['all', 'Все чаты'], ['unread', 'Непрочит.'], ['group', 'Группы'], ['channel', 'Каналы']]) {
       const button = document.createElement('button');
       button.type = 'button';button.dataset.railFilter = filter;

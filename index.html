@@ -11,12 +11,12 @@
 <meta name="description" content="Личный мессенджер ExstraChat">
 <meta name="theme-color" content="#0d0d14">
 <title>ExstraChat</title>
-<link rel="manifest" href="./manifest.webmanifest?v=161">
-<link rel="icon" type="image/png" sizes="16x16" href="./favicon-16.png?v=61">
-<link rel="icon" type="image/png" sizes="32x32" href="./favicon-32.png?v=61">
-<link rel="icon" type="image/png" sizes="48x48" href="./favicon-48.png?v=61">
-<link rel="shortcut icon" href="./favicon.ico?v=61">
-<link rel="apple-touch-icon" href="./apple-touch-icon.png?v=61">
+<link rel="manifest" href="./manifest.webmanifest?v=178">
+<link rel="icon" type="image/png" sizes="16x16" href="./favicon-16.png?v=178">
+<link rel="icon" type="image/png" sizes="32x32" href="./favicon-32.png?v=178">
+<link rel="icon" type="image/png" sizes="48x48" href="./favicon-48.png?v=178">
+<link rel="shortcut icon" href="./favicon.ico?v=178">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png?v=178">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{
@@ -284,21 +284,12 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
 #startup-loader.is-hidden{opacity:0;visibility:hidden;pointer-events:none;}
 .startup-inner{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;text-align:center;padding:28px;}
 .startup-mark{position:relative;width:112px;height:112px;margin-bottom:21px;display:grid;place-items:center;}
-.startup-orbit{position:absolute;inset:2px;border:1px solid rgba(167,139,250,.32);border-radius:50%;animation:startupOrbit 4.8s linear infinite;box-shadow:inset 0 0 30px rgba(124,110,247,.05);}
-.startup-orbit::before{content:'';position:absolute;top:8px;left:15px;width:7px;height:7px;border-radius:50%;background:#c4b5fd;box-shadow:0 0 10px #a78bfa,0 0 22px rgba(124,110,247,.8);}
-.startup-orbit::after{content:'';position:absolute;right:-3px;top:51px;width:4px;height:4px;border-radius:50%;background:#7dd3fc;box-shadow:0 0 9px #60a5fa;}
-.startup-bubble{position:relative;width:66px;height:51px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.16);border-radius:50%;background:linear-gradient(145deg,#8b7dfb,#6959e9);box-shadow:0 14px 38px rgba(71,55,190,.36),inset 0 1px 0 rgba(255,255,255,.28);animation:startupBreathe 2s ease-in-out infinite;}
-.startup-bubble::after{content:'';position:absolute;left:9px;bottom:-5px;width:17px;height:17px;background:#7566ef;clip-path:polygon(0 0,100% 0,0 100%);transform:rotate(8deg);}
-.startup-letter{position:relative;z-index:1;color:#fff;font-size:27px;font-weight:800;letter-spacing:-2px;text-shadow:0 2px 10px rgba(24,18,86,.35);}
 .startup-title{font-size:27px;line-height:1;font-weight:800;letter-spacing:-.8px;color:#eeeefe;text-shadow:0 0 28px rgba(167,139,250,.22);}
 .startup-title span{color:#9f8cff;}
 .startup-subtitle{margin-top:8px;color:#77778f;font-size:12px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;}
 .startup-progress{width:min(228px,66vw);height:4px;margin-top:28px;overflow:hidden;border-radius:99px;background:rgba(255,255,255,.07);box-shadow:inset 0 1px 3px rgba(0,0,0,.35);}
 .startup-progress-fill{width:10%;height:100%;border-radius:inherit;background:linear-gradient(90deg,#6857e8,#a78bfa,#67b7ff);box-shadow:0 0 13px rgba(124,110,247,.72);transition:width .28s cubic-bezier(.25,.8,.25,1);}
 .startup-status{height:18px;margin-top:11px;color:#6f6f89;font-size:11px;font-weight:600;letter-spacing:.02em;}
-@keyframes startupOrbit{to{transform:rotate(360deg);}}
-@keyframes startupBreathe{0%,100%{transform:translateY(0) scale(1);}50%{transform:translateY(-3px) scale(1.035);}}
-@media (prefers-reduced-motion:reduce){.startup-orbit,.startup-bubble,#startup-loader::before{animation:none!important;}}
 /* ROOMS, CHANNELS & MEDIA */
 .sidebar-brand-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px;}
 .sidebar-brand-row .sidebar-logo{margin-bottom:0;}
@@ -451,13 +442,13 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
 <link rel="stylesheet" href="./qr-profile-v131.css?v=131">
 <link rel="stylesheet" href="./chat-scroll-v132.css?v=132">
 <link rel="stylesheet" href="./music-intro-v118.css?v=118">
+<link rel="stylesheet" href="./branding-v178.css?v=178">
 </head>
 <body>
 <div id="startup-loader" role="status" aria-live="polite" aria-label="Загрузка ExstraChat">
   <div class="startup-inner">
     <div class="startup-mark" aria-hidden="true">
-      <div class="startup-orbit"></div>
-      <div class="startup-bubble"><span class="startup-letter">E</span></div>
+      <img class="brand-icon-v178" src="./branding/logo-v178-128.webp" srcset="./branding/logo-v178-256.webp 2x" width="112" height="112" alt="" fetchpriority="high">
     </div>
     <div class="startup-title">Exstra<span>Chat</span></div>
     <div class="startup-subtitle">твой космос общения</div>
@@ -526,6 +517,7 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
 <!-- AUTH -->
 <div class="screen active" id="auth-screen">
   <div class="auth-box">
+    <img class="brand-icon-v178 auth-brand-icon-v178" src="./branding/logo-v178-128.webp" srcset="./branding/logo-v178-256.webp 2x" width="80" height="80" alt="" decoding="async">
     <div class="auth-logo">Exstra<span>Chat</span></div>
     <div class="auth-sub">секретный мессенджер для своих</div>
     <div class="auth-tabs">
@@ -2519,7 +2511,7 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <script src="./mentions-v106.js?v=106"></script>
 <script src="./performance-v107.js?v=108"></script>
 <link rel="stylesheet" href="./navigation-readers-v109.css?v=109">
-<script src="./navigation-readers-v109.js?v=174"></script>
+<script src="./navigation-readers-v109.js?v=178"></script>
 <script src="./stories-v115.js?v=153"></script>
 <script src="./music-intro-v118.js?v=161"></script>
 <script src="./music-hub-v117.js?v=176"></script>
@@ -2559,7 +2551,7 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <script src="./pixel-emotions-v163.js?v=166"></script>
 <script src="./pixel-eyes-v155.js?v=167"></script>
 <link rel="stylesheet" href="./phone-shell-v159.css?v=167">
-<script src="./phone-shell-v159.js?v=168"></script>
+<script src="./phone-shell-v159.js?v=178"></script>
 <link rel="stylesheet" href="./settings-navigation-v160.css?v=165">
 <script src="./settings-navigation-v160.js?v=176"></script>
 <link rel="stylesheet" href="./chat-comfort-v167.css?v=167">
