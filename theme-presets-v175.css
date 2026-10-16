@@ -1,0 +1,48 @@
+/* Tile previews are fixed; changing theme changes colours, never layout or media. */
+html body #settings-panel .theme-setting-v175{display:block!important;min-width:0}
+html body #settings-panel .theme-setting-v175>.setting-copy{margin:0 0 14px}
+html body #settings-panel .theme-grid-v175{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;width:100%;max-width:100%;min-width:0}
+html body #settings-panel .theme-grid-v175 .theme-preset-v175{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;width:100%;min-width:0;height:76px;margin:0;padding:10px 3px;border:1px solid transparent!important;border-radius:12px!important;background:var(--bg3)!important;color:var(--text2)!important;box-shadow:none!important;transform:none!important;cursor:pointer;font-family:inherit;font-size:10px;font-weight:600;line-height:1.3;transition:background-color 120ms,border-color 120ms;position:relative}
+html body #settings-panel .theme-grid-v175 .theme-preset-v175:hover{background:var(--flow-selected)!important;color:var(--text)!important}
+html body #settings-panel .theme-grid-v175 .theme-preset-v175.active{background:var(--flow-selected)!important;border-color:var(--accent3)!important;color:var(--text)!important}
+html body #settings-panel .theme-grid-v175 .theme-preset-v175::before,html body #settings-panel .theme-grid-v175 .theme-preset-v175::after{content:none!important}
+html body #settings-panel .theme-grid-v175 .theme-preset-v175:focus-visible{outline:2px solid var(--accent3);outline-offset:2px}
+.theme-name-v175{font-size:10px;line-height:1.3;font-weight:600;white-space:nowrap}
+.theme-swatches-v175{display:flex;align-items:center;justify-content:center;height:23px;isolation:isolate}
+.theme-swatches-v175 i{display:block;width:21px;height:21px;border-radius:50%;background:var(--preset-accent);box-shadow:0 0 0 1px #ffffff0a}
+.theme-swatches-v175 i+i{margin-left:-8px;background:var(--preset-bg)}
+.theme-plus-v175{position:relative;display:block;width:23px;height:23px;color:var(--text3)}
+.theme-plus-v175::before,.theme-plus-v175::after{content:'';position:absolute;left:4px;right:4px;top:11px;height:1.5px;background:currentColor;border-radius:1px}
+.theme-plus-v175::after{transform:rotate(90deg)}
+.theme-custom-v175:not(.has-custom-v175) .theme-swatches-v175,.theme-custom-v175.has-custom-v175 .theme-plus-v175{display:none}
+html body #settings-panel .theme-note-v175{margin:12px 0 0;color:var(--text3);font-size:11px;line-height:1.65;overflow-wrap:anywhere}
+html body #theme-editor-v175{margin-top:14px;padding:14px;background:var(--bg3);border:1px solid var(--border);border-radius:12px}
+html body #theme-editor-v175[hidden]{display:none!important}
+.theme-editor-colors-v175{display:flex;gap:12px}
+.theme-editor-colors-v175 label{display:flex;align-items:center;justify-content:space-between;gap:12px;flex:1;min-width:0;font-size:12px;color:var(--text)}
+html body #theme-editor-v175 input[type=color]{width:40px;height:36px;min-height:36px;padding:3px;border:1px solid var(--border);border-radius:8px;background:var(--bg2);cursor:pointer}
+#theme-editor-v175 p{font-size:11px;line-height:1.5;color:var(--text3);margin:14px 0}
+.theme-editor-actions-v175{display:flex;justify-content:flex-end;gap:8px}
+html body #theme-editor-v175 button{padding:10px 12px;min-height:42px;border:1px solid var(--border);border-radius:9px;background:var(--bg2);color:var(--text);font-size:11px;cursor:pointer}
+html body #theme-editor-v175 button[type=submit]{background:var(--accent);color:#fff;border-color:transparent}
+/* Legacy components resolve the same palette instead of keeping purple islands. */
+html body[data-theme-v175]{background:var(--bg)!important;color:var(--text)}
+html body[data-theme-v175] #chat-screen{--chat-surface:var(--bg2);--chat-raised:var(--bg3);--chat-canvas:var(--bg);--chat-line:var(--border);--chat-ink:var(--text);--chat-muted:var(--text2);--chat-dim:var(--text3);--chat-hover:var(--flow-hover);--chat-selected:var(--flow-selected);--chat-accent:var(--accent3)}
+html body[data-theme-v175] :is(.sidebar-tabs,.sidebar-footer,.composer-tools){background-color:var(--bg2)!important;border-color:var(--border)!important}
+html body[data-theme-v175] #chat-screen :is(.sidebar-logo,.chat-name,.contact-name){color:var(--text)!important}
+html body[data-theme-v175] #chat-screen :is(.sidebar-tab,.telechat-nav-btn,.section-rail-v109 button){color:var(--text2)!important}
+html body[data-theme-v175] #chat-screen :is(.sidebar-tab,.telechat-nav-btn,.section-rail-v109 button).active{color:var(--accent3)!important;background:var(--flow-selected)!important;border-color:var(--border)!important}
+html body[data-theme-v175] #chat-screen :is(#msg-input,.composer-tools){background:transparent!important;color:var(--text)!important}
+html body[data-theme-v175] #settings-panel :is(.panel-head,.panel-section){color:var(--text)}
+html body[data-theme-v175] #settings-panel :is(.setting-label,.panel-title){color:var(--text)!important}
+html body[data-theme-v175] #settings-panel :is(.setting-note,.panel-section-title){color:var(--text3)!important}
+html body[data-theme-v175] #settings-panel .font-btn{background:var(--bg3)!important;color:var(--text2)!important;border-color:var(--border)!important}
+html body[data-theme-v175] #settings-panel .font-btn.active{background:var(--flow-selected)!important;color:var(--accent3)!important;border-color:var(--accent3)!important}
+html body[data-theme-v175] #music-hub-v117.mh-layout-v171{--mh-bg:var(--bg);--mh-panel:var(--bg2);--mh-line:var(--border);--mh-muted:var(--text3);--mh-text:var(--text);--mh-accent:var(--accent3);color-scheme:inherit}
+html body[data-theme-v175] #music-hub-v117.mh-layout-v171 :is(.mh-workspace,.mh-top,.mh-nav){background:var(--bg)!important}
+html body[data-theme-v175] #music-hub-v117.mh-layout-v171 :is(.mh-player,.mh-listening,.mh-sheet,.mh-sheet>header,.mh-tabs,.mh-playlist-card){background:var(--bg2)!important;border-color:var(--border)!important;color:var(--text)}
+html body[data-theme-v175] #music-hub-v117.mh-layout-v171 :is(input:not([type=range]),textarea,select,.mh-search){background:var(--bg3)!important;color:var(--text)!important;border-color:var(--border)!important}
+html body[data-theme-v175] #music-hub-v117.mh-layout-v171 .mh-wave-v171{background:linear-gradient(120deg,var(--bg3),var(--bg))!important}
+html body[data-theme-v175] #music-hub-v117.mh-layout-v171 :is(.mh-primary,.mh-publish-top){background:var(--accent)!important;color:#fff!important}
+@media(max-width:380px){html body #settings-panel .theme-grid-v175{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(prefers-reduced-motion:reduce){html body #settings-panel .theme-grid-v175 .theme-preset-v175{transition:none}}

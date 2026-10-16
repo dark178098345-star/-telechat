@@ -1,5 +1,7 @@
-const CACHE_NAME='telechat-shell-v174-reply-unread-presence';
+const CACHE_NAME='telechat-shell-v175-theme-presets';
 const APP_SHELL=[
+  './theme-presets-v175.css?v=175',
+  './theme-presets-v175.js?v=175',
   './settings-navigation-v160.css?v=165',
   './settings-navigation-v160.js?v=167',
   './phone-shell-v159.css?v=167',

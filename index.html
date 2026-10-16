@@ -1149,6 +1149,7 @@ async function doLogin(){
   const {data,error}=await sb.from('users').select('*').eq('nick',nick).eq('pass',pass).maybeSingle();
   if(error||!data){err.textContent='Неверный логин или пароль';btn.disabled=false;btn.textContent='Войти';return;}
   me=data;userCache[me.nick]=me;
+  window.dispatchEvent(new CustomEvent('telechat-account-ready-v175',{detail:{nick:me.nick}}));
   updateOnline().catch(()=>{});setInterval(updateOnline,25000);
   document.getElementById('auth-screen').classList.remove('active');
   document.getElementById('chat-screen').classList.add('active');
@@ -2721,5 +2722,7 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <script src="./swipe-reply-v174.js?v=174"></script>
 <style id="plain-background-v142">html body,html body #chat-screen.active,#startup-loader{background:var(--bg)!important}</style>
 <link rel="stylesheet" href="./conversation-design-v150.css?v=174">
+<link rel="stylesheet" href="./theme-presets-v175.css?v=175">
+<script src="./theme-presets-v175.js?v=175"></script>
 </body>
 </html>
