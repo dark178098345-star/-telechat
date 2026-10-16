@@ -14,7 +14,7 @@ const root=path.resolve(__dirname,'..');
  const before=await page.evaluate(()=>rows.length);assert.equal(await page.evaluate(()=>telechatDeliveryV72.sendDirect('friend','expired',{expiresAt:Date.now()-1})),false);assert.equal(await page.evaluate(()=>rows.length),before);
  await assert.rejects(()=>page.evaluate(()=>telechatDeliveryV72.sendDirect('host','self')));
  await page.evaluate(()=>{fail=true;});assert.equal(await page.evaluate(()=>telechatDeliveryV72.sendDirect('friend','queued',{expiresAt:Date.now()+60000})),false);
- await page.evaluate(async()=>{fail=false;await telechatDeliveryV72.drain();});assert.equal(await page.evaluate(()=>rows.filter(r=>r.text==='queued').length),1);await page.evaluate(()=>telechatDeliveryV72.drain());assert.equal(await page.evaluate(()=>rows.filter(r=>r.text==='queued').length),1);
+ await page.evaluate(async()=>{fail=false;await telechatDeliveryV72.drain(true);});assert.equal(await page.evaluate(()=>rows.filter(r=>r.text==='queued').length),1);await page.evaluate(()=>telechatDeliveryV72.drain());assert.equal(await page.evaluate(()=>rows.filter(r=>r.text==='queued').length),1);
  await page.evaluate(()=>{window.chatActions=[];window.addEventListener('telechat-chat-action-v155',event=>chatActions.push(event.detail));window.pendingMedia=null;window.replyTo=null;window.canWriteCurrent=()=>true;window.cancelReply=()=>{};window.cancelPendingMedia=()=>{};document.getElementById('msg-input').value='❤️';});
  await page.evaluate(()=>sendMsg());await page.waitForFunction(()=>rows.some(row=>row.text==='❤️'));
  assert.deepEqual(await page.evaluate(()=>chatActions),[{action:'send',owner:'host',key:'friend_host',text:'❤️'}]);
