@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v170-pair-days-chat-streak';
+const CACHE_NAME='telechat-shell-v171-cover-first-music';
 const APP_SHELL=[
   './settings-navigation-v160.css?v=165',
   './settings-navigation-v160.js?v=167',
@@ -64,8 +64,8 @@ const APP_SHELL=[
   './chat-wallpaper-v119.css?v=119',
   './music-intro-v118.js?v=161',
   './music-intro-v118.css?v=118',
-  './music-hub-v117.js?v=161',
-  './music-hub-v117.css?v=119',
+  './music-hub-v117.js?v=171',
+  './music-hub-v117.css?v=171',
   './stories-v115.css?v=153',
   './stories-v115.js?v=153',
   './room-media-v113.js?v=113',
