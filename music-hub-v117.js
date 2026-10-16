@@ -73,13 +73,14 @@
     $('mh-local-files').onchange=importTracks;
     const together=document.createElement('button');together.className='mh-together-v147';together.dataset.action='together';together.setAttribute('aria-label','Слушать вместе');together.innerHTML=icon('music')+'<span>Слушать вместе</span>';root.querySelector('.mh-publish-top').before(together);
     document.addEventListener('keydown',e=>{
-      if(document.getElementById('together-v147')?.open)return;
+      if(document.getElementById('together-v147')?.open||document.getElementById('sleep-timer-v176')?.open)return;
       if(!state.opened)return;
       if(e.key==='Escape'){e.preventDefault();e.stopImmediatePropagation();if(!$('mh-sheet').hidden)closeSheet();else if(root.classList.contains('mh-show-now'))setNow(false,true);else close();}
       if(e.key==='Tab'){const scope=!$('mh-sheet').hidden?$('mh-sheet'):root;const focus=[...scope.querySelectorAll('button:not(:disabled),a[href],input:not([hidden]),textarea,select')].filter(el=>el.getClientRects().length);if(!focus.length)return;const first=focus[0],last=focus.at(-1);if(e.shiftKey&&(document.activeElement===first||document.activeElement===scope||!scope.contains(document.activeElement))){e.preventDefault();last.focus();}else if(!e.shiftKey&&(document.activeElement===last||document.activeElement===scope)){e.preventDefault();first.focus();}}
     },true);
     $('mh-now-art').innerHTML=cover({id:'telechat-music'},'mh-large-art');
     window.addEventListener('telechat-music-progress-v117',e=>syncPlayer(e.detail));
+    window.exstraUtilitiesV176?.attachMusic(root);
   }
   async function open() {
     if(!user()?.nick){toast('Сначала войди в аккаунт');return;}

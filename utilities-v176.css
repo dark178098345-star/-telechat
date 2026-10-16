@@ -1,0 +1,25 @@
+.utility-note-v176{color:var(--text3);font-size:11px;line-height:1.7;margin:12px 0;overflow-wrap:anywhere}
+.connection-values-v176{margin:18px 0;border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.connection-values-v176>div{display:flex;align-items:baseline;justify-content:space-between;gap:18px;padding:13px 12px;border-bottom:1px solid var(--border)}
+.connection-values-v176>div:last-child{border:0}.connection-values-v176 dt{color:var(--text2);font-size:12px;flex:1;min-width:0}.connection-values-v176 dd{margin:0;text-align:right;color:var(--text);font-size:12px;line-height:1.5;max-width:55%;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.connection-actions-v176{display:flex;gap:8px;flex-wrap:wrap}
+html body .connection-actions-v176 button{flex:1;min-width:120px;min-height:44px;padding:10px;border:1px solid var(--border);border-radius:10px;background:var(--bg3);color:var(--text);font-size:12px;cursor:pointer}
+html body #connection-reconnect-v176{background:var(--accent);color:#fff;border-color:transparent}
+html body :is(.connection-actions-v176 button,#sleep-timer-v176 button):disabled{opacity:.5;cursor:default}
+html body .sleep-open-v176{display:flex;align-items:center;gap:12px;text-align:left;width:100%;min-height:58px;padding:12px;border:1px solid var(--border);border-radius:12px;background:var(--bg3);color:var(--text);cursor:pointer;font-family:inherit}
+.sleep-open-v176>svg{width:23px;height:23px;flex:none;color:var(--accent3)}.sleep-open-v176>span:nth-child(2){flex:1;min-width:0}.sleep-open-v176 strong{display:block;font-size:12px;font-weight:600}.sleep-open-v176 small{display:block;font-size:10px;color:var(--text3);margin-top:4px}.sleep-open-v176>span:last-child{color:var(--text3);font-size:22px}
+html body .sleep-open-v176.sleep-active-v176{border-color:var(--accent3)}
+html body #music-hub-v117 .sleep-open-v176{margin-top:18px;background:var(--mh-panel);border-color:var(--mh-line);color:var(--mh-text)}
+html body #sleep-timer-v176{box-sizing:border-box;width:min(410px,calc(100vw - 24px));max-width:410px;max-height:calc(100dvh - 24px);margin:auto;padding:22px;border:1px solid var(--border);border-radius:18px;background:var(--bg2);color:var(--text);font-family:inherit;overflow:auto;overscroll-behavior:contain;box-shadow:0 18px 60px #0005}
+#sleep-timer-v176::backdrop{background:#0008;backdrop-filter:none}
+#sleep-timer-v176>header{display:flex;align-items:center;gap:12px}#sleep-timer-v176>header>span{color:var(--accent3);display:flex}#sleep-timer-v176>header svg{width:25px;height:25px}#sleep-timer-v176 h2{flex:1;font-size:19px;font-weight:650;margin:0}
+html body #sleep-timer-v176 button{min-height:44px;border:1px solid var(--border);border-radius:10px;padding:10px 12px;background:var(--bg3);color:var(--text);font-family:inherit;font-size:12px;cursor:pointer}
+html body #sleep-timer-v176>header button{width:38px;min-height:38px;padding:0;font-size:22px;background:transparent}
+.sleep-current-v176{display:flex;justify-content:space-between;gap:12px;align-items:center;background:var(--bg3);padding:14px;border-radius:12px;margin:18px 0;font-size:12px}.sleep-current-v176>span{color:var(--text3)}.sleep-current-v176>strong{font-weight:600;font-variant-numeric:tabular-nums;text-align:right}
+.sleep-presets-v176{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+#sleep-form-v176{margin:20px 0 12px}#sleep-form-v176>label{display:block;font-size:11px;color:var(--text2);margin-bottom:8px}#sleep-form-v176>div{display:flex;gap:8px}
+html body #sleep-form-v176 input{width:100%;min-width:0;flex:1;height:44px;box-sizing:border-box;padding:10px 12px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:10px;font-size:16px}
+html body #sleep-form-v176 button{background:var(--accent);color:#fff;border-color:transparent}
+html body #sleep-timer-v176 :is(#sleep-after-v176,#sleep-stop-v176){width:100%;text-align:center}
+@media(max-width:380px){html body #sleep-timer-v176{padding:17px}.connection-values-v176>div{gap:10px;padding:12px 10px}}
+html body.telechat-phone-v159.telechat-mobile-keyboard-v100 #sleep-timer-v176{position:fixed;top:calc(var(--v100-offset,0px) + 12px);bottom:auto;margin:0 auto;max-height:calc(var(--v100-height,100dvh) - 24px)}

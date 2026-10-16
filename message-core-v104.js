@@ -59,6 +59,7 @@
   }
   function channelStatus(status,key,token,kind){
     if(token!==generation||!sameKey(key))return;
+    window.dispatchEvent?.(new Event('exstra-connection-change-v176'));
     if(status==='SUBSCRIBED'){unhealthy.delete(kind);if(!unhealthy.size)reconnectAttempt=0;scheduleRefresh(key);return;}
     if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'||status==='CLOSED'){unhealthy.add(kind);scheduleReconnect(key);}
   }
@@ -109,5 +110,5 @@
   window.addEventListener('telechat-native-visibility',event=>{if(event.detail?.background===false)recover();});
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)recover();},{passive:true});
   setInterval(()=>{const key=activeKey(),at=Date.now();if(!key||document.hidden||typeof navigator!=='undefined'&&navigator.onLine===false)return;const gap=unhealthy.size?7000:30000;if(at-lastProbeAt<gap)return;lastProbeAt=at;probeLatest(key);},7000);
-  window.telechatMessageCoreV104={resync:recover,reconnect:subscribeCore,seen:eventKey};
+  window.telechatMessageCoreV104={resync:recover,reconnect:subscribeCore,seen:eventKey,diagnostics:()=>({active:!!activeKey(),connected:!!activeKey()&&!!msgSub&&!unhealthy.size,reconnecting:!!reconnectTimer})};
 })();

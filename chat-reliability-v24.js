@@ -55,11 +55,11 @@
   }
   async function outboxWrite(item){
     try{const database=await openDatabase();if(!database)return false;
-    return await new Promise(resolve=>{const tx=database.transaction(STORE,'readwrite');tx.objectStore(STORE).put({...item,element:undefined});tx.oncomplete=()=>resolve(true);tx.onerror=tx.onabort=()=>resolve(false);});}catch(_){return false;}
+    return await new Promise(resolve=>{const tx=database.transaction(STORE,'readwrite');tx.objectStore(STORE).put({...item,element:undefined});tx.oncomplete=()=>{window.dispatchEvent(new Event('exstra-delivery-change-v176'));resolve(true);};tx.onerror=tx.onabort=()=>resolve(false);});}catch(_){return false;}
   }
   async function outboxDelete(clientId){
     const database=await openDatabase();if(!database)return;
-    await new Promise(resolve=>{const tx=database.transaction(STORE,'readwrite');tx.objectStore(STORE).delete(clientId);tx.oncomplete=resolve;tx.onerror=resolve;tx.onabort=resolve;});
+    await new Promise(resolve=>{const tx=database.transaction(STORE,'readwrite');tx.objectStore(STORE).delete(clientId);tx.oncomplete=()=>{window.dispatchEvent(new Event('exstra-delivery-change-v176'));resolve();};tx.onerror=resolve;tx.onabort=resolve;});
   }
   async function outboxRead(){
     const database=await openDatabase();if(!database)return [];
@@ -72,7 +72,7 @@
     return '<span class="v72-delivery v72-sending"><i></i> Отправляется</span>';
   }
   function setDeliveryState(item,state){
-    item.state=state;const element=item.element;if(!element?.isConnected)return;
+    item.state=state;window.dispatchEvent(new Event('exstra-delivery-change-v176'));const element=item.element;if(!element?.isConnected)return;
     const holder=document.createElement('span');holder.innerHTML=deliveryMarkup(state);const next=holder.firstElementChild;
     const old=element.querySelector('.v72-delivery');if(old)old.replaceWith(next);else element.querySelector('.msg-meta')?.append(next);
     if(state==='failed')next.onclick=()=>retryMessage(item.clientId);
@@ -148,5 +148,14 @@
     try{return await deliver(item,{silent:true});}catch(error){setDeliveryState(item,'failed');await outboxWrite({...item,state:'failed'});return false;}
   }
   function acknowledge(message){if(!message?.id||message.from_nick!==me?.nick)return false;const item=[...liveRows.values()].find(item=>item.row.chat_key===message.chat_key&&item.row.from_nick===message.from_nick&&(message.client_id_v172?item.clientId===message.client_id_v172:Number(item.row.ts)===Number(message.ts)&&item.row.text===message.text));if(!item)return false;if(item.state==='sent')return true;const saved={...item.row,...message,text:typeof message.text==='string'?message.text:item.row.text};const waiter=ackWaiters.get(item.clientId);if(waiter)waiter({ok:true,row:saved});else{confirmedRows.set(item,saved);const pending=deliveries.get(item.clientId);if(pending)pending.finally(()=>{if(confirmedRows.has(item)&&isMine(item))deliver(item,{silent:true}).catch(()=>{});}).catch(()=>{});else deliver(item,{silent:true}).catch(()=>{});}return true;}
-  window.telechatDeliveryV72={retry:retryMessage,drain:drainOutbox,sendDirect,acknowledge};
+  async function diagnostics(){
+    const owner=me?.nick;if(!owner)return {queued:0,failed:0,permanent:0,sending:0,durable:true};
+    const database=await openDatabase(),items=new Map();
+    // Stream only counters/IDs: do not retain a second copy of queued media bodies.
+    if(database)await new Promise(resolve=>{const tx=database.transaction(STORE,'readonly'),request=tx.objectStore(STORE).openCursor();request.onerror=tx.onabort=()=>resolve();request.onsuccess=()=>{const cursor=request.result;if(!cursor){resolve();return;}const item=cursor.value;if(item.row?.from_nick===owner&&(!item.expiresAt||item.expiresAt>Date.now()))items.set(item.clientId,{clientId:item.clientId,state:item.state,permanent:!!item.permanent});cursor.continue();};});
+    for(const [id,item] of liveRows)if(item.row?.from_nick===owner&&item.state!=='sent'&&(!item.expiresAt||item.expiresAt>Date.now()))items.set(id,item);
+    if(me?.nick!==owner)return null;
+    const values=[...items.values()];return {queued:values.length,failed:values.filter(item=>item.state==='failed').length,permanent:values.filter(item=>item.permanent).length,sending:values.filter(item=>deliveries.has(item.clientId)).length,durable:!!database};
+  }
+  window.telechatDeliveryV72={retry:retryMessage,drain:drainOutbox,sendDirect,acknowledge,diagnostics};
 })();

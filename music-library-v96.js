@@ -18,15 +18,17 @@
   let dbPromise, dialog, tracks = [], activeOwner = '', current = null, objectUrl = '', playToken = 0, busy = false;
   let opener = null, restoreFocusOnClose = false, positionFrame = 0, lastPlaybackState = '';
   let queue = [], repeat = false, shuffle = false;
-  let loading=false,playError=null,playRequest=0;
+  let loading=false,playError=null,playRequest=0,pauseEpoch=0;
+  let userVolume=audio.volume,sleepGain=1;
+  function applyVolume(){audio.volume=userVolume*sleepGain;cloudPlayer?.setVolume?.(audio.volume);}
   const soundcloud = window.telechatSoundCloudV98;
   let cloudPlayer = null, cloudAbort = null, pendingAutoPlay = false;
   const isCloud = track => !!soundcloud?.isLink(track?.url);
   const player = () => isCloud(current) ? (cloudPlayer || {paused:true,currentTime:0,duration:current?.duration||0}) : audio;
   const inCall = () => !!document.querySelector('#voice-call-overlay.show,#voice-call-mini.show') || document.body.classList.contains('voice-call-full-v32');
-  function pauseMusic() {pendingAutoPlay=false;audio.pause();cloudPlayer?.pause();}
+  function pauseMusic() {++pauseEpoch;pendingAutoPlay=false;audio.pause();cloudPlayer?.pause();}
   function seekTo(seconds) {if(isCloud(current))cloudPlayer?.seek(seconds);else if(Number.isFinite(audio.duration))audio.currentTime=Math.max(0,Math.min(seconds,audio.duration));}
-  function ended() {const items=queue.length?queue:tracks,index=items.findIndex(t=>t.id===current?.id);if(repeat&&current){seekTo(0);play(current);}else if(shuffle&&items.length>1)step(1);else if(index>=0&&index<items.length-1)play(items[index+1]);else updatePlayers();}
+  function ended() {if(window.exstraSleepTimerV176?.onTrackEnd(current))return;const items=queue.length?queue:tracks,index=items.findIndex(t=>t.id===current?.id);if(repeat&&current){seekTo(0);play(current);}else if(shuffle&&items.length>1)step(1);else if(index>=0&&index<items.length-1)play(items[index+1]);else updatePlayers();}
   function cloudSource(url) {
     const a=document.createElement('a');a.className='music-soundcloud-source-v98';a.href=url;a.target='_blank';a.rel='noopener noreferrer';a.setAttribute('aria-label','Открыть трек на SoundCloud');a.innerHTML=soundcloud.brand;return a;
   }
@@ -193,16 +195,17 @@
     catch(error){playError={name:error.name,message:error.message};throw error;}
   }
   async function startTrack(track, autoplay = true) {
+    const intent=pauseEpoch;
     if (!track || owner() !== track.owner) return;
     if (inCall()) {notify('Музыка на паузе во время звонка.');return;}
     if (!autoplay && current?.id === track.id) { pauseMusic();return; }
     if(isCloud(track)) {
-      if(current?.id===track.id&&cloudPlayer){if(!cloudPlayer.paused)pauseMusic();else await cloudPlayer.play();return;}
-      stop();const token=playToken;current=track;pendingAutoPlay=autoplay;cloudAbort=new AbortController();
+      if(current?.id===track.id&&cloudPlayer){if(!cloudPlayer.paused)pauseMusic();else{pendingAutoPlay=true;await cloudPlayer.play();}return;}
+      stop();const token=playToken;current=track;pendingAutoPlay=autoplay&&intent===pauseEpoch;cloudAbort=new AbortController();
       ensureDialog();dialog.classList.add('has-soundcloud-v98');updatePlayers();position();
       try {
         cloudPlayer=await soundcloud.create(track.url,byId('music-soundcloud-widget-v98'),{
-          signal:cloudAbort.signal,canPlay:()=>token===playToken&&owner()===track.owner&&!inCall(),
+          signal:cloudAbort.signal,canPlay:()=>token===playToken&&owner()===track.owner&&!inCall()&&pendingAutoPlay,
           onState:()=>{if(token!==playToken)return;audio.pause();updatePlayers();},onEnd:ended,onError:error=>notify(errorText(error))
         });
         if(token!==playToken||owner()!==track.owner){cloudPlayer?.destroy();cloudPlayer=null;return;}
@@ -231,7 +234,7 @@
       if (token !== playToken || owner() !== track.owner) return;
       current = track;audio.src = src;updatePlayers();
       if ('mediaSession' in navigator && 'MediaMetadata' in window) navigator.mediaSession.metadata = new MediaMetadata({title:track.title,artist:'Моя музыка · ExstraChat'});
-      if (autoplay) await audio.play();
+      if (autoplay&&intent===pauseEpoch) await audio.play();
     } catch (error) {
       if (token !== playToken) return;
       playError={name:error.name,message:error.message};
@@ -434,9 +437,9 @@
   window.addEventListener('telechat-profile-music-updated-v97',()=>{if(dialog)renderList();});
   window.telechatMusicV96 = {
     async getTracks(){ensureDialog();await loadLibrary();return tracks.map(t=>({...t}));},
-    getState(){const media=player();return {track:current?{...current}:null,paused:media.paused,time:media.currentTime||0,duration:media.duration||current?.duration||0,repeat,shuffle,loading,error:playError};},
+    getState(){const media=player();return {track:current?{...current}:null,paused:media.paused,time:media.currentTime||0,duration:media.duration||current?.duration||0,repeat,shuffle,loading,error:playError,volume:userVolume};},
     resume:resumeMusic,
-    async playTrack(track,items=[],options={}){ensureDialog();await loadLibrary();queue=items.map(t=>({...t,owner:owner()}));return play({...track,owner:owner()},options.autoplay!==false);},
+    async playTrack(track,items=[],options={}){const nick=owner(),intent=pauseEpoch;ensureDialog();await loadLibrary();if(owner()!==nick||intent!==pauseEpoch)return;queue=items.map(t=>({...t,owner:nick}));return play({...track,owner:nick},options.autoplay!==false);},
     async getFile(id){await loadLibrary();if(!tracks.some(t=>t.id===id))throw new Error('Трек не найден');return read('files',id);},
     async importFiles(files){ensureDialog();await addFiles(files);window.dispatchEvent(new Event('telechat-music-library-v117'));return tracks.map(t=>({...t}));},
     async importFilesReport(files){ensureDialog();const result=await addFiles(files);window.dispatchEvent(new Event('telechat-music-library-v117'));return result;},
@@ -445,13 +448,15 @@
     inspectAudio,normalizeLink,pause:pauseMusic,seek:seekTo,step,stop,
     toggle(){if(current)return play(current);},
     setRepeat(value){repeat=!!value;updatePlayers();},setShuffle(value){shuffle=!!value;updatePlayers();},
-    setVolume(value){const volume=Math.max(0,Math.min(1,Number(value)||0));audio.volume=volume;cloudPlayer?.setVolume?.(volume);},
+    setVolume(value){userVolume=Math.max(0,Math.min(1,Number(value)||0));applyVolume();},
+    setSleepGain(value){sleepGain=Math.max(0,Math.min(1,Number(value)||0));applyVolume();},
     openLocal(trigger){return open(trigger,true);},
     async playLink(track,nick) {
       if(!owner())return;
+      const user=owner(),intent=pauseEpoch;
       const url = normalizeLink(track.url);
       if(current?.kind==='link'&&current.url===url&&current.owner===owner())return play(current);
-      await loadLibrary();queue=[];
+      await loadLibrary();if(owner()!==user||intent!==pauseEpoch)return;queue=[];
       return play({id:'profile:'+nick+':'+url,owner:owner(),kind:'link',url,title:track.title||'Музыка профиля',duration:track.duration||0});
     }
   };

@@ -2,7 +2,9 @@
 (()=>{
  'use strict';
  const unsupported=new Map(),inflight=new Map();
- const stats={requests:0,sends:0,heartbeats:0,snapshots:0,timeouts:0,missing:0};
+ const stats={requests:0,sends:0,heartbeats:0,snapshots:0,timeouts:0,missing:0,successes:0,failures:0,lastSuccessAt:0,lastFailureAt:0,latencyMs:0,lastResult:0};
+ let probeJob=null,lastProbe=0;
+ function record(ok,start){const end=Date.now();stats.lastResult=ok?1:-1;if(ok){stats.successes++;stats.lastSuccessAt=end;stats.latencyMs=Math.max(1,end-start);}else{stats.failures++;stats.lastFailureAt=end;}window.dispatchEvent?.(new Event('exstra-connection-change-v176'));}
  let offset=null;
  const self=()=>{try{return me||null;}catch(_){return null;}};
  function credentials(owner){const u=self();if(!u||u.nick!==owner)return null;const login=document.getElementById('l-login'),pass=document.getElementById('l-pass');const secret=u.pass||(login?.value.trim().toLowerCase()===owner?pass?.value:'');return secret?{p_nick:owner,p_pass:secret}:null;}
@@ -16,8 +18,8 @@
    let result;
    if(terminal){const response=await fetch(SUPABASE_URL+'/rest/v1/rpc/'+name,{method:'POST',headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'},body:JSON.stringify(args),keepalive:true,signal:controller.signal,cache:'no-store'});if(!response.ok){let error;try{error=await response.json();}catch(_){error={message:'Соединение с сервером временно недоступно',code:String(response.status)};}throw error;}result={data:await response.json()};}
    else{let query=sb.rpc(name,args);if(query.abortSignal)query=query.abortSignal(controller.signal);result=await query;}
-   if(result.error)throw result.error;observe(result.data,start);return result.data;
-  }catch(error){if(missing(error)){unsupported.set(name,Date.now()+300000);stats.missing++;return null;}if(controller.signal.aborted||error?.name==='AbortError'){stats.timeouts++;throw Object.assign(Error('Сервер не успел подтвердить запрос. Проверим автоматически.'),{code:'TIMEOUT'});}throw error;}
+   if(result.error)throw result.error;observe(result.data,start);record(true,start);return result.data;
+  }catch(error){record(false,start);if(missing(error)){unsupported.set(name,Date.now()+300000);stats.missing++;return null;}if(controller.signal.aborted||error?.name==='AbortError'){stats.timeouts++;throw Object.assign(Error('Сервер не успел подтвердить запрос. Проверим автоматически.'),{code:'TIMEOUT'});}throw error;}
   finally{clearTimeout(timer);}
  }
  function packet(row){if(!row.client_id_v172)row.client_id_v172=crypto.randomUUID();return {chat_key:row.chat_key,from_nick:row.from_nick,text:row.text,ts:row.ts,reply_text:row.reply_text??null,client_id_v172:row.client_id_v172};}
@@ -26,5 +28,18 @@
  }
  async function snapshot(nicks){const auth=credentials(self()?.nick);if(!auth)return null;stats.snapshots++;const result=await call('exstra_presence_snapshot_v172',{...auth,p_nicks:[...new Set(nicks)].slice(0,80)});if(!result)return null;if(!['modern','legacy','users'].every(k=>Array.isArray(result[k])))throw Error('Некорректный ответ статуса');return result;}
  async function heartbeat(session,snapshot,terminal=false){const auth=credentials(session.nick);if(!auth)return null;stats.heartbeats++;return call('exstra_presence_heartbeat_v172',{...auth,p_key:session.key,p_state:snapshot.state,p_at:snapshot.at,p_listening:!!snapshot.listening},{terminal,timeout:8000});}
- window.telechatTransportV172=Object.freeze({send,snapshot,heartbeat,now:()=>offset===null?null:Date.now()+offset,diagnostics:()=>({...stats,inflight:inflight.size})});
+ function probe(){
+  if(probeJob)return probeJob;
+  if(navigator.onLine===false)return Promise.resolve({ok:false,offline:true});
+  if(Date.now()-lastProbe<3000)return Promise.resolve({ok:stats.lastResult===1,cooldown:true});
+  lastProbe=Date.now();
+  probeJob=Promise.resolve().then(async()=>{const start=Date.now(),controller=new AbortController(),timer=setTimeout(()=>controller.abort(),8000);stats.requests++;
+   try{if(typeof SUPABASE_URL==='undefined'||typeof SUPABASE_KEY==='undefined')throw Error('Not configured');
+    const response=await fetch(SUPABASE_URL+'/rest/v1/users?select=nick&limit=0',{method:'HEAD',headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY},cache:'no-store',signal:controller.signal});
+    if(!response.ok)throw Error('Server check failed');record(true,start);return {ok:true,latencyMs:stats.latencyMs};
+   }catch(_){if(controller.signal.aborted)stats.timeouts++;record(false,start);return {ok:false};}
+   finally{clearTimeout(timer);}
+  }).finally(()=>{probeJob=null;});return probeJob;
+ }
+ window.telechatTransportV172=Object.freeze({send,snapshot,heartbeat,probe,now:()=>offset===null?null:Date.now()+offset,diagnostics:()=>({...stats,inflight:inflight.size})});
 })();

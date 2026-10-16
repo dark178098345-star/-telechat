@@ -103,6 +103,7 @@
     ownChannel.on('presence',{event:'sync'},()=>syncLive(ownChannel)).subscribe(status=>{
       if(channel!==ownChannel||version!==generation)return;
       connected=status==='SUBSCRIBED';
+      window.dispatchEvent(new Event('exstra-connection-change-v176'));
       if(connected){connectionFailed=false;reconnectDelay=1000;clearTimeout(reconnectTimer);syncLive(ownChannel);if(session?.state){pendingTrack={key:session.key,nick:session.nick,device:session.device,state:session.state,at:session.at,listening:!!session.listening};trackLatest();}publish(true);refresh(true);}
       else if(['CLOSED','CHANNEL_ERROR','TIMED_OUT'].includes(status)){connectionFailed=true;schedulePaint();clearTimeout(reconnectTimer);reconnectTimer=setTimeout(()=>{if(channel!==ownChannel||shutdown||navigator.onLine===false)return;disconnect();connect();},reconnectDelay);reconnectDelay=Math.min(30000,reconnectDelay*2);}
     });
@@ -192,7 +193,8 @@
   // Guard against an older cached profile renderer painting last_seen over an exact state.
   const observer=new MutationObserver(()=>{schedulePaint();clearTimeout(refreshTimer);refreshTimer=setTimeout(()=>refresh(),100);});
   for(const id of ['contacts-list','chat-status-text','view-profile-seen'])if($(id))observer.observe($(id),{childList:true,subtree:id==='contacts-list',characterData:id!=='contacts-list'});
-  window.telechatPresenceV120=Object.freeze({publish,refresh,wake,leave,state:nick=>value(nick),paintHeader,paintProfile,paintContacts});
+  function reconnect(){if(navigator.onLine===false)return;shutdown=false;ensureAccount();disconnect();if(session&&!closingChannel)connect();publish(true);refresh(true);}
+  window.telechatPresenceV120=Object.freeze({publish,refresh,wake,leave,reconnect,diagnostics:()=>({connected:!!connected&&session?.nick===account(),hasSession:!!session&&session.nick===account(),reconnecting:!!reconnectTimer||!!closingChannel}),state:nick=>value(nick),paintHeader,paintProfile,paintContacts});
   window.telechatBackgroundPresenceV101={refresh,markBackground:()=>{nativeHidden=true;return publish(true);},markActive:()=>{nativeHidden=false;wake();},state:async nick=>{await refresh(false,nick);const v=value(nick);return v.state==='offline'?'':v.state;}};
   window.telechatDevicePresenceV72={publish,refresh,device:()=>phone()?'phone':'pc'};
   request('GET','typing?select=ts&limit=0').catch(()=>{}).finally(()=>{clockReady=true;wake();});
