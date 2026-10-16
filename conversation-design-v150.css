@@ -1,6 +1,92 @@
-/* A flatter conversation list and a quieter reading rhythm. Personal backgrounds remain intact. */
-body{--flow-selected:#8e75dc24;--flow-hover:#aaa0d210;--flow-unread:#9d82ee0b;--flow-incoming:#202130;--flow-outgoing:#6e58bd;--flow-secondary:#a7a5b9}
-body.theme-light{--flow-selected:#eae4fa;--flow-hover:#f3f1f8;--flow-unread:#f6f3fc;--flow-incoming:#fff;--flow-outgoing:#7558d4;--flow-secondary:#687085}
+/* v173: shared presentation foundation. No timers, observers or message mutations. */
+body{--bg:#0e0f12;--bg2:#15161b;--bg3:#202127;--border:#2b2d36;--text:#f1f1f5;--text2:#b7b8c3;--text3:#9496a5;--accent:#7156bd;--accent2:#6047a6;--accent3:#bba6ef;--flow-selected:#292432;--flow-hover:#ffffff07;--flow-unread:#b49ad709;--flow-incoming:#222329;--flow-outgoing:#655095;--flow-secondary:#a1a3b1;--pc-bg:var(--bg2);--pc-line:var(--border);--pc-text:var(--text);--pc-muted:var(--text3);--pc-block:var(--bg3);--shell-rail:#111216;--shell-field:#202127}
+html body.theme-light{--bg:#f5f5f7;--bg2:#fff;--bg3:#f0f0f4;--border:#dedfe6;--text:#25252c;--text2:#575967;--text3:#6f7280;--accent:#7156bd;--accent2:#6047a6;--accent3:#6e51ae;--flow-selected:#ece6f7;--flow-hover:#f5f3f9;--flow-unread:#f8f5fc;--flow-incoming:#fff;--flow-outgoing:#655095;--flow-secondary:#6a6e7b;--shell-rail:#f7f7fa;--shell-field:#f2f2f6}
+html body.theme-green{--bg:#111a16;--bg2:#17211c;--bg3:#202e26;--border:#314037;--text:#f0f5f1;--text2:#b3c6b9;--text3:#91aa9a;--accent:#27784f;--accent2:#20633f;--accent3:#8bd0a9;--flow-selected:#253b2d;--flow-hover:#ffffff07;--flow-unread:#9bd4a909;--flow-incoming:#233129;--flow-outgoing:#246443;--flow-secondary:#a3b8aa;--shell-rail:#121b16;--shell-field:#202e26}
+html body{font-family:system-ui,-apple-system,'Segoe UI',sans-serif!important}
+html body :is(button,input,textarea,select){font-family:inherit!important}
+html body :is(button,a,input,textarea,select,[role=button]):focus-visible{outline:2px solid var(--accent3);outline-offset:3px}
+html body :is(.sidebar,.chat-main,.sidebar-top,.chat-header,.input-area,.composer-shell,.panel-head){backdrop-filter:none!important;-webkit-backdrop-filter:none!important;text-shadow:none!important;transition:none!important}
+html body #chat-screen #sidebar{background:var(--bg2)!important;box-shadow:none!important}
+html body #chat-screen>.chat-main{background:var(--bg)!important;box-shadow:none!important}
+html body #chat-screen #messages:not(.has-wallpaper-v119){background:var(--bg)!important}
+html body #pixel-eyes-stage-v155{background:var(--bg)!important;border-color:var(--border)!important}
+html body #chat-screen .sidebar-top{background:var(--bg2)!important;border-color:var(--border)!important}
+html body #chat-screen .sidebar-logo{font-size:22px;font-weight:700;letter-spacing:-1px;color:var(--text)}
+html body #chat-screen .sidebar-logo span{color:var(--accent3)}
+html body #chat-screen .sidebar-tagline-v77{font-size:10px;font-weight:450;color:var(--text3);letter-spacing:.02em;margin-top:4px}
+html body #chat-screen :is(.create-room-btn,.hdr-btn,.back-btn){border:1px solid transparent!important;background:transparent!important;box-shadow:none!important;color:var(--text2)!important;border-radius:12px!important;transform:none!important}
+html body #chat-screen :is(.create-room-btn,.hdr-btn,.back-btn):hover{background:var(--bg3)!important;color:var(--text)!important}
+html body #chat-screen .create-room-btn{background:var(--bg3)!important;color:var(--accent3)!important}
+html body #chat-screen .search-inp{background:var(--shell-field)!important;color:var(--text)!important;border:1px solid transparent!important;border-radius:12px!important;box-shadow:none!important;backdrop-filter:none!important;height:44px;font-size:13px;transition:border-color 120ms ease!important}
+html body #chat-screen .search-inp::placeholder,html body #chat-screen .msg-input::placeholder{color:var(--text3)!important;opacity:1}
+html body #chat-screen .search-inp:focus{border-color:var(--accent3)!important;outline:none}
+html body #chat-screen :is(.search-wrap,.chat-header-actions){background:transparent!important;box-shadow:none!important}
+html body #chat-screen .chat-header{background:var(--bg2)!important;border-bottom:1px solid var(--border)!important;box-shadow:none!important}
+html body #chat-screen .chat-name{font-weight:650!important;font-size:15px;letter-spacing:-.2px;text-shadow:none!important}
+html body #chat-screen .chat-status-text{font-size:11px;font-weight:450}
+html body #chat-screen .input-area{background:var(--bg)!important;border-top:1px solid var(--border)!important;box-shadow:none!important}
+html body #chat-screen .composer-shell{background:var(--shell-field)!important;border:1px solid var(--border)!important;border-radius:16px!important;box-shadow:none!important}
+html body #chat-screen .composer-shell:focus-within{border-color:var(--accent3)!important}
+html body #chat-screen :is(.composer-tool,#attach-button-v141){color:var(--text2);box-shadow:none!important;transform:none!important}
+html body #chat-screen .send-btn{background:var(--accent)!important;box-shadow:none!important;border-radius:14px!important;color:#fff!important;transform:none!important}
+html body #chat-screen .send-btn:hover{background:var(--accent2)!important}
+html body #chat-screen #stories-strip-v115{background:transparent!important;border-color:var(--border)!important;box-shadow:none!important}
+html body #chat-screen .stories-title-v115{font-size:10px;letter-spacing:.1em;color:var(--text3);font-weight:600}
+html body #chat-screen .stories-add-v115{background:transparent!important;border-color:var(--border)!important;color:var(--accent3)!important;border-radius:9px!important;box-shadow:none!important}
+html body #chat-screen .story-chip-name-v115{font-size:10px;font-weight:450;color:var(--text2)}
+html body #chat-screen .story-chip-ring-v115{box-shadow:none!important}
+html body #sidebar>.music-sidebar-player{background:var(--bg3)!important;border:1px solid var(--border)!important;border-radius:14px!important;box-shadow:none!important}
+html body .auth-box{background:var(--bg2)!important;border:1px solid var(--border)!important;border-radius:20px!important;box-shadow:0 20px 70px #0003!important;backdrop-filter:none!important}
+html body :is(.modal-box,.side-panel){background-color:var(--bg2);color:var(--text)}
+html body #settings-panel.settings-navigation-v160 .panel-head{background:var(--bg2)!important}
+html body #settings-home-v160 button{border-radius:12px;min-height:60px}
+html body #settings-home-v160 button:hover{background:var(--bg3)}
+html body #settings-profile-v165{border-bottom:1px solid var(--border);padding:22px 20px}
+html body #settings-panel.settings-navigation-v160 .panel-title{font-weight:650!important;letter-spacing:-.4px}
+html body :is(.contact-menu,.ctx-menu-v36,#attachment-menu-v141){background:var(--bg2)!important;border-color:var(--border)!important;backdrop-filter:none!important;box-shadow:0 14px 40px #0003!important}
+html body #empty-state .empty-card-v77{background:none!important;border:0!important;box-shadow:none!important;animation:none!important;min-height:0;max-width:440px;padding:32px 24px}
+html body #empty-state .empty-card-v77::before,html body #empty-state .empty-card-v77::after{display:none!important}
+html body #empty-state .empty-mark-v77{width:76px;height:76px;background:var(--bg3)!important;border:1px solid var(--border)!important;border-radius:24px;box-shadow:none!important;animation:none!important;display:grid;place-items:center;transform:none!important;color:var(--accent3);margin:0 0 24px}
+html body #empty-state .empty-mark-v77 svg{width:36px;height:36px}
+html body #empty-state .empty-mark-v77::before,html body #empty-state .empty-mark-v77::after{display:none!important}
+html body #empty-state .empty-kicker-v77{color:var(--text3);font-size:10px;letter-spacing:.15em;font-weight:550}
+html body #empty-state h1{font-size:30px;font-weight:650;letter-spacing:-1px;color:var(--text);text-shadow:none}
+html body #empty-state p{color:var(--text2);font-size:14px;line-height:1.7;max-width:320px}
+html body #empty-state .empty-search-btn-v77{background:var(--accent)!important;border:0!important;color:#fff!important;box-shadow:none!important;border-radius:12px;min-height:46px;font-size:13px;font-weight:600}
+html body #empty-state .empty-features-v77{color:var(--text3);font-weight:450;font-size:10px}
+@media(min-width:721px){
+ html body:not(.telechat-phone-v159) #chat-screen.active{padding:0!important;gap:0!important}
+ html body:not(.telechat-phone-v159) #chat-screen #sidebar{width:372px;min-width:372px;padding-left:72px;border:0!important;border-right:1px solid var(--border)!important;border-radius:0!important}
+ html body:not(.telechat-phone-v159) #chat-screen>.chat-main{border:0!important;border-radius:0!important}
+ html body:not(.telechat-phone-v159) #sidebar::before{background:var(--shell-rail)!important;border-color:var(--border)!important}
+ html body:not(.telechat-phone-v159) #sidebar>.sidebar-top{padding:25px 18px 18px!important}
+ html body:not(.telechat-phone-v159) #sidebar>.section-rail-v109{padding:17px 7px;gap:8px}
+ html body:not(.telechat-phone-v159) #sidebar .section-rail-v109 button{border-radius:12px;font-weight:550;font-size:9px;min-height:62px;color:var(--text3);background:transparent}
+ html body:not(.telechat-phone-v159) #sidebar .section-rail-v109 button.active{background:var(--flow-selected);color:var(--accent3)}
+ html body:not(.telechat-phone-v159) #sidebar .section-rail-v109 button.active::before{display:none}
+ html body:not(.telechat-phone-v159) #sidebar .rail-brand-v109{font-size:27px;letter-spacing:-2px;height:50px;color:var(--text)}
+ html body:not(.telechat-phone-v159) #sidebar .telechat-nav-btn{color:var(--text3);background:transparent!important;box-shadow:none!important;transform:none!important;font-weight:550}
+ html body:not(.telechat-phone-v159) #sidebar>.sidebar-footer.telechat-bottom-nav{background:transparent!important;border:0!important;box-shadow:none!important}
+ html body:not(.telechat-phone-v159) #sidebar .telechat-nav-btn{border:0!important;border-radius:12px!important}
+ html body:not(.telechat-phone-v159) #sidebar .telechat-nav-btn:hover,html body:not(.telechat-phone-v159) #sidebar .telechat-nav-btn.active{background:var(--flow-selected)!important;color:var(--accent3)}
+ html body:not(.telechat-phone-v159) #chat-screen .chat-header{min-height:78px;padding:12px 26px;gap:14px}
+ html body:not(.telechat-phone-v159) #chat-screen .chat-header :is(.hdr-btn,.back-btn){width:40px;height:40px}
+ html body:not(.telechat-phone-v159) #chat-screen .input-area{padding:16px clamp(16px,3vw,48px);gap:12px}
+ html body:not(.telechat-phone-v159) #chat-screen .send-btn{width:48px;height:48px;flex:0 0 48px}
+}
+html body.telechat-phone-v159{--phone-bg:var(--bg);--phone-card:#191a20;--phone-raised:#23242c;--phone-line:#ffffff12;--phone-text:#f1f1f5;--phone-muted:#a1a3b1;--phone-accent:#bba6ef;--phone-nav:68px;--bg2:var(--phone-card);--bg3:var(--phone-raised)}
+html body.theme-light.telechat-phone-v159{--phone-card:#fff;--phone-raised:#f0f0f4;--phone-line:#25252c18;--phone-text:#25252c;--phone-muted:#6f7280;--phone-accent:#6e51ae}
+html body.theme-green.telechat-phone-v159{--phone-card:#17211c;--phone-raised:#202e26;--phone-line:#eef5f114;--phone-text:#f0f5f1;--phone-muted:#a3b8aa;--phone-accent:#8bd0a9}
+html body.telechat-phone-v159 #phone-home-head-v159{padding-top:calc(20px + env(safe-area-inset-top,0px));background:var(--phone-bg)}
+html body.telechat-phone-v159 #phone-home-head-v159 h1{font-size:29px;font-weight:650;letter-spacing:-1px}
+html body.telechat-phone-v159 #phone-home-head-v159 .phone-home-row-v159>div>span{font-size:11px;letter-spacing:.2px}
+html body.telechat-phone-v159 #phone-home-head-v159 .phone-home-actions-v159 button{border-radius:13px;background:var(--phone-card);color:var(--phone-text)}
+html body.telechat-phone-v159 #phone-nav-v159 button{border-radius:12px;font-weight:550;gap:5px}
+html body.telechat-phone-v159 #phone-nav-v159 button.active{background:transparent;color:var(--phone-accent)}
+html body.telechat-phone-v159 #phone-nav-v159 button.active svg{background:var(--phone-raised);outline:7px solid var(--phone-raised);border-radius:5px}
+html body.telechat-phone-v159 .phone-action-v159{border-radius:13px;background:var(--phone-card);box-shadow:none;min-height:64px}
+html body.telechat-phone-v159 .phone-action-v159 strong{font-weight:600}
+html body.telechat-phone-v159 .phone-self-card-v159{border-radius:18px;box-shadow:none}
 html body #chat-screen #contacts-list{padding:8px 6px!important}
 html body #chat-screen #contacts-list .contact,
 html body.theme-light #chat-screen #contacts-list .contact,

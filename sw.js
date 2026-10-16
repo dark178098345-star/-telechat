@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v172-transport-reliability';
+const CACHE_NAME='telechat-shell-v173-unified-interface';
 const APP_SHELL=[
   './settings-navigation-v160.css?v=165',
   './settings-navigation-v160.js?v=167',
@@ -25,7 +25,7 @@ const APP_SHELL=[
   './game-status-v151.css?v=151',
   './game-status-catalog-v151.js?v=151',
   './game-status-v151.js?v=151',
-  './conversation-design-v150.css?v=150',
+  './conversation-design-v150.css?v=173',
   './conversation-design-v150.js?v=150',
   './music-together-v147.js?v=149',
   './music-together-v147.css?v=148',

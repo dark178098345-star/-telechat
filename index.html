@@ -17,7 +17,6 @@
 <link rel="icon" type="image/png" sizes="48x48" href="./favicon-48.png?v=61">
 <link rel="shortcut icon" href="./favicon.ico?v=61">
 <link rel="apple-touch-icon" href="./apple-touch-icon.png?v=61">
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{
@@ -670,9 +669,9 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
   <div class="chat-main">
     <div class="empty-state" id="empty-state">
       <div class="empty-card-v77">
-        <div class="empty-mark-v77" aria-hidden="true"><span>●</span><i></i><b></b></div>
+        <div class="empty-mark-v77" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M25 17a9 9 0 0 1-9 9H7l-4 3 2-7a11 11 0 1 1 22-6"/><path d="M10 12h11M10 17h7"/></svg></div>
         <div class="empty-kicker-v77">ExstraChat</div>
-        <h1>Твои разговоры рядом</h1>
+        <h1>Место для своих</h1>
         <p>Выбери чат слева или найди человека, чтобы начать общение.</p>
         <button type="button" class="empty-search-btn-v77" onclick="document.getElementById('search-inp').focus()">
           <span aria-hidden="true">⌕</span> Найти собеседника
@@ -2691,7 +2690,6 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <link rel="stylesheet" href="./light-theme-v147.css?v=167">
 <script src="./music-together-v147.js?v=149"></script>
 <script src="./music-room-invites-v148.js?v=148"></script>
-<link rel="stylesheet" href="./conversation-design-v150.css?v=150">
 <script src="./conversation-design-v150.js?v=150"></script>
 <link rel="stylesheet" href="./game-status-v151.css?v=151">
 <script src="./game-status-catalog-v151.js?v=151"></script>
@@ -2718,6 +2716,7 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <script src="./pair-bubble-v168.js?v=170"></script>
 <link rel="stylesheet" href="./chat-streak-v170.css?v=170">
 <script src="./chat-streak-v170.js?v=170"></script>
-<style id="plain-background-v142">html body,html body #chat-screen.active,#startup-loader{background:#090a12!important}</style>
+<style id="plain-background-v142">html body,html body #chat-screen.active,#startup-loader{background:var(--bg)!important}</style>
+<link rel="stylesheet" href="./conversation-design-v150.css?v=173">
 </body>
 </html>
