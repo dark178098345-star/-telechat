@@ -43,7 +43,7 @@
  function messageText(text){
   let value=String(text||'');
   if(value.startsWith('__telechat_story_reply_v152__:')){try{value=JSON.parse(value.slice('__telechat_story_reply_v152__:'.length)).text||'';}catch(_){return '';}}
-  else if(value.startsWith('__telechat_media_v1__:')){try{const media=JSON.parse(value.slice('__telechat_media_v1__:'.length));value=['image','voice','file'].includes(media.kind)?String(media.caption||''):'';}catch(_){return '';}}
+  else if(value.startsWith('__telechat_media_v1__:')){try{const media=JSON.parse(value.slice('__telechat_media_v1__:'.length));value=['image','voice','file','album'].includes(media.kind)?String(media.caption||''):'';}catch(_){return '';}}
   else if(value.startsWith('__telechat_'))return '';
   return String(value||'').slice(0,8000).replace(/https?:\/\/\S+|```[\s\S]*?```|`[^`]*`/gi,'');
  }

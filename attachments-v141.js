@@ -6,9 +6,9 @@
  const readCache=new Map(),readFlights=new Map(),cacheLimit=32*1024*1024;
  const unpackBefore=unpackMedia,renderBefore=renderMessageContent,previewBefore=messagePreviewText,pendingBefore=renderPendingMedia,sendBefore=sendMsg;
  const descriptor=raw=>{try{const d=JSON.parse(raw);return d&&/^[0-9a-f-]{36}$/i.test(d.id)&&typeof d.name==='string'&&d.name.length<=180&&Number.isFinite(d.size)&&d.size>0&&d.size<=max?d:null;}catch(_){return null;}};
- unpackMedia=function(text){const old=unpackBefore(text);if(old)return old;try{if(!String(text).startsWith(MEDIA_PREFIX))return null;const m=JSON.parse(text.slice(MEDIA_PREFIX.length));return m.kind==='file'&&descriptor(m.data)?m:null;}catch(_){return null;}};
+ unpackMedia=function(text){const old=unpackBefore(text);if(old)return old;try{if(!String(text).startsWith(MEDIA_PREFIX))return null;const m=JSON.parse(text.slice(MEDIA_PREFIX.length));if(m.kind==='album')return window.exstraPhotoAlbumV183?.parse(m.data)?m:null;return m.kind==='file'&&descriptor(m.data)?m:null;}catch(_){return null;}};
  const photo=d=>d?.view==='image'&&/^image\/(jpeg|png|webp)$/.test(d.mime||'');
- messagePreviewText=function(text){const m=unpackMedia(text);if(m?.kind==='file'){const d=descriptor(m.data);return (photo(d)?'Фотография':'Файл: '+d.name)+(m.caption?' · '+(window.exstraEmojiPlainV182?.(m.caption)??m.caption):'');}return previewBefore(text);};
+ messagePreviewText=function(text){const m=unpackMedia(text);if(m?.kind==='album')return 'Альбом · '+window.exstraPhotoAlbumV183.parse(m.data).length+' фото'+(m.caption?' · '+(window.exstraEmojiPlainV182?.(m.caption)??m.caption):'');if(m?.kind==='file'){const d=descriptor(m.data);return (photo(d)?'Фотография':'Файл: '+d.name)+(m.caption?' · '+(window.exstraEmojiPlainV182?.(m.caption)??m.caption):'');}return previewBefore(text);};
  const size=n=>n>=1048576?(n/1048576).toFixed(1)+' МБ':Math.max(1,Math.ceil(n/1024))+' КБ';
  renderMessageContent=function(text){const m=unpackMedia(text);if(m?.kind!=='file')return renderBefore(text);const d=descriptor(m.data);return '<button type="button" class="attachment-file-v141" data-file-v141="'+esc(d.id)+'" data-attachment-v179="'+esc(JSON.stringify(d))+'" aria-label="Сохранить файл '+esc(d.name)+'">'+icon('file')+'<span><strong>'+esc(d.name)+'</strong><small>'+size(d.size)+' · Скачать</small></span>'+icon('download')+'</button>'+(m.caption?'<div class="media-caption">'+(window.telechatEmojiV127?.decorate(esc(m.caption),false)||esc(m.caption))+'</div>':'');};
  async function api(action,data,signal){const owner=me?.nick;if(!owner)throw Error('Сначала войди в аккаунт');const pass=me.pass||($('l-login')?.value.trim().toLowerCase()===owner?$('l-pass')?.value:'');let q=sb.rpc('telechat_files_v141',{p_nick:owner,p_pass:pass||'',p_action:action,p_data:data});if(signal&&q.abortSignal)q=q.abortSignal(signal);const r=await q;if(r.error)throw r.error;if(me?.nick!==owner)throw Error('Аккаунт изменился');return r.data;}
@@ -50,17 +50,56 @@
   window.telechatVoiceV125?.cancel();pendingMedia={kind:'file',data:'',duration:0,_fileV141:file};renderPendingMedia();
  }
  renderPendingMedia=function(){if(pendingMedia?.kind!=='file'){const result=pendingBefore();if(uploading&&pendingMedia?.kind==='image'){const label=$('pending-media')?.querySelector('.pending-label');if(label)label.textContent='Загружаем фотографию…';}return result;}const file=pendingMedia._fileV141||descriptor(pendingMedia.data);if(!file)return;const box=$('pending-media');box.classList.add('show');box.innerHTML=icon('file')+'<div class="pending-label">'+esc(file.name)+'<small>'+size(file.size)+(uploading?' · Загружаем…':' · Готов к отправке')+'</small></div><button type="button" class="pending-remove" aria-label="Убрать файл">×</button>';box.querySelector('button').onclick=()=>cancelPendingMedia();};
- sendMsg=async function(...args){if(window.exstraPhotoComposeV182?.isPreparing()){showToast('Фото ещё подготавливается');return;}if(uploading)return;const isPhoto=pendingMedia?.kind==='image'&&(pendingMedia._photoBlobV182 instanceof Blob||/^data:image\/(jpeg|png|webp);base64,/i.test(pendingMedia.data||''));if(!pendingMedia?._fileV141&&!isPhoto)return sendBefore.apply(this,args);const media=pendingMedia,key=conversationKey(),owner=me?.nick;if(!key||!canWriteCurrent())return;if(navigator.onLine===false){showToast('Нет сети. Вложение осталось для повтора. Не закрывай приложение до отправки.');return;}
-  const captionAtSend=$('msg-input')?.value||'',encodedCaption=window.exstraEmojiComposerV182?.serialize(captionAtSend)??captionAtSend,controller=new AbortController();uploadController=controller;let timedOut=false;const timeout=setTimeout(()=>{timedOut=true;controller.abort();},90000);uploading=true;$('input-area')?.setAttribute('aria-busy','true');renderPendingMedia();let file=media._fileV141,ticket=null,client=null,attempted=false,handedOff=false;
-  try{if(isPhoto){const blob=media._photoBlobV182 instanceof Blob?media._photoBlobV182:await (await fetch(media.data)).blob(),ext=({'image/jpeg':'jpg','image/png':'png','image/webp':'webp'})[blob.type];if(!ext||blob.size<1||blob.size>max)throw Error('Не удалось подготовить фотографию до 20 МБ');file=new File([blob],'photo-'+Date.now()+'.'+ext,{type:blob.type});}if(pendingMedia!==media||conversationKey()!==key||me?.nick!==owner)throw new DOMException('Отменено','AbortError');
-   ticket=await guarded(api('reserve',{chat_key:key,name:file.name.slice(0,180),size:file.size,mime:file.type||'application/octet-stream'},controller.signal),controller.signal);if(!ticket?.id||!ticket.token||ticket.size!==file.size)throw Error('Сервер не подтвердил подготовку вложения');client=storage(ticket,controller.signal,true);attempted=true;const result=await guarded(client.upload(ticket.id+'/file',file,{contentType:'application/octet-stream',upsert:false}),controller.signal);if(result.error)throw result.error;
-   if(controller.signal.aborted||pendingMedia!==media||conversationKey()!==key||me?.nick!==owner)throw new DOMException('Отменено','AbortError');
-   rememberFile(ticket.id,{blob:file,name:ticket.name,mime:ticket.mime,size:ticket.size},owner);media.kind='file';media.data=JSON.stringify({id:ticket.id,name:ticket.name,size:ticket.size,mime:ticket.mime,...(isPhoto?{view:'image'}:{})});delete media._fileV141;delete media._photoBlobV182;handedOff=true;clearTimeout(timeout);
-   const input=$('msg-input'),nextDraft=input?.value||'',entities=window.exstraEmojiComposerV182?.capture(),edited=nextDraft!==captionAtSend;media._captionSnapshotV182=encodedCaption;if(edited&&input)input.value=captionAtSend;
+ sendMsg=async function(...args){
+  if(window.exstraPhotoComposeV182?.isPreparing()){showToast('Фото ещё подготавливается');return;}
+  if(uploading)return;
+  const media=pendingMedia,album=media?._albumV183;
+  const isPhoto=media?.kind==='image'&&(media._photoBlobV182 instanceof Blob||/^data:image\/(jpeg|png|webp);base64,/i.test(media.data||''));
+  if(!album&&!media?._fileV141&&!isPhoto)return sendBefore.apply(this,args);
+  const key=conversationKey(),owner=me?.nick;if(!key||!canWriteCurrent())return;
+  if(album&&(!Array.isArray(album)||album.length<2||album.length>10||album.some(item=>!(item.blob instanceof Blob))||album.reduce((n,item)=>n+item.blob.size,0)>40*1048576)){showToast('Выбери от 2 до 10 фото, до 40 МБ после сжатия');return;}
+  if(navigator.onLine===false){showToast('Нет сети. Вложение осталось для повтора. Не закрывай приложение до отправки.');return;}
+  const captionAtSend=$('msg-input')?.value||'',encodedCaption=window.exstraEmojiComposerV182?.serialize(captionAtSend)??captionAtSend,controller=new AbortController();
+  uploadController=controller;let timedOut=false,handedOff=false;
+  const timeout=setTimeout(()=>{timedOut=true;controller.abort();},album?180000:90000),tickets=[];
+  uploading=true;$('input-area')?.setAttribute('aria-busy','true');renderPendingMedia();
+  const current=()=>!controller.signal.aborted&&pendingMedia===media&&conversationKey()===key&&me?.nick===owner;
+  try{
+   const sources=album||[isPhoto?{blob:media._photoBlobV182 instanceof Blob?media._photoBlobV182:await (await fetch(media.data)).blob()}: {file:media._fileV141}];
+   const descriptors=[];
+   for(const [index,source] of sources.entries()){
+    if(!current())throw new DOMException('Отменено','AbortError');
+    let file=source.file;
+    if(!file){const blob=source.blob,ext=({'image/jpeg':'jpg','image/png':'png','image/webp':'webp'})[blob.type];if(!ext||blob.size<1||blob.size>max)throw Error('Не удалось подготовить фотографию до 20 МБ');file=new File([blob],'photo-'+Date.now()+'-'+(index+1)+'.'+ext,{type:blob.type});}
+    if(album){media._uploadStatusV183='Загружаем '+(index+1)+' из '+sources.length+'…';renderPendingMedia();}
+    const ticket=await guarded(api('reserve',{chat_key:key,name:file.name.slice(0,180),size:file.size,mime:file.type||'application/octet-stream'},controller.signal),controller.signal);
+    if(!ticket?.id||!ticket.token||ticket.size!==file.size||ticket.mime!==(file.type||'application/octet-stream'))throw Error('Сервер не подтвердил подготовку вложения');
+    const allocation={ticket,attempted:false};tickets.push(allocation);
+    if(!current())throw new DOMException('Отменено','AbortError');
+    allocation.attempted=true;
+    const result=await guarded(storage(ticket,controller.signal,true).upload(ticket.id+'/file',file,{contentType:'application/octet-stream',upsert:false}),controller.signal);if(result.error)throw result.error;
+    if(!current())throw new DOMException('Отменено','AbortError');
+    rememberFile(ticket.id,{blob:file,name:ticket.name,mime:ticket.mime,size:ticket.size},owner);
+    descriptors.push({id:ticket.id,name:ticket.name,size:ticket.size,mime:ticket.mime,...(isPhoto||album?{view:'image'}:{})});
+   }
+   const data=album?JSON.stringify({v:1,items:descriptors}):JSON.stringify(descriptors[0]);
+   if(album&&!window.exstraPhotoAlbumV183?.parse(data))throw Error('Не удалось собрать альбом');
+   media.kind=album?'album':'file';media.data=data;delete media._fileV141;delete media._photoBlobV182;
+   handedOff=true;clearTimeout(timeout);
+   const input=$('msg-input'),nextDraft=input?.value||'',entities=window.exstraEmojiComposerV182?.capture(),edited=nextDraft!==captionAtSend;
+   media._captionSnapshotV182=encodedCaption;if(edited&&input)input.value=captionAtSend;
    try{await sendBefore.apply(this,args);}finally{if(edited&&input&&me?.nick===owner&&conversationKey()===key&&(input.value===''||input.value===captionAtSend)){input.value=nextDraft;input.dispatchEvent(new Event('input',{bubbles:true}));window.exstraEmojiComposerV182?.restore(entities);window.autoResize?.(input);}delete media._captionSnapshotV182;}
-  }catch(error){if(timedOut)showToast('Отправка заняла слишком много времени. Вложение осталось для повтора. Не закрывай приложение.');else if(navigator.onLine===false)showToast('Соединение прервалось. Вложение осталось для повтора. Не закрывай приложение.');else if(error.name!=='AbortError')errorToast(error);}
-  finally{clearTimeout(timeout);uploadController=null;uploading=false;$('input-area')?.removeAttribute('aria-busy');if(pendingMedia===media)renderPendingMedia();
-   if(ticket&&!handedOff&&me?.nick===owner){const cleanup=new AbortController(),timer=setTimeout(()=>cleanup.abort(),8000);try{if(attempted){const removed=await guarded(storage(ticket,cleanup.signal,true).remove([ticket.id+'/file']),cleanup.signal);if(removed.error)throw removed.error;}await guarded(api('cancel',{id:ticket.id},cleanup.signal),cleanup.signal);}catch(_){/* Never delete an attachment handed to the durable sender. */}finally{clearTimeout(timer);}}
+  }catch(error){
+   if(timedOut)showToast('Отправка заняла слишком много времени. Вложение осталось для повтора. Не закрывай приложение.');
+   else if(navigator.onLine===false)showToast('Соединение прервалось. Вложение осталось для повтора. Не закрывай приложение.');
+   else if(error.name!=='AbortError')errorToast(error);
+  }finally{
+   clearTimeout(timeout);uploadController=null;uploading=false;delete media._uploadStatusV183;$('input-area')?.removeAttribute('aria-busy');if(pendingMedia===media)renderPendingMedia();
+   if(tickets.length&&!handedOff&&me?.nick===owner){
+    const cleanup=new AbortController(),timer=setTimeout(()=>cleanup.abort(),8000);
+    try{await Promise.all(tickets.map(async({ticket,attempted})=>{try{if(attempted){const removed=await guarded(storage(ticket,cleanup.signal,true).remove([ticket.id+'/file']),cleanup.signal);if(removed.error)throw removed.error;}await guarded(api('cancel',{id:ticket.id},cleanup.signal),cleanup.signal);}catch(_){/* Best effort; never remove files handed to the durable sender. */}}));}
+    finally{clearTimeout(timer);}
+   }
   }
  };
  const cancelBefore=window.cancelPendingMedia;if(typeof cancelBefore==='function')window.cancelPendingMedia=function(...args){uploadController?.abort();return cancelBefore.apply(this,args);};
@@ -72,7 +111,7 @@
  }
  const downloads=new Set();
  async function download(raw){const d=typeof raw==='string'?descriptor(raw):raw;if(!d||downloads.has(d.id))return;downloads.add(d.id);try{const value=await loadFile(d);await saveBlob(value.blob,value.name);}catch(e){if(e.name!=='AbortError')errorToast(e);}finally{downloads.delete(d.id);}}
- async function saveMessage(message){const m=unpackMedia(message?.text);if(!m)return;if(m.kind==='file')return download(descriptor(m.data));if(!['image','voice'].includes(m.kind))return;try{const response=await fetch(m.data),blob=await response.blob();const ext=({'image/jpeg':'jpg','image/png':'png','image/webp':'webp','audio/ogg':'ogg','audio/mp4':'m4a','audio/mpeg':'mp3','audio/wav':'wav'})[blob.type.split(';')[0]]||'webm';await saveBlob(blob,'telechat-'+(message.id||Date.now())+'.'+ext);}catch(e){if(e.name!=='AbortError')errorToast(e);}}
+ async function saveMessage(message){const m=unpackMedia(message?.text);if(!m)return;if(m.kind==='album')return window.exstraAlbumViewerV183?.open(window.exstraPhotoAlbumV183.parse(m.data));if(m.kind==='file')return download(descriptor(m.data));if(!['image','voice'].includes(m.kind))return;try{const response=await fetch(m.data),blob=await response.blob();const ext=({'image/jpeg':'jpg','image/png':'png','image/webp':'webp','audio/ogg':'ogg','audio/mp4':'m4a','audio/mpeg':'mp3','audio/wav':'wav'})[blob.type.split(';')[0]]||'webm';await saveBlob(blob,'telechat-'+(message.id||Date.now())+'.'+ext);}catch(e){if(e.name!=='AbortError')errorToast(e);}}
  $('messages')?.addEventListener('click',event=>{const button=event.target.closest('[data-file-v141]');if(button){event.preventDefault();download(descriptor(button.dataset.attachmentV179||''));}});
  const tools=document.querySelector('.composer-tools');if(!tools)return;
  const oldPhoto=tools.querySelector('[onclick*="chat-photo-input"]'),poll=tools.querySelector('[onclick*="openPollModal"]');oldPhoto?.remove();poll?.remove();
@@ -85,5 +124,5 @@
  menu.onclick=event=>{const action=event.target.closest('[data-attach]')?.dataset.attach;if(!action)return;close();if(action==='photo')$('chat-photo-input').click();else if(action==='poll')openPollModal();else{fileInput.accept=action==='video'?'video/*':'';fileInput.click();}};
  document.addEventListener('pointerdown',event=>{if(!menu.contains(event.target)&&!trigger.contains(event.target))close();});document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!menu.hidden){event.preventDefault();close(true);}});addEventListener('resize',()=>close());window.visualViewport?.addEventListener('resize',()=>close());
  const record=$('record-btn');record?.classList.add('voice-button-v141');if(record){if(!record.querySelector('svg'))record.innerHTML=icon('mic');tools.append(record);}
- window.telechatAttachmentsV141={saveMessage,canSave:message=>!!unpackMedia(message?.text),selectFile:selected,loadFile,cachedFile,abortAutomaticReads,descriptor,isPhoto:photo,isUploading:()=>uploading,cancelUpload:()=>uploadController?.abort()};
+ window.telechatAttachmentsV141={saveMessage,downloadFile:download,canSave:message=>!!unpackMedia(message?.text),selectFile:selected,loadFile,cachedFile,abortAutomaticReads,descriptor,isPhoto:photo,isUploading:()=>uploading,cancelUpload:()=>uploadController?.abort()};
 })();

@@ -653,7 +653,7 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
             <button class="composer-tool" onclick="openPollModal()" title="Опрос" aria-label="Создать опрос">&#128202;</button>
             <button class="composer-tool" onclick="document.getElementById('chat-photo-input').click()" title="Фотография" aria-label="Прикрепить фотографию">&#128247;</button>
             <button class="composer-tool" id="record-btn" onclick="toggleVoiceRecording()" title="Голосовое сообщение" aria-label="Записать голосовое">&#127908;</button>
-            <input id="chat-photo-input" type="file" accept="image/*" hidden onchange="handleChatPhoto(this)">
+            <input id="chat-photo-input" type="file" accept="image/*" multiple hidden onchange="handleChatPhoto(this)">
             <div class="composer-spacer"></div>
             <div class="recording-status" id="recording-status"><span class="recording-dot"></span><span id="recording-time">0:00</span></div>
           </div>
@@ -2472,7 +2472,7 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <script src="./emoji-catalog-v182.js?v=182"></script>
 <script src="./emoji-art-v182.js?v=182"></script>
 <script src="./reaction-art-v126.js?v=182"></script>
-<script src="./message-context-v36.js?v=156"></script>
+<script src="./message-context-v36.js?v=183"></script>
 <script src="./desktop-notifications-v37.js?v=181"></script>
 <script src="./ui-symbols-v125.js?v=125"></script>
 <script src="./voice-send-v38.js?v=125"></script>
@@ -2489,7 +2489,7 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <script src="./saved-accounts-v75.js?v=167"></script>
 <script src="./chat-privacy-v74.js?v=74"></script>
 <script src="./smooth-ui-v76.js?v=133"></script>
-<script src="./mobile-optimization-v100.js?v=159"></script>
+<script src="./mobile-optimization-v100.js?v=183"></script>
 <script src="./emoji-picker-v182.js?v=182"></script>
 <script src="./profile-background-v84.js?v=93"></script>
 <script src="./profile-editor-v88.js?v=167"></script>
@@ -2522,7 +2522,8 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <link rel="stylesheet" href="./mobile-interface-v138.css?v=138">
 <script src="./mobile-interface-v138.js?v=159"></script>
 <link rel="stylesheet" href="./attachments-v141.css?v=141">
-<script src="./attachments-v141.js?v=182"></script>
+<script src="./photo-album-model-v183.js?v=183"></script>
+<script src="./attachments-v141.js?v=183"></script>
 <link rel="stylesheet" href="./profile-card-v143.css?v=167">
 <link rel="stylesheet" href="./listening-v145.css?v=145">
 <link rel="stylesheet" href="./music-together-v147.css?v=148">
@@ -2535,14 +2536,14 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <script src="./game-status-v151.js?v=151"></script>
 <link rel="stylesheet" href="./social-v152.css?v=152">
 <link rel="stylesheet" href="./call-design-v152.css?v=152">
-<script src="./shared-media-v152.js?v=179"></script>
+<script src="./shared-media-v152.js?v=183"></script>
 <script src="./story-replies-v152.js?v=152"></script>
 <script src="./call-chat-v152.js?v=152"></script>
 <link rel="stylesheet" href="./quick-jump-v154.css?v=154">
 <script src="./quick-jump-v154.js?v=161"></script>
 <link rel="stylesheet" href="./pixel-eyes-v155.css?v=165">
 <script src="./pixel-emotions-v163.js?v=166"></script>
-<script src="./pixel-eyes-v155.js?v=167"></script>
+<script src="./pixel-eyes-v155.js?v=183"></script>
 <link rel="stylesheet" href="./phone-shell-v159.css?v=182">
 <script src="./phone-shell-v159.js?v=181"></script>
 <link rel="stylesheet" href="./settings-navigation-v160.css?v=165">
@@ -2566,12 +2567,14 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <script src="./rooms-studio-v177.js?v=177"></script>
 <link rel="stylesheet" href="./media-auto-v179.css?v=179">
 <script src="./media-policy-v179.js?v=179"></script>
-<script src="./media-auto-v179.js?v=182"></script>
+<script src="./media-auto-v179.js?v=183"></script>
 <link rel="stylesheet" href="./chat-features-v181.css?v=181">
 <script src="./chat-preferences-model-v181.js?v=181"></script>
 <script src="./chat-preferences-v181.js?v=181"></script>
-<script src="./whats-new-v181.js?v=182"></script>
-<script src="./photo-compose-v182.js?v=182"></script>
+<script src="./whats-new-v181.js?v=183"></script>
+<link rel="stylesheet" href="./photo-album-v183.css?v=183">
+<script src="./photo-album-viewer-v183.js?v=183"></script>
+<script src="./photo-compose-v183.js?v=183"></script>
 <script src="./emoji-composer-v182.js?v=182"></script>
 </body>
 </html>

@@ -432,7 +432,7 @@
   }
 
   function openForwardModalV36(messages) {
-    if(messages.some(message=>typeof unpackMedia==='function'&&unpackMedia(message?.text)?.kind==='file')){showToast('Для другого чата скачай файл и прикрепи его заново');return;}
+    if(messages.some(message=>typeof unpackMedia==='function'&&['file','album'].includes(unpackMedia(message?.text)?.kind))){showToast('Для другого чата скачай вложения и прикрепи их заново');return;}
     closeContextMenuV36();
     forwardMessagesV36 = messages.filter(message => message && !message.deleted);
     if (!forwardMessagesV36.length) return;

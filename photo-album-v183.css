@@ -1,0 +1,32 @@
+/* Stable reserved tiles: decoded photos never move the surrounding messages. */
+html body .photo-album-v183{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:3px;width:360px;max-width:100%;overflow:hidden;border-radius:14px}
+html body .photo-album-v183[data-count="3"]>.auto-photo-v179:first-child{grid-column:1/-1;aspect-ratio:2/1}
+html body .photo-album-v183[data-count="5"],html body .photo-album-v183[data-count="6"],html body .photo-album-v183[data-count="7"],html body .photo-album-v183[data-count="8"],html body .photo-album-v183[data-count="9"],html body .photo-album-v183[data-count="10"]{grid-template-columns:repeat(3,minmax(0,1fr))}
+html body .photo-album-v183[data-count="5"]>.auto-photo-v179:first-child,html body .photo-album-v183[data-count="8"]>.auto-photo-v179:first-child{grid-column:span 2;aspect-ratio:2/1}
+html body .photo-album-v183[data-count="7"]>.auto-photo-v179:first-child,html body .photo-album-v183[data-count="10"]>.auto-photo-v179:first-child{grid-column:1/-1;aspect-ratio:3/1}
+html body .photo-album-v183>.auto-photo-v179{width:100%;aspect-ratio:1;border:0;border-radius:0;min-width:0}
+html body .photo-album-v183 .auto-photo-image-v179{object-fit:cover;border-radius:0}
+html body .photo-album-v183 .auto-photo-load-v179{padding:8px;gap:5px}
+.photo-album-v183 .auto-photo-load-v179 svg{width:22px;height:22px}
+.photo-album-v183 .auto-photo-load-v179 strong{font-size:11px}.photo-album-v183 .auto-photo-load-v179 small{font-size:10px}
+html body #pending-media.album-pending-v183{display:flex;flex-direction:column;align-items:stretch;padding:8px;gap:7px;min-width:0;animation:none}
+.album-pending-head-v183{display:flex;align-items:center;justify-content:space-between;gap:8px}.album-pending-head-v183>div{display:flex;gap:6px;flex:none}
+html body .album-pending-head-v183 strong{font:600 12px/1.4 system-ui;min-width:0}
+html body .album-pending-v183 button{display:grid;place-items:center;position:static;min-width:32px;height:32px;padding:0 8px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font:14px system-ui;cursor:pointer}
+html body .album-pending-v183 button:disabled{opacity:.35;cursor:default}
+.album-pending-rail-v183{display:flex;gap:8px;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;padding-bottom:3px}
+.album-pending-item-v183{flex:0 0 104px;min-width:0}.album-pending-item-v183>div{display:flex;justify-content:space-between;margin-top:4px;gap:3px}
+html body #pending-media.album-pending-v183 .album-pending-item-v183>img{display:block;width:104px;height:70px;border-radius:8px;object-fit:cover}
+html body .album-viewer-v183{box-sizing:border-box;width:min(960px,100%);max-width:100%;height:min(850px,100dvh);max-height:100dvh;inset:0;margin:auto;border:1px solid var(--border);padding:0;border-radius:20px;background:var(--bg);color:var(--text);overflow:hidden}
+.album-viewer-v183::backdrop{background:#000c}
+.album-viewer-v183[open]{display:flex!important;flex-direction:column}
+.album-viewer-v183 header,.album-viewer-v183 footer{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px;flex:none;background:var(--bg2)}
+.album-viewer-v183 header strong{font:600 14px system-ui}.album-viewer-v183 button{min-width:44px;min-height:44px;border:1px solid var(--border);border-radius:10px;background:var(--bg3);color:var(--text);font:14px system-ui;padding:8px 14px;cursor:pointer}.album-viewer-v183 button:disabled{opacity:.4;cursor:default}
+.album-viewer-stage-v183{min-height:0;flex:1;display:grid;place-items:center;overflow:hidden;position:relative;background:#0b0c10;touch-action:pan-y pinch-zoom}
+.album-viewer-stage-v183 img{width:100%;height:100%;min-height:0;object-fit:contain}.album-viewer-stage-v183 p{position:absolute;padding:20px;text-align:center;color:#ddd;font:14px/1.5 system-ui;pointer-events:none}
+.album-viewer-v183 footer>div{display:flex;gap:8px}.album-viewer-v183 footer>span{font:12px system-ui;color:var(--text2)}
+.album-viewer-v183 [hidden]{display:none!important}
+@media(max-width:600px){html body .photo-album-v183{width:300px;max-width:100%}html body .album-viewer-v183{width:100%;height:100dvh;max-height:100dvh;border:0;border-radius:0;margin:0}.album-viewer-v183 header{padding-top:calc(10px + env(safe-area-inset-top,0px))}.album-viewer-v183 footer{padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))}.album-viewer-v183 footer button{padding:8px 10px}}
+@media(max-height:550px){html body #pending-media .album-pending-item-v183>img{height:42px}.album-pending-head-v183 button,.album-pending-item-v183 button{height:28px}}
+html body.telechat-phone-v159.telechat-mobile-keyboard-v100 #pending-media.album-pending-v183{max-height:none;overflow:visible;padding:4px 8px!important}
+html body.telechat-phone-v159.telechat-mobile-keyboard-v100 #pending-media.album-pending-v183 .album-pending-item-v183>img{height:42px}

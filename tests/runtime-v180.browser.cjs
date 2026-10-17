@@ -33,9 +33,9 @@ function fixtureClient() {
       } }); return q;
     },
     rpc(name, args) {
-      if (name === 'telechat_files_v141' && args.p_action === 'reserve') return reply({id:'00000000-0000-4000-8000-000000000182',token:'fixture-file-capability',...args.p_data});
+      if (name === 'telechat_files_v141' && args.p_action === 'reserve') return reply({id:'00000000-0000-4000-8000-'+String(window.fixtureFileId=(window.fixtureFileId||0)+1).padStart(12,'0'),token:'fixture-file-capability',...args.p_data});
       if (name === 'exstra_send_messages_v172') {
-        const rows = args.p_rows.map(row => { const saved = { ...row, id: messages.length + 1, read_by: [] }; messages.push(saved); return saved; });
+        const rows = args.p_rows.map(row => { const saved = { deleted: false, ...row, id: messages.length + 1, read_by: [] }; messages.push(saved); return saved; });
         return reply({ rows, server_time: Date.now() });
       }
       if (name === 'exstra_presence_snapshot_v172') return reply({ modern: [], legacy: [], users: users.map(u => ({ nick: u.nick, last_seen: u.last_seen })), server_time: Date.now() });
@@ -99,6 +99,44 @@ function fixtureClient() {
       await p.waitForSelector('#messages .media-caption [data-emoji-id=bubble-tea]');
       assert(!(await p.locator('#messages').textContent()).includes('[ex182:bubble-tea]'),'Photo caption renders its custom emotion without exposing internal tokens');
       await p.waitForFunction(()=>!pendingMedia);
+      const tiny=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a4RcAAAAASUVORK5CYII=','base64');
+      await p.locator('#chat-photo-input').setInputFiles([1,2,3].map(n=>({name:'album-'+n+'.png',mimeType:'image/png',buffer:tiny})));
+      await p.waitForFunction(()=>pendingMedia?._albumV183?.length===3&&!exstraPhotoComposeV182.isPreparing());
+      assert.equal(await p.locator('.album-pending-item-v183').count(),3);
+      await p.screenshot({path:path.join(root,'outputs/album-compose-real-v183-'+width+'.png')});
+      if(width<600){
+        const headerHeight=await p.locator('.chat-header').evaluate(n=>n.getBoundingClientRect().height);
+        await p.locator('#msg-input').focus();
+        await p.evaluate(()=>{window.fixtureNativeViewport=visualViewport;const v=new EventTarget();v.height=420;v.offsetTop=0;Object.defineProperty(window,'visualViewport',{value:v,configurable:true});window.dispatchEvent(new Event('resize'));});
+        await p.waitForTimeout(150);
+        assert.equal(await p.locator('.chat-header').evaluate(n=>n.getBoundingClientRect().height),headerHeight,'Album caption keyboard does not squash header');
+        assert(await p.locator('#pending-media').evaluate(n=>n.getBoundingClientRect().height>100),'Album controls are not clipped by the old 50px keyboard preview rule');
+        assert(await p.locator('#input-area').evaluate(n=>n.getBoundingClientRect().bottom<=421),'Album composer remains above keyboard');
+        await p.screenshot({path:path.join(root,'outputs/album-keyboard-v183.png')});
+        await p.evaluate(()=>{document.getElementById('msg-input').blur();Object.defineProperty(window,'visualViewport',{value:fixtureNativeViewport,configurable:true});window.dispatchEvent(new Event('resize'));});
+        await p.waitForTimeout(100);
+      }
+      await p.getByRole('button',{name:'Переместить фото 2 влево',exact:true}).click();
+      await p.locator('#msg-input').fill('Общая подпись');
+      await p.locator('.send-btn').click();
+      await p.waitForSelector('#messages .photo-album-v183[data-count="3"]');
+      assert.equal(await p.evaluate(()=>window.fixtureUploads),4,'One upload per photo including the preceding single photo');
+      assert.equal(await p.locator('#messages .photo-album-v183').count(),1,'One album row, not three separate messages');
+      assert.equal(await p.locator('#messages .photo-album-v183').evaluate(n=>n.parentElement.querySelector('.media-caption').textContent),'Общая подпись');
+      await p.locator('#messages .photo-album-v183').scrollIntoViewIfNeeded();
+      await p.waitForFunction(()=>document.querySelectorAll('.photo-album-v183 img:not([hidden])').length===3,{},{timeout:5000}).catch(async error=>{console.log(JSON.stringify(await p.evaluate(()=>({hidden:document.hidden,photos:[...document.querySelectorAll('.auto-photo-v179')].map(c=>({ready:c.dataset.mediaReadyV179,busy:c.getAttribute('aria-busy'),text:c.textContent,html:c.querySelector('img').outerHTML,complete:c.querySelector('img').complete,rect:c.getBoundingClientRect().toJSON(),cached:!!telechatAttachmentsV141.cachedFile(JSON.parse(c.dataset.attachmentV179).id)}))}))));await p.screenshot({path:path.join(root,'outputs/album-debug-v183.png')});throw error;});
+      await p.locator('#messages .photo-album-v183 img').first().click();
+      await p.waitForSelector('#album-viewer-v183 img:not([hidden])');
+      assert(await p.locator('#album-viewer-v183').evaluate(n=>{const r=n.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth+1&&r.top>=0&&r.bottom<=innerHeight+1&&Math.abs(r.left-(innerWidth-r.width)/2)<2;}),'Viewer is centered on desktop and fits phone');
+      assert.equal(await p.locator('#album-viewer-v183 footer>span').textContent(),'1 / 3');
+      await p.getByRole('button',{name:'Следующее фото',exact:true}).click();
+      assert.equal(await p.locator('#album-viewer-v183 footer>span').textContent(),'2 / 3');
+      await p.screenshot({path:path.join(root,'outputs/album-viewer-v183-'+width+'.png')});
+      await p.getByRole('button',{name:'Закрыть альбом',exact:true}).click();
+      await p.screenshot({path:path.join(root,'outputs/album-chat-v183-'+width+'.png')});
+      await p.evaluate(()=>telechatSharedMediaV152.open('bob'));
+      await p.waitForFunction(()=>document.querySelectorAll('#shared-media-list-v152 .auto-photo-v179').length===4,{},{timeout:5000}).catch(async e=>{console.log('GALLERY',await p.locator('#shared-media-v152').textContent(),errors);throw e;});
+      await p.evaluate(()=>telechatSharedMediaV152.close());
       await p.evaluate(() => openUserProfile('bob'));
       await p.waitForTimeout(200);
       assert.equal(await p.locator('#view-profile-name').textContent(), 'Bob');

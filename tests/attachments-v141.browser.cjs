@@ -4,7 +4,7 @@ const path=require('path'),assert=require('assert/strict'),{chromium}=require('p
  await p.evaluate(()=>Object.assign(window,{MEDIA_PREFIX:'media:',me:{nick:'a',pass:'fixture'},SUPABASE_URL:'https://example.test',SUPABASE_KEY:'fixture',pendingMedia:null,key:'a_b',sent:[],calls:[],uploaded:[],removed:[],toasts:[],
  conversationKey:()=>key,canWriteCurrent:()=>true,showToast:s=>toasts.push(s),openPollModal:()=>{},unpackMedia:text=>{try{const m=JSON.parse(text.slice(6));return m.kind==='image'?m:null;}catch(_){return null;}},renderMessageContent:t=>t,messagePreviewText:t=>t,renderPendingMedia:()=>{},cancelPendingMedia:()=>{pendingMedia=null;},
  sendMsg:async()=>{sent.push({...pendingMedia});pendingMedia=null;},
- sb:{rpc:async(name,args)=>{calls.push(args);return {data:{id:'11111111-1111-4111-8111-111111111111',token:'ticket',name:args.p_data.name||'test.txt',size:args.p_data.size||3,mime:'text/plain'}};}},
+ sb:{rpc:async(name,args)=>{calls.push(args);return {data:{id:'11111111-1111-4111-8111-111111111111',token:'ticket',name:args.p_data.name||'test.txt',size:args.p_data.size||3,mime:args.p_data.mime||'text/plain'}};}},
  supabase:{createClient:()=>({storage:{from:()=>({
  upload:async(path,file)=>{uploaded.push(path);if(window.delay)await new Promise(resolve=>window.release=resolve);return window.fail?{error:{message:'upload failed'}}:{};},
  remove:async paths=>{removed.push(...paths);return {};},
