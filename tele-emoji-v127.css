@@ -10,12 +10,6 @@
 .tele-emoji-run-v127 .tele-emoji-v127:only-child{width:100px;height:100px}
 .tele-emoji-run-v127:has(> .tele-emoji-v127:nth-child(2)) .tele-emoji-v127{width:72px;height:72px}
 .tele-emoji-run-v127:has(> .tele-emoji-v127:nth-child(3)) .tele-emoji-v127{width:60px;height:60px}
-#emoji-picker .emoji-item-v80 .tele-emoji-art-v127{width:34px;height:34px;margin:auto}
-#emoji-picker .emoji-category-v80 .tele-emoji-art-v127{width:27px;height:27px;margin:auto}
-#emoji-picker .emoji-item-v80[data-tele-emoji]{min-height:42px;border-radius:14px;background:#b4a0ed08}
-#emoji-picker .emoji-item-v80[data-tele-emoji]:hover,#emoji-picker .emoji-item-v80[data-tele-emoji]:focus-visible{background:#b4a0ed22;outline:1px solid #c3a7f35c}
-#emoji-picker .emoji-grid-v80.tele-grid-v127{grid-template-columns:repeat(auto-fill,minmax(52px,1fr));grid-auto-rows:54px;gap:7px;padding:12px}
-#emoji-picker .tele-grid-v127 .emoji-item-v80{width:100%;height:54px}
 .theme-light .msg-reactions-v36 .tele-emoji-art-v127{color:inherit}
-@media(max-width:720px){#emoji-picker.emoji-studio-v80{max-height:min(65dvh,510px)!important;min-height:300px!important}.tele-emoji-run-v127 .tele-emoji-v127:only-child{width:90px;height:90px}}
+@media(max-width:720px){.tele-emoji-run-v127 .tele-emoji-v127:only-child{width:90px;height:90px}}
 @media(prefers-reduced-motion:reduce){.tele-emoji-v127,.tele-emoji-art-v127{transition:none!important;animation:none!important}}

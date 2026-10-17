@@ -19,7 +19,7 @@ const root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f
     sb:{from:()=>({select(){return this},in(field,ids){return failRead?Promise.reject(Error('offline')):Promise.resolve({data:serverRows.filter(r=>ids.includes(r.message_id)).map(r=>({...r}))});},delete(){this.remove=true;this.filters={};return this},eq(k,v){this.filters[k]=v;return this},upsert(row){this.row=row;return this},then(resolve,reject){const op=this;writes.push({finish(error,throwError=false){if(!error){const id=op.remove?op.filters.message_id:op.row.message_id;serverRows=serverRows.filter(r=>!(r.message_id===id&&r.user_nick==='me'));if(!op.remove)serverRows.push(op.row);}if(throwError)reject(Error(error));else resolve({error:error?{message:error}:null});}});}}),channel:()=>({on(){return this},subscribe(){return this}})}
    });
   });
-  for(const f of ['tele-emoji-art-v127.js','reaction-art-v126.js','message-context-v36.js','ui-symbols-v125.js','ui-icons-v125.js','emoji-animation-v128.js'])await p.addScriptTag({content:read(f)});
+  for(const f of ['emoji-catalog-v182.js','emoji-art-v182.js','reaction-art-v126.js','message-context-v36.js','ui-symbols-v125.js','ui-icons-v125.js','emoji-animation-v128.js'])await p.addScriptTag({content:read(f)});
   await p.evaluate(()=>telechatSyncVisibleMessagesV105([row]));
   await p.waitForSelector('.message-reaction-v36');
   const heart=p.locator('.message-reaction-v36[data-emoji-v36="❤️"]');
@@ -71,8 +71,8 @@ const root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f
   assert.equal(await p.locator('.msg-reactions-v36 img').count(),0,'untrusted reaction values never become markup');
   assert.equal(await p.evaluate(()=>window.injected),undefined);
   await p.evaluate(async()=>{serverRows=serverRows.filter(r=>r.user_nick!=='intruder');for(const [i,emoji] of ['🥰','😘','👍','🔥','😍'].entries())serverRows.push({message_id:1,user_nick:'user'+i,emoji});await telechatRefreshReactionsV36();telechatSystemIconsV125.refresh();});
-  assert.equal(await p.locator('.message-reaction-v36 svg').count(),6);
-  assert.equal(await p.locator('[data-reaction-v36] svg').count(),6,'shared icon decorator preserves custom reaction art');
+  assert.equal(await p.locator('.message-reaction-v36 .reaction-art-v126').count(),6,'New artwork or portable fallback for historic Unicode reactions');
+  assert.equal(await p.locator('[data-reaction-v36] .reaction-art-v126').count(),6,'shared icon decorator preserves artwork and legacy fallback');
   for(const width of [320,390,1280]){
    await p.setViewportSize({width,height:760});await p.waitForTimeout(60);await p.evaluate(()=>showCtxMenu({clientX:innerWidth-3,clientY:150},row));await p.waitForTimeout(200);
    const bounds=await p.locator('#ctx-menu').boundingBox();assert(bounds.x>=0&&bounds.x+bounds.width<=width,'picker fits width '+width);

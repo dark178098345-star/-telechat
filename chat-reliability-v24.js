@@ -121,7 +121,7 @@
   }
 
   sendMsg=async function(){
-    const input=document.getElementById('msg-input'),caption=input.value.trim(),key=conversationKey();
+    const input=document.getElementById('msg-input'),caption=String(pendingMedia?._captionSnapshotV182??window.exstraEmojiComposerV182?.serialize(input.value)??input.value).trim(),key=conversationKey();
     if(!key||(!caption&&!pendingMedia))return;if(!canWriteCurrent()){showToast('Писать в канал может только владелец');return;}
     const media=pendingMedia,reply=replyTo,text=media?packMedia(media.kind,media.data,caption,media.duration):caption;
     const clientId=crypto.randomUUID?.()||('m-'+Date.now()+'-'+Math.random().toString(16).slice(2));

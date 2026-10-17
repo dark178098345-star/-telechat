@@ -183,7 +183,6 @@
     const state = historyCacheV51.get(normalizedKey);
     disposeStateV137(state);
     historyCacheV51.delete(normalizedKey);
-    window.exstraChatStreakV170?.invalidate(normalizedKey);
     deletePersistentV72(normalizedKey).catch(() => {});
     renderTokenV51++;
     if (normalizedKey === activeKeyV51()) {
@@ -620,7 +619,6 @@
         if(row){const saved={...message,chat_key:key,_type:'msg'};if(row._messageSourceV136)Object.assign(row._messageSourceV136,saved);row.dataset.id=String(message.id||'');row.dataset.messageKeyV105=itemKeyV51(saved);renderedRowsV105.set(row,stateMarkV51([saved]));}
       }
       window.telechatEmojiMotionV128?.acknowledge(message);
-      window.exstraChatStreakV170?.onMessage(message);
       state.cursor = state.items.length ? Math.min(...state.items.map(item => Number(item.ts || 0))) : state.cursor;
       schedulePersistentV72(state, 20);
       return true;

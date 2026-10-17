@@ -33,6 +33,7 @@ function fixtureClient() {
       } }); return q;
     },
     rpc(name, args) {
+      if (name === 'telechat_files_v141' && args.p_action === 'reserve') return reply({id:'00000000-0000-4000-8000-000000000182',token:'fixture-file-capability',...args.p_data});
       if (name === 'exstra_send_messages_v172') {
         const rows = args.p_rows.map(row => { const saved = { ...row, id: messages.length + 1, read_by: [] }; messages.push(saved); return saved; });
         return reply({ rows, server_time: Date.now() });
@@ -41,7 +42,6 @@ function fixtureClient() {
       if (name === 'exstra_presence_heartbeat_v172') return reply({ ts: args.p_at * 10 + 1, server_time: Date.now() });
       if (name === 'telechat_music_v117') return reply({ saved: [], liked: [], playlists: [] });
       if (name === 'telechat_activity_v124') return reply({ nick: 'alice', xp: 0, active_seconds: 0, music_seconds: 0 });
-      if (name === 'exstra_chat_streak_v170') return reply({ owner: 'alice', peer: 'bob', today: new Date().toISOString().slice(0, 10), days: 0, today_mask: 0 });
       return reply({});
     },
     channel() {
@@ -49,7 +49,7 @@ function fixtureClient() {
       return channel;
     },
     removeChannel: async () => {},
-    storage: { from: () => ({ getPublicUrl: p => ({ data: { publicUrl: 'https://app.test/' + p } }) }) }
+    storage: { from: () => ({ getPublicUrl: p => ({ data: { publicUrl: 'https://app.test/' + p } }),upload:async()=>{window.fixtureUploads=(window.fixtureUploads||0)+1;return {};},remove:async()=>({}) }) }
   };
   window.supabase = { createClient: () => client };
 }
@@ -76,6 +76,8 @@ function fixtureClient() {
       await p.locator('#l-login').fill('alice'); await p.locator('#l-pass').fill('fixture-only');
       await p.evaluate(() => doLogin());
       await p.waitForFunction(() => document.getElementById('chat-screen').classList.contains('active'));
+      await p.waitForSelector('#whats-new-v181[open]');
+      await p.locator('#whats-new-v181 button[data-close]').last().click();
       await p.evaluate(() => openChat('bob'));
       await p.waitForFunction(() => document.querySelectorAll('#messages .msg').length >= 20);
       await p.locator('#msg-input').fill('Runtime v180 send');
@@ -83,6 +85,20 @@ function fixtureClient() {
       await p.waitForFunction(() => [...document.querySelectorAll('#messages .msg-bubble')].some(node => node.textContent === 'Runtime v180 send'));
       await p.waitForTimeout(150);
       assert.equal(await p.locator('#messages .msg-bubble').filter({ hasText: 'Runtime v180 send' }).count(), 1, 'No duplicate optimistic message in full stack');
+      await p.evaluate(()=>exstraEmojiComposerV182.insert(exstraEmojiCatalogV182.get('boxing')));
+      assert.equal(await p.locator('#msg-input').inputValue(),'🥊','Custom IDs never appear in the input');
+      await p.locator('.send-btn').click();
+      await p.waitForSelector('#messages [data-emoji-id=boxing]');
+      assert(!(await p.locator('#messages').textContent()).includes('[ex182:boxing]'),'Actual send renders the selected custom expression, not its internal token');
+      await p.evaluate(()=>exstraEmojiComposerV182.insert(exstraEmojiCatalogV182.get('bubble-tea')));
+      await p.locator('#chat-photo-input').setInputFiles({name:'camera.png',mimeType:'image/png',buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a4RcAAAAASUVORK5CYII=','base64')});
+      await p.waitForFunction(()=>pendingMedia?._photoBlobV182 instanceof Blob&&!exstraPhotoComposeV182.isPreparing());
+      await p.locator('.send-btn').click();
+      await p.waitForFunction(()=>document.querySelectorAll('#messages .auto-photo-v179').length===1);
+      assert.equal(await p.evaluate(()=>window.fixtureUploads),1,'Actual sender chain uploads the photo exactly once');
+      await p.waitForSelector('#messages .media-caption [data-emoji-id=bubble-tea]');
+      assert(!(await p.locator('#messages').textContent()).includes('[ex182:bubble-tea]'),'Photo caption renders its custom emotion without exposing internal tokens');
+      await p.waitForFunction(()=>!pendingMedia);
       await p.evaluate(() => openUserProfile('bob'));
       await p.waitForTimeout(200);
       assert.equal(await p.locator('#view-profile-name').textContent(), 'Bob');

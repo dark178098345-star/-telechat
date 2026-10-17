@@ -11,7 +11,7 @@ const root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f
   sb:{from:table=>({select(){return this},eq(){return this},order(){return this},limit(n){this.count=n;return this},lt(){return this},then(resolve,reject){return Promise.resolve({data:table==='messages'?serverRows.map(r=>({...r})).sort((a,b)=>b.ts-a.ts).slice(0,this.count):[]}).then(resolve,reject)}})},
   appendMessage:async m=>{const row=document.createElement('div');row.className='msg '+(m.from_nick==='me'?'me':'them');row.dataset.id=m.id||'';row.innerHTML='<div class="msg-bubble">'+renderMessageContent(m.text)+'</div><div class="msg-meta">12:30</div>';row.style.opacity='0';document.querySelector('#messages').append(row);setTimeout(()=>{row.style.opacity='1';const box=document.querySelector('#messages');box.scrollTop=box.scrollHeight;},220);}
  }));
- for(const f of ['tele-emoji-art-v127.js','reaction-art-v126.js','tele-emoji-v127.js','chat-speed-v51.js','emoji-animation-v128.js'])await p.addScriptTag({content:read(f)});
+ for(const f of ['emoji-catalog-v182.js','emoji-art-v182.js','reaction-art-v126.js','tele-emoji-v127.js','chat-speed-v51.js','emoji-animation-v128.js'])await p.addScriptTag({content:read(f)});
  await p.evaluate(async()=>{serverRows=Array.from({length:8},(_,i)=>({id:i+1,ts:i+1,chat_key:conversationKey(),from_nick:'friend',text:'Ранее '+i}));await renderMessages();});await p.waitForTimeout(280);assert.equal(await p.evaluate(()=>telechatEmojiMotionV128.info().active),0);
  await p.evaluate(()=>appendMessage({from_nick:'me',chat_key:conversationKey(),text:'❤️',ts:100}));
  assert.equal(await p.evaluate(()=>telechatEmojiMotionV128.info().active),0,'do not start while entry opacity is zero and scroll is pending');

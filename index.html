@@ -171,7 +171,6 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
 .icon-btn{background:none;border:none;font-size:22px;cursor:pointer;padding:6px;border-radius:10px;line-height:1;flex-shrink:0;color:var(--text3);transition:transform .2s ease,background .2s ease,color .2s ease;}
 .emoji-picker{position:fixed;bottom:0;left:0;right:0;background:rgba(19,19,30,.94);background:color-mix(in srgb,var(--bg2) 94%,transparent);border-top:1px solid var(--border);padding:12px;display:flex;flex-wrap:wrap;gap:4px;z-index:200;padding-bottom:calc(12px + var(--safe-bottom));max-height:220px;overflow-y:auto;opacity:0;visibility:hidden;pointer-events:none;transform:translateY(20px);transition:opacity .28s ease,transform .35s cubic-bezier(.2,.8,.2,1),visibility .28s;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);}
 .emoji-picker.open{opacity:1;visibility:visible;pointer-events:auto;transform:translateY(0);}
-.ep-emoji{font-size:26px;cursor:pointer;padding:5px;border-radius:8px;line-height:1;}
 
 /* POLL MODAL */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:400;align-items:center;justify-content:center;}
@@ -418,8 +417,8 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
 <link rel="stylesheet" href="./smooth-ui-v76.css?v=76">
 <link rel="stylesheet" href="./full-redesign-v77.css?v=77">
 <link rel="stylesheet" href="./chat-stability-v78.css?v=78">
-<link rel="stylesheet" href="./mobile-experience-v79.css?v=79">
-<link rel="stylesheet" href="./emoji-motion-v80.css?v=82">
+<link rel="stylesheet" href="./mobile-experience-v79.css?v=182">
+<link rel="stylesheet" href="./emoji-studio-v182.css?v=182">
 <link rel="stylesheet" href="./profile-background-v84.css?v=167">
 <link rel="stylesheet" href="./profile-editor-v87.css?v=87">
 <link rel="stylesheet" href="./profile-editor-v88.css?v=167">
@@ -429,7 +428,7 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
 <link rel="stylesheet" href="./music-library-v96.css?v=96">
 <link rel="stylesheet" href="./music-card-v97.css?v=97">
 <link rel="stylesheet" href="./soundcloud-v98.css?v=99">
-<link rel="stylesheet" href="./mobile-adaptation-v100.css?v=100">
+<link rel="stylesheet" href="./mobile-adaptation-v100.css?v=182">
 <link rel="stylesheet" href="./background-presence-v101.css?v=101">
 <link rel="stylesheet" href="./stories-v115.css?v=153">
 <link rel="stylesheet" href="./music-hub-v117.css?v=171">
@@ -438,7 +437,7 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
 <link rel="stylesheet" href="./activity-stats-v124.css?v=124">
 <link rel="stylesheet" href="./ui-icons-v125.css?v=125">
 <link rel="stylesheet" href="./reactions-v126.css?v=126">
-<link rel="stylesheet" href="./tele-emoji-v127.css?v=130">
+<link rel="stylesheet" href="./tele-emoji-v127.css?v=182">
 <link rel="stylesheet" href="./qr-profile-v131.css?v=131">
 <link rel="stylesheet" href="./chat-scroll-v132.css?v=132">
 <link rel="stylesheet" href="./music-intro-v118.css?v=118">
@@ -846,7 +845,6 @@ const SUPABASE_KEY='sb_publishable_XuzevkpQFrhxRccCR4kc6w_M_vIXTgG';
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 const AVATARS=['😺','🐻','🦊','🐼','🦁','🐸','🐧','🦋','👻','🤖','👾','🎭','🎃','🦄','🐉','🔥','⚡','🌙','🌈','💀','🎸','🚀','👑','💎'];
 const FG=['😂','🔥','💯','👀','😍','🤣','💀','😭','✨','🥺','🤔','😎','🙃','💪','🫶','👏','🤯','🥳','😤','🫡'];
-const PICKER=['😂','😍','🔥','💯','👀','😭','✨','🥺','😎','🙃','💪','🫶','👏','🤯','🥳','😤','💀','👑','🎉','🎸','🚀','💎','🌙','⚡','🌈','🦋','🐸','🤖','👾','🎭','❤️','🧡','💛','💚','💙','💜','🖤','🤍','🙏','👍','👎','✅','❌','🎮','🍕','🍔','☕','🎵','🎶'];
 const PROFILE_DATA_PREFIX='__telechat_profile_v1__:';
 
 function unpackProfileData(raw){
@@ -1520,12 +1518,7 @@ async function createPoll(){
 
 // EMOJI PICKER
 function buildEmojiPicker(){
-  const p=document.getElementById('emoji-picker');
-  PICKER.forEach(e=>{
-    const el=document.createElement('div');el.className='ep-emoji';el.textContent=e;
-    el.onclick=()=>{document.getElementById('msg-input').value+=e;p.classList.remove('open');document.getElementById('msg-input').focus();};
-    p.appendChild(el);
-  });
+  return window.exstraEmojiPickerV182?.mount();
 }
 function toggleEmojiPicker(ev){ev.stopPropagation();document.getElementById('emoji-picker').classList.toggle('open');}
 document.addEventListener('click',e=>{if(!e.target.closest('.icon-btn')&&!e.target.closest('.emoji-picker'))document.getElementById('emoji-picker').classList.remove('open');});
@@ -1994,8 +1987,7 @@ function renderPendingMedia(){
 }
 function cancelPendingMedia(){pendingMedia=null;const box=document.getElementById('pending-media');if(box){box.classList.remove('show');box.innerHTML='';}}
 function handleChatPhoto(input){
-  const file=input.files&&input.files[0];input.value='';if(!file)return;if(!file.type.startsWith('image/')){showToast('Выбери фотографию');return;}if(file.size>12*1024*1024){showToast('Фото слишком большое — максимум 12 МБ');return;}
-  const url=URL.createObjectURL(file),img=new Image();img.onload=()=>{try{let scale=Math.min(1,1280/Math.max(img.naturalWidth,img.naturalHeight)),w=Math.max(1,Math.round(img.naturalWidth*scale)),h=Math.max(1,Math.round(img.naturalHeight*scale));let canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;let ctx=canvas.getContext('2d');ctx.drawImage(img,0,0,w,h);let data=canvas.toDataURL('image/jpeg',.76);if(data.length>650000){scale=Math.min(1,820/Math.max(img.naturalWidth,img.naturalHeight));w=Math.round(img.naturalWidth*scale);h=Math.round(img.naturalHeight*scale);canvas.width=w;canvas.height=h;ctx=canvas.getContext('2d');ctx.drawImage(img,0,0,w,h);data=canvas.toDataURL('image/jpeg',.58);}pendingMedia={kind:'image',data,duration:0};renderPendingMedia();showToast('Фото готово 📷');}catch(e){showToast('Не удалось обработать фото');}URL.revokeObjectURL(url);};img.onerror=()=>{URL.revokeObjectURL(url);showToast('Не удалось открыть фото');};img.src=url;
+  return window.exstraPhotoComposeV182?.select(input);
 }
 function blobToDataUrl(blob){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(blob);});}
 async function toggleVoiceRecording(){
@@ -2474,11 +2466,12 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <script src="./ui-polish-v16.js"></script>
 <script src="./moderation-v19.js?v=180"></script>
 <script src="./transport-v172.js?v=176"></script>
-<script src="./chat-reliability-v24.js?v=176"></script>
+<script src="./chat-reliability-v24.js?v=182"></script>
 <script src="./message-send-animation-v35.js?v=164"></script>
 <script src="./voice-calls-v32.js?v=167"></script>
-<script src="./tele-emoji-art-v127.js?v=161"></script>
-<script src="./reaction-art-v126.js?v=128"></script>
+<script src="./emoji-catalog-v182.js?v=182"></script>
+<script src="./emoji-art-v182.js?v=182"></script>
+<script src="./reaction-art-v126.js?v=182"></script>
 <script src="./message-context-v36.js?v=156"></script>
 <script src="./desktop-notifications-v37.js?v=181"></script>
 <script src="./ui-symbols-v125.js?v=125"></script>
@@ -2487,7 +2480,7 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <script src="./chat-boot-v41.js?v=174"></script>
 <script src="./fluid-ui-v42.js?v=133"></script>
 <script src="./chat-open-loader-v44.js?v=113"></script>
-<script src="./chat-speed-v51.js?v=170"></script>
+<script src="./chat-speed-v51.js?v=182"></script>
 <script src="./chat-actions-v52.js?v=105"></script>
 <script src="./sound-studio-v53.js?v=181"></script>
 <script src="./chat-experience-v62.js?v=174"></script>
@@ -2497,7 +2490,7 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <script src="./chat-privacy-v74.js?v=74"></script>
 <script src="./smooth-ui-v76.js?v=133"></script>
 <script src="./mobile-optimization-v100.js?v=159"></script>
-<script src="./emoji-motion-v80.js?v=161"></script>
+<script src="./emoji-picker-v182.js?v=182"></script>
 <script src="./profile-background-v84.js?v=93"></script>
 <script src="./profile-editor-v88.js?v=167"></script>
 <script src="./profile-quick-v91.js?v=168"></script>
@@ -2506,7 +2499,7 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <script src="./profile-music-v97.js?v=168"></script>
 <script src="./music-library-v96.js?v=176"></script>
 <script src="./profile-follow-compact-v102.js?v=167"></script>
-<script src="./message-core-v104.js?v=181"></script>
+<script src="./message-core-v104.js?v=182"></script>
 <link rel="stylesheet" href="./mentions-v106.css?v=106">
 <script src="./mentions-v106.js?v=106"></script>
 <script src="./performance-v107.js?v=108"></script>
@@ -2522,14 +2515,14 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <script src="./activity-model-v124.js?v=124"></script>
 <script src="./activity-stats-v124.js?v=161"></script>
 <script src="./ui-icons-v125.js?v=159"></script>
-<script src="./tele-emoji-v127.js?v=130"></script>
-<script src="./emoji-animation-v128.js?v=130"></script>
+<script src="./tele-emoji-v127.js?v=182"></script>
+<script src="./emoji-animation-v128.js?v=182"></script>
 <script src="./qr-profile-v131.js?v=161"></script>
 <script src="./chat-scroll-v132.js?v=134"></script>
 <link rel="stylesheet" href="./mobile-interface-v138.css?v=138">
 <script src="./mobile-interface-v138.js?v=159"></script>
 <link rel="stylesheet" href="./attachments-v141.css?v=141">
-<script src="./attachments-v141.js?v=179"></script>
+<script src="./attachments-v141.js?v=182"></script>
 <link rel="stylesheet" href="./profile-card-v143.css?v=167">
 <link rel="stylesheet" href="./listening-v145.css?v=145">
 <link rel="stylesheet" href="./music-together-v147.css?v=148">
@@ -2550,7 +2543,7 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <link rel="stylesheet" href="./pixel-eyes-v155.css?v=165">
 <script src="./pixel-emotions-v163.js?v=166"></script>
 <script src="./pixel-eyes-v155.js?v=167"></script>
-<link rel="stylesheet" href="./phone-shell-v159.css?v=167">
+<link rel="stylesheet" href="./phone-shell-v159.css?v=182">
 <script src="./phone-shell-v159.js?v=181"></script>
 <link rel="stylesheet" href="./settings-navigation-v160.css?v=165">
 <script src="./settings-navigation-v160.js?v=179"></script>
@@ -2560,8 +2553,6 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <script src="./pair-bubble-model-v168.js?v=170"></script>
 <link rel="stylesheet" href="./pair-bubble-v168.css?v=170">
 <script src="./pair-bubble-v168.js?v=170"></script>
-<link rel="stylesheet" href="./chat-streak-v170.css?v=170">
-<script src="./chat-streak-v170.js?v=170"></script>
 <script src="./swipe-reply-v174.js?v=174"></script>
 <style id="plain-background-v142">html body,html body #chat-screen.active,#startup-loader{background:var(--bg)!important}</style>
 <link rel="stylesheet" href="./conversation-design-v150.css?v=174">
@@ -2575,10 +2566,12 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <script src="./rooms-studio-v177.js?v=177"></script>
 <link rel="stylesheet" href="./media-auto-v179.css?v=179">
 <script src="./media-policy-v179.js?v=179"></script>
-<script src="./media-auto-v179.js?v=180"></script>
+<script src="./media-auto-v179.js?v=182"></script>
 <link rel="stylesheet" href="./chat-features-v181.css?v=181">
 <script src="./chat-preferences-model-v181.js?v=181"></script>
 <script src="./chat-preferences-v181.js?v=181"></script>
-<script src="./whats-new-v181.js?v=181"></script>
+<script src="./whats-new-v181.js?v=182"></script>
+<script src="./photo-compose-v182.js?v=182"></script>
+<script src="./emoji-composer-v182.js?v=182"></script>
 </body>
 </html>

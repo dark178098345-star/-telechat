@@ -50,13 +50,13 @@
    case 'joy':play('body',transforms('translateY(0)','translateY(-3px) scale(1.04)','translateY(0)','translateY(-1px)','translateY(0)'),900);play('eyes',transforms('scaleY(1)','scaleY(.15)','scaleY(1)'),350,{delay:200});break;
    case 'love':play('hearts',pulse,1150);break;
    case 'tender':play('body',transforms('rotate(0deg)','rotate(-5deg)','rotate(4deg)','rotate(0deg)'),1200);play('hearts',transforms('scale(1)','scale(1.2)','scale(1)'),1000,{stagger:120});break;
-   case 'kiss':play('hearts',[{transform:'translate(0,0) scale(1)',opacity:1},{transform:'translate(3px,-4px) scale(1.25)',opacity:1,offset:.4},{transform:'translate(5px,-7px) scale(.7)',opacity:0,offset:.8},{transform:'translate(0,0) scale(1)',opacity:1}],1200);break;
-   case 'cool':play('glasses',transforms('translateY(0)','translateY(2px) rotate(-3deg)','translateY(0)'),1000);play('shine',[{opacity:1},{opacity:.2},{opacity:1}],1000);break;
+   case 'kiss':play('body',transforms('rotate(0deg)','rotate(-4deg) scale(1.02)','rotate(0deg)'),1200);play('hearts',[{transform:'translate(0,0) scale(1)',opacity:1},{transform:'translate(3px,-4px) scale(1.25)',opacity:1,offset:.4},{transform:'translate(5px,-7px) scale(.7)',opacity:0,offset:.8},{transform:'translate(0,0) scale(1)',opacity:1}],1200);break;
+   case 'cool':play('body',transforms('rotate(0deg)','rotate(-3deg)','rotate(0deg)'),1000);play('glasses',transforms('translateY(0)','translateY(2px) rotate(-3deg)','translateY(0)'),1000);play('shine',[{opacity:1},{opacity:.2},{opacity:1}],1000);break;
    case 'plea':play('shine',transforms('scale(1)','scale(1.4)','scale(.8)','scale(1)'),1100,{stagger:100});break;
-   case 'cry':play('tears',[{transform:'translateY(0) scaleY(1)',opacity:1},{transform:'translateY(2px) scaleY(.8)',opacity:.65},{transform:'translateY(0) scaleY(1)',opacity:1}],550,{iterations:2});play('mouth',transforms('scale(1)','scale(.8,1.15)','scale(1)'),1100);break;
+   case 'cry':play('body',transforms('translateY(0)','translateY(2px) scale(.98)','translateY(0)'),1100);play('tears',[{transform:'translateY(0) scaleY(1)',opacity:1},{transform:'translateY(2px) scaleY(.8)',opacity:.65},{transform:'translateY(0) scaleY(1)',opacity:1}],550,{iterations:2});play('mouth',transforms('scale(1)','scale(.8,1.15)','scale(1)'),1100);break;
    case 'anger':play('body',transforms('translateX(0)','translateX(-2px)','translateX(2px)','translateX(-1.5px)','translateX(1px)','translateX(0)'),700);play('vein',pulse,900);break;
-   case 'surprise':play('mouth',transforms('scale(1)','scale(1.35)','scale(1.35)','scale(1)'),1100);play('eyes',transforms('scale(1)','scale(1.15)','scale(1)'),1100);break;
-   case 'think':play('hand',transforms('translateY(0) rotate(0deg)','translateY(-2px) rotate(-9deg)','translateY(0) rotate(0deg)','translateY(-1px) rotate(-5deg)','translateY(0) rotate(0deg)'),1400);break;
+   case 'surprise':play('body',transforms('scale(1)','scale(1.06)','scale(1)'),1100);play('mouth',transforms('scale(1)','scale(1.35)','scale(1.35)','scale(1)'),1100);play('eyes',transforms('scale(1)','scale(1.15)','scale(1)'),1100);break;
+   case 'think':play('body',transforms('rotate(0deg)','rotate(3deg)','rotate(0deg)'),1400);play('hand',transforms('translateY(0) rotate(0deg)','translateY(-2px) rotate(-9deg)','translateY(0) rotate(0deg)','translateY(-1px) rotate(-5deg)','translateY(0) rotate(0deg)'),1400);break;
    case 'thumb':play('body',transforms('rotate(0deg)','rotate(-12deg) translateY(-2px)','rotate(0deg)','rotate(-7deg)','rotate(0deg)'),1000,{origin:'50% 85%'});break;
   }
   if(!state.animations.length){stop(svg);return false;}
