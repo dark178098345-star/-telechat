@@ -142,6 +142,17 @@ function fixtureClient() {
       assert.equal(await p.locator('#view-profile-name').textContent(), 'Bob');
       await p.evaluate(() => closeUserProfile());
       await p.waitForTimeout(150);
+      await p.evaluate(()=>openPanel('settings-panel'));
+      await p.waitForSelector('#settings-home-v160');
+      await p.locator('[data-settings-section="appearance"]').click();
+      await p.getByLabel('Анимации интерфейса',{exact:true}).selectOption('off');
+      assert.equal(await p.evaluate(()=>exstraMotionV184.enabled()),false,'Actual settings disables decorative UI motion');
+      await p.getByLabel('Анимации интерфейса',{exact:true}).selectOption('full');
+      await p.locator('#interface-motion-settings-v184').scrollIntoViewIfNeeded();
+      await p.screenshot({path:path.join(root,'outputs/interface-motion-v184-'+width+'.png')});
+      await p.evaluate(()=>closeAllPanels());
+      await p.waitForTimeout(350);
+      assert.equal(await p.evaluate(()=>exstraMotionV184.getState().active),0,'No held UI animation after closing panels');
       await p.evaluate(() => {
         window.idleBadgeCandidates = 0; const query = Element.prototype.querySelectorAll;
         Element.prototype.querySelectorAll = function(selector) { const result = query.call(this, selector); if (this === document.body && selector.includes('profile-nick-marker')) idleBadgeCandidates += result.length; return result; };

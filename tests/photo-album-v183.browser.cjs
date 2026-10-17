@@ -29,7 +29,9 @@ async function setup(browser,width){
  const {p,errors}=await setup(browser,390);
  assert.equal(await p.locator('#chat-photo-input').getAttribute('multiple'),'');
  await p.evaluate(()=>selectColors(['red','green','blue']));assert.equal(await p.locator('.album-pending-item-v183').count(),3);
+ await p.evaluate(()=>{window.previewImages=[...document.querySelectorAll('.album-pending-item-v183 img')];for(let i=0;i<30;i++){pendingMedia._uploadStatusV183='Progress '+i;renderPendingMedia();}delete pendingMedia._uploadStatusV183;renderPendingMedia();});assert(await p.evaluate(()=>previewImages.every(n=>n.isConnected&&document.querySelectorAll('.album-pending-item-v183 img')[previewImages.indexOf(n)]===n)),'Progress preserves decoded preview nodes');
  await p.getByRole('button',{name:'Переместить фото 3 влево',exact:true}).click();assert.deepEqual(await p.evaluate(()=>colors()),[[250,0,0],[0,0,250],[0,130,0]]);
+ assert(await p.evaluate(()=>previewImages.every(n=>n.isConnected)),'Reorder moves existing images instead of recreating them');
  await p.getByRole('button',{name:'Убрать фото 2',exact:true}).click();assert.equal(await p.locator('.album-pending-item-v183').count(),2);
  const chosen=p.waitForEvent('filechooser');await p.getByRole('button',{name:'Добавить фото в альбом',exact:true}).click();const picker=await chosen;
  const png=await p.evaluate(async()=>[...new Uint8Array(await (await pick('blue')).arrayBuffer())]);await picker.setFiles({name:'extra.png',mimeType:'image/png',buffer:Buffer.from(png)});await p.waitForFunction(()=>pendingMedia?._albumV183?.length===3&&!exstraPhotoComposeV182.isPreparing());

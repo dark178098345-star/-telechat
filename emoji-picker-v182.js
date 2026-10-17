@@ -19,10 +19,5 @@
  function toggle(event){event?.stopPropagation();mount();if(picker.classList.contains('open'))close();else{if(document.body.classList.contains('telechat-phone-v159')&&document.activeElement?.id==='msg-input')document.activeElement.blur();picker.classList.add('open');render();}}
  document.addEventListener('keydown',event=>{if(event.key==='Escape'&&picker.classList.contains('open')){event.preventDefault();close();document.querySelector('.composer-tool[onclick*="toggleEmojiPicker"]')?.focus({preventScroll:true});}});
  window.buildEmojiPicker=mount;window.toggleEmojiPicker=toggle;window.exstraEmojiPickerV182=Object.freeze({mount,close,count:()=>art.all.length});
- // Existing button press feedback stays independent of the retired picker.
- const prepareButton=b=>{if(b instanceof HTMLButtonElement&&!b.classList.contains('v80-motion-ready'))b.classList.add('v80-motion-ready');};
- function prepare(root){if(root instanceof HTMLButtonElement)prepareButton(root);root.querySelectorAll?.('button').forEach(prepareButton);}prepare(document);document.body.classList.add('telechat-motion-v80');let pressed=null;
- function release(){pressed?.classList.remove('v80-pressing');pressed=null;}
- document.addEventListener('pointerdown',event=>{const b=event.target.closest('button.v80-motion-ready');if(!b||b.disabled)return;release();pressed=b;b.classList.add('v80-pressing');},{passive:true});for(const name of ['pointerup','pointercancel','blur'])window.addEventListener(name,release,{passive:true,capture:true});document.addEventListener('visibilitychange',()=>{if(document.hidden){release();observer?.disconnect();}else if(picker.classList.contains('open'))render();});
- new MutationObserver(records=>{for(const r of records)for(const n of r.addedNodes)if(n.nodeType===1)prepare(n);}).observe(document.body,{childList:true,subtree:true});
+ document.addEventListener('visibilitychange',()=>{if(document.hidden)observer?.disconnect();else if(picker.classList.contains('open'))render();});
 })();

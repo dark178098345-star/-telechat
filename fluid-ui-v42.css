@@ -56,7 +56,6 @@ button, [role="button"], .contact, .search-result-item { touch-action: manipulat
 }
 .contact {
   contain: layout paint style;
-  transform: translateZ(0);
   transition: background-color 180ms ease,border-color 180ms ease,transform 190ms var(--motion-v42),box-shadow 190ms ease !important;
 }
 .contact:hover { box-shadow: inset 0 0 0 1px rgba(167,139,250,.035); }
@@ -78,9 +77,9 @@ button, [role="button"], .contact, .search-result-item { touch-action: manipulat
   overscroll-behavior: contain;
   overflow-anchor: auto;
 }
-.msg { contain: layout paint; transform: translateZ(0); }
+.msg { contain: layout paint; }
 .msg-bubble {
-  transition: transform 180ms var(--motion-v42),filter 180ms ease,box-shadow 180ms ease;
+  transition: transform 180ms var(--motion-v42);
 }
 .msg:active .msg-bubble { transform: scale(.992); }
 
@@ -95,27 +94,17 @@ button, [role="button"], .contact, .search-result-item { touch-action: manipulat
   animation: panel-card-in-v42 330ms var(--motion-v42) both;
   animation-delay: min(calc(var(--motion-order-v42,0) * 28ms),168ms);
 }
-.panel-overlay { transition: opacity 260ms ease,visibility 260ms,backdrop-filter 320ms ease !important; }
+.panel-overlay { transition: opacity 180ms ease,visibility 180ms !important; }
 .modal-overlay.show .modal { animation: modal-in-v42 280ms var(--motion-spring-v42) both !important; }
 
 /* More responsive controls while preserving the glass visual. */
-button,.telechat-nav-btn,.hdr-btn,.icon-btn,.composer-tool,.close-btn,.profile-preview-btn {
-  transform: translateZ(0);
-}
-button.is-pressing-v42,
-.telechat-nav-btn.is-pressing-v42,
-.hdr-btn.is-pressing-v42,
-.icon-btn.is-pressing-v42 {
-  transform: scale(.955) !important;
-  transition-duration: 80ms !important;
-}
 .telechat-nav-btn .telechat-nav-icon {
-  transition: transform 240ms var(--motion-spring-v42),filter 220ms ease;
+  transition: transform 180ms var(--motion-v42);
 }
 .telechat-nav-btn:hover .telechat-nav-icon,
 .telechat-nav-btn.active .telechat-nav-icon { transform: translateY(-1px) scale(1.08); }
 .composer-shell {
-  transition: border-color 190ms ease,box-shadow 230ms ease,background-color 230ms ease,transform 190ms var(--motion-v42) !important;
+  transition: border-color 190ms ease,background-color 190ms ease,transform 190ms var(--motion-v42) !important;
 }
 .composer-shell:focus-within {
   transform: translateY(-1px);

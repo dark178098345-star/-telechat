@@ -1,0 +1,18 @@
+/* Motion ownership: no permanent compositor promotion, paint-heavy filters or list entrances. */
+body.exstra-motion-v184 :is(button,[role="button"]){transition:scale 130ms cubic-bezier(.2,.8,.2,1),background-color 140ms ease,color 140ms ease,border-color 140ms ease!important}
+body.exstra-motion-v184 .is-pressing-v184:not(:disabled){scale:.965}
+body.exstra-motion-v184 :is(.auth-btn,.modal-btn.primary,.install-app-btn,.sidebar-tab,.send-btn,.telechat-nav-btn,.account-logout-btn-v76,.logout-dialog-actions-v76 button):active{transform:none!important}
+body.exstra-motion-v184 .msg:active .msg-bubble{transform:none!important}
+body.exstra-motion-v184 :is(.side-panel,.panel-overlay,.modal-overlay,.message-modal-overlay-v36,#user-profile-modal,.contact-menu,#ctx-menu,#emoji-picker,#attachment-menu-v141,dialog){will-change:auto!important}
+body.exstra-motion-v184 :is(.modal-overlay.show,.message-modal-overlay-v36.show,.contact-menu.show,#ctx-menu.show,#emoji-picker.open,#attachment-menu-v141:not([hidden]),dialog[open]),body.exstra-motion-v184 .modal-overlay.show :is(.modal,.modal-box){animation:none!important}
+body.exstra-motion-v184 #emoji-picker{transition:none!important}
+body.exstra-motion-v184 .side-panel.open{animation:none!important}
+html body.exstra-motion-v184 .side-panel,html body.exstra-motion-v184 #settings-panel.side-panel.v65-full-panel,html body.exstra-motion-v184 #profile-panel.side-panel.v65-full-panel{transition:none!important}
+html body.exstra-motion-v184 #settings-panel.side-panel.v65-full-panel.open,html body.exstra-motion-v184 #profile-panel.side-panel.v65-full-panel.open{animation:none!important}
+body.exstra-motion-v184 #profile-quick-v91{transition:none!important;animation:none!important}
+.motion-field-v184{display:flex;flex-direction:column;gap:9px;color:var(--text2);font:13px/1.5 system-ui}.motion-field-v184 select{min-height:44px;width:100%;min-width:0;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--bg3);color:var(--text);font:inherit}
+#interface-motion-settings-v184 p{font:12px/1.65 system-ui;color:var(--text3);margin:12px 0 0}
+body[data-ui-motion-v184="off"] :is(button,[role="button"],.side-panel,.panel-overlay,.modal-overlay,.modal,.modal-box,.message-modal-overlay-v36,.contact,#emoji-picker,#ctx-menu,#attachment-menu-v141,.composer-shell,.msg-bubble),body[data-ui-motion-v184="off"] .sidebar-tabs::before{transition:none!important;animation:none!important}
+body[data-ui-motion-v184="off"] .is-pressing-v184{scale:1}
+body[data-ui-motion-v184="off"] :is(.telechat-nav-icon,.contact:active){transition:none!important;transform:none!important}
+@media(prefers-reduced-motion:reduce){body.exstra-motion-v184 :is(button,[role="button"]){transition:none!important}body.exstra-motion-v184 .is-pressing-v184{scale:1}}

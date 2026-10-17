@@ -16,7 +16,7 @@
       if (token !== epoch || self() !== owner || !dialog.open) return;
       if (!/^image\/(jpeg|png|webp)$/.test(value.mime)) throw Error('Вложение не является фотографией');
       url = URL.createObjectURL(new Blob([value.blob], { type: value.mime }));
-      image.onload = () => { if (token === epoch) { image.hidden = false; note.hidden = true; save.disabled = false; } };
+      image.onload = () => { if (token === epoch) { image.hidden = false; note.hidden = true; save.disabled = false; window.exstraMotionV184?.reveal(image, 'photo'); } };
       image.onerror = () => { if (token === epoch) note.textContent = 'Фото не открылось. Перейди к соседнему и попробуй ещё раз.'; };
       image.src = url;
     } catch (error) { if (token === epoch) note.textContent = error.message || 'Не удалось загрузить фото. Попробуй ещё раз.'; }

@@ -82,33 +82,63 @@
     finally { staging.delete(controller); if (job === controller) { job = null; busy(false); } release(); }
   }
   const render = window.renderPendingMedia;
+  let albumUi = null;
+  function makeButton(text, title) {
+    const button = document.createElement('button'); button.type = 'button'; button.textContent = text; button.setAttribute('aria-label', title); button.title = title; return button;
+  }
   window.renderPendingMedia = function (...args) {
     if (job && pendingMedia !== null && !entries(pendingMedia).length) cancel();
     release(); const album = pendingMedia?._albumV183, box = $('pending-media');
-    if (input) input.placeholder = album ? 'Общая подпись к альбому…' : originalPlaceholder;
+    const placeholder = album ? 'Общая подпись к альбому…' : originalPlaceholder;
+    if (input && input.placeholder !== placeholder) input.placeholder = placeholder;
     box?.classList.toggle('album-pending-v183', !!album);
-    if (!album || !box) return render?.apply(this, args);
-    box.classList.add('show'); box.replaceChildren();
-    const header = document.createElement('div'); header.className = 'album-pending-head-v183';
-    const label = document.createElement('strong'); label.className = 'pending-label'; label.textContent = pendingMedia._uploadStatusV183 || 'Альбом · ' + album.length + ' фото';
-    const controls = document.createElement('div'), uploading = !!window.telechatAttachmentsV141?.isUploading?.();
-    const button = (text, title, action, disabled = false) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = text; b.setAttribute('aria-label', title); b.title = title; b.disabled = disabled || uploading || !!job; b.onclick = action; return b; };
-    const add = button('+ Фото', 'Добавить фото в альбом', () => { appendNext = true; chooser.click(); }, album.length >= limit.maxCount);
-    const remove = button('×', 'Убрать альбом', () => window.cancelPendingMedia()); remove.disabled = false;
-    controls.append(add, remove); header.append(label, controls);
-    const rail = document.createElement('div'); rail.className = 'album-pending-rail-v183';
+    if (!album || !box) { albumUi = null; return render?.apply(this, args); }
+    if (!box.classList.contains('show')) box.classList.add('show');
+    if (!albumUi || albumUi.header.parentNode !== box) {
+      const header = document.createElement('div'); header.className = 'album-pending-head-v183';
+      const label = document.createElement('strong'); label.className = 'pending-label';
+      const controls = document.createElement('div'), add = makeButton('+ Фото', 'Добавить фото в альбом'), remove = makeButton('×', 'Убрать альбом');
+      add.onclick = () => { appendNext = true; chooser.click(); }; remove.onclick = () => window.cancelPendingMedia();
+      controls.append(add, remove); header.append(label, controls);
+      const rail = document.createElement('div'); rail.className = 'album-pending-rail-v183';
+      box.replaceChildren(header, rail); albumUi = { header, label, add, rail, tiles: new Map(), signature: '', locked: null };
+    }
+    const ui = albumUi, locked = !!window.telechatAttachmentsV141?.isUploading?.() || !!job;
+    const label = pendingMedia._uploadStatusV183 || (job ? 'Подготавливаем фото…' : 'Альбом · ' + album.length + ' фото');
+    if (ui.label.textContent !== label) ui.label.textContent = label;
+    const signature = album.map(item => item.url).join('|');
+    // Upload progress changes only the label, not ten decoded images and thirty buttons.
+    if (signature === ui.signature && locked === ui.locked) return;
+    ui.signature = signature; ui.locked = locked; ui.add.disabled = locked || album.length >= limit.maxCount;
+    const keep = new Set(album.map(item => item.url));
+    for (const [url, tile] of ui.tiles) if (!keep.has(url)) { tile.remove(); ui.tiles.delete(url); }
     album.forEach((item, index) => {
-      const tile = document.createElement('div'); tile.className = 'album-pending-item-v183';
-      const img = document.createElement('img'); img.src = item.url; img.alt = 'Фото ' + (index + 1); img.draggable = false;
-      const bar = document.createElement('div');
-      const move = step => { const next = [...album]; [next[index], next[index + step]] = [next[index + step], next[index]]; commit(next); $('pending-media').querySelectorAll('.album-pending-item-v183')[index + step]?.querySelector('button')?.focus({ preventScroll: true }); };
-      bar.append(button('‹', 'Переместить фото ' + (index + 1) + ' влево', () => move(-1), index === 0), button('×', 'Убрать фото ' + (index + 1), () => commit(album.filter((_, i) => i !== index))), button('›', 'Переместить фото ' + (index + 1) + ' вправо', () => move(1), index === album.length - 1));
-      tile.append(img, bar); rail.append(tile);
+      let tile = ui.tiles.get(item.url);
+      if (!tile) {
+        tile = document.createElement('div'); tile.className = 'album-pending-item-v183';
+        const image = document.createElement('img'); image.src = item.url; image.draggable = false;
+        const bar = document.createElement('div'); bar.append(makeButton('‹', ''), makeButton('×', ''), makeButton('›', ''));
+        tile.append(image, bar); ui.tiles.set(item.url, tile);
+      }
+      tile.querySelector('img').alt = 'Фото ' + (index + 1);
+      const [left, remove, right] = tile.querySelectorAll('button');
+      const move = step => {
+        if (window.telechatAttachmentsV141?.isUploading?.() || job) return;
+        const positions = window.exstraMotionV184?.enabled() ? new Map([...ui.rail.children].map(node => [node, node.getBoundingClientRect()])) : null;
+        const next = [...album]; [next[index], next[index + step]] = [next[index + step], next[index]]; commit(next);
+        window.exstraMotionV184?.reorder(ui.rail, positions);
+        ui.rail.children[index + step]?.querySelector('button')?.focus({ preventScroll: true });
+      };
+      for (const [button, text, disabled, action] of [
+        [left, 'Переместить фото ' + (index + 1) + ' влево', index === 0, () => move(-1)],
+        [remove, 'Убрать фото ' + (index + 1), false, () => commit(album.filter((_, i) => i !== index))],
+        [right, 'Переместить фото ' + (index + 1) + ' вправо', index === album.length - 1, () => move(1)]
+      ]) { button.setAttribute('aria-label', text); button.title = text; button.disabled = locked || disabled; button.onclick = action; }
+      if (ui.rail.children[index] !== tile) ui.rail.insertBefore(tile, ui.rail.children[index] || null);
     });
-    box.append(header, rail);
   };
   const remove = window.cancelPendingMedia;
-  window.cancelPendingMedia = function (...args) { cancel(); appendNext = false; const result = remove?.apply(this, args); release(); $('pending-media')?.classList.remove('album-pending-v183'); if (input) input.placeholder = originalPlaceholder; return result; };
+  window.cancelPendingMedia = function (...args) { cancel(); appendNext = false; albumUi = null; const result = remove?.apply(this, args); release(); $('pending-media')?.classList.remove('album-pending-v183'); if (input) input.placeholder = originalPlaceholder; return result; };
   chooser?.addEventListener('cancel', () => { appendNext = false; });
   for (const name of ['openChat', 'openRoom', 'goBack']) { const before = window[name]; if (typeof before === 'function') window[name] = function (...args) { cancel(); appendNext = false; window.telechatAttachmentsV141?.cancelUpload(); return before.apply(this, args); }; }
   window.addEventListener('telechat-account-ready-v175', () => { cancel(); appendNext = false; release(); });
