@@ -6,7 +6,9 @@ const root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f
  for(const file of ['profile-follow-compact-v102.js','activity-model-v124.js','activity-stats-v124.js','ui-symbols-v125.js','ui-icons-v125.js'])await page.addScriptTag({content:read(file)});
  await page.evaluate(()=>telechatActivityV124.refreshBadges());await page.waitForSelector('.activity-badge-v124:not([hidden])');await page.waitForTimeout(400);
  assert.equal(await page.locator('.activity-badge-v124').count(),1,'followers observer must not multiply badges');
- assert.equal(await page.locator('#profile-follow-compact-v102').evaluate(e=>e.previousElementSibling.id),'view-profile-nick');
+ // The existing activity module intentionally inserts its single badge after the
+ // nickname. Followers may follow that badge; adjacency is not badge identity.
+ assert.equal(await page.locator('#profile-follow-compact-v102').evaluate(e=>{let previous=e.previousElementSibling;if(previous?.classList.contains('activity-badge-v124'))previous=previous.previousElementSibling;return previous?.id;}),'view-profile-nick');
  const settled=await page.evaluate(()=>changes);await page.waitForTimeout(400);assert.equal(await page.evaluate(()=>changes),settled,'layout observers must settle instead of looping');
  await page.evaluate(()=>{const badge=document.querySelector('.activity-badge-v124');for(let i=0;i<30;i++)badge.parentElement.append(badge.cloneNode(true));telechatActivityV124.refreshBadges();});await page.waitForTimeout(100);assert.equal(await page.locator('.activity-badge-v124').count(),1,'existing duplicates are removed');
  await page.evaluate(()=>{for(let i=0;i<50;i++){telechatFollowCompactV102.ensure();telechatActivityV124.refreshBadges();}});await page.waitForTimeout(100);assert.equal(await page.locator('.activity-badge-v124').count(),1);

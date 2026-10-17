@@ -20,8 +20,18 @@
   function scan(node){if(node.nodeType!==1&&node!==document)return;if(node.matches?.(selector))add(node);node.querySelectorAll?.(selector).forEach(add);}
   scan(document);
   new MutationObserver(records=>{
-    for(const record of records)for(const node of record.addedNodes)scan(node);
-    for(const [video,state] of tracked)if(!video.isConnected){observer.unobserve(video);video.removeEventListener('play',state.onPlay);video.pause();tracked.delete(video);}
+    const added=new Set();let removedElement=false;
+    for(const record of records){
+      for(const node of record.addedNodes)if(node.nodeType===1)added.add(node);
+      if(!removedElement)removedElement=[...record.removedNodes].some(node=>node.nodeType===1);
+    }
+    for(const node of added){
+      if(!node.isConnected)continue;
+      let parent=node.parentElement;while(parent&&!added.has(parent))parent=parent.parentElement;
+      if(!parent)scan(node);
+    }
+    // Text/timer updates cannot detach a video. Avoid walking every avatar for those.
+    if(removedElement)for(const [video,state] of tracked)if(!video.isConnected){observer.unobserve(video);video.removeEventListener('play',state.onPlay);video.pause();tracked.delete(video);}
   }).observe(document.body,{childList:true,subtree:true});
   const syncAll=()=>{for(const [video,state] of tracked)sync(video,state);};
   document.addEventListener('visibilitychange',syncAll,{passive:true});

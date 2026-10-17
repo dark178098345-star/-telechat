@@ -1959,7 +1959,7 @@ renderMessages=async function(){
 appendMessage=async function(m,doScroll=true){
   if(m.deleted&&m.from_nick!==me.nick)return;const box=document.getElementById('messages'),ds=makeDateStr(m.ts);
   if(ds!==lastRenderedDate){const div=document.createElement('div');div.className='date-divider';div.textContent=ds;box.appendChild(div);lastRenderedDate=ds;}
-  const isMe=m.from_nick===me.nick,u=await getUser(m.from_nick),wrap=document.createElement('div');wrap.className='msg '+(isMe?'me':'them');wrap.dataset.id=m.id||'';
+  const isMe=m.from_nick===me.nick,u=await getUser(m.from_nick),wrap=document.createElement('div');wrap.className='msg '+(isMe?'me':'them');wrap.dataset.id=m.id||'';wrap.dataset.senderNick=m.from_nick;
   const time=makeTimeStr(m.ts),replyHtml=m.reply_text?`<div class="msg-reply-ref">&#8617; ${escHtml(m.reply_text.substring(0,50))}</div>`:'';
   const isRead=currentRoom?(m.read_by||[]).some(n=>n!==me.nick):m.read_by&&m.read_by.includes(currentChat),checkClass=isMe?(isRead?'msg-check read':'msg-check'):'',deletedStyle=m.deleted?'opacity:.5;font-style:italic;':'';
   wrap.innerHTML=(!isMe?`<div class="msg-sender-name">${u?escHtml(u.name):escHtml(m.from_nick)}</div>`:'')+replyHtml+`<div class="msg-bubble" style="${deletedStyle}">${renderMessageContent(m.text)}</div><div class="msg-meta"><span class="msg-time">${time}</span>${isMe?`<span class="${checkClass}">✓✓</span>`:''}</div>`;
@@ -2461,18 +2461,18 @@ const verifiedObserver=new MutationObserver(()=>{if(verifiedBadgeFrameV21)return
 verifiedObserver.observe(document.body,{childList:true,subtree:true});
 
 const renderContactsBeforeVerified=renderContacts;
-renderContacts=async function(){const value=await renderContactsBeforeVerified();enhanceVerifiedBadges();return value;};
+renderContacts=async function(){const value=await renderContactsBeforeVerified();enhanceVerifiedBadges(document.getElementById('contacts-list'));return value;};
 const openChatBeforeVerified=openChat;
-openChat=async function(nick){const value=await openChatBeforeVerified(nick);enhanceVerifiedBadges();return value;};
+openChat=async function(nick){const value=await openChatBeforeVerified(nick);enhanceVerifiedBadges(document.getElementById('active-chat'));return value;};
 </script>
 <script src="./storage-watch-v124.js?v=161"></script>
 <script src="./user-cache-v123.js?v=140"></script>
-<script src="./profile-performance-v11.js?v=168"></script>
+<script src="./profile-performance-v11.js?v=180"></script>
 <script src="./followers-v12.js?v=167"></script>
 <script src="./room-media-v113.js?v=177"></script>
-<script src="./app-performance-v17.js?v=174"></script>
+<script src="./app-performance-v17.js?v=180"></script>
 <script src="./ui-polish-v16.js"></script>
-<script src="./moderation-v19.js"></script>
+<script src="./moderation-v19.js?v=180"></script>
 <script src="./transport-v172.js?v=176"></script>
 <script src="./chat-reliability-v24.js?v=176"></script>
 <script src="./message-send-animation-v35.js?v=164"></script>
@@ -2518,7 +2518,7 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <script src="./chat-wallpaper-v119.js?v=124"></script>
 <script src="./presence-model-v120.js?v=172"></script>
 <script src="./presence-v120.js?v=176"></script>
-<script src="./viewport-performance-v124.js?v=124"></script>
+<script src="./viewport-performance-v124.js?v=180"></script>
 <script src="./activity-model-v124.js?v=124"></script>
 <script src="./activity-stats-v124.js?v=161"></script>
 <script src="./ui-icons-v125.js?v=159"></script>
@@ -2575,6 +2575,6 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <script src="./rooms-studio-v177.js?v=177"></script>
 <link rel="stylesheet" href="./media-auto-v179.css?v=179">
 <script src="./media-policy-v179.js?v=179"></script>
-<script src="./media-auto-v179.js?v=179"></script>
+<script src="./media-auto-v179.js?v=180"></script>
 </body>
 </html>

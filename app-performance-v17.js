@@ -210,7 +210,7 @@
     }
     commitSidebarV105(list,fragment);
     if(typeof window.telechatApplySidebarCustomV52==='function')window.telechatApplySidebarCustomV52();
-    if(typeof enhanceVerifiedBadges==='function')enhanceVerifiedBadges();
+    if(typeof enhanceVerifiedBadges==='function')enhanceVerifiedBadges(list);
     window.telechatExperienceV62?.decorate();
     window.telechatPresenceV120?.paintContacts?.();
     return true;

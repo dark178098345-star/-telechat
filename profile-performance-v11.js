@@ -60,7 +60,7 @@
     paintMedia(cover,JSON.stringify([user.nick,banner,user.animated_profile]),()=>applyProfileBanner(cover,banner));
     const appearance=window.telechatProfileAppearanceV84;
     if(appearance)appearance.applyBackground(appearance.decode(banner).background);
-    if(typeof enhanceVerifiedBadges==='function')enhanceVerifiedBadges();
+    if(typeof enhanceVerifiedBadges==='function')enhanceVerifiedBadges(document.getElementById('user-profile-modal'));
     window.telechatPresenceV120?.paintProfile(user.nick,user.last_seen);
     window.exstraPairV168?.renderProfile(user);
   }

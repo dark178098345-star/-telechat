@@ -1,7 +1,8 @@
 /* TELECHAT MODERATION V19 — lightweight creator/admin controls */
 (()=>{
   const MOD_FIELDS='nick,role,verified,muted_until,muted_forever,banned_until,banned_forever,moderation_reason,session_version';
-  let targetV19=null,watchTimerV19=null,sessionVersionV19=0,decoratingV19=false;const moderationCacheV25=new Map(),moderationInflightV25=new Map(),MODERATION_TTL_V25=20000;
+  let targetV19=null,watchTimerV19=null,heartbeatTimerV19=0,watchGenerationV180=0,watchControllerV180=null,sessionVersionV19=0;
+  const moderationCacheV25=new Map(),moderationInflightV25=new Map(),MODERATION_TTL_V25=20000;
 
   const lower=value=>String(value||'').trim().toLowerCase();
   const nowV19=()=>Date.now();
@@ -51,33 +52,57 @@
     (result.data||[]).forEach(mergeModerationV19);refreshBadgesV19();return true;
   }
 
-  function badgeAutoHtmlV19(nick){
-    return verifiedBadgeHtml(nick).replace('verified-badge','verified-badge moderation-auto-badge');
-  }
+  const badgeRootsV180=new Set();let badgeFrameV180=0;
+  const badgeContainerV180='.contact,.search-result-item,.member-item,.chat-identity,.follow-list-user';
+  const badgeNameV180='.msg-sender-name,.contact-name,.member-name,.chat-name,.follow-list-user-name';
   function addAutoBadgeV19(target,nick){
-    if(!target||target.querySelector('.verified-badge'))return;
-    const html=badgeAutoHtmlV19(nick);if(html)target.insertAdjacentHTML('beforeend',html);
+    if(!target)return;
+    const badges=[...target.querySelectorAll(':scope > .verified-badge')],current=badges.shift();
+    badges.forEach(badge=>badge.remove());
+    const html=verifiedBadgeHtml(nick,!!current?.classList.contains('large'));
+    if(current&&current.outerHTML.replace('verified-badge moderation-auto-badge','verified-badge')===html)return;
+    current?.remove();
+    if(html)target.insertAdjacentHTML('beforeend',html.replace('verified-badge','verified-badge moderation-auto-badge'));
   }
-  function decorateBadgesV19(){
-    if(decoratingV19)return;decoratingV19=true;
-    queueMicrotask(()=>{
-      document.querySelectorAll('.profile-nick-marker[data-profile-nick]').forEach(marker=>{
+  function flushBadgesV180(){
+    badgeFrameV180=0;
+    const roots=[...badgeRootsV180].filter(root=>root.isConnected);badgeRootsV180.clear();
+    const queued=new Set(roots);
+    const markers=new Set(),senders=new Set();
+    for(const root of roots){
+      let parent=root.parentElement;while(parent&&!queued.has(parent))parent=parent.parentElement;
+      if(parent)continue;
+      if(root.matches('.profile-nick-marker[data-profile-nick]'))markers.add(root);
+      if(root.matches('.msg-sender-name'))senders.add(root);
+      root.querySelectorAll('.profile-nick-marker[data-profile-nick],.msg-sender-name').forEach(node=>{
+        if(node.matches('.msg-sender-name'))senders.add(node);else markers.add(node);
+      });
+    }
+    markers.forEach(marker=>{
         const nick=lower(marker.dataset.profileNick),avatar=marker.closest('.av');if(!avatar)return;
-        const container=avatar.closest('.contact,.search-result-item,.member-item,.chat-identity,.follow-list-user');if(!container)return;
+        const container=avatar.closest(badgeContainerV180);if(!container)return;
         let target=container.querySelector('.contact-name,.member-name,.chat-name,.follow-list-user-name');
         if(!target){const copy=avatar.nextElementSibling;target=copy&&copy.firstElementChild;}
         addAutoBadgeV19(target,nick);
-      });
-      const users=Object.values(userCache||{});
-      document.querySelectorAll('.msg-sender-name').forEach(element=>{
-        const base=String(element.childNodes[0]?.textContent||'').trim();
-        const user=users.find(item=>String(item?.name||item?.nick||'').trim()===base);if(user)addAutoBadgeV19(element,user.nick);
-      });
-      decoratingV19=false;
+    });
+    // One name index per changed batch, not a linear users.find for every message.
+    const byName=new Map();
+    const senderNick=element=>element.dataset.senderNick||element.closest('[data-sender-nick]')?.dataset.senderNick;
+    if([...senders].some(element=>!senderNick(element)))for(const user of Object.values(userCache||{})){
+      const name=String(user?.name||user?.nick||'').trim();if(name&&!byName.has(name))byName.set(name,user.nick);
+    }
+    senders.forEach(element=>{
+      const base=[...element.childNodes].filter(node=>!node.classList?.contains('verified-badge')).map(node=>node.textContent).join('').trim();
+      const nick=senderNick(element)||byName.get(base);
+      addAutoBadgeV19(element,nick||'');
     });
   }
-
-  function refreshBadgesV19(){document.querySelectorAll('.moderation-auto-badge').forEach(item=>item.remove());decorateBadgesV19();}
+  function decorateBadgesV19(root=document.body){
+    if(!(root instanceof Element))return;badgeRootsV180.add(root);
+    if(!badgeFrameV180)badgeFrameV180=requestAnimationFrame(flushBadgesV180);
+  }
+  function refreshBadgesV19(){decorateBadgesV19();}
+  decorateBadgesV19.__performanceV107=true; // Already batched; do not add a second RAF wrapper.
 
   function ensureUiV19(){
     const seen=document.getElementById('view-profile-seen'),actions=document.querySelector('.user-profile-actions');
@@ -125,7 +150,7 @@
     else if(userRole==='admin'){role.classList.add('show','admin');role.textContent='A · Администратор';}
     else if(user?.verified){role.classList.add('show');role.textContent='✓ Подтверждённый профиль';}
     const nickElement=document.getElementById('view-profile-nick');if(nickElement&&user?.nick)nickElement.innerHTML='@'+escHtml(user.nick)+verifiedBadgeHtml(user.nick,true);
-    profileButton.style.display=canModerateV19(user)?'':'none';decorateBadgesV19();
+    profileButton.style.display=canModerateV19(user)?'':'none';decorateBadgesV19(document.getElementById('user-profile-modal'));
   }
   function moderationChipsV19(user){
     const chips=[];const role=roleOfV19(user);
@@ -168,8 +193,8 @@
 
   function applyComposerModerationV19(){
     ensureUiV19();const lock=document.getElementById('moderation-lock');if(!lock)return;const blocked=mutedV19();
-    if(blocked){document.getElementById('input-area').style.display='none';document.getElementById('channel-readonly').classList.remove('show');lock.classList.add('show');}
-    else lock.classList.remove('show');
+    if(blocked){const input=document.getElementById('input-area');if(input.style.display!=='none')input.style.display='none';const readonly=document.getElementById('channel-readonly');if(readonly.classList.contains('show'))readonly.classList.remove('show');}
+    lock.classList.toggle('show',blocked);
   }
   const updateComposerBeforeV19=updateComposerAccess;
   updateComposerAccess=function(){updateComposerBeforeV19();applyComposerModerationV19();};
@@ -183,13 +208,23 @@
 
   function forceLogoutV19(message){sessionStorage.setItem('telechat-moderation-message',message||'Сеанс завершён администратором');location.reload();}
   function startWatcherV19(){
-    clearInterval(watchTimerV19);sessionVersionV19=Number(me?.session_version||0);if(!me)return;
+    clearInterval(watchTimerV19);watchControllerV180?.abort();const version=++watchGenerationV180,owner=me;let inFlight=false;
+    sessionVersionV19=Number(me?.session_version||0);if(!me)return;
     watchTimerV19=setInterval(async()=>{
-      if(!me||document.hidden)return;const result=await sb.from('users').select(MOD_FIELDS).eq('nick',me.nick).maybeSingle();if(result.error||!result.data)return;
-      const fresh=result.data,currentVersion=Number(fresh.session_version||0);
-      if(bannedV19(fresh)){forceLogoutV19(banMessageV19(fresh));return;}
-      if(currentVersion!==sessionVersionV19){forceLogoutV19('Твой сеанс завершён создателем');return;}
-      mergeModerationV19(fresh);applyComposerModerationV19();refreshBadgesV19();
+      if(!me||me!==owner||document.hidden||inFlight||version!==watchGenerationV180)return;
+      inFlight=true;
+      const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),7000);watchControllerV180=controller;
+      try{
+        const query=sb.from('users').select(MOD_FIELDS).eq('nick',owner.nick).maybeSingle();
+        const result=await (query.abortSignal?query.abortSignal(controller.signal):query);
+        if(version!==watchGenerationV180||me!==owner||result.error||!result.data)return;
+        const fresh=result.data,currentVersion=Number(fresh.session_version||0);
+        if(bannedV19(fresh)){forceLogoutV19(banMessageV19(fresh));return;}
+        if(currentVersion!==sessionVersionV19){forceLogoutV19('Твой сеанс завершён создателем');return;}
+        const before=verifiedBadgeHtml(owner.nick);mergeModerationV19(fresh);applyComposerModerationV19();
+        if(before!==verifiedBadgeHtml(owner.nick))refreshBadgesV19();
+      }catch(_){/* Keep the confirmed restrictions; retry on the next poll. */}
+      finally{clearTimeout(timeout);if(watchControllerV180===controller)watchControllerV180=null;inFlight=false;}
     },8000);
   }
 
@@ -200,7 +235,9 @@
     const result=await sb.from('users').select('*').eq('nick',nick).eq('pass',pass).maybeSingle();
     if(result.error||!result.data){err.textContent='Неверный логин или пароль';button.disabled=false;button.textContent='Войти';return;}
     if(bannedV19(result.data)){err.textContent=banMessageV19(result.data);button.disabled=false;button.textContent='Войти';return;}
-    me=result.data;userCache[me.nick]=me;sessionVersionV19=Number(me.session_version||0);await updateOnline();setInterval(updateOnline,25000);
+    me=result.data;userCache[me.nick]=me;sessionVersionV19=Number(me.session_version||0);await updateOnline();
+    clearInterval(heartbeatTimerV19);heartbeatTimerV19=0;
+    if(!window.telechatPresenceV120)heartbeatTimerV19=setInterval(()=>{if(me)updateOnline();},25000);
     document.getElementById('auth-screen').classList.remove('active');document.getElementById('chat-screen').classList.add('active');
     await renderContacts();buildProfPanel();buildEmojiPicker();button.disabled=false;button.textContent='Войти';
     await loadModerationDirectoryV19();startWatcherV19();applyComposerModerationV19();
@@ -210,8 +247,22 @@
   openUserProfile=async function(nick,...args){const profileTask=openProfileBeforeV19(nick,...args),moderationTask=loadModerationUserV19(nick);const [value,user]=await Promise.all([profileTask,moderationTask]);if(lower(viewedProfileNickV5)===lower(nick))renderProfileRoleV19(user||userCache[lower(nick)]);return value;};
   const closeProfileBeforeV19=closeUserProfile;closeUserProfile=function(){closeModerationV19();targetV19=null;return closeProfileBeforeV19();};
 
-  let observerFrameV21=0;const observerV19=new MutationObserver(()=>{if(observerFrameV21)return;observerFrameV21=requestAnimationFrame(()=>{observerFrameV21=0;decorateBadgesV19();});});observerV19.observe(document.body,{childList:true,subtree:true});
+  // Moderation owns role badges, including creator. Retire the older whole-body watcher.
+  if(typeof verifiedObserver!=='undefined')verifiedObserver.disconnect();
+  if(typeof verifiedBadgeFrameV21!=='undefined'&&verifiedBadgeFrameV21){cancelAnimationFrame(verifiedBadgeFrameV21);verifiedBadgeFrameV21=0;}
+  enhanceVerifiedBadges=decorateBadgesV19;
+  const observerV19=new MutationObserver(records=>{
+    for(const record of records){
+      const target=record.target.nodeType===1?record.target:record.target.parentElement;
+      if(!target||target.closest('.verified-badge'))continue;
+      const changed=[...record.addedNodes,...record.removedNodes];
+      if(changed.length&&changed.every(node=>node.nodeType===1&&node.matches('.verified-badge')))continue;
+      const name=target.closest(badgeNameV180);
+      if(name)decorateBadgesV19(name.matches('.msg-sender-name')?name:name.closest(badgeContainerV180)||name);
+      for(const node of record.addedNodes)if(node.nodeType===1&&!node.matches('.verified-badge'))decorateBadgesV19(node);
+    }
+  });observerV19.observe(document.body,{childList:true,subtree:true,characterData:true});
   document.addEventListener('keydown',event=>{if(event.key==='Escape')closeModerationV19();});
   const forced=sessionStorage.getItem('telechat-moderation-message');if(forced){sessionStorage.removeItem('telechat-moderation-message');setTimeout(()=>{const err=document.getElementById('auth-err');if(err)err.textContent=forced;},50);}
-  window.openModerationV19=openModerationV19;window.closeModerationV19=closeModerationV19;window.loadModerationDirectoryV19=loadModerationDirectoryV19;ensureUiV19();
+  window.openModerationV19=openModerationV19;window.closeModerationV19=closeModerationV19;window.loadModerationDirectoryV19=loadModerationDirectoryV19;ensureUiV19();decorateBadgesV19();
 })();
