@@ -40,7 +40,7 @@
         await appendMessage(message);
         Promise.resolve(renderContacts()).catch(() => {});
         const silenced = !currentRoom && window.telechatShouldSilenceV74?.(message.from_nick);
-        if (!silenced) playPing();
+        if (!silenced) playPing({chatKey:key});
         const user = await getUser(message.from_nick);
         if (!silenced) {
           sendPushNotification(

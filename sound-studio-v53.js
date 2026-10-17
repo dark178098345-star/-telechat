@@ -119,7 +119,9 @@
     const throttle = category === 'incoming' ? 240 : category === 'send' ? 90 : 160;
     if (!options.preview && now - lastPlay[category] < throttle) return false;
     lastPlay[category] = now;
-    const preset = PRESETS[category].find(item => item.id === settings[category]) || PRESETS[category][0];
+    const chatKey = typeof options.chatKey === 'string' ? options.chatKey : '';
+    const override = category === 'incoming' && chatKey ? window.exstraChatPreferencesV181?.soundFor(chatKey) : '';
+    const preset = PRESETS[category].find(item => item.id === (override || settings[category])) || PRESETS[category][0];
     if (!preset.notes.length) return false;
     try {
       const context = contextV53();
@@ -199,7 +201,7 @@
   window.telechatPlaySoundV53 = play;
   window.telechatSoundSettingsV53 = () => ({ ...settings });
   try {
-    playPing = () => play('incoming');
+    playPing = (options = {}) => play('incoming', options);
     playSendSound = () => play('send');
   } catch (error) {}
 

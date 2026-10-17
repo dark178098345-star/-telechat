@@ -80,7 +80,7 @@
         try{await appendMessage({...message,chat_key:key});}catch(_){seenEvents.delete(eventKey(message));scheduleRefresh(key);return;}
         if(token!==generation||!sameKey(key))return;
         const silenced=!currentRoom&&window.telechatShouldSilenceV74?.(message.from_nick);
-        Promise.resolve(renderContacts()).catch(()=>{});if(!silenced)window.playPing?.();
+        Promise.resolve(renderContacts()).catch(()=>{});if(!silenced)window.playPing?.({chatKey:key});
         try{const user=await getUser(message.from_nick);if(token===generation&&sameKey(key)&&!silenced)window.sendPushNotification?.(currentRoom?currentRoom.name:(user?.name||'Новое сообщение'),messagePreviewText(message.text).substring(0,80));}catch(_){ }
         Promise.resolve(markAsRead()).catch(()=>{});
       })

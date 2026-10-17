@@ -75,7 +75,7 @@
     if (peer && window.telechatIsBlockedV74?.(peer)) return;
     if (peer && window.telechatShouldSilenceV74?.(peer)) return;
 
-    try { window.telechatPlaySoundV53?.('incoming'); } catch (error) {}
+    try { window.telechatPlaySoundV53?.('incoming', {chatKey:key}); } catch (error) {}
 
     let senderName = String(message.from_nick || 'Новое сообщение');
     try {

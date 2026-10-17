@@ -46,6 +46,7 @@
   const box=sheet.querySelector('div');box.replaceChildren();
   const choose=fn=>()=>{sheet.close();call(fn);};
   box.append(button('Найти сообщение','search',choose(()=>window.toggleChatSearch?.())));
+  box.append(button('Настройки чата','settings',choose(()=>window.exstraChatPreferencesV181?.open())));
   if(typeof currentRoom!=='undefined'&&currentRoom)box.append(button(currentRoom.type==='channel'?'Информация о канале':'Информация о группе','you',choose(()=>window.openRoomPanel?.())));
   else box.append(button('Профиль собеседника','you',choose(()=>window.openCurrentHeaderInfo?.())));
   box.append(button('Быстрый переход','more',choose(()=>window.telechatQuickJumpV154?.open())));
