@@ -1,0 +1,7 @@
+const assert=require('assert/strict'),m=require('../media-policy-v179.js');
+const p=m.defaults(),unknown=m.network(p,{effectiveType:'4g'});assert.equal(unknown.profile,'mobile');assert.equal(unknown.known,false);assert(!m.allows(p,unknown,'image',100));
+const wifi=m.network(p,{type:'wifi'});assert(m.allows(p,wifi,'image',100));assert(!m.allows(p,wifi,'video',100));assert(!m.allows(p,wifi,'file',100));assert(!m.allows(p,wifi,'image',11*1048576));
+assert.equal(m.network(p,{type:'ethernet'}).profile,'wifi');assert.equal(m.network(p,{type:'cellular'}).known,true);assert(!m.allows(p,m.network(p,{type:'wifi',saveData:true}),'image',100));assert(!m.allows(p,m.network(p,{type:'wifi'},false),'image',100));
+const manual=m.clean({mode:'wifi',respectSaver:false,wifi:{video:true,file:true,maxMB:20}});assert(m.allows(manual,m.network(manual,{saveData:true}),'video',20*1048576));assert(!m.allows(manual,m.network(manual,{}),'file',21*1048576));
+assert.deepEqual(m.clean({mode:'4g',wifi:{image:'false',maxMB:999}}),p);assert.equal(m.kind({mime:'video/webm'}),'video');assert.equal(m.kind({mime:'image/png',view:'image'}),'image');assert.equal(m.kind({mime:'image/svg+xml',view:'image'}),'file');assert.equal(m.kind({mime:'image/png'}),'file');
+console.log('PASS v179 media policy: conservative unknown network, separate Wi-Fi/cellular, size bounds, Save-Data, manual mode, malformed preferences and safe image types');

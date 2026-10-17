@@ -1,5 +1,8 @@
-const CACHE_NAME='telechat-shell-v178-planet-logo';
+const CACHE_NAME='telechat-shell-v179-media-auto-download';
 const APP_SHELL=[
+  './media-policy-v179.js?v=179',
+  './media-auto-v179.js?v=179',
+  './media-auto-v179.css?v=179',
   './branding-v178.css?v=178',
   './branding/logo-v178-128.webp',
   './branding/logo-v178-256.webp',
@@ -12,7 +15,7 @@ const APP_SHELL=[
   './theme-presets-v175.css?v=175',
   './theme-presets-v175.js?v=175',
   './settings-navigation-v160.css?v=165',
-  './settings-navigation-v160.js?v=176',
+  './settings-navigation-v160.js?v=179',
   './phone-shell-v159.css?v=167',
   './phone-shell-v159.js?v=178',
   './pixel-eyes-v155.css?v=165',
@@ -30,7 +33,7 @@ const APP_SHELL=[
   './quick-jump-v154.js?v=161',
   './social-v152.css?v=152',
   './call-design-v152.css?v=152',
-  './shared-media-v152.js?v=152',
+  './shared-media-v152.js?v=179',
   './story-replies-v152.js?v=152',
   './call-chat-v152.js?v=152',
   './game-status-v151.css?v=151',
@@ -45,7 +48,7 @@ const APP_SHELL=[
   './light-theme-v147.css?v=167',
   './listening-v145.css?v=145',
   './profile-card-v143.css?v=167',
-  './attachments-v141.js?v=141',
+  './attachments-v141.js?v=179',
   './attachments-v141.css?v=141',
   './mobile-interface-v138.css?v=138',
   './mobile-interface-v138.js?v=159',
