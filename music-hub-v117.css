@@ -166,6 +166,9 @@ body.music-hub-open-v117{overflow:hidden!important}
 #music-hub-v117 .mh-empty h3{font-size:16px;font-weight:650}
 #music-hub-v117 .mh-empty p{font-size:11px;max-width:370px;color:#8c819b;margin:8px 0 18px;line-height:1.8}
 #music-hub-v117 .mh-notice{font-size:11px;color:#baaccb;padding-top:14px;min-height:10px}
+#music-hub-v117 .mh-playback-error-v185{flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 16px;border-bottom:1px solid var(--mh-line);background:var(--mh-panel);color:var(--mh-text);font-size:12px;line-height:1.5}
+#music-hub-v117 .mh-playback-error-v185>span{min-width:0;overflow-wrap:anywhere}
+#music-hub-v117 .mh-playback-error-v185>button{flex:none;min-height:36px;padding:8px 12px}
 #music-hub-v117 .mh-loading{padding:40px;text-align:center;color:#a395b1;font-size:12px}
 #music-hub-v117 .mh-load-more{border:1px solid var(--mh-line);width:100%;padding:13px;margin-top:16px;font-size:11px;color:#b9aacb}
 #music-hub-v117 .mh-sheet-backdrop{position:absolute;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;padding:28px;background:#05050bc4;backdrop-filter:blur(7px)}

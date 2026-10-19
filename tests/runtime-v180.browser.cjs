@@ -4,6 +4,7 @@ const path = require('node:path');
 const assert = require('node:assert/strict');
 const { chromium } = require('playwright');
 const root = path.resolve(__dirname, '..');
+function musicWav(){const b=Buffer.alloc(44+320000);b.write('RIFF');b.writeUInt32LE(b.length-8,4);b.write('WAVEfmt ',8);b.writeUInt32LE(16,16);b.writeUInt16LE(1,20);b.writeUInt16LE(1,22);b.writeUInt32LE(8000,24);b.writeUInt32LE(16000,28);b.writeUInt16LE(2,32);b.writeUInt16LE(16,34);b.write('data',36);b.writeUInt32LE(b.length-44,40);return b;}
 
 function fixtureClient() {
   const users = [
@@ -11,13 +12,14 @@ function fixtureClient() {
     { nick: 'bob', name: 'Bob', av: 1, status: '', bio: 'Fixture peer', banner: 'preset:cosmos', role: 'admin', last_seen: Date.now() - 120000 }
   ];
   const messages = Array.from({ length: 100 }, (_, i) => ({ id: i + 1, chat_key: 'alice_bob', from_nick: i % 2 ? 'alice' : 'bob', text: 'Fixture message ' + i, ts: Date.now() - 200000 + i * 1000, deleted: false, read_by: [] }));
+  const music=[{id:'00000000-0000-4000-8000-000000000001',url:'https://audio.test/runtime.wav',title:'Runtime music',artist:'Fixture',author_nick:'alice',duration:20,source:'upload',created_at:new Date().toISOString()}];
   const match = (row, filters) => filters.every(([op, field, value]) => op === 'eq' ? row[field] === value : op === 'neq' ? row[field] !== value : op === 'in' ? value.includes(row[field]) : op === 'lt' ? row[field] < value : op === 'gte' ? row[field] >= value : true);
   const reply = value => { let q; q = new Proxy({ then(resolve, reject) { return Promise.resolve({ data: value, error: null }).then(resolve, reject); } }, { get(target, key) { return key in target ? target[key] : () => q; } }); return q; };
   const client = {
     from(table) {
       const filters = []; let single = false, count = 1000, order, descending = false;
       let q; q = new Proxy({ then(resolve, reject) {
-        let rows = (table === 'users' ? users : table === 'messages' ? messages : []).filter(row => match(row, filters));
+        let rows = (table === 'users' ? users : table === 'messages' ? messages : table==='music_catalog_v117'?music:[]).filter(row => match(row, filters));
         if (order) rows = rows.slice().sort((a, b) => (a[order] > b[order] ? 1 : a[order] < b[order] ? -1 : 0) * (descending ? -1 : 1));
         rows = rows.slice(0, count);
         return Promise.resolve({ data: structuredClone(single ? rows[0] || null : rows), error: null, count: rows.length }).then(resolve, reject);
@@ -62,6 +64,7 @@ function fixtureClient() {
       await context.addInitScript(fixtureClient);
       await context.route('**/*', route => {
         const url = new URL(route.request().url());
+        if(url.hostname==='audio.test')return route.fulfill({contentType:'audio/wav',body:musicWav()});
         if (url.hostname === 'cdn.jsdelivr.net') return route.fulfill({ contentType: 'application/javascript', body: '/* Fixture Supabase client is injected before page scripts. */' });
         if (url.hostname.endsWith('.supabase.co')) return route.fulfill({ status: route.request().method() === 'GET' ? 200 : 204, headers: { Date: new Date().toUTCString() }, contentType: 'application/json', body: route.request().method() === 'GET' ? '[]' : '' });
         if (url.hostname !== 'app.test') return route.abort();
@@ -142,6 +145,14 @@ function fixtureClient() {
       assert.equal(await p.locator('#view-profile-name').textContent(), 'Bob');
       await p.evaluate(() => closeUserProfile());
       await p.waitForTimeout(150);
+      await p.evaluate(()=>telechatMusicHubV117.open());
+      await p.waitForSelector('.mh-track-art');
+      await p.locator('.mh-track-art').first().click();
+      await p.waitForFunction(()=>telechatMusicV96.getState().track?.title==='Runtime music'&&!telechatMusicV96.getState().paused&&telechatMusicV96.getState().time>0);
+      assert.equal(await p.evaluate(()=>telechatMusicV96.getState().error),null,'All production modules permit music playback '+width);
+      await p.evaluate(()=>telechatMusicHubV117.close());await p.waitForTimeout(100);
+      assert.equal(await p.evaluate(()=>telechatMusicV96.getState().paused),false,'Music continues after closing the full app music screen '+width);
+      await p.evaluate(()=>telechatMusicV96.stop());
       await p.evaluate(()=>openPanel('settings-panel'));
       await p.waitForSelector('#settings-home-v160');
       await p.locator('[data-settings-section="appearance"]').click();
@@ -163,6 +174,6 @@ function fixtureClient() {
       assert.deepEqual(errors, [], 'All production scripts work together at ' + width);
       await context.close();
     }
-    console.log('PASS full production stack: isolated login, chat/history, optimistic send, profile, idle DOM work and composer at 390/1440px');
+    console.log('PASS full production stack: isolated login, chat/history, optimistic send, profile, real music playback/close, idle DOM work and composer at 390/1440px');
   } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

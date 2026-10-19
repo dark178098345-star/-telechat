@@ -60,6 +60,7 @@
       <div class="mh-sheet-backdrop" id="mh-sheet" hidden><section class="mh-sheet" role="dialog" aria-modal="true" aria-labelledby="mh-sheet-title"><header><h2 id="mh-sheet-title"></h2><button class="mh-icon" data-action="sheet-close" aria-label="Закрыть">${icon('close')}</button></header><div id="mh-sheet-body"></div></section></div>
       <input id="mh-local-files" type="file" accept="audio/*,.mp3,.m4a,.wav,.ogg,.opus,.flac" multiple hidden>`;
     document.body.append(root);
+    const playbackNotice=document.createElement('div');playbackNotice.id='mh-playback-error-v185';playbackNotice.className='mh-playback-error-v185';playbackNotice.hidden=true;playbackNotice.setAttribute('role','alert');root.querySelector('.mh-top').after(playbackNotice);
     $('mh-search').placeholder='Поиск музыки';
     root.querySelector('.mh-logo').setAttribute('aria-label','Главная ExstraMusic');root.querySelector('.mh-logo').title='ExstraMusic';root.querySelector('.mh-back').title='Вернуться в чаты';root.querySelector('.mh-back').setAttribute('aria-label','Вернуться в чаты');
     const queueClose=document.createElement('button');queueClose.className='mh-icon mh-now-close-v171';queueClose.dataset.action='now';queueClose.setAttribute('aria-label','Закрыть очередь');queueClose.innerHTML=icon('close');root.querySelector('.mh-listening').prepend(queueClose);root.querySelector('.mh-listening').id='mh-listening-v171';const queueToggle=root.querySelector('.mh-now-toggle');queueToggle.setAttribute('aria-controls','mh-listening-v171');queueToggle.setAttribute('aria-expanded','false');queueToggle.setAttribute('aria-label','Плеер и очередь');
@@ -94,6 +95,7 @@
     const results=await Promise.allSettled([core().getTracks(),loadLibrary(),loadFeed(true)]);
     if(user()?.nick!==state.owner)return close();
     if(results[0].status==='fulfilled')state.local=results[0].value;
+    else toast('Локальные файлы сейчас недоступны. Общие треки по ссылке можно слушать независимо от хранилища устройства.');
     if(results[1].status==='rejected'){state.server=false;toast(err(results[1].reason));}
     render();syncPlayer(core()?.getState());
     const shared=new URL(location.href).searchParams.get('music');if(shared){await openShared(shared);}
@@ -167,10 +169,13 @@
   async function playWave(){if(state.waveActive&&currentTrack()&&state.queue.some(t=>t.id===currentTrack().id)){await core().toggle();return;}const ids=[...new Set([...state.liked,...state.saved,...state.feed,...state.local.map(t=>t.id)])];const tracks=ids.map(resolveTrack).filter(Boolean).slice(0,60);if(!tracks.length){toast('Добавь первый трек — и включай свою волну');return;}for(let i=tracks.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[tracks[i],tracks[j]]=[tracks[j],tracks[i]];}state.queue=tracks;state.waveActive=true;renderQueue();try{await core().playTrack(playable(tracks[0]),tracks.map(playable));}catch(error){state.waveActive=false;toast(err(error));}}
   function renderQueue(){if(!$('mh-queue'))return;const current=currentTrack(),index=state.queue.findIndex(t=>t.id===current?.id),next=state.queue.slice(Math.max(0,index+1));$('mh-queue-count').textContent=String(next.length);$('mh-queue').innerHTML=next.slice(0,8).map(t=>`<button class="mh-queue-track" data-action="play" data-id="${esc(t.id)}">${cover(t)}<span><strong>${esc(t.title)}</strong><small>${esc(t.artist||t.author_nick||'На устройстве')}</small></span>${icon('play')}</button>`).join('')||'<p class="mh-queue-empty">Включи подборку — следующие треки появятся здесь.</p>';}
   function syncPlayer(info){if(!root||!info||!state.opened)return;const t=info.track,signature=t?.id||'',changed=root.dataset.playingId!==signature;root.dataset.playingId=signature;
+    const notice=$('mh-playback-error-v185'),failure=info.error?.message||'';
+    if(notice&&notice.dataset.playbackFailure!==failure){notice.dataset.playbackFailure=failure;notice.hidden=!failure;if(failure){const copy=document.createElement('span');copy.textContent=failure;const retry=document.createElement('button');retry.type='button';retry.className='mh-primary';retry.dataset.action='retry';retry.textContent='Повторить';notice.replaceChildren(copy,retry);}else notice.replaceChildren();}
     if(changed){$('mh-now-art').innerHTML=cover(t||{id:'telechat-music'},'mh-large-art');$('mh-player-art').innerHTML=cover(t||{id:'empty'});$('mh-now-title').textContent=t?.title||'Твой следующий любимый трек';$('mh-now-artist').textContent=t?.artist||t?.author_nick||'Выбирай музыку и оставайся на своей волне';$('mh-player-title').textContent=t?.title||'Выбери трек';$('mh-player-artist').textContent=t?.artist||t?.author_nick||(t?'Моя музыка':'Всё начинается с одного нажатия');renderQueue();}
     $('mh-now-artist').dataset.author=t?.author_nick||'';
     const sc=!!window.telechatSoundCloudV98?.isLink(t?.url);$('mh-cloud-options').hidden=!sc;
     const toggle=root.querySelector('[data-action="toggle"]'),mode=t&&!info.paused?'pause':'play';if(toggle.dataset.mode!==mode){toggle.innerHTML=icon(mode);toggle.dataset.mode=mode;toggle.setAttribute('aria-label',mode==='pause'?'Пауза':'Воспроизвести');}
+    if(toggle.getAttribute('aria-busy')!==String(!!info.loading))toggle.setAttribute('aria-busy',String(!!info.loading));
     const wave=root.querySelector('[data-action="play-wave"]');if(wave){const playing=state.waveActive&&t&&state.queue.some(x=>x.id===t.id)&&!info.paused,waveMode=playing?'pause':'play';if(wave.dataset.mode!==waveMode){wave.dataset.mode=waveMode;wave.innerHTML=icon(waveMode);wave.setAttribute('aria-label',playing?'Пауза моей волны':'Слушать мою волну');}}
     $('mh-elapsed').textContent=time(info.time)||'0:00';if(!info.time)$('mh-elapsed').textContent='0:00';$('mh-duration').textContent=info.duration?time(info.duration):'0:00';const seek=$('mh-seek');seek.max=info.duration||1;if(document.activeElement!==seek)seek.value=info.time||0;seek.style.setProperty('--progress',Math.min(100,(info.time||0)/(info.duration||1)*100)+'%');
     ['repeat','shuffle'].forEach(action=>{const b=root.querySelector(`[data-action="${action}"]`);b.classList.toggle('is-active',!!info[action]);b.setAttribute('aria-pressed',String(!!info[action]));});
@@ -227,6 +232,7 @@
       if(a==='play')await play(id);if(a==='play-all'){const t=shownTracks()[0];if(t)await play(t.id);else toast('Добавь первый трек — и включай свою волну');}
       if(a==='play-wave')await playWave();if(a==='shelf-back'||a==='shelf-next'){const shelf=[...root.querySelectorAll('[data-shelf-v171]')].find(n=>n.dataset.shelfV171===b.dataset.shelf);shelf?.scrollBy({left:(a==='shelf-next'?1:-1)*shelf.clientWidth*.8,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});}
       if(a==='toggle'){if(currentTrack())await core().toggle();else if(shownTracks()[0])await play(shownTracks()[0].id);}
+      if(a==='retry')await core().retry();
       if(a==='next')core().step(1);if(a==='previous')core().step(-1);if(a==='repeat')core().setRepeat(!core().getState().repeat);if(a==='shuffle')core().setShuffle(!core().getState().shuffle);
       if(a==='now')setNow(!root.classList.contains('mh-show-now'),true);if(a==='load-more')await loadFeed();if(a==='import'){importPlaylist='';$('mh-local-files').click();}
       if(a==='playlist-files')devicePlaylistPicker();if(a==='playlist-import'){importPlaylist=state.selectedPlaylist;closeSheet();$('mh-local-files').click();}

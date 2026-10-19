@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v184-motion-performance';
+const CACHE_NAME='telechat-shell-v185-music-recovery';
 const APP_SHELL=[
   './interface-motion-v184.js?v=184',
   './interface-motion-v184.css?v=184',
@@ -91,8 +91,8 @@ const APP_SHELL=[
   './chat-wallpaper-v119.css?v=119',
   './music-intro-v118.js?v=161',
   './music-intro-v118.css?v=118',
-  './music-hub-v117.js?v=176',
-  './music-hub-v117.css?v=171',
+  './music-hub-v117.js?v=185',
+  './music-hub-v117.css?v=185',
   './stories-v115.css?v=153',
   './stories-v115.js?v=153',
   './room-media-v113.js?v=177',
@@ -114,7 +114,7 @@ const APP_SHELL=[
   './branding/soundcloud-white.png',
   './music-card-v97.css?v=97',
   './profile-music-v97.js?v=168',
-  './music-library-v96.js?v=176',
+  './music-library-v96.js?v=185',
   './music-library-v96.css?v=96',
   './appearance-mode-v95.js?v=95',
   './chat-foundation-v94.css?v=94',

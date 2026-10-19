@@ -18,7 +18,7 @@
   let dbPromise, dialog, tracks = [], activeOwner = '', current = null, objectUrl = '', playToken = 0, busy = false;
   let opener = null, restoreFocusOnClose = false, positionFrame = 0, lastPlaybackState = '';
   let queue = [], repeat = false, shuffle = false;
-  let loading=false,playError=null,playRequest=0,pauseEpoch=0;
+  let loading=false,playError=null,playRequest=0,pauseEpoch=0,audioStartAbort=null;
   let userVolume=audio.volume,sleepGain=1;
   function applyVolume(){audio.volume=userVolume*sleepGain;cloudPlayer?.setVolume?.(audio.volume);}
   const soundcloud = window.telechatSoundCloudV98;
@@ -26,7 +26,24 @@
   const isCloud = track => !!soundcloud?.isLink(track?.url);
   const player = () => isCloud(current) ? (cloudPlayer || {paused:true,currentTime:0,duration:current?.duration||0}) : audio;
   const inCall = () => !!document.querySelector('#voice-call-overlay.show,#voice-call-mini.show') || document.body.classList.contains('voice-call-full-v32');
-  function pauseMusic() {++pauseEpoch;pendingAutoPlay=false;audio.pause();cloudPlayer?.pause();}
+  function pauseMusic() {++pauseEpoch;++playRequest;loading=false;pendingAutoPlay=false;audioStartAbort?.abort();audio.pause();cloudPlayer?.pause();updatePlayers();}
+  function playbackFailure(error){
+    const rawCode=Number(error?.code||audio.error?.code),code=[1,2,3,4].includes(rawCode)?rawCode:0;
+    const message=error?.name==='TimeoutError'?'Трек слишком долго загружается. Проверь соединение и нажми «Повторить».':error?.name==='NotAllowedError'?'Браузер ожидает нажатия. Нажми «Повторить», чтобы включить трек.':code===2?'Соединение с аудиофайлом прервалось. Можно повторить загрузку.':code===3?'Браузер не смог прочитать этот аудиофайл. Возможно, файл повреждён или его кодек не поддерживается.':code===4?'Ссылка на трек недоступна или не возвращает поддерживаемое аудио.':errorText(error);
+    return {name:error?.name||'MediaError',message,...(code?{code}:{})};
+  }
+  function playAudio(){
+    audioStartAbort?.abort();const controller=new AbortController();audioStartAbort=controller;
+    return new Promise((resolve,reject)=>{
+      let settled=false;
+      const finish=error=>{if(settled)return;settled=true;clearTimeout(timer);audio.removeEventListener('error',failed);controller.signal.removeEventListener('abort',aborted);if(audioStartAbort===controller)audioStartAbort=null;if(error){audio.pause();reject(error);}else resolve();};
+      const aborted=()=>finish(new DOMException('Playback cancelled','AbortError'));
+      const failed=()=>finish(audio.error||new Error('Не удалось загрузить аудиофайл'));
+      const timer=setTimeout(()=>finish(new DOMException('Audio startup timed out','TimeoutError')),20000);
+      controller.signal.addEventListener('abort',aborted,{once:true});audio.addEventListener('error',failed,{once:true});
+      try{Promise.resolve(audio.play()).then(()=>finish(),finish);}catch(error){finish(error);}
+    });
+  }
   function seekTo(seconds) {if(isCloud(current))cloudPlayer?.seek(seconds);else if(Number.isFinite(audio.duration))audio.currentTime=Math.max(0,Math.min(seconds,audio.duration));}
   function ended() {if(window.exstraSleepTimerV176?.onTrackEnd(current))return;const items=queue.length?queue:tracks,index=items.findIndex(t=>t.id===current?.id);if(repeat&&current){seekTo(0);play(current);}else if(shuffle&&items.length>1)step(1);else if(index>=0&&index<items.length-1)play(items[index+1]);else updatePlayers();}
   function cloudSource(url) {
@@ -35,29 +52,38 @@
 
   function database() {
     if (dbPromise) return dbPromise;
-    dbPromise = new Promise((resolve,reject) => {
-      const request = indexedDB.open('telechat_music_v96',1);
+    let task;const opening = new Promise((resolve,reject) => {
+      let request,settled=false;
+      const finish=(error,db)=>{if(settled){db?.close();return;}settled=true;clearTimeout(timer);if(error)reject(error);else resolve(db);};
+      const timer=setTimeout(()=>finish(new Error('Локальное хранилище музыки не отвечает. Общие треки можно слушать без него.')),7000);
+      try{request=indexedDB.open('telechat_music_v96',1);}catch(error){finish(error);return;}
       request.onupgradeneeded = () => {
+        if(settled){request.transaction?.abort();return;}
         const db = request.result;
         db.createObjectStore('tracks',{keyPath:'id'}).createIndex('owner','owner');
         db.createObjectStore('files');
       };
       request.onsuccess = () => {
         request.result.onversionchange = () => { request.result.close(); dbPromise = null; };
-        resolve(request.result);
+        finish(null,request.result);
       };
-      request.onerror = () => { dbPromise = null; reject(request.error); };
-      request.onblocked = () => { dbPromise = null; reject(new Error('Закрой другие вкладки ExstraChat и попробуй снова.')); };
+      request.onerror = () => finish(request.error);
+      request.onblocked = () => finish(new Error('Закрой другие вкладки ExstraChat и попробуй снова.'));
     });
+    task=opening.catch(error=>{if(dbPromise===task)dbPromise=null;throw error;});dbPromise=task;
     return dbPromise;
   }
   async function read(store, key, index) {
     const db = await database();
     return new Promise((resolve,reject) => {
       const tx = db.transaction(store,'readonly'), source = tx.objectStore(store);
+      let settled=false;
+      const finish=(error,value)=>{if(settled)return;settled=true;clearTimeout(timer);if(error)reject(error);else resolve(value);};
+      const timer=setTimeout(()=>{finish(new Error('Чтение локального трека заняло слишком много времени. Повтори попытку.'));try{tx.abort();}catch(_){}},12000);
       const request = index ? source.index(index).getAll(key) : source.get(key);
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
+      request.onsuccess = () => finish(null,request.result);
+      request.onerror = () => finish(request.error);
+      tx.onabort=tx.onerror=()=>finish(tx.error||new Error('Не удалось прочитать локальное хранилище музыки.'));
     });
   }
   async function write(track, blob, remove = false) {
@@ -84,7 +110,8 @@
     status(text,true);
     if (!dialog?.open) window.showToast?.(text);
   }
-  function stop() {
+  function stop(internal=false) {
+    internal=internal===true;audioStartAbort?.abort();if(!internal){++playRequest;loading=false;playError=null;}
     pendingAutoPlay=false;cloudAbort?.abort();cloudAbort=null;cloudPlayer?.destroy();cloudPlayer=null;
     byId('music-soundcloud-widget-v98')?.replaceChildren();dialog?.classList.remove('has-soundcloud-v98');
     ++playToken; audio.pause(); audio.removeAttribute('src'); audio.load();
@@ -93,15 +120,18 @@
     if ('mediaSession' in navigator) {navigator.mediaSession.metadata = null;navigator.mediaSession.playbackState = 'none';}
   }
   async function loadLibrary() {
-    const nick = owner();
-    if (!nick) throw new Error('Войди в аккаунт, чтобы открыть музыку.');
-    if (activeOwner !== nick) { stop(); tracks = []; queue = []; activeOwner = nick; renderList(); }
+    const nick = syncOwner();
     const rows = await read('tracks',nick,'owner');
     if (owner() !== nick) return;
     const sorted = rows.sort((a,b) => b.added - a.added);
     const changed = JSON.stringify(sorted) !== JSON.stringify(tracks);
     tracks = sorted;
     if (changed || !byId('music-list-v96')?.childElementCount) renderList();
+  }
+  function syncOwner(){
+    const nick=owner();if(!nick)throw new Error('Войди в аккаунт, чтобы открыть музыку.');
+    if(activeOwner!==nick){stop();tracks=[];queue=[];activeOwner=nick;renderList();}
+    return nick;
   }
   function normalizeLink(value) {
     let url;
@@ -184,29 +214,27 @@
       status('Ссылка сохранена. Для прослушивания нужен интернет.');
     } catch (error) {status(errorText(error),true);} finally {setBusy(false);}
   }
-  async function play(track,autoplay=true) {
-    const request=++playRequest;loading=true;playError=null;
-    try{return await startTrack(track,autoplay);}finally{if(request===playRequest){loading=false;updatePlayers();}}
+  async function play(track,autoplay=true,reload=false) {
+    const request=++playRequest;loading=true;playError=null;updatePlayers();
+    try{return await startTrack(track,autoplay,reload);}finally{if(request===playRequest){loading=false;updatePlayers();}}
   }
   async function resumeMusic() {
     if(!current||inCall()||!player().paused||loading)return;
-    playError=null;
-    try{if(isCloud(current)){pendingAutoPlay=true;await cloudPlayer?.play();}else await audio.play();}
-    catch(error){playError={name:error.name,message:error.message};throw error;}
+    return play(current,true,!!playError);
   }
-  async function startTrack(track, autoplay = true) {
+  async function startTrack(track, autoplay = true, reload = false) {
     const intent=pauseEpoch;
     if (!track || owner() !== track.owner) return;
     if (inCall()) {notify('Музыка на паузе во время звонка.');return;}
     if (!autoplay && current?.id === track.id) { pauseMusic();return; }
     if(isCloud(track)) {
-      if(current?.id===track.id&&cloudPlayer){if(!cloudPlayer.paused)pauseMusic();else{pendingAutoPlay=true;await cloudPlayer.play();}return;}
-      stop();const token=playToken;current=track;pendingAutoPlay=autoplay&&intent===pauseEpoch;cloudAbort=new AbortController();
+      if(!reload&&current?.id===track.id&&cloudPlayer){if(!cloudPlayer.paused)pauseMusic();else{pendingAutoPlay=true;await cloudPlayer.play();}return;}
+      stop(true);const token=playToken;current=track;pendingAutoPlay=autoplay&&intent===pauseEpoch;cloudAbort=new AbortController();
       ensureDialog();dialog.classList.add('has-soundcloud-v98');updatePlayers();position();
       try {
         cloudPlayer=await soundcloud.create(track.url,byId('music-soundcloud-widget-v98'),{
           signal:cloudAbort.signal,canPlay:()=>token===playToken&&owner()===track.owner&&!inCall()&&pendingAutoPlay,
-          onState:()=>{if(token!==playToken)return;audio.pause();updatePlayers();},onEnd:ended,onError:error=>notify(errorText(error))
+          onState:()=>{if(token!==playToken)return;audio.pause();updatePlayers();},onEnd:ended,onError:error=>{if(token!==playToken)return;playError=playbackFailure(error);notify(playError.message);updatePlayers();}
         });
         if(token!==playToken||owner()!==track.owner){cloudPlayer?.destroy();cloudPlayer=null;return;}
         current.duration=cloudPlayer.duration;
@@ -214,18 +242,22 @@
         if('mediaSession' in navigator&&'MediaMetadata' in window)navigator.mediaSession.metadata=new MediaMetadata({title:track.title,artist:'SoundCloud · ExstraChat'});
         updatePlayers();position();
         if(pendingAutoPlay&&!inCall())await cloudPlayer.play();
-      } catch(error){if(token===playToken&&error.name!=='AbortError'){playError={name:error.name,message:error.message};stop();notify(errorText(error));}}
+      } catch(error){if(token===playToken&&error.name!=='AbortError'){playError=playbackFailure(error);stop(true);current=track;notify(playError.message);}}
       return;
     }
-    if (current?.id === track.id) {
-      if (!audio.paused) {audio.pause();return;}
-      try {await audio.play();} catch (error) {playError={name:error.name,message:error.message};notify('Нажми ▶ ещё раз. Если трек недоступен, добавь его заново.');}
+    if (!reload&&current?.id === track.id) {
+      if (!audio.paused) {pauseMusic();return;}
+      const token=playToken;
+      try {await playAudio();} catch (error) {if(token===playToken&&error.name!=='AbortError'){playError=playbackFailure(error);notify(playError.message);}}
       return;
     }
-    stop();const token = playToken;
+    stop(true);const token = playToken;
     try {
       let src = track.url;
       if (track.kind === 'file') {
+        const metadata=await read('tracks',track.id);
+        if(token!==playToken||owner()!==track.owner)return;
+        if(metadata?.owner!==track.owner)throw new Error('Локальный трек не найден в этом аккаунте. Добавь файл заново.');
         const blob = await read('files',track.id);
         if (token !== playToken || owner() !== track.owner) return;
         if (!blob) throw new Error('Файл больше не хранится на устройстве. Добавь его заново.');
@@ -234,11 +266,10 @@
       if (token !== playToken || owner() !== track.owner) return;
       current = track;audio.src = src;updatePlayers();
       if ('mediaSession' in navigator && 'MediaMetadata' in window) navigator.mediaSession.metadata = new MediaMetadata({title:track.title,artist:'Моя музыка · ExstraChat'});
-      if (autoplay&&intent===pauseEpoch) await audio.play();
+      if (autoplay&&intent===pauseEpoch) await playAudio();
     } catch (error) {
-      if (token !== playToken) return;
-      playError={name:error.name,message:error.message};
-      notify(error.name === 'NotAllowedError' ? 'Трек готов. Нажми ▶ для воспроизведения.' : errorText(error));
+      if (token !== playToken||error.name==='AbortError') return;
+      playError=playbackFailure(error);notify(playError.message);
     }
   }
   function step(direction) {
@@ -251,7 +282,7 @@
   }
   function updatePlayers() {
     const media=player();
-    window.dispatchEvent(new CustomEvent('telechat-music-progress-v117',{detail:{track:current?{...current}:null,paused:media.paused,time:media.currentTime||0,duration:media.duration||current?.duration||0,repeat,shuffle}}));
+    window.dispatchEvent(new CustomEvent('telechat-music-progress-v117',{detail:{track:current?{...current}:null,paused:media.paused,time:media.currentTime||0,duration:media.duration||current?.duration||0,repeat,shuffle,loading,error:playError}}));
     if (dialog) {
       const title = dialog.querySelector('.music-now-title-v97'), hint = dialog.querySelector('.music-now-hint-v97');
       const text = current?.title || 'Включи любимый трек';
@@ -355,7 +386,7 @@
       const button = event.target.closest('[data-music]');if (!button) return;
       const action = button.dataset.music;
       if (action === 'library') open(button);
-      if (action === 'toggle' && current) play(current);
+      if (action === 'toggle' && current) {if(loading)pauseMusic();else play(current,true,!!playError);}
       if (action === 'stop') stop();
       if (action === 'previous') step(-1);
       if (action === 'next') step(1);
@@ -439,24 +470,25 @@
     async getTracks(){ensureDialog();await loadLibrary();return tracks.map(t=>({...t}));},
     getState(){const media=player();return {track:current?{...current}:null,paused:media.paused,time:media.currentTime||0,duration:media.duration||current?.duration||0,repeat,shuffle,loading,error:playError,volume:userVolume};},
     resume:resumeMusic,
-    async playTrack(track,items=[],options={}){const nick=owner(),intent=pauseEpoch;ensureDialog();await loadLibrary();if(owner()!==nick||intent!==pauseEpoch)return;queue=items.map(t=>({...t,owner:nick}));return play({...track,owner:nick},options.autoplay!==false);},
+    async playTrack(track,items=[],options={}){const nick=syncOwner();ensureDialog();queue=items.map(t=>({...t,owner:nick}));return play({...track,owner:nick},options.autoplay!==false);},
     async getFile(id){await loadLibrary();if(!tracks.some(t=>t.id===id))throw new Error('Трек не найден');return read('files',id);},
     async importFiles(files){ensureDialog();await addFiles(files);window.dispatchEvent(new Event('telechat-music-library-v117'));return tracks.map(t=>({...t}));},
     async importFilesReport(files){ensureDialog();const result=await addFiles(files);window.dispatchEvent(new Event('telechat-music-library-v117'));return result;},
     async removeLocal(id){await loadLibrary();const t=tracks.find(t=>t.id===id);if(!t)return;await write(t,null,true);if(current?.id===id)stop();tracks=tracks.filter(t=>t.id!==id);renderList();},
     async saveLink(track){ensureDialog();await loadLibrary();const url=normalizeLink(track.url);if(tracks.some(t=>t.url===url))return;if(tracks.length>=COUNT_LIMIT)throw new Error('В библиотеке уже 100 треков');const item={...track,id:crypto.randomUUID(),owner:owner(),url,kind:'link',size:0,added:Date.now()};await write(item);tracks.unshift(item);renderList();},
     inspectAudio,normalizeLink,pause:pauseMusic,seek:seekTo,step,stop,
-    toggle(){if(current)return play(current);},
+    toggle(){if(loading){pauseMusic();return;}if(current)return play(current,true,!!playError);},
+    retry(){if(current)return play(current,true,true);},
     setRepeat(value){repeat=!!value;updatePlayers();},setShuffle(value){shuffle=!!value;updatePlayers();},
     setVolume(value){userVolume=Math.max(0,Math.min(1,Number(value)||0));applyVolume();},
     setSleepGain(value){sleepGain=Math.max(0,Math.min(1,Number(value)||0));applyVolume();},
     openLocal(trigger){return open(trigger,true);},
     async playLink(track,nick) {
       if(!owner())return;
-      const user=owner(),intent=pauseEpoch;
+      const user=syncOwner();
       const url = normalizeLink(track.url);
-      if(current?.kind==='link'&&current.url===url&&current.owner===owner())return play(current);
-      await loadLibrary();if(owner()!==user||intent!==pauseEpoch)return;queue=[];
+      if(current?.kind==='link'&&current.url===url&&current.owner===owner())return play(current,true,!!playError);
+      if(owner()!==user)return;queue=[];
       return play({id:'profile:'+nick+':'+url,owner:owner(),kind:'link',url,title:track.title||'Музыка профиля',duration:track.duration||0});
     }
   };
@@ -470,7 +502,7 @@
     }
   }
   audio.addEventListener('ended',ended);
-  audio.addEventListener('error',() => {if(current&&!isCloud(current)) notify('Трек сейчас недоступен. Проверь интернет или добавь файл заново.');});
+  audio.addEventListener('error',() => {if(current&&!isCloud(current)&&audio.error){playError=playbackFailure(audio.error);if(!audioStartAbort)notify(playError.message);updatePlayers();}});
   // A voice message or a call should never compete with music.
   document.addEventListener('play',event => {if (event.target !== audio && event.target instanceof HTMLMediaElement && !event.target.muted && event.target.volume > 0) pauseMusic();},true);
   new MutationObserver(() => {if(inCall()) pauseMusic();}).observe(document.body,{attributes:true,attributeFilter:['class']});
