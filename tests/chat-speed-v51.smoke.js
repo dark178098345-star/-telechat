@@ -11,8 +11,11 @@ class ClassList {
 }
 
 class Element {
-  constructor(tag = 'div') { this.tagName = tag;this.children = [];this.dataset = {};this.className = '';this.classList = new ClassList(this);this.scrollHeight = 500;this.scrollTop = 500;this.clientHeight = 400; }
-  appendChild(child) { this.children.push(child);return child; }
+  constructor(tag = 'div') { this.nodeType=1;this.parentNode=null;this.tagName = tag;this.children = [];this.dataset = {};this.className = '';this.classList = new ClassList(this);this.scrollHeight = 500;this.scrollTop = 500;this.clientHeight = 400; }
+  appendChild(child) { this.children.push(child);child.parentNode=this;return child; }
+  get firstChild(){return this.children[0]||null;}
+  get lastChild(){return this.children[this.children.length-1]||null;}
+  get nextSibling(){const siblings=this.parentNode?.children||[];return siblings[siblings.indexOf(this)+1]||null;}
   insertBefore(child,anchor) {const old=this.children.indexOf(child);if(old>=0)this.children.splice(old,1);const index=this.children.indexOf(anchor);this.children.splice(index<0?this.children.length:index,0,child);return child;}
   get lastElementChild(){return this.children[this.children.length-1]||null;}
   replaceChildren(...children) { this.children = children; }

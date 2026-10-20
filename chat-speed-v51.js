@@ -12,6 +12,9 @@
   const avatarMarkupCacheV51 = new WeakMap();
   let persistentDbV72 = null;
   let renderTokenV51 = 0;
+  let historyOwnerV186 = '';
+  const ownerV186 = () => String(me?.nick || '').toLowerCase();
+  const ownsStateV186 = state => state && !state.disposed && state.owner === ownerV186();
   const renderedRowsV105=new WeakMap();
 
   const appendMessageBeforeV51 = appendMessage;
@@ -24,40 +27,48 @@
     try { return conversationKey() || ''; } catch (error) { return ''; }
   }
 
-  function persistentKeyV72(key) {
-    const nick = String(me?.nick || '').trim().toLowerCase();
+  function persistentKeyV72(key, owner = ownerV186()) {
+    const nick = String(owner || '').trim().toLowerCase();
     return nick && key ? `${nick}:${key}` : '';
   }
 
   function openPersistentDbV72() {
     if (!('indexedDB' in window)) return Promise.resolve(null);
     if (persistentDbV72) return persistentDbV72;
-    persistentDbV72 = new Promise(resolve => {
-      const request = indexedDB.open(PERSISTENT_DB_V72, 1);
+    const opening = new Promise(resolve => {
+      let settled=false,request;
+      const finish=value=>{if(settled){value?.close();return;}settled=true;clearTimeout(timer);resolve(value);};
+      const timer=setTimeout(()=>finish(null),1500);
+      try{request = indexedDB.open(PERSISTENT_DB_V72, 1);}catch(_){finish(null);return;}
       request.onupgradeneeded = () => {
         if (!request.result.objectStoreNames.contains(PERSISTENT_STORE_V72)) {
           request.result.createObjectStore(PERSISTENT_STORE_V72, { keyPath: 'id' });
         }
       };
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => resolve(null);
-      request.onblocked = () => resolve(null);
+      request.onsuccess = () => {const db=request.result;if(!settled)db.onversionchange=()=>{db.close();persistentDbV72=null;};finish(db);};
+      request.onerror = request.onblocked = () => finish(null);
     });
+    persistentDbV72=opening;
+    opening.then(db=>{if(!db&&persistentDbV72===opening)persistentDbV72=null;});
     return persistentDbV72;
   }
 
-  async function readPersistentV72(key) {
-    const id = persistentKeyV72(key);
+  async function readPersistentV72(key, owner = ownerV186()) {
+    const id = persistentKeyV72(key,owner);
     const database = id ? await openPersistentDbV72() : null;
     if (!database) return null;
     return new Promise(resolve => {
-      const request = database.transaction(PERSISTENT_STORE_V72, 'readonly').objectStore(PERSISTENT_STORE_V72).get(id);
+      let done=false,request,transaction;
+      const finish=value=>{if(done)return;done=true;clearTimeout(timer);resolve(value);};
+      const timer=setTimeout(()=>{finish(null);try{transaction?.abort();}catch(_){}},1500);
+      try{transaction=database.transaction(PERSISTENT_STORE_V72, 'readonly');request=transaction.objectStore(PERSISTENT_STORE_V72).get(id);}catch(_){finish(null);return;}
+      transaction.onabort=transaction.onerror=()=>finish(null);
       request.onsuccess = () => {
         const record = request.result;
-        if (!record || Date.now() - Number(record.updatedAt || 0) > PERSISTENT_MAX_AGE_V72) resolve(null);
-        else resolve(record);
+        if (!record || Date.now() - Number(record.updatedAt || 0) > PERSISTENT_MAX_AGE_V72) finish(null);
+        else finish(record);
       };
-      request.onerror = () => resolve(null);
+      request.onerror = () => finish(null);
     });
   }
 
@@ -76,9 +87,10 @@
   }
 
   async function writePersistentV72(state) {
-    const id = persistentKeyV72(state?.key);
+    if(!ownsStateV186(state))return;
+    const id = persistentKeyV72(state.key,state.owner);
     const database = id ? await openPersistentDbV72() : null;
-    if (!database || state?.disposed) return;
+    if (!database || !ownsStateV186(state)) return;
     const items = compactPersistentItemsV72(state.items);
     const record = {
       id,
@@ -122,9 +134,10 @@
     if (!state || state.disposed || state.persistentChecked) return false;
     if (state.persistentLoading) return state.persistentLoading;
     state.persistentLoading = (async () => {
-      const record = await readPersistentV72(state.key);
+      const record = await readPersistentV72(state.key,state.owner);
       state.persistentChecked = true;
-      if (!record || state.disposed || state.key !== activeKeyV51()) return false;
+      // A slower disk snapshot must never resurrect messages after a fresh network read.
+      if (!record || !ownsStateV186(state) || state.lastFetchedAt || state.key !== activeKeyV51()) return false;
       state.items = mergeItemsV51(record.items || [], state.items || []);
       state.cursor = Number.isFinite(Number(record.cursor)) ? Number(record.cursor) : (state.items.length ? Math.min(...state.items.map(item => Number(item.ts || 0))) : null);
       state.hasMore = Boolean(record.hasMore);
@@ -135,10 +148,12 @@
   }
 
   function getStateV51(key) {
+    syncOwnerV186();
     let state = historyCacheV51.get(key);
     if (!state) {
       state = {
         key,
+        owner: historyOwnerV186,
         items: [],
         cursor: null,
         hasMore: true,
@@ -176,6 +191,14 @@
     state.refreshTimer = state.persistTimer = 0;
     state.refreshWaiters.splice(0).forEach(done => done(null));
   }
+
+  function syncOwnerV186(){
+    const owner=ownerV186();if(owner===historyOwnerV186)return;
+    historyOwnerV186=owner;renderTokenV51++;
+    for(const state of historyCacheV51.values())disposeStateV137(state);
+    historyCacheV51.clear();statusFreshAtV51.clear();
+  }
+  window.addEventListener?.('telechat-account-ready-v175',syncOwnerV186);
 
   function clearConversationV51(key = activeKeyV51()) {
     const normalizedKey = String(key || '');
@@ -293,12 +316,12 @@
   }
 
   async function paintStateV51(state, options = {}) {
-    if (!state || state.disposed || state.key !== activeKeyV51()) return false;
+    if (!ownsStateV186(state) || state.key !== activeKeyV51()) return false;
     if (state.painting) return state.painting.then(()=>paintStateV51(state,options));
     state.painting = (async () => {
       const token = ++renderTokenV51;
       await warmUsersV51(state.items);
-      if (state.disposed || token !== renderTokenV51 || state.key !== activeKeyV51()) return false;
+      if (!ownsStateV186(state) || token !== renderTokenV51 || state.key !== activeKeyV51()) return false;
       const box = document.getElementById('messages');
       if (!box) return false;
       const visibleItems = state.items.filter(item => item._type === 'poll' || !window.telechatShouldHideMessageV74?.(item));
@@ -326,9 +349,11 @@
             const key=itemKeyV51(item),mark=stateMarkV51([item]);
             let element=existing.get(key);
             if(!element||renderedRowsV105.get(element)!==mark){
-              const before=new Set([...box.children]);
+              const tail=box.lastChild;
               if(item._type==='poll')renderPoll(item,box);else await appendMessageBeforeV51(item,false);
-              const added=[...box.children].filter(child=>!before.has(child));
+              const added=[];
+              // Inspect only appended siblings, not the entire loaded history per row.
+              for(let node=tail?.parentNode===box?tail.nextSibling:box.firstChild;node;node=node.nextSibling)if(node.nodeType===1)added.push(node);
               element=added.find(child=>child.classList?.contains('msg'));
               if(element){element.classList.add('v51-hydrated');element.dataset.messageKeyV105=key;renderedRowsV105.set(element,mark);}
             }
@@ -360,7 +385,7 @@
       const previousMark = stateMarkV51(state.items);
       const beforeFetch=new Map(state.items.map(item=>[itemKeyV51(item),item]));
       const page = await fetchPageV51(state.key);
-      if (state.disposed) return null;
+      if (!ownsStateV186(state)) return null;
       const oldestFresh = page.items.length ? page.cursor : Infinity;
       const older = page.items.length ? state.items.filter(item => Number(item.ts || 0) < oldestFresh) : [];
       // Preserve local sends and arrivals that raced the network snapshot.
@@ -411,19 +436,27 @@
       scheduleLatestV51(state, alreadyVisible ? 90 : 40).catch(() => {});
       return;
     }
-    const restored = await hydratePersistentV72(state);
-    if (restored && state.key === activeKeyV51()) {
+    // Disk and server race: a blocked cache cannot delay a healthy connection;
+    // an offline server cannot hide a usable local snapshot.
+    const cached=hydratePersistentV72(state).catch(()=>false);
+    const network=refreshLatestV51(state,false).then(value=>!!value,()=>false);
+    const first=await Promise.race([
+      cached.then(ok=>ok?'cache':network.then(ok=>ok?'network':'none')),
+      network.then(ok=>ok?'network':cached.then(ok=>ok?'cache':'none'))
+    ]);
+    if(!ownsStateV186(state)||key!==activeKeyV51())return;
+    if(first!=='none'){
       await paintStateV51(state);
-      scheduleLatestV51(state, 45).catch(() => {});
+      if(first==='cache')network.then(async ok=>{
+        if(!ok||!ownsStateV186(state)||key!==activeKeyV51())return;
+        const box=document.getElementById('messages');
+        const nearBottom=!box||box.scrollHeight-box.scrollTop-box.clientHeight<90;
+        await paintStateV51(state,{keepScroll:!nearBottom,preserveAnchor:!nearBottom});
+      }).catch(()=>{});
       return;
     }
-    try {
-      await refreshLatestV51(state, false);
-      await paintStateV51(state);
-    } catch (error) {
-      historyCacheV51.delete(key);
-      if(key===activeKeyV51())return renderMessagesFallbackV51();
-    }
+    if(historyCacheV51.get(key)===state)historyCacheV51.delete(key);
+    return renderMessagesFallbackV51();
   };
 
   async function loadOlderV51() {
@@ -434,7 +467,7 @@
     box.classList.add('v51-loading-older');
     state.loading = (async () => {
       const page = await fetchPageV51(key, state.cursor);
-      if (state.disposed || historyCacheV51.get(key) !== state || key !== activeKeyV51()) return;
+      if (!ownsStateV186(state) || historyCacheV51.get(key) !== state || key !== activeKeyV51()) return;
       state.items = mergeItemsV51(page.items, state.items);
       state.cursor = state.items.length ? Math.min(...state.items.map(item => Number(item.ts || 0))) : state.cursor;
       state.hasMore = page.hasMore;
@@ -482,7 +515,7 @@
     const element=messageElementV51(message)||document.getElementById('messages')?.lastElementChild;
     if(element?.classList?.contains('msg')){element.dataset.messageKeyV105=normalizedKey;element._messageSourceV136=message;renderedRowsV105.set(element,stateMarkV51([normalized]));}
     window.telechatReadReceiptV109?.(element, normalized);
-    window.telechatMessageLayoutV150?.sync(document.getElementById('messages'));
+    window.telechatMessageLayoutV150?.sync(document.getElementById('messages'),element);
     return value;
   };
 

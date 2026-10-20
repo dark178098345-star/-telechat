@@ -170,8 +170,9 @@
  }
  function scan(){
   scanQueued=false;sync();if(stage.hidden)return;
-  const rows=[...messages.children].filter(n=>n.classList.contains('msg'));
-  const first=!primed;for(const row of rows.slice(-12)){
+  const rows=[];for(let row=messages.lastElementChild;row&&rows.length<12;row=row.previousElementSibling)if(row.classList.contains('msg'))rows.push(row);
+  rows.reverse();
+  const first=!primed;for(const row of rows){
    const source=row._messageSourceV136;if(!source)continue;
    const id=String(source.id||source.client_id||row.dataset.messageKeyV105||row.dataset.id||'');if(!id||seen.has(id))continue;seen.add(id);
    if(first||source.from_nick===owner||source.deleted||source.chat_key&&source.chat_key!==key||!Number.isFinite(Number(source.ts))||Math.abs(Date.now()-Number(source.ts))>30000)continue;
