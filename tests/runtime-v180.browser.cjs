@@ -163,6 +163,13 @@ function fixtureClient() {
       await p.screenshot({path:path.join(root,'outputs/interface-motion-v184-'+width+'.png')});
       await p.evaluate(()=>closeAllPanels());
       await p.waitForTimeout(350);
+      await p.evaluate(()=>exstraCenterV187.open());
+      await p.waitForFunction(()=>document.querySelectorAll('#my-center-v187[open] [data-widget]').length===8);
+      await p.waitForFunction(()=>document.getElementById('mc-level-v187').textContent==='Уровень 1');
+      await p.locator('#mc-search-v187').fill('Bob');
+      await p.locator('#mc-results-v187 button').filter({hasText:'Bob'}).first().click();
+      await p.waitForFunction(()=>!document.getElementById('my-center-v187').open&&currentChat==='bob');
+      await p.waitForTimeout(100);
       assert.equal(await p.evaluate(()=>exstraMotionV184.getState().active),0,'No held UI animation after closing panels');
       await p.evaluate(() => {
         window.idleBadgeCandidates = 0; const query = Element.prototype.querySelectorAll;

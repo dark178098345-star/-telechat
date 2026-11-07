@@ -40,7 +40,7 @@
  window.addEventListener('online',()=>sync(true));
  function time(seconds){const minutes=Math.floor((Number(seconds)||0)/60);return minutes<60?minutes+' мин':Math.floor(minutes/60)+' ч '+minutes%60+' мин';}
  const size=bytes=>bytes===null||bytes===undefined?'Недоступно':bytes>=1073741824?(bytes/1073741824).toFixed(1)+' ГБ':(bytes/1048576).toFixed(1)+' МБ';
- function paint(){if(!dialog?.open)return;const p=model.progress(stats?.xp);
+ function paint(){window.dispatchEvent(new CustomEvent('exstra-activity-snapshot-v187',{detail:{owner}}));if(!dialog?.open)return;const p=model.progress(stats?.xp);
   $('stats-level-v124').textContent=stats?'Уровень '+p.level:'Твой уровень';
   $('stats-xp-v124').textContent=stats?p.xp+' XP · до уровня '+(p.level+1)+' ещё '+(p.next-p.xp)+' XP':'Загружаем статистику аккаунта…';
   $('stats-progress-v124').value=stats?p.percent:0;
@@ -79,6 +79,6 @@
  const profile=$('user-profile-modal');if(profile)watch.observe(profile,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['class','style']});
  new MutationObserver(()=>{const quick=$('profile-quick-v91');if(quick&&!quick.dataset.statsWatched){quick.dataset.statsWatched='1';watch.observe(quick,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['hidden']});refreshBadges();}}).observe(document.body,{childList:true});
  const settings=$('settings-panel');if(settings){const button=document.createElement('button');button.type='button';button.id='stats-open-v124';button.innerHTML='<span aria-hidden="true">✦</span><span>Статистика<small>Твой уровень, музыка и память</small></span><span aria-hidden="true">›</span>';button.onclick=open;settings.append(button);}
- window.addEventListener('telechat-storage-v124',paint);window.telechatActivityV124={open,sync,refreshBadges};
+ window.addEventListener('telechat-storage-v124',paint);window.telechatActivityV124={open,sync,refreshBadges,getSnapshot:()=>({owner,ready,error,stats:owner===nick()&&stats?{xp:Number(stats.xp)||0,active_seconds:Number(stats.active_seconds)||0,music_seconds:Number(stats.music_seconds)||0,today_xp:Number(stats.today_xp)||0}:null})};
  setInterval(sample,5000);setTimeout(sample,1500);
 })();
