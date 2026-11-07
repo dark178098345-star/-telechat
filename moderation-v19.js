@@ -102,7 +102,6 @@
     if(!badgeFrameV180)badgeFrameV180=requestAnimationFrame(flushBadgesV180);
   }
   function refreshBadgesV19(){decorateBadgesV19();}
-  decorateBadgesV19.__performanceV107=true; // Already batched; do not add a second RAF wrapper.
 
   function ensureUiV19(){
     const seen=document.getElementById('view-profile-seen'),actions=document.querySelector('.user-profile-actions');

@@ -1,7 +1,7 @@
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
 const {chromium}=require('playwright');
 const root=path.resolve(__dirname,'..');
-const source=name=>fs.readFileSync(path.join(root,name),'utf8');
+const source=name=>process.argv.includes('--baseline-v187')?require('node:child_process').execFileSync('git',['show','5c5193346b8e54f5279c2eb3174320146b2a764c:'+name],{cwd:root,encoding:'utf8'}):fs.readFileSync(path.join(root,name),'utf8');
 (async()=>{
   const browser=await chromium.launch({channel:'msedge',headless:true});
   try{
@@ -126,6 +126,18 @@ const source=name=>fs.readFileSync(path.join(root,name),'utf8');
     await sidebar.evaluate(async()=>{telechatApplySidebarMessageV25({id:2,chat_key:'me_friend',from_nick:'me',text:'sent',ts:2});await renderContacts();await renderContacts();});
     assert.equal(await sidebar.locator('.contact-last').textContent(),'sent');
     assert(await sidebar.evaluate(()=>avatar===document.querySelector('video')),'sending must keep avatar alive');
+    await sidebar.addScriptTag({content:source('performance-v107.js')});
+    await sidebar.evaluate(()=>{
+      window.pauseSidebarPaint=true;
+      window.telechatUserCacheV123={many:async nicks=>{if(pauseSidebarPaint){pauseSidebarPaint=false;await new Promise(resolve=>window.releaseSidebarPaint=resolve);}return nicks.map(n=>userCache[n]);}};
+      window.pendingSidebarPaint=renderContacts();
+    });
+    await sidebar.waitForFunction(()=>typeof releaseSidebarPaint==='function');
+    await sidebar.evaluate(()=>{telechatApplySidebarMessageV25({id:3,chat_key:'me_friend',from_nick:'me',text:'latest while painting',ts:3});window.localSidebarPaint=renderContacts();});
+    assert.equal(await sidebar.locator('.contact-last').textContent(),'latest while painting','An in-flight full paint cannot swallow a local preview update');
+    await sidebar.evaluate(async()=>{releaseSidebarPaint();await Promise.all([pendingSidebarPaint,localSidebarPaint]);});
+    assert.equal(await sidebar.locator('.contact-last').textContent(),'latest while painting','An older avatar lookup cannot roll back the new message preview');
+    assert(await sidebar.evaluate(()=>avatar===document.querySelector('video')),'Concurrent local patch preserves avatar');
     await sidebar.addScriptTag({content:source('index.html').match(/function setAvatarElement\(el,user\)\{[\s\S]*?\n\}/)[0]});
     await sidebar.evaluate(()=>{
       window.header=document.createElement('div');document.body.append(header);setAvatarElement(header,userCache.friend);

@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v187-my-center';
+const CACHE_NAME='telechat-shell-v188-owner-cleanup';
 const APP_SHELL=[
   './my-center-v187.js?v=187',
   './my-center-v187.css?v=187',
@@ -16,7 +16,7 @@ const APP_SHELL=[
   './chat-features-v181.css?v=181',
   './chat-preferences-model-v181.js?v=181',
   './chat-preferences-v181.js?v=181',
-  './whats-new-v181.js?v=187',
+  './whats-new-v181.js?v=188',
   './media-policy-v179.js?v=179',
   './media-auto-v179.js?v=184',
   './media-auto-v179.css?v=179',
@@ -98,12 +98,12 @@ const APP_SHELL=[
   './stories-v115.css?v=153',
   './stories-v115.js?v=153',
   './room-media-v113.js?v=177',
-  './app-performance-v17.js?v=180',
+  './app-performance-v17.js?v=188',
   './chat-open-loader-v44.js?v=113',
   './message-context-v36.js?v=183',
   './navigation-readers-v109.js?v=178',
   './navigation-readers-v109.css?v=109',
-  './performance-v107.js?v=108',
+  './performance-v107.js?v=188',
   './mentions-v106.js?v=106',
   './mentions-v106.css?v=106',
   './message-core-v104.js?v=182',
@@ -143,7 +143,7 @@ const APP_SHELL=[
   './ui-polish-v16.css',
   './ui-polish-v16.js',
   './moderation-v19.css',
-  './moderation-v19.js?v=180',
+  './moderation-v19.js?v=188',
   './chat-reliability-v24.css',
   './transport-v172.js?v=176',
   './chat-reliability-v24.js?v=182',

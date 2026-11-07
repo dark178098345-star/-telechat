@@ -27,7 +27,7 @@
   window.batchUsersV15=batchUsersV15;
 
   const renderContactsFallbackV17=renderContacts;
-  let contactsInFlightV17=null,contactsQueuedV17=false;
+  let contactsInFlightV17=null;
   let sidebarMessagesCacheV17=[],sidebarCacheReadyV17=false,sidebarCacheUpdatedAtV17=0,sidebarLocalPaintCreditsV25=0;
   const sidebarPendingPatchesV51=new Map();
   const rowMarkupV105=new WeakMap();
@@ -218,6 +218,9 @@
 
   function applySidebarMessageV25(message){
     if(!sidebarCacheReadyV17||!message?.chat_key)return false;
+    // A pending avatar/user lookup must not commit a preview captured before
+    // this local message. The next patch/full paint owns the updated snapshot.
+    sidebarPaintV105++;
     const compact=compactSidebarMessageV18(message);
     sidebarMessagesCacheV17=[compact,...sidebarMessagesCacheV17.filter(item=>{
       if(compact.id&&item.id)return String(item.id)!==String(compact.id);
@@ -248,7 +251,6 @@
     if(contactsInFlightV17)return contactsInFlightV17;
     contactsInFlightV17=renderContactsNowV17().finally(()=>{
       contactsInFlightV17=null;
-      if(contactsQueuedV17){contactsQueuedV17=false;setTimeout(requestSidebarRefreshV18,0);}
     });
     return contactsInFlightV17;
   }
@@ -334,18 +336,10 @@
     return renderMessageContentBeforeV15(text).replace('<img class="chat-photo"','<img class="chat-photo" loading="lazy" decoding="async"');
   };
 
-  const updateOnlineBeforeV15=updateOnline;
-  updateOnline=async function(...args){if(document.hidden||!me)return;return updateOnlineBeforeV15(...args);};
-  const updateStatusBarBeforeV15=updateStatusBar;
-  updateStatusBar=async function(...args){if(document.hidden)return;return updateStatusBarBeforeV15(...args);};
-
+  // Visibility is cosmetic here. Presence owns wake/publish, viewport-v124 owns
+  // decorative avatars, and the call/player modules own their media lifecycle.
   function syncVisibilityV15(){
     document.body.classList.toggle('telechat-app-paused',document.hidden);
-    document.querySelectorAll('video').forEach(video=>{
-      if(document.hidden){if(!video.paused){video.dataset.resumeV15='1';video.pause();}}
-      else if(video.dataset.resumeV15==='1'){delete video.dataset.resumeV15;video.play().catch(()=>{});}
-    });
-    if(!document.hidden&&me){updateOnline();updateStatusBar();}
   }
   document.addEventListener('visibilitychange',syncVisibilityV15,{passive:true});
   syncVisibilityV15();
