@@ -15,7 +15,7 @@
     const rail = document.createElement('nav');
     rail.className = 'section-rail-v109';
     rail.setAttribute('aria-label', 'Разделы ExstraChat');
-    rail.innerHTML = '<span class="rail-brand-v109" aria-hidden="true"><img class="brand-icon-v178" src="./branding/logo-v178-128.webp" width="48" height="48" alt="" decoding="async"></span>';
+    rail.innerHTML = '<button type="button" class="rail-brand-v109" aria-label="Дополнительные разделы" aria-expanded="false" aria-controls="rail-extras-v194"><img class="brand-icon-v178" src="./branding/logo-v178-128.webp" width="48" height="48" alt="" decoding="async"><span class="rail-more-label-v194">Ещё</span></button>';
     for (const [filter, title] of [['all', 'Все чаты'], ['unread', 'Непрочит.'], ['group', 'Группы'], ['channel', 'Каналы']]) {
       const button = document.createElement('button');
       button.type = 'button';button.dataset.railFilter = filter;
@@ -38,6 +38,24 @@
       if (music && parent && music.parentNode !== parent) parent.append(music);
     };
     placeMusic();desktop.addEventListener?.('change', placeMusic);
+    const brand=rail.querySelector('.rail-brand-v109'),extras=document.createElement('div'),extraList=document.createElement('div');
+    extras.id='rail-extras-v194';extras.className='rail-extras-v194';extras.hidden=true;extras.inert=true;extras.setAttribute('aria-hidden','true');extraList.className='rail-extra-list-v194';extras.append(extraList);rail.append(extras);
+    const reduce=matchMedia('(prefers-reduced-motion: reduce)');let expanded=false,animation=null;
+    function more(next){
+      const from=extras.hidden?0:extras.getBoundingClientRect().height;animation?.cancel();animation=null;expanded=!!next;brand.setAttribute('aria-expanded',String(expanded));rail.dataset.moreV194=String(expanded);extras.inert=!expanded;extras.setAttribute('aria-hidden',String(!expanded));
+      if(!expanded&&extras.contains(document.activeElement))brand.focus({preventScroll:true});
+      const motion=!reduce.matches&&!['off','lite'].includes(document.body.dataset.uiMotionV184)&&!document.hidden&&typeof extras.animate==='function';
+      if(!motion){extras.hidden=!expanded;return;}if(!expanded&&extras.hidden)return;extras.hidden=false;
+      const to=expanded?extraList.getBoundingClientRect().height:0,job=extras.animate([{height:from+'px',opacity:expanded ? .25 : 1,transform:expanded?'translateY(-6px)':'translateY(0)'},{height:to+'px',opacity:expanded?1:0,transform:expanded?'translateY(0)':'translateY(-6px)'}],{duration:200,easing:'cubic-bezier(.2,.8,.2,1)'});animation=job;
+      const done=()=>{if(animation!==job)return;animation=null;extras.hidden=!expanded;};job.finished.then(done,()=>{});
+    }
+    function collect(){for(const node of [...rail.children])if(node.tagName==='BUTTON'&&node!==brand&&!node.matches('[data-rail-filter="all"],[data-rail-filter="group"],[data-rail-filter="channel"],.music-entry-v96'))extraList.append(node);}
+    collect();new MutationObserver(collect).observe(rail,{childList:true});
+    brand.onclick=()=>more(!expanded);rail.addEventListener('keydown',event=>{if(event.key==='Escape'&&expanded){more(false);brand.focus({preventScroll:true});event.preventDefault();event.stopPropagation();}});
+    reduce.addEventListener?.('change',()=>more(expanded));window.addEventListener('exstra-motion-policy-v184',()=>more(expanded));document.addEventListener('visibilitychange',()=>{if(document.hidden)more(false);});
+    desktop.addEventListener?.('change',()=>more(false));window.addEventListener('telechat-account-ready-v175',()=>more(false));
+    window.addEventListener('telechat-native-visibility',event=>{if(event.detail?.background===true)more(false);});
+    window.exstraRailV194=Object.freeze({setExpanded:more,getState:()=>({expanded,animating:!!animation,extras:extraList.children.length})});
     const sync = () => {
       const selected = sidebar.querySelector('.sidebar-tab.active')?.dataset.filter || 'all';
       rail.querySelectorAll('[data-rail-filter]').forEach(button => {

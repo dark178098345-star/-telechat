@@ -163,7 +163,7 @@ function fixtureClient() {
       await p.screenshot({path:path.join(root,'outputs/interface-motion-v184-'+width+'.png')});
       await p.evaluate(()=>closeAllPanels());
       await p.waitForTimeout(350);
-      await p.evaluate(()=>exstraCenterV187.open());
+      if(width>900){await p.locator('.rail-brand-v109').click();await p.waitForFunction(()=>!exstraRailV194.getState().animating);await p.screenshot({path:path.join(root,'outputs/rail-v194-production.png')});await p.locator('#mc-nav-v187').click();}else await p.evaluate(()=>exstraCenterV187.open());
       await p.waitForFunction(()=>document.querySelectorAll('#my-center-v187[open] [data-widget]').length===8);
       await p.waitForFunction(()=>document.getElementById('mc-level-v187').textContent==='Уровень 1');
       await p.locator('#mc-search-v187').fill('Bob');
