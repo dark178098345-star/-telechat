@@ -78,7 +78,7 @@
   function compactSidebarMessageV18(message){
     let preview='';
     try{preview=messagePreviewText(message?.text||'');}catch(error){preview=String(message?.text||'');}
-    return{id:message?.id,chat_key:String(message?.chat_key||''),from_nick:String(message?.from_nick||''),ts:Number(message?.ts)||0,text:String(preview||'').slice(0,180)};
+    return{id:message?.id,chat_key:String(message?.chat_key||''),from_nick:String(message?.from_nick||''),ts:Number(message?.ts)||0,edited_at:Number(message?.edited_at)||0,text:String(preview||'').slice(0,180)};
   }
 
   function sidebarSnapshotKeyV18(){return me?.nick?'telechat.sidebar.v18.'+me.nick:'';}
@@ -104,6 +104,7 @@
 
   function hydrateSidebarSnapshotV18(){
     if(!me||sidebarSnapshotHydratedForV18===me.nick)return sidebarCacheReadyV17;
+    sidebarMessagesCacheV17=[];sidebarCacheReadyV17=false;sidebarCacheUpdatedAtV17=0;sidebarPendingPatchesV51.clear();sidebarLocalPaintCreditsV25=0;sidebarPaintV105++;contactsInFlightV17=null;
     sidebarSnapshotHydratedForV18=me.nick;
     try{
       const raw=localStorage.getItem(sidebarSnapshotKeyV18());if(!raw)return false;
@@ -129,8 +130,11 @@
   };
 
   async function fetchSidebarMessagesV18(){
-    const metaResult=await sb.from('messages').select('id,chat_key,from_nick,ts').eq('deleted',false).order('ts',{ascending:false}).limit(800);
+    const actor=me?.nick,previous=new Map(sidebarMessagesCacheV17.filter(m=>m.id!=null).map(m=>[String(m.id),m]));let reusable=true;
+    const metadata=fields=>sb.from('messages').select(fields).eq('deleted',false).order('ts',{ascending:false}).limit(800);
+    let metaResult=await metadata('id,chat_key,from_nick,ts,edited_at');if(metaResult.error&&/edited_at/.test(String(metaResult.error.message||''))){reusable=false;metaResult=await metadata('id,chat_key,from_nick,ts');}
     if(metaResult.error)throw metaResult.error;
+    if(me?.nick!==actor)return [];
     const latest=[],seen=new Set();
     for(const message of metaResult.data||[]){
       const key=String(message.chat_key||''),relevant=key.startsWith('room_')||!!privatePeerFromKeyV18(key);
@@ -138,10 +142,11 @@
       seen.add(key);latest.push(message);if(latest.length>=180)break;
     }
     const textById=new Map();
-    // Avatars do not depend on message text or room loading: fetch them in parallel.
-    const tasks=[batchUsersV15(sidebarPrivateNicksV18(latest),true)];
-    for(let start=0;start<latest.length;start+=80){
-      const ids=latest.slice(start,start+80).map(message=>message.id);
+    // Profile/photo loading is not a prerequisite for showing the chat rows.
+    const tasks=[];if(window.telechatUserCacheV123?.warm)window.telechatUserCacheV123.warm(sidebarPrivateNicksV18(latest));else tasks.push(batchUsersV15(sidebarPrivateNicksV18(latest),true));
+    const needed=[];for(const message of latest){const old=previous.get(String(message.id));if(reusable&&old&&old.chat_key===message.chat_key&&old.from_nick===message.from_nick&&Number(old.ts)===Number(message.ts)&&Number(old.edited_at||0)===Number(message.edited_at||0))textById.set(String(message.id),old.text);else needed.push(message);}
+    for(let start=0;start<needed.length;start+=80){
+      const ids=needed.slice(start,start+80).map(message=>message.id);
       tasks.push((async()=>{
         const textResult=await sb.from('messages').select('id,text').in('id',ids);
         if(textResult.error)throw textResult.error;
@@ -172,7 +177,7 @@
     for(const message of allMsgs){if(message.chat_key&&message.chat_key.startsWith('room_')&&!roomLast[message.chat_key])roomLast[message.chat_key]=message;}
     const visibleRooms=roomRows.filter(room=>['all','unread'].includes(sidebarFilter)||room.type===sidebarFilter);
     const chats=collectPrivateChatsV17(allMsgs);
-    if(chats.length)await batchUsersV15(chats.map(chat=>chat.nick));
+    if(chats.length){if(window.telechatUserCacheV123?.warm)window.telechatUserCacheV123.warm(chats.map(chat=>chat.nick));else await batchUsersV15(chats.map(chat=>chat.nick));}
     if(paint!==sidebarPaintV105||me?.nick!==owner||sidebarFilter!==filter)return false;
 
     const fragment=document.createDocumentFragment();let rendered=0;
@@ -249,10 +254,7 @@
 
   function requestSidebarRefreshV18(){
     if(contactsInFlightV17)return contactsInFlightV17;
-    contactsInFlightV17=renderContactsNowV17().finally(()=>{
-      contactsInFlightV17=null;
-    });
-    return contactsInFlightV17;
+    const job=renderContactsNowV17().finally(()=>{if(contactsInFlightV17===job)contactsInFlightV17=null;});contactsInFlightV17=job;return job;
   }
 
   renderContacts=async function(){

@@ -108,7 +108,7 @@
     if(!scheduled){scheduled=true;queueMicrotask(drain);}return entry.promise;
   }
   async function many(values,force=false){
-    const token=syncOwner(),keys=[...new Set(values.map(nick).filter(Boolean))];await restore(keys);
+    const token=syncOwner(),keys=[...new Set(values.map(nick).filter(Boolean))],diskKeys=keys.filter(key=>!memory()[key]||!fresh.has(key));if(diskKeys.length)await restore(diskKeys);
     if(token!==generation)return [];
     const missing=[];
     for(const key of keys){
@@ -121,9 +121,10 @@
     return token===generation?keys.map(key=>memory()[key]).filter(Boolean):[];
   }
   async function get(value){
-    const token=syncOwner(),key=nick(value);if(!key)return null;await restore([key]);if(token!==generation)return null;
+    const token=syncOwner(),key=nick(value);if(!key)return null;if(!memory()[key]||!fresh.has(key))await restore([key]);if(token!==generation)return null;
     const saved=memory()[key];if(saved){if(Date.now()-(fresh.get(key)||0)>FRESH_MS)request(key).catch(()=>{});return saved;}
     return request(key);
   }
-  window.telechatUserCacheV123={get,many,merge,restore:values=>restore(values.map(nick)),flush};
+  function warm(values){const keys=[...new Set(values.map(nick).filter(Boolean))];syncOwner();many(keys,true).catch(()=>{});return keys.map(key=>memory()[key]).filter(Boolean);}
+  window.telechatUserCacheV123={get,many,warm,merge,restore:values=>restore(values.map(nick)),flush};
 })();

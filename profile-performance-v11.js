@@ -101,7 +101,8 @@
   function queuePrepare(nick){if(candidate===nick&&prepareTimer)return;candidate=nick;clearTimeout(prepareTimer);prepareTimer=setTimeout(()=>{prepareTimer=0;if(canPrepare())prepare(candidate);},500);}
   document.addEventListener('pointerover',event=>{if(event.pointerType==='touch')return;const row=event.target.closest?.('.contact[data-contact-nick]');if(row)queuePrepare(row.dataset.contactNick);},{passive:true});
   document.addEventListener('focusin',event=>{const row=event.target.closest?.('.contact[data-contact-nick]');if(row)queuePrepare(row.dataset.contactNick);});
-  const header=document.getElementById('chat-name-hdr');if(header)new MutationObserver(()=>{try{if(currentChat&&!currentRoom)queuePrepare(currentChat);}catch(_){}}).observe(header,{childList:true,characterData:true,subtree:true});
+  // Full banners/photos must not compete with opening every conversation.
+  // Intentional hover/focus still prepares a likely profile on a good network.
   document.addEventListener('visibilitychange',()=>{if(document.hidden){clearTimeout(prepareTimer);prepareTimer=0;}});
   window.addEventListener('telechat-native-visibility',event=>{nativeHidden=event.detail?.background===true;if(nativeHidden){clearTimeout(prepareTimer);prepareTimer=0;}});
   window.addEventListener('telechat-account-ready-v175',()=>{if(owner!==account()){syncOwner();closeUserProfile();}clearTimeout(prepareTimer);prepareTimer=0;});

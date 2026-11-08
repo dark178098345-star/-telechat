@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v194-compact-navigation';
+const CACHE_NAME='telechat-shell-v195-less-transfer';
 const APP_SHELL=[
   './room-info-v193.css?v=193',
   './bubble-styles-v189.css?v=189',
@@ -23,7 +23,7 @@ const APP_SHELL=[
   './chat-features-v181.css?v=181',
   './chat-preferences-model-v181.js?v=189',
   './chat-preferences-v181.js?v=189',
-  './whats-new-v181.js?v=194',
+  './whats-new-v181.js?v=195',
   './media-policy-v179.js?v=179',
   './media-auto-v179.js?v=184',
   './media-auto-v179.css?v=179',
@@ -105,7 +105,7 @@ const APP_SHELL=[
   './stories-v115.css?v=153',
   './stories-v115.js?v=153',
   './room-media-v113.js?v=177',
-  './app-performance-v17.js?v=188',
+  './app-performance-v17.js?v=195',
   './chat-open-loader-v44.js?v=113',
   './message-context-v36.js?v=183',
   './navigation-readers-v109.js?v=194',
@@ -144,8 +144,8 @@ const APP_SHELL=[
   './favicon-32.png?v=178',
   './favicon-48.png?v=178',
   './favicon.ico?v=178',
-  './user-cache-v123.js?v=191',
-  './profile-performance-v11.js?v=191',
+  './user-cache-v123.js?v=195',
+  './profile-performance-v11.js?v=195',
   './followers-v12.js?v=167',
   './ui-polish-v16.css',
   './ui-polish-v16.js',
