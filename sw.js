@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v189-bubble-styles';
+const CACHE_NAME='telechat-shell-v190-connection-recovery';
 const APP_SHELL=[
   './bubble-styles-v189.css?v=189',
   './bubble-art-v189/sketch.svg',
@@ -22,7 +22,7 @@ const APP_SHELL=[
   './chat-features-v181.css?v=181',
   './chat-preferences-model-v181.js?v=189',
   './chat-preferences-v181.js?v=189',
-  './whats-new-v181.js?v=189',
+  './whats-new-v181.js?v=190',
   './media-policy-v179.js?v=179',
   './media-auto-v179.js?v=184',
   './media-auto-v179.css?v=179',
@@ -112,7 +112,7 @@ const APP_SHELL=[
   './performance-v107.js?v=188',
   './mentions-v106.js?v=106',
   './mentions-v106.css?v=106',
-  './message-core-v104.js?v=182',
+  './message-core-v104.js?v=190',
   './profile-follow-compact-v102.js?v=167',
   './background-presence-v101.css?v=101',
   './mobile-adaptation-v100.css?v=182',
@@ -151,7 +151,7 @@ const APP_SHELL=[
   './moderation-v19.css',
   './moderation-v19.js?v=188',
   './chat-reliability-v24.css',
-  './transport-v172.js?v=176',
+  './transport-v172.js?v=190',
   './chat-reliability-v24.js?v=182',
   './delivery-v72.css?v=72',
   './message-send-animation-v35.css?v=164',

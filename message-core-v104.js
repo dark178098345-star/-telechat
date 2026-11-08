@@ -4,8 +4,9 @@
   const SEEN_TTL=120000,MAX_SEEN=5000,MAX_RETRY=30000;
   const seenEvents=new Map(),latestByKey=new Map();
   let probeJob=null;
-  let reconnectTimer=0,reconnectAttempt=0,refreshTimer=0,generation=0,lastProbeAt=0;
+  let reconnectTimer=0,reconnectAttempt=0,refreshTimer=0,generation=0,lastProbeAt=0,connectTimer=0,connecting=false;
   const unhealthy=new Set();
+  const offline=()=>typeof navigator!=='undefined'&&navigator.onLine===false;
 
   const activeKey=()=>{try{return typeof conversationKey==='function'?String(conversationKey()||''):'';}catch(_){return '';}};
   const sameKey=key=>key&&activeKey()===key;
@@ -25,7 +26,7 @@
     }
     return false;
   }
-  function clearTimers(){clearTimeout(reconnectTimer);clearTimeout(refreshTimer);reconnectTimer=0;refreshTimer=0;}
+  function clearTimers(){clearTimeout(reconnectTimer);clearTimeout(refreshTimer);clearTimeout(connectTimer);reconnectTimer=refreshTimer=connectTimer=0;connecting=false;}
   function scheduleRefresh(key){
     if(!sameKey(key))return;
     clearTimeout(refreshTimer);
@@ -45,10 +46,10 @@
   async function probeLatest(key){
     if(document.hidden||!sameKey(key)||typeof sb==='undefined'||probeJob)return;
     const token=generation;
-    probeJob=(async()=>{const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),8000);try{
+    probeJob=(async()=>{const controller=new AbortController();let timeout;const expiry=new Promise((_,reject)=>{timeout=setTimeout(()=>{reject(Error('Probe timeout'));controller.abort();},8000);});try{
       let query=sb.from('messages').select('id,ts').eq('chat_key',key).order('ts',{ascending:false}).limit(1);
       if(query.abortSignal)query=query.abortSignal(controller.signal);
-      const result=await query;
+      const result=await Promise.race([Promise.resolve(query),expiry]);
       if(result.error||token!==generation||!sameKey(key))return;
       const newest=result.data?.[0];
       const id=newest?String(newest.id??''):'';
@@ -59,16 +60,16 @@
   }
   function channelStatus(status,key,token,kind){
     if(token!==generation||!sameKey(key))return;
+    if(status==='SUBSCRIBED'){unhealthy.delete(kind);if(!unhealthy.size){reconnectAttempt=0;connecting=false;clearTimeout(connectTimer);clearTimeout(reconnectTimer);connectTimer=reconnectTimer=0;}scheduleRefresh(key);}
+    if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'||status==='CLOSED'){unhealthy.add(kind);connecting=false;clearTimeout(connectTimer);connectTimer=0;scheduleReconnect(key);}
     window.dispatchEvent?.(new Event('exstra-connection-change-v176'));
-    if(status==='SUBSCRIBED'){unhealthy.delete(kind);if(!unhealthy.size)reconnectAttempt=0;scheduleRefresh(key);return;}
-    if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'||status==='CLOSED'){unhealthy.add(kind);scheduleReconnect(key);}
   }
   function subscribeCore(){
-    const key=activeKey();if(!key||!me?.nick||typeof sb==='undefined')return;
-    generation++;const token=generation;clearTimeout(reconnectTimer);clearTimeout(refreshTimer);reconnectTimer=0;refreshTimer=0;
+    const key=activeKey();if(!key||!me?.nick||typeof sb==='undefined'||offline())return;
+    generation++;const token=generation;clearTimers();connecting=true;
     unhealthy.clear();unhealthy.add('messages');unhealthy.add('polls');
-    try{if(msgSub)sb.removeChannel(msgSub);}catch(_){ }
-    try{if(pollSub)sb.removeChannel(pollSub);}catch(_){ }
+    try{if(msgSub)Promise.resolve(sb.removeChannel(msgSub)).catch(()=>{});}catch(_){ }
+    try{if(pollSub)Promise.resolve(sb.removeChannel(pollSub)).catch(()=>{});}catch(_){ }
     const channel=sb.channel('telechat-messages-v104-'+key+'-'+token+'-'+Date.now())
       .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:'chat_key=eq.'+key},async payload=>{
         const message=payload?.new;if(token!==generation||!sameKey(key)||!message||message.deleted)return;
@@ -92,6 +93,7 @@
     pollSub=sb.channel('telechat-polls-v104-'+key+'-'+token+'-'+Date.now())
       .on('postgres_changes',{event:'*',schema:'public',table:'polls',filter:'chat_key=eq.'+key},()=>{if(token===generation)scheduleRefresh(key);})
       .subscribe(status=>channelStatus(status,key,token,'polls'));
+    if(connecting)connectTimer=setTimeout(()=>{connectTimer=0;if(token!==generation||!sameKey(key)||!unhealthy.size)return;connecting=false;scheduleReconnect(key);window.dispatchEvent?.(new Event('exstra-connection-change-v176'));},12000);
   }
   if(typeof subscribeRealtime==='function')subscribeRealtime=subscribeCore;
 
@@ -100,13 +102,14 @@
     goBack=function(...args){generation++;clearTimers();unhealthy.clear();return goBackBefore.apply(this,args);};
   }
   function recover(){
-    if(document.hidden)return;
+    if(document.hidden||offline())return;
     const key=activeKey();if(!key)return;
-    if(!msgSub||unhealthy.size)subscribeCore();else scheduleRefresh(key);
+    if(!msgSub||unhealthy.size){if(!connecting)subscribeCore();}else scheduleRefresh(key);
   }
   window.addEventListener('online',()=>{reconnectAttempt=0;recover();});
+  window.addEventListener('offline',()=>{clearTimers();unhealthy.add('network');window.dispatchEvent?.(new Event('exstra-connection-change-v176'));});
   window.addEventListener('telechat-native-visibility',event=>{if(event.detail?.background===false)recover();});
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)recover();},{passive:true});
   setInterval(()=>{const key=activeKey(),at=Date.now();if(!key||document.hidden||typeof navigator!=='undefined'&&navigator.onLine===false)return;const gap=unhealthy.size?7000:30000;if(at-lastProbeAt<gap)return;lastProbeAt=at;probeLatest(key);},7000);
-  window.telechatMessageCoreV104={resync:recover,reconnect:subscribeCore,seen:eventKey,diagnostics:()=>({active:!!activeKey(),connected:!!activeKey()&&!!msgSub&&!unhealthy.size,reconnecting:!!reconnectTimer})};
+  window.telechatMessageCoreV104={resync:recover,reconnect:subscribeCore,seen:eventKey,diagnostics:()=>({active:!!activeKey(),connected:!offline()&&!!activeKey()&&!!msgSub&&!unhealthy.size,reconnecting:connecting||!!reconnectTimer})};
 })();

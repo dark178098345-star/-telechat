@@ -10,17 +10,22 @@
  function credentials(owner){const u=self();if(!u||u.nick!==owner)return null;const login=document.getElementById('l-login'),pass=document.getElementById('l-pass');const secret=u.pass||(login?.value.trim().toLowerCase()===owner?pass?.value:'');return secret?{p_nick:owner,p_pass:secret}:null;}
  const missing=error=>/PGRST202|42883|schema cache|function.*does not exist/.test(String(error?.code||'')+' '+String(error?.message||''));
  function observe(data,start){const server=Number(data?.server_time),end=Date.now();if(Number.isFinite(server)&&end-start<4000)offset=server-(start+end)/2;}
+ function bounded(work,timeout){
+  const controller=new AbortController();let timer;
+  const expiry=new Promise((_,reject)=>{timer=setTimeout(()=>{reject(Object.assign(Error('Сервер не успел подтвердить запрос. Проверим автоматически.'),{code:'TIMEOUT'}));controller.abort();},timeout);});
+  return Promise.race([Promise.resolve().then(()=>work(controller.signal)),expiry]).finally(()=>clearTimeout(timer));
+ }
  async function call(name,args,{terminal=false,timeout=10000}={}){
   if(Date.now()<(unsupported.get(name)||0))return null;
   if(navigator.onLine===false)throw Object.assign(Error('Нет соединения с интернетом'),{code:'NETWORK'});
-  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),timeout),start=Date.now();stats.requests++;
+  const start=Date.now();stats.requests++;
   try{
-   let result;
-   if(terminal){const response=await fetch(SUPABASE_URL+'/rest/v1/rpc/'+name,{method:'POST',headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'},body:JSON.stringify(args),keepalive:true,signal:controller.signal,cache:'no-store'});if(!response.ok){let error;try{error=await response.json();}catch(_){error={message:'Соединение с сервером временно недоступно',code:String(response.status)};}throw error;}result={data:await response.json()};}
-   else{let query=sb.rpc(name,args);if(query.abortSignal)query=query.abortSignal(controller.signal);result=await query;}
+   const result=await bounded(async signal=>{
+    if(terminal){const response=await fetch(SUPABASE_URL+'/rest/v1/rpc/'+name,{method:'POST',headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'},body:JSON.stringify(args),keepalive:true,signal,cache:'no-store'});if(!response.ok){let error;try{error=await response.json();}catch(_){error={message:'Соединение с сервером временно недоступно',code:String(response.status)};}throw error;}return {data:await response.json()};}
+    let query=sb.rpc(name,args);if(query.abortSignal)query=query.abortSignal(signal);return await query;
+   },timeout);
    if(result.error)throw result.error;observe(result.data,start);record(true,start);return result.data;
-  }catch(error){record(false,start);if(missing(error)){unsupported.set(name,Date.now()+300000);stats.missing++;return null;}if(controller.signal.aborted||error?.name==='AbortError'){stats.timeouts++;throw Object.assign(Error('Сервер не успел подтвердить запрос. Проверим автоматически.'),{code:'TIMEOUT'});}throw error;}
-  finally{clearTimeout(timer);}
+  }catch(error){if(missing(error)){unsupported.set(name,Date.now()+300000);stats.missing++;return null;}record(false,start);if(error?.code==='TIMEOUT'||error?.name==='AbortError'){stats.timeouts++;throw Object.assign(Error('Сервер не успел подтвердить запрос. Проверим автоматически.'),{code:'TIMEOUT'});}throw error;}
  }
  function packet(row){if(!row.client_id_v172)row.client_id_v172=crypto.randomUUID();return {chat_key:row.chat_key,from_nick:row.from_nick,text:row.text,ts:row.ts,reply_text:row.reply_text??null,client_id_v172:row.client_id_v172};}
  async function send(row){const owner=row?.from_nick,auth=credentials(owner);if(!auth)return null;const value=packet(row),key=JSON.stringify([owner,value.client_id_v172]);if(inflight.has(key))return inflight.get(key);
@@ -33,12 +38,11 @@
   if(navigator.onLine===false)return Promise.resolve({ok:false,offline:true});
   if(Date.now()-lastProbe<3000)return Promise.resolve({ok:stats.lastResult===1,cooldown:true});
   lastProbe=Date.now();
-  probeJob=Promise.resolve().then(async()=>{const start=Date.now(),controller=new AbortController(),timer=setTimeout(()=>controller.abort(),8000);stats.requests++;
+  probeJob=Promise.resolve().then(async()=>{const start=Date.now();stats.requests++;
    try{if(typeof SUPABASE_URL==='undefined'||typeof SUPABASE_KEY==='undefined')throw Error('Not configured');
-    const response=await fetch(SUPABASE_URL+'/rest/v1/users?select=nick&limit=0',{method:'HEAD',headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY},cache:'no-store',signal:controller.signal});
+    const response=await bounded(signal=>fetch(SUPABASE_URL+'/rest/v1/users?select=nick&limit=0',{method:'HEAD',headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY},cache:'no-store',signal}),8000);
     if(!response.ok)throw Error('Server check failed');record(true,start);return {ok:true,latencyMs:stats.latencyMs};
-   }catch(_){if(controller.signal.aborted)stats.timeouts++;record(false,start);return {ok:false};}
-   finally{clearTimeout(timer);}
+   }catch(error){if(error?.code==='TIMEOUT'||error?.name==='AbortError')stats.timeouts++;record(false,start);return {ok:false};}
   }).finally(()=>{probeJob=null;});return probeJob;
  }
  window.telechatTransportV172=Object.freeze({send,snapshot,heartbeat,probe,now:()=>offset===null?null:Date.now()+offset,diagnostics:()=>({...stats,inflight:inflight.size})});
