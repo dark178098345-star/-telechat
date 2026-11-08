@@ -1,18 +1,33 @@
 /* TELECHAT PROFILE PERFORMANCE V11 */
 (()=>{
-  const css=document.createElement('style');css.textContent=`
-  .profile-load{position:absolute;inset:0;z-index:9;display:flex;align-items:center;justify-content:center;background:linear-gradient(155deg,rgba(25,22,46,.985),rgba(7,10,22,.99));opacity:0;visibility:hidden;pointer-events:none;transition:.2s}
-  .profile-load.show{opacity:1;visibility:visible;pointer-events:auto}.profile-load-box{text-align:center}.profile-load-orbit{width:72px;height:72px;position:relative;margin:0 auto 14px;border:1px solid rgba(167,139,250,.25);border-radius:50%;animation:profile-spin 2.7s linear infinite}.profile-load-orbit:before{content:'✦';position:absolute;inset:15px;display:grid;place-items:center;border-radius:50%;background:radial-gradient(circle at 35% 30%,#b29cff,#6655dd 58%,#2c2459);color:#fff;font-size:22px;animation:profile-pulse 1.5s ease-in-out infinite}.profile-load-orbit:after{content:'';position:absolute;width:10px;height:10px;left:3px;top:9px;border-radius:50%;background:#8b7cff;box-shadow:0 0 18px #8b7cff}.profile-load-logo{color:#bcaeff;font-size:20px;font-weight:1000}.profile-load-text{margin-top:6px;color:var(--text2);font-size:12px;font-weight:800}.profile-load-sub{margin-top:4px;color:var(--text3);font-size:9px}.profile-load-retry{display:none;margin:13px auto 0;padding:9px 15px;border:1px solid rgba(167,139,250,.25);border-radius:10px;background:rgba(124,110,247,.14);color:#fff;font:800 11px Nunito;cursor:pointer}.profile-load.error .profile-load-retry{display:inline-flex}.profile-load.error .profile-load-orbit{animation:none}.profile-load.error .profile-load-orbit:before{content:'!';background:linear-gradient(135deg,#ef4444,#9f1239);animation:none}.profile-refresh{position:absolute;z-index:7;left:50%;top:12px;transform:translate(-50%,-18px);padding:5px 9px;border-radius:999px;background:rgba(9,10,20,.72);color:#c4b5fd;font-size:9px;font-weight:900;opacity:0;transition:.2s;pointer-events:none}.profile-refresh.show{transform:translate(-50%,0);opacity:1}@keyframes profile-spin{to{transform:rotate(360deg)}}@keyframes profile-pulse{50%{transform:scale(1.06)}}`;
-  document.head.appendChild(css);
+  const calm=document.createElement('style');calm.textContent=`
+  .profile-load{position:absolute;inset:0;z-index:9;display:flex;opacity:0;visibility:hidden}.profile-load.show{opacity:1;visibility:visible}.profile-load-retry{display:none;margin-top:16px;padding:10px 16px;border:1px solid;border-radius:10px;cursor:pointer}.profile-load.error .profile-load-retry{display:inline-flex}
+  #user-profile-modal .user-profile-card{min-height:min(520px,calc(var(--v100-height,100dvh) - 40px))}
+  #user-profile-modal .user-profile-close{z-index:12!important}
+  #profile-load{background:var(--pc-bg,var(--bg2));align-items:flex-start;justify-content:flex-start;padding:0;pointer-events:none!important;transition:opacity 140ms ease,visibility 140ms ease}
+  #profile-load .profile-load-box{width:100%;text-align:left;padding:0 24px 24px}
+  #profile-load.show{pointer-events:auto!important}
+  .profile-skeleton-cover-v191{height:130px;margin:0 -24px 0;background:var(--bg3)}
+  .profile-skeleton-avatar-v191{width:76px;height:76px;border:4px solid var(--pc-bg,var(--bg2));border-radius:22px;background:var(--border);margin-top:-30px;position:relative}
+  .profile-skeleton-line-v191{height:12px;margin:18px 0;border-radius:6px;background:var(--bg3);width:68%}.profile-skeleton-line-v191.short{width:36%;height:9px}.profile-skeleton-line-v191.wide{width:100%;height:64px;margin-top:28px;border-radius:14px}
+  #profile-load-text{font:500 12px/1.5 system-ui;color:var(--text3);margin-top:24px}#profile-load-retry{pointer-events:auto;color:var(--text);border-color:var(--border);background:var(--bg3);font:500 13px system-ui}
+  #profile-load-orbit,.profile-load-orbit{display:none!important;animation:none!important}
+  #profile-refresh{display:none!important}#view-profile-avatar{width:84px;height:84px}#view-profile-name{min-height:28px}#view-profile-nick{min-height:18px}
+  @media(prefers-reduced-motion:reduce){#profile-load{transition:none}}
+  body[data-ui-motion-v184=off] #profile-load{transition:none}
+  `;document.head.append(calm);
 
   const card=document.querySelector('.user-profile-card');
   if(card&&!document.getElementById('profile-load')){
     const refresh=document.createElement('div');refresh.id='profile-refresh';refresh.className='profile-refresh';refresh.textContent='◌ обновляем профиль';card.appendChild(refresh);
-    const load=document.createElement('div');load.id='profile-load';load.className='profile-load';load.innerHTML='<div class="profile-load-box"><div class="profile-load-orbit"></div><div class="profile-load-logo">ExstraChat</div><div class="profile-load-text" id="profile-load-text">Загружаем профиль…</div><div class="profile-load-sub">аватарка · баннер · информация</div><button class="profile-load-retry" id="profile-load-retry">Повторить</button></div>';card.appendChild(load);
+    const load=document.createElement('div');load.id='profile-load';load.className='profile-load';load.innerHTML='<div class="profile-load-box"><div class="profile-skeleton-cover-v191" aria-hidden="true"></div><div class="profile-skeleton-avatar-v191" aria-hidden="true"></div><div class="profile-skeleton-line-v191" aria-hidden="true"></div><div class="profile-skeleton-line-v191 short" aria-hidden="true"></div><div class="profile-skeleton-line-v191 wide" aria-hidden="true"></div><div class="profile-load-text" id="profile-load-text" role="status">Загружаем профиль…</div><button class="profile-load-retry" id="profile-load-retry">Повторить</button></div>';card.appendChild(load);
   }
 
   const lightFields='nick,name,av,status,last_seen,avatar_video,animated_profile',profileFields='nick,name,av,status,bio,banner,last_seen,avatar_video,animated_profile';
   const cache=new Map(),inflight=new Map(),lightInflight=new Map(),times=new Map();let token=0,lastNick='';
+  const account=()=>{try{return String(me?.nick||'');}catch(_){return '';}};let owner=account();
+  function syncOwner(){if(owner===account())return;owner=account();token++;cache.clear();inflight.clear();lightInflight.clear();times.clear();}
+  async function prepareImages(user){const sources=[];try{const photo=unpackProfileData(user.status).photo;if(photo)sources.push(photo);if(/^data:image\/(png|jpeg|webp);base64,/i.test(user.banner||''))sources.push(user.banner);}catch(_){}if(!sources.length)return;let timer;await Promise.race([Promise.allSettled(sources.slice(0,2).map(src=>{const img=new Image();img.src=src;return img.decode?img.decode():Promise.resolve();})),new Promise(r=>timer=setTimeout(r,120))]);clearTimeout(timer);}
   function merge(user){if(window.telechatUserCacheV123)return window.telechatUserCacheV123.merge(user);if(!user||!user.nick)return null;userCache[user.nick]=Object.assign({},userCache[user.nick]||{},user);times.set(user.nick,Date.now());return userCache[user.nick];}
   async function light(nick){
     if(lightInflight.has(nick))return lightInflight.get(nick);
@@ -21,11 +36,14 @@
   }
   getUser=async function(nick){if(window.telechatUserCacheV123)return window.telechatUserCacheV123.get(nick);nick=String(nick||'').toLowerCase();if(!nick)return null;const saved=userCache[nick];if(saved){if(Date.now()-(times.get(nick)||0)>45000)light(nick).catch(()=>{});return saved;}return light(nick);};
   async function full(nick,force){
-    const saved=cache.get(nick);if(!force&&saved&&Date.now()-saved.time<90000)return saved.user;if(inflight.has(nick))return inflight.get(nick);
-    const task=(async()=>{let r=await sb.from('users').select(profileFields).eq('nick',nick).maybeSingle();if(r.error&&/avatar_video|animated_profile/.test(String(r.error.message)))r=await sb.from('users').select('nick,name,av,status,bio,banner,last_seen').eq('nick',nick).maybeSingle();if(r.error)throw r.error;if(!r.data)throw Error('Профиль не найден');const user=merge(r.data);cache.set(nick,{user,time:Date.now()});return user;})().finally(()=>inflight.delete(nick));
+    syncOwner();const actor=owner;
+    const saved=cache.get(nick);if(!force&&saved&&Date.now()-saved.time<90000){cache.delete(nick);cache.set(nick,saved);return saved.user;}if(inflight.has(nick))return inflight.get(nick);
+    let timer;const controller=new AbortController();const query=fields=>{let q=sb.from('users').select(fields).eq('nick',nick);if(q.abortSignal)q=q.abortSignal(controller.signal);return q.maybeSingle();};
+    const deadline=new Promise((_,reject)=>timer=setTimeout(()=>{reject(Error('Не удалось дождаться профиля. Попробуй ещё раз.'));controller.abort();},8000));
+    const task=Promise.race([(async()=>{let r=await query(profileFields);if(r.error&&/avatar_video|animated_profile/.test(String(r.error.message)))r=await query('nick,name,av,status,bio,banner,last_seen');if(r.error)throw r.error;if(!r.data)throw Error('Профиль не найден');return r.data;})(),deadline]).then(async data=>{if(actor!==account())throw Error('Аккаунт изменился');await prepareImages(data);if(actor!==account())throw Error('Аккаунт изменился');const user=merge(data);cache.delete(nick);cache.set(nick,{user,time:Date.now(),bytes:JSON.stringify(data).length*2});while(cache.size>24||[...cache.values()].reduce((n,v)=>n+(v.bytes||0),0)>8*1024*1024)cache.delete(cache.keys().next().value);return user;}).finally(()=>{clearTimeout(timer);if(inflight.get(nick)===task)inflight.delete(nick);});
     inflight.set(nick,task);return task;
   }
-  function mode(type,text){const load=document.getElementById('profile-load'),refresh=document.getElementById('profile-refresh');if(!load)return;load.classList.remove('show','error');refresh.classList.remove('show');if(type==='load')load.classList.add('show');if(type==='refresh')refresh.classList.add('show');if(type==='error'){load.classList.add('show','error');document.getElementById('profile-load-text').textContent=text||'Не удалось загрузить профиль';}}
+  function mode(type,text){const load=document.getElementById('profile-load'),refresh=document.getElementById('profile-refresh');if(!load)return;card?.setAttribute('aria-busy',String(type==='load'));const body=card?.querySelector('.user-profile-body');if(body)body.inert=type==='load'||type==='error';load.classList.remove('show','error');refresh.classList.remove('show');if(type==='load'){document.getElementById('profile-load-text').textContent='Загружаем профиль…';load.classList.add('show');}if(type==='refresh')refresh.classList.add('show');if(type==='error'){load.classList.add('show','error');document.getElementById('profile-load-text').textContent=text||'Не удалось загрузить профиль';}}
   const mediaPaints=new WeakMap();
   const suspendedMedia=new Set();
   function syncMedia(){
@@ -65,16 +83,27 @@
     window.exstraPairV168?.renderProfile(user);
   }
   openUserProfile=async function(nick,force=false){
-    nick=String(nick||'').toLowerCase();if(!nick)return;lastNick=nick;
+    syncOwner();const actor=owner;nick=String(nick||'').toLowerCase();if(!nick)return;lastNick=nick;
     if(!force&&me&&String(me.nick).toLowerCase()===nick&&Object.hasOwn(me,'banner'))cache.set(nick,{user:me,time:Date.now()});
     const request=++token,modal=document.getElementById('user-profile-modal'),saved=cache.get(nick),preview=saved?.user||userCache[nick];
     const complete=!!saved||!!preview&&Object.hasOwn(preview,'bio');
-    if(preview){paint(preview,complete);mode('idle');}else{mode('load');document.getElementById('view-profile-name').textContent='';document.getElementById('view-profile-nick').textContent='@'+nick;applyProfileBanner(document.getElementById('view-profile-cover'),'preset:cosmos');mediaPaints.delete(document.getElementById('view-profile-cover'));}
+    if(preview){paint(preview,complete);mode('idle');}else{paint({nick,name:nick,status:'',bio:'',banner:'preset:cosmos'},false);mode('load');}
     modal.classList.add('show');modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');modal.setAttribute('aria-labelledby','view-profile-name');
     syncMedia();
-    try{const user=await full(nick,force);if(request!==token)return;paint(user,true);syncMedia();mode('idle');}catch(e){if(request!==token)return;if(preview){mode('idle');showToast('Показана сохранённая версия профиля');}else mode('error',String(e.message||'Ошибка загрузки'));}
+    try{const user=await full(nick,force);if(request!==token||actor!==account())return;paint(user,true);syncMedia();mode('idle');}catch(e){if(request!==token||actor!==account())return;if(preview){mode('idle');showToast('Показана сохранённая версия профиля');}else mode('error',String(e.message||'Ошибка загрузки'));}
   };
   closeUserProfile=function(){token++;document.getElementById('user-profile-modal').classList.remove('show');viewedProfileNickV5='';mode('idle');syncMedia();};
   document.getElementById('profile-load-retry').onclick=()=>openUserProfile(lastNick,true);
   window.addEventListener('telechat-user-updated-v123',event=>{const nick=String(event.detail?.nick||'').toLowerCase();if(nick)cache.delete(nick);});
+  let prepareTimer=0,preparing=false,lastPrepare=0,candidate='',nativeHidden=false;
+  function canPrepare(){return !!account()&&document.getElementById('chat-screen')?.classList.contains('active')&&!document.hidden&&!nativeHidden&&navigator.onLine!==false&&!navigator.connection?.saveData&&!/^(slow-)?[23]g$/.test(navigator.connection?.effectiveType||'');}
+  function prepare(nick){nick=String(nick||'').toLowerCase();syncOwner();if(!/^[a-z0-9_]{1,64}$/.test(nick)||!canPrepare()||preparing||Date.now()-lastPrepare<10000)return Promise.resolve();const saved=cache.get(nick);if(saved&&Date.now()-saved.time<90000)return Promise.resolve();lastPrepare=Date.now();preparing=true;return full(nick,false).catch(()=>{}).finally(()=>{preparing=false;});}
+  function queuePrepare(nick){if(candidate===nick&&prepareTimer)return;candidate=nick;clearTimeout(prepareTimer);prepareTimer=setTimeout(()=>{prepareTimer=0;if(canPrepare())prepare(candidate);},500);}
+  document.addEventListener('pointerover',event=>{if(event.pointerType==='touch')return;const row=event.target.closest?.('.contact[data-contact-nick]');if(row)queuePrepare(row.dataset.contactNick);},{passive:true});
+  document.addEventListener('focusin',event=>{const row=event.target.closest?.('.contact[data-contact-nick]');if(row)queuePrepare(row.dataset.contactNick);});
+  const header=document.getElementById('chat-name-hdr');if(header)new MutationObserver(()=>{try{if(currentChat&&!currentRoom)queuePrepare(currentChat);}catch(_){}}).observe(header,{childList:true,characterData:true,subtree:true});
+  document.addEventListener('visibilitychange',()=>{if(document.hidden){clearTimeout(prepareTimer);prepareTimer=0;}});
+  window.addEventListener('telechat-native-visibility',event=>{nativeHidden=event.detail?.background===true;if(nativeHidden){clearTimeout(prepareTimer);prepareTimer=0;}});
+  window.addEventListener('telechat-account-ready-v175',()=>{if(owner!==account()){syncOwner();closeUserProfile();}clearTimeout(prepareTimer);prepareTimer=0;});
+  window.telechatProfileLoadingV191=Object.freeze({prepare,info:()=>({cached:cache.size,inflight:inflight.size,preparing,queued:!!prepareTimer})});
 })();

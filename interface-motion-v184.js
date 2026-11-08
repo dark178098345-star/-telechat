@@ -46,7 +46,7 @@
     const still = kind === 'photo' || node?.matches('.side-panel,.user-profile-card,.modal-overlay,.message-modal-overlay-v36') || (node?.matches('dialog') && innerWidth < 600);
     return play(node, still ? [{ opacity: .55 }, { opacity: 1 }] : [
       { opacity: .5, transform: 'translateY(7px) scale(.99)' }, { opacity: 1, transform: 'translateY(0) scale(1)' }
-    ], kind === 'photo' ? 200 : 180, kind);
+    ], kind === 'photo' ? 200 : 160, kind);
   }
   function reorder(rail, before) {
     if (!enabled() || !rail?.isConnected || !(before instanceof Map)) return;

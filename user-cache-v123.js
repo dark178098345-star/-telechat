@@ -12,11 +12,12 @@
   function open(){
     try{if(!window.indexedDB)return Promise.resolve(null);}catch(_){return Promise.resolve(null);}
     if(database)return database;
-    database=new Promise(resolve=>{
-      let request;try{request=indexedDB.open('telechat-user-photos-v123',1);}catch(_){resolve(null);return;}
+    const job=new Promise(resolve=>{
+      let settled=false;const timer=setTimeout(()=>finish(null),800);function finish(db){if(settled){db?.close();return;}settled=true;clearTimeout(timer);if(db)db.onversionchange=()=>{db.close();database=null;};resolve(db);}
+      let request;try{request=indexedDB.open('telechat-user-photos-v123',1);}catch(_){finish(null);return;}
       request.onupgradeneeded=()=>{const store=request.result.createObjectStore('profiles',{keyPath:'id'});store.createIndex('owner','owner');};
-      request.onsuccess=()=>resolve(request.result);request.onerror=()=>resolve(null);request.onblocked=()=>resolve(null);
-    });return database;
+      request.onsuccess=()=>finish(request.result);request.onerror=()=>finish(null);request.onblocked=()=>finish(null);
+    });database=job;job.then(db=>{if(!db&&database===job)database=null;});return job;
   }
   function lightRecord(user){const result={};for(const field of FIELDS.split(','))if(user[field]!==undefined)result[field]=user[field];return result;}
   async function flush(){
@@ -56,15 +57,15 @@
       const task=(async()=>{
         const db=await open();if(!db||token!==generation)return;
         await new Promise(resolve=>{
-          let tx;try{tx=db.transaction('profiles','readonly');}catch(_){resolve();return;}
+          let tx,finished=false;const timer=setTimeout(()=>{finish();try{tx?.abort();}catch(_){}},750);function finish(){if(finished)return;finished=true;clearTimeout(timer);resolve();}try{tx=db.transaction('profiles','readonly');}catch(_){finish();return;}
           for(const key of missing){const request=tx.objectStore('profiles').get(JSON.stringify([user,key]));
             request.onsuccess=()=>{const record=request.result,age=Date.now()-Number(record?.at||0);
-              if(token!==generation||account()!==user||!record?.value||record.value.nick!==key||age<0||age>DISK_TTL)return;
+              if(finished||token!==generation||account()!==user||!record?.value||record.value.nick!==key||age<0||age>DISK_TTL)return;
               if(key===user&&memory()[key])return;
               if((fresh.get(key)||0)<record.at)merge(record.value,{at:record.at,save:false});
             };
           }
-          tx.oncomplete=resolve;tx.onerror=resolve;tx.onabort=resolve;
+          tx.oncomplete=finish;tx.onerror=finish;tx.onabort=finish;
         });
       })().catch(()=>{}).finally(()=>{if(token===generation)for(const key of missing){restored.add(key);reads.delete(key);}});
       for(const key of missing)reads.set(key,task);
@@ -72,10 +73,10 @@
     await Promise.all(keys.map(key=>reads.get(key)).filter(Boolean));
   }
   async function fetchPart(entries){
-    const first=entries[0],controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),8000);
+    const first=entries[0],controller=new AbortController();let timeout;const deadline=new Promise((_,reject)=>{timeout=setTimeout(()=>{reject(Error('Не удалось загрузить данные профиля'));controller.abort();},8000);});
     try{
       if(first.token!==generation||first.owner!==account()){entries.forEach(entry=>entry.resolve(null));return;}
-      const query=fields=>{const q=sb.from('users').select(fields).in('nick',entries.map(entry=>entry.nick));return q.abortSignal?q.abortSignal(controller.signal):q;};
+      const query=fields=>{const q=sb.from('users').select(fields).in('nick',entries.map(entry=>entry.nick));return Promise.race([Promise.resolve(q.abortSignal?q.abortSignal(controller.signal):q),deadline]);};
       let result=await query(FIELDS);
       if(result.error&&/avatar_video|animated_profile/.test(String(result.error.message)))result=await query('nick,name,av,status,last_seen');
       if(result.error)throw result.error;
