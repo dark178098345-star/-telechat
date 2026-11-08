@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v191-calm-loading';
+const CACHE_NAME='telechat-shell-v192-soft-emotions';
 const APP_SHELL=[
   './bubble-styles-v189.css?v=189',
   './bubble-art-v189/sketch.svg',
@@ -11,7 +11,7 @@ const APP_SHELL=[
   './interface-motion-v184.js?v=191',
   './interface-motion-v184.css?v=184',
   './emoji-catalog-v182.js?v=182',
-  './emoji-art-v182.js?v=182',
+  './emoji-art-v182.js?v=192',
   './emoji-picker-v182.js?v=184',
   './emoji-studio-v182.css?v=184',
   './photo-album-model-v183.js?v=183',
@@ -22,7 +22,7 @@ const APP_SHELL=[
   './chat-features-v181.css?v=181',
   './chat-preferences-model-v181.js?v=189',
   './chat-preferences-v181.js?v=189',
-  './whats-new-v181.js?v=191',
+  './whats-new-v181.js?v=192',
   './media-policy-v179.js?v=179',
   './media-auto-v179.js?v=184',
   './media-auto-v179.css?v=179',
