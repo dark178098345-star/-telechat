@@ -143,6 +143,13 @@ function fixtureClient() {
       await p.evaluate(() => openUserProfile('bob'));
       await p.waitForTimeout(200);
       assert.equal(await p.locator('#view-profile-name').textContent(), 'Bob');
+      assert.equal(await p.locator('body').getAttribute('data-profile-layout-v196'),null,'Classic remains the production default');
+      await p.evaluate(()=>exstraProfileLayoutV196.set('panel'));
+      const sideBanner=await p.locator('#view-profile-cover').boundingBox(), profileBody=await p.locator('.user-profile-body').boundingBox();
+      assert(sideBanner.x<profileBody.x&&sideBanner.width<profileBody.width,'Production card uses a side banner');
+      assert(await p.locator('.user-profile-card').evaluate(n=>n.scrollWidth<=n.clientWidth+1),'Production panel has no horizontal overflow');
+      await p.screenshot({path:path.join(root,'outputs/profile-panel-v196-production-'+width+'.png')});
+      await p.evaluate(()=>exstraProfileLayoutV196.set('classic'));
       await p.evaluate(() => closeUserProfile());
       await p.waitForTimeout(150);
       await p.evaluate(()=>telechatMusicHubV117.open());

@@ -1,5 +1,7 @@
-const CACHE_NAME='telechat-shell-v195-less-transfer';
+const CACHE_NAME='telechat-shell-v196-profile-layout';
 const APP_SHELL=[
+  './profile-layout-v196.js?v=196',
+  './profile-layout-v196.css?v=196',
   './room-info-v193.css?v=193',
   './bubble-styles-v189.css?v=189',
   './bubble-art-v189/sketch.svg',
@@ -23,7 +25,7 @@ const APP_SHELL=[
   './chat-features-v181.css?v=181',
   './chat-preferences-model-v181.js?v=189',
   './chat-preferences-v181.js?v=189',
-  './whats-new-v181.js?v=195',
+  './whats-new-v181.js?v=196',
   './media-policy-v179.js?v=179',
   './media-auto-v179.js?v=184',
   './media-auto-v179.css?v=179',
