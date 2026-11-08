@@ -1,5 +1,6 @@
-const CACHE_NAME='telechat-shell-v192-soft-emotions';
+const CACHE_NAME='telechat-shell-v193-room-information';
 const APP_SHELL=[
+  './room-info-v193.css?v=193',
   './bubble-styles-v189.css?v=189',
   './bubble-art-v189/sketch.svg',
   './bubble-art-v189/blossom.svg',
@@ -22,7 +23,7 @@ const APP_SHELL=[
   './chat-features-v181.css?v=181',
   './chat-preferences-model-v181.js?v=189',
   './chat-preferences-v181.js?v=189',
-  './whats-new-v181.js?v=192',
+  './whats-new-v181.js?v=193',
   './media-policy-v179.js?v=179',
   './media-auto-v179.js?v=184',
   './media-auto-v179.css?v=179',
@@ -31,7 +32,7 @@ const APP_SHELL=[
   './branding/logo-v178-256.webp',
   './rooms-studio-v177.css?v=177',
   './rooms-model-v177.js?v=177',
-  './rooms-studio-v177.js?v=177',
+  './rooms-studio-v177.js?v=193',
   './utilities-v176.css?v=176',
   './sleep-timer-v176.js?v=176',
   './utilities-v176.js?v=176',
@@ -54,7 +55,7 @@ const APP_SHELL=[
   './quick-jump-v154.js?v=161',
   './social-v152.css?v=152',
   './call-design-v152.css?v=152',
-  './shared-media-v152.js?v=183',
+  './shared-media-v152.js?v=193',
   './story-replies-v152.js?v=152',
   './call-chat-v152.js?v=152',
   './game-status-v151.css?v=151',

@@ -25,7 +25,8 @@ async function setup(browser,width){
  for(const f of ['room-media-v113.js','rooms-model-v177.js','rooms-studio-v177.js'])await p.addScriptTag({content:read(f)});
  return {p,errors};
 }
-(async()=>{const browser=await chromium.launch({channel:'msedge',headless:true});try{
+module.exports={setup};
+if(require.main===module)(async()=>{const browser=await chromium.launch({channel:'msedge',headless:true});try{
  for(const width of [320,390,1440]){
   const {p,errors}=await setup(browser,width);await p.evaluate(()=>openCreateRoomModal());
   assert.equal(await p.locator('#room-modal').count(),0,'Retired creator removed, not hidden');
