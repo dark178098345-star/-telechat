@@ -19,7 +19,7 @@
  function paintMedia(node,mark,render){const old=mediaMarks.get(node);if(old?.mark===mark&&old.child===node.firstChild)return;render();mediaMarks.set(node,{mark,child:node.firstChild});}
  function paintAccount(){
   const user=self();if(!user||!you)return;const mark=JSON.stringify([user.nick,user.name,user.av,user.status,user.banner,user.avatar_video,user.animated_profile]);if(mark===accountMark)return;accountMark=mark;
-  you.querySelector('.phone-self-name-v159').textContent=user.name||user.nick;you.querySelector('.phone-self-nick-v159').textContent='@'+user.nick;
+  you.querySelector('.phone-self-name-v159').textContent=user.name||user.nick;const nickNode=you.querySelector('.phone-self-nick-v159');if(nickNode.firstChild?.nodeValue!=='@'+user.nick)nickNode.textContent='@'+user.nick;window.exstraIdentityV197?.paint(you.querySelector('.phone-self-nick-v159'),user.nick);
   const avatar=you.querySelector('.phone-self-avatar-v159'),cover=you.querySelector('.phone-self-cover-v159');
   paintMedia(avatar,JSON.stringify([user.nick,user.av,window.unpackProfileData?.(user.status)?.photo||'',user.avatar_video]),()=>{if(window.setAvatarElement)window.setAvatarElement(avatar,user);else avatar.textContent=(user.name||user.nick).slice(0,1);});
   paintMedia(cover,JSON.stringify([user.nick,user.banner]),()=>window.applyProfileBanner?.(cover,user.banner));

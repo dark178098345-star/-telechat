@@ -99,6 +99,7 @@
     const cover=card.querySelector('.pq-cover');
     paintMedia(cover,JSON.stringify([user.nick,user.banner,user.animated_profile]),()=>window.applyProfileBanner?.(cover,user.banner));
     opened=true;card.hidden=false;
+    window.exstraIdentityV197?.paint(nick,user.nick);
     window.telechatGameStatusV151?.paintQuick(card);
     window.telechatGameStatusV151?.refresh(user.nick,true);
     trigger.setAttribute('aria-expanded','true');

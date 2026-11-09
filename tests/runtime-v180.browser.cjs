@@ -19,7 +19,7 @@ function fixtureClient() {
     from(table) {
       const filters = []; let single = false, count = 1000, order, descending = false;
       let q; q = new Proxy({ then(resolve, reject) {
-        let rows = (table === 'users' ? users : table === 'messages' ? messages : table==='music_catalog_v117'?music:[]).filter(row => match(row, filters));
+        let rows = (table === 'users' ? users : table === 'messages' ? messages : table==='music_catalog_v117'?music:table==='exstra_badges_public_v197'?[{nick:'bob',premium:true,premium_forever:true,image:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a4RcAAAAASUVORK5CYII='}]:[]).filter(row => match(row, filters));
         if (order) rows = rows.slice().sort((a, b) => (a[order] > b[order] ? 1 : a[order] < b[order] ? -1 : 0) * (descending ? -1 : 1));
         rows = rows.slice(0, count);
         return Promise.resolve({ data: structuredClone(single ? rows[0] || null : rows), error: null, count: rows.length }).then(resolve, reject);
@@ -35,6 +35,7 @@ function fixtureClient() {
       } }); return q;
     },
     rpc(name, args) {
+      if(name==='exstra_wallet_v197'&&args.p_action==='state')return reply({balance:50000,unlimited:false,premium:false,forever:false,until:null,badge:'',history:[]});
       if (name === 'telechat_files_v141' && args.p_action === 'reserve') return reply({id:'00000000-0000-4000-8000-'+String(window.fixtureFileId=(window.fixtureFileId||0)+1).padStart(12,'0'),token:'fixture-file-capability',...args.p_data});
       if (name === 'exstra_send_messages_v172') {
         const rows = args.p_rows.map(row => { const saved = { deleted: false, ...row, id: messages.length + 1, read_by: [] }; messages.push(saved); return saved; });
@@ -143,6 +144,8 @@ function fixtureClient() {
       await p.evaluate(() => openUserProfile('bob'));
       await p.waitForTimeout(200);
       assert.equal(await p.locator('#view-profile-name').textContent(), 'Bob');
+      await p.waitForSelector('#view-profile-nick .nickname-badge-v197 img');
+      assert.equal(await p.locator('#view-profile-nick .nickname-badge-v197').count(),1,'Another user sees the public custom badge without replacing role verification');
       assert.equal(await p.locator('body').getAttribute('data-profile-layout-v196'),null,'Classic remains the production default');
       await p.evaluate(()=>exstraProfileLayoutV196.set('panel'));
       const sideBanner=await p.locator('#view-profile-cover').boundingBox(), profileBody=await p.locator('.user-profile-body').boundingBox();
@@ -169,6 +172,11 @@ function fixtureClient() {
       await p.locator('#interface-motion-settings-v184').scrollIntoViewIfNeeded();
       await p.screenshot({path:path.join(root,'outputs/interface-motion-v184-'+width+'.png')});
       await p.evaluate(()=>closeAllPanels());
+      await p.evaluate(()=>exstraWalletUIV197.open());
+      assert.equal(await p.locator('[data-wallet-balance]').textContent(),'50 000');
+      assert(await p.locator('#exstra-wallet-v197').evaluate(n=>n.scrollWidth<=n.clientWidth+1));
+      await p.screenshot({path:path.join(root,'outputs/wallet-v197-production-'+width+'.png')});
+      await p.locator('[data-wallet-close]').click();
       await p.waitForTimeout(350);
       if(width>900){await p.locator('.rail-brand-v109').click();await p.waitForFunction(()=>!exstraRailV194.getState().animating);await p.screenshot({path:path.join(root,'outputs/rail-v194-production.png')});await p.locator('#mc-nav-v187').click();}else await p.evaluate(()=>exstraCenterV187.open());
       await p.waitForFunction(()=>document.querySelectorAll('#my-center-v187[open] [data-widget]').length===8);

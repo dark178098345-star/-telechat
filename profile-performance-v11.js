@@ -81,6 +81,8 @@
     if(typeof enhanceVerifiedBadges==='function')enhanceVerifiedBadges(document.getElementById('user-profile-modal'));
     window.telechatPresenceV120?.paintProfile(user.nick,user.last_seen);
     window.exstraPairV168?.renderProfile(user);
+    window.exstraIdentityV197?.paint(handle,user.nick);
+    window.exstraWalletUIV197?.profile(user);
   }
   openUserProfile=async function(nick,force=false){
     syncOwner();const actor=owner;nick=String(nick||'').toLowerCase();if(!nick)return;lastNick=nick;

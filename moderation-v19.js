@@ -60,9 +60,10 @@
     const badges=[...target.querySelectorAll(':scope > .verified-badge')],current=badges.shift();
     badges.forEach(badge=>badge.remove());
     const html=verifiedBadgeHtml(nick,!!current?.classList.contains('large'));
-    if(current&&current.outerHTML.replace('verified-badge moderation-auto-badge','verified-badge')===html)return;
+    if(current&&current.outerHTML.replace('verified-badge moderation-auto-badge','verified-badge')===html){window.exstraIdentityV197?.paint(target,nick);return;}
     current?.remove();
     if(html)target.insertAdjacentHTML('beforeend',html.replace('verified-badge','verified-badge moderation-auto-badge'));
+    window.exstraIdentityV197?.paint(target,nick);
   }
   function flushBadgesV180(){
     badgeFrameV180=0;
@@ -92,7 +93,7 @@
       const name=String(user?.name||user?.nick||'').trim();if(name&&!byName.has(name))byName.set(name,user.nick);
     }
     senders.forEach(element=>{
-      const base=[...element.childNodes].filter(node=>!node.classList?.contains('verified-badge')).map(node=>node.textContent).join('').trim();
+      const base=[...element.childNodes].filter(node=>!node.classList?.contains('verified-badge')&&!node.classList?.contains('nickname-badge-v197')).map(node=>node.textContent).join('').trim();
       const nick=senderNick(element)||byName.get(base);
       addAutoBadgeV19(element,nick||'');
     });
@@ -149,6 +150,7 @@
     else if(userRole==='admin'){role.classList.add('show','admin');role.textContent='A · Администратор';}
     else if(user?.verified){role.classList.add('show');role.textContent='✓ Подтверждённый профиль';}
     const nickElement=document.getElementById('view-profile-nick');if(nickElement&&user?.nick)nickElement.innerHTML='@'+escHtml(user.nick)+verifiedBadgeHtml(user.nick,true);
+    if(user?.nick)window.exstraIdentityV197?.paint(nickElement,user.nick);
     profileButton.style.display=canModerateV19(user)?'':'none';decorateBadgesV19(document.getElementById('user-profile-modal'));
   }
   function moderationChipsV19(user){
@@ -253,9 +255,9 @@
   const observerV19=new MutationObserver(records=>{
     for(const record of records){
       const target=record.target.nodeType===1?record.target:record.target.parentElement;
-      if(!target||target.closest('.verified-badge'))continue;
+      if(!target||target.closest('.verified-badge,.nickname-badge-v197'))continue;
       const changed=[...record.addedNodes,...record.removedNodes];
-      if(changed.length&&changed.every(node=>node.nodeType===1&&node.matches('.verified-badge')))continue;
+      if(changed.length&&changed.every(node=>node.nodeType===1&&node.matches('.verified-badge,.nickname-badge-v197')))continue;
       const name=target.closest(badgeNameV180);
       if(name)decorateBadgesV19(name.matches('.msg-sender-name')?name:name.closest(badgeContainerV180)||name);
       for(const node of record.addedNodes)if(node.nodeType===1&&!node.matches('.verified-badge'))decorateBadgesV19(node);
