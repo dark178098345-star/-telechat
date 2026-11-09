@@ -84,6 +84,7 @@ function fixtureClient() {
       await p.locator('#whats-new-v181 button[data-close]').last().click();
       await p.evaluate(() => openChat('bob'));
       await p.waitForFunction(() => document.querySelectorAll('#messages .msg').length >= 20);
+      await p.screenshot({path:path.join(root,'outputs/interface-v200-runtime-'+width+'.png')});
       await p.locator('#msg-input').fill('Runtime v180 send');
       await p.evaluate(() => sendMsg());
       await p.waitForFunction(() => [...document.querySelectorAll('#messages .msg-bubble')].some(node => node.textContent === 'Runtime v180 send'));

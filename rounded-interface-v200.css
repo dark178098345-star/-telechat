@@ -1,0 +1,75 @@
+/* One restrained radius scale. Geometry only: no scripts, repaint effects or
+   changes to message styles, avatar shapes, crop masks and touch targets. */
+:root{--ex-radius-small:10px;--ex-radius-control:15px;--ex-radius-card:18px;--ex-radius-panel:24px;--ex-doodles:url('./interface-doodles-v200.svg')}
+
+/* Repeated vector drawings, painted with the ordinary background. Never cover
+   a personal photo, add a floating layer or intercept clicks/scrolling. */
+html body[data-interface-v200=drawings] #chat-screen #messages:not(.has-wallpaper-v119),
+html body[data-interface-v200=drawings] #chat-screen #contacts-list:not(.has-wallpaper-v119){background-image:var(--ex-doodles)!important;background-size:540px 540px!important;background-repeat:repeat!important;background-attachment:scroll!important}
+html body[data-interface-v200=drawings] #chat-screen #contacts-list:not(.has-wallpaper-v119){background-size:670px 670px!important}
+html body #chat-screen #contacts-list .contact.active{box-shadow:inset 3px 0 var(--accent3)!important}
+html body #chat-screen .sidebar-top,
+html body #chat-screen .chat-header{background-image:linear-gradient(110deg,color-mix(in srgb,var(--accent) 7%,transparent),transparent 65%)!important}
+.interface-settings-v200>p{font-size:12px;line-height:1.6;color:var(--text3)}
+.interface-choices-v200{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.interface-choices-v200 button{min-width:0;padding:12px;text-align:left;color:var(--text);background:var(--bg2);border:1px solid var(--border);border-radius:18px;font:inherit;cursor:pointer}
+.interface-choices-v200 button[aria-pressed=true]{border-color:var(--accent3);box-shadow:inset 0 0 0 1px var(--accent3)}
+.interface-choices-v200 button:focus-visible{outline:2px solid var(--accent3);outline-offset:3px}
+.interface-choices-v200 strong,.interface-choices-v200 small{display:block;font-size:12px;margin-top:10px}.interface-choices-v200 small{font-size:10px;line-height:1.5;color:var(--text3);margin-top:5px}
+.interface-sample-v200{display:block;height:78px;border-radius:12px;background-color:var(--bg);border:1px solid var(--border)}
+.interface-sample-drawings-v200{background-image:var(--ex-doodles);background-size:240px}
+
+html body #chat-screen #contacts-list .contact,
+html body.theme-light #chat-screen #contacts-list .contact,
+html body #chat-screen #contacts-list.has-wallpaper-v119 .contact{border-radius:var(--ex-radius-control)!important}
+html body #chat-screen :is(.search-inp,.create-room-btn,.hdr-btn,.back-btn,.send-btn),
+html body #chat-screen .telechat-nav-btn,
+html body #settings-home-v160 button{border-radius:var(--ex-radius-control)!important}
+html body #chat-screen .composer-shell{border-radius:20px!important}
+html body #chat-screen .composer-shell>.msg-input{background:transparent!important}
+html body #chat-screen .sidebar-music-player{border-radius:var(--ex-radius-card)!important}
+html body #chat-screen :is(.stories-add,.sidebar-tab){border-radius:var(--ex-radius-small)!important}
+html body #sidebar .section-rail-v109 button{border-radius:var(--ex-radius-control)!important}
+
+/* Standalone surfaces; full-screen phone pages keep their flush screen edges. */
+html body :is(.modal-box,.auth-box,.ex-wallet-dialog-v197),
+html body #user-profile-modal .user-profile-card,
+html body #profile-quick-v91{border-radius:var(--ex-radius-panel)!important}
+html body :is(.ctx-menu,.contact-menu,.attachment-menu,.search-results){border-radius:var(--ex-radius-card)!important}
+html body :is(.modal-btn,.comfort-secondary-v167,.focus-options-v167 button),
+html body #settings-panel :is(select,.settings-profile-qr-v165),
+html body #user-profile-modal :is(.user-profile-close,#follow-btn,.profile-music-play-v97),
+html body #profile-quick-v91 :is(.pq-close,.pq-switch),
+html body .ex-wallet-dialog-v197 button:not(.ex-wallet-tabs-v197 button):not(header>button),
+html body .ex-wallet-label-v197 input:not([type=range]):not([type=checkbox]),
+html body :is(.ex-wallet-upload-v197,.ex-profile-badge-entry-v197 button){border-radius:var(--ex-radius-control)!important}
+html body :is(.comfort-preview-v167,.ex-premium-v197,.ex-profile-badge-entry-v197),
+html body #user-profile-modal .profile-music-v97{border-radius:var(--ex-radius-card)!important}
+html body[data-profile-layout-v196=panel] #user-profile-modal .user-profile-card{border-radius:var(--ex-radius-panel)!important}
+html body #profile-quick-v91 .pq-actions button{border-radius:12px!important}
+
+html body #room-panel .room-info-actions-v193 button,
+html body #voice-call-overlay .voice-call-control,
+html body #call-chat-panel-v152 :is(input,form button){border-radius:var(--ex-radius-control)!important}
+html body #call-chat-panel-v152{border-radius:var(--ex-radius-card)!important}
+html body #music-hub-v117 :is(.mh-track,.mh-tabs,.mh-shelf-v171[data-shelf-v171=collections]>button){border-radius:var(--ex-radius-control)}
+html body #music-hub-v117 .mh-release>.mh-art{border-radius:var(--ex-radius-card)}
+
+@media(min-width:721px){
+ html body:not(.telechat-phone-v159) #chat-screen .composer-shell>.msg-input{border-radius:19px 19px 0 0!important}
+ html body:not(.telechat-phone-v159) #chat-screen.active{padding:8px!important;gap:10px!important}
+ html body:not(.telechat-phone-v159) #chat-screen #sidebar,
+ html body:not(.telechat-phone-v159) #chat-screen>.chat-main{border:1px solid var(--border)!important;border-radius:var(--ex-radius-panel)!important}
+ html body:not(.telechat-phone-v159) #sidebar>.section-rail-v109{border-radius:23px 0 0 23px}
+ html body:not(.telechat-phone-v159) #sidebar .sidebar-top{border-top-right-radius:23px}
+ html body:not(.telechat-phone-v159) #sidebar .sidebar-footer{border-bottom-right-radius:23px}
+ html body:not(.telechat-phone-v159) #chat-screen .chat-header{border-radius:23px 23px 0 0}
+ html body:not(.telechat-phone-v159) #chat-screen .input-area{border-radius:0 0 23px 23px}
+ html body:not(.telechat-phone-v159) #settings-panel.side-panel.v65-full-panel.settings-navigation-v160.open,
+ html body.room-info-docked-v193:not(.telechat-phone-v159) #room-panel.side-panel[data-rooms-studio-v177].open,
+ html body #voice-call-overlay .voice-call-surface{border-radius:var(--ex-radius-panel)!important}
+}
+@media(max-width:720px){
+ html body.telechat-phone-v159 #phone-home-head-v159 .search-inp{border-radius:var(--ex-radius-card)!important}
+ html body.telechat-phone-v159 :is(.phone-self-card-v159,.phone-action-v159){border-radius:var(--ex-radius-card)!important}
+}

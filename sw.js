@@ -1,5 +1,8 @@
-const CACHE_NAME='telechat-shell-v199-music';
+const CACHE_NAME='telechat-shell-v200-rounded';
 const APP_SHELL=[
+  './rounded-interface-v200.css?v=200',
+  './interface-style-v200.js?v=200',
+  './interface-doodles-v200.svg',
   './music-refresh-v199.css?v=199',
   './gift-art-v198.js?v=198',
   './wallet-recipients-v198.js?v=198',

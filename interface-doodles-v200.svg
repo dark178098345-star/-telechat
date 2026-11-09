@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600" viewBox="0 0 600 600" fill="none">
+ <defs>
+  <g id="spark"><path d="M0-8 2-2 8 0 2 2 0 8-2 2-8 0-2-2Z"/></g>
+  <g id="chat"><path d="M-24-13Q-26-22-16-23H16Q25-23 25-13V8Q25 18 15 18H-5L-20 28-17 17Q-25 16-25 8Z"/><path d="M-14-9H12M-14 1H5"/></g>
+  <g id="phones"><path d="M-24 10V-2a24 24 0 0 1 48 0v12M-24 1h7v22h-7q-6 0-6-6V7q0-6 6-6ZM24 1h-7v22h7q6 0 6-6V7q0-6-6-6Z"/><path d="M-16-11q16-16 32 0"/></g>
+  <g id="eyes"><path d="M-30-8h4v-6h17v6h4v19h-4v5h-17v-5h-4ZM6-8h4v-6h17v6h4v19h-4v5H10v-5H6Z"/><path d="M-18-4v10M18-4v10" stroke-width="5"/><path d="M-4 24q4 3 8 0"/></g>
+  <g id="heart"><path d="M0 24C-6 17-28 3-26-10c2-17 21-17 26-4 6-13 24-13 26 4C28 3 6 17 0 24Z"/><path d="M-19-8q2-7 9-5"/></g>
+  <g id="pad"><path d="M-18-14h36q9 0 13 14l4 15q2 12-7 12-5 0-14-12h-28q-9 12-14 12-9 0-7-12l4-15q4-14 13-14Z"/><path d="M-20-1v12M-26 5h12M12 0h1M22 9h1M-4-15v-7q0-7 8-7" stroke-linecap="round"/></g>
+  <g id="plane"><path d="m-27-6 56-19-19 57-8-25-29-13ZM2 7l27-32M2 7l-3 18 10-11"/></g>
+  <g id="tape"><rect x="-30" y="-20" width="60" height="40" rx="7"/><rect x="-21" y="-12" width="42" height="17" rx="8"/><circle cx="-12" cy="-4" r="4"/><circle cx="12" cy="-4" r="4"/><path d="M-16 20-11 11h22l5 9M-26 14h2M24 14h2"/></g>
+  <g id="note"><path d="M-10 13v-34l31-6V7M-10-11l31-6"/><ellipse cx="-17" cy="16" rx="8" ry="6" transform="rotate(-20 -17 16)"/><ellipse cx="14" cy="10" rx="8" ry="6" transform="rotate(-20 14 10)"/></g>
+  <g id="orbit"><ellipse rx="34" ry="10" transform="rotate(-27)"/><circle r="21"/><path d="m3-12 3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1Z"/></g>
+ </defs>
+ <g stroke="#a296b6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity=".22">
+  <use href="#chat" transform="translate(65 66) rotate(-12)"/>
+  <use href="#phones" transform="translate(234 43) rotate(16)"/>
+  <use href="#eyes" transform="translate(428 74) rotate(-9)"/>
+  <use href="#plane" transform="translate(563 39) rotate(14)"/>
+  <use href="#note" transform="translate(145 188) rotate(-16)"/>
+  <use href="#pad" transform="translate(327 175) rotate(12)"/>
+  <use href="#heart" transform="translate(519 203) rotate(-17)"/>
+  <use href="#orbit" transform="translate(43 307) rotate(8)"/>
+  <use href="#tape" transform="translate(230 302) rotate(-13)"/>
+  <use href="#chat" transform="translate(429 313) rotate(16)"/>
+  <use href="#eyes" transform="translate(124 435) rotate(11)"/>
+  <use href="#plane" transform="translate(315 428) rotate(-18)"/>
+  <use href="#phones" transform="translate(533 437) rotate(-12)"/>
+  <use href="#heart" transform="translate(36 554) rotate(18)"/>
+  <use href="#note" transform="translate(236 555) rotate(11)"/>
+  <use href="#orbit" transform="translate(437 548) rotate(-16)"/>
+  <use href="#spark" transform="translate(149 81)"/><use href="#spark" transform="translate(335 63) scale(.7)"/>
+  <use href="#spark" transform="translate(41 184) scale(.65)"/><use href="#spark" transform="translate(429 194)"/>
+  <use href="#spark" transform="translate(143 306) scale(.65)"/><use href="#spark" transform="translate(550 304)"/>
+  <use href="#spark" transform="translate(36 428)"/><use href="#spark" transform="translate(424 437) scale(.6)"/>
+  <use href="#spark" transform="translate(149 547) scale(.7)"/><use href="#spark" transform="translate(551 555) scale(.7)"/>
+  <path d="m274 116 7 4 9-6M368 262q-7 9 1 17t0 17M77 231l5 8m8-16 4 7M176 370q12-6 20 3M474 381l8-4m2 10 8-4M351 514q10-9 18 0"/>
+  <circle cx="185" cy="115" r="2"/><circle cx="488" cy="117" r="2"/><circle cx="590" cy="242" r="2"/><circle cx="181" cy="485" r="2"/><circle cx="374" cy="361" r="2"/>
+ </g>
+</svg>
