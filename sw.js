@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v204-updates';
+const CACHE_NAME='telechat-shell-v205-sites-wave';
 const APP_SHELL=[
   './desktop-update-v204.css?v=204',
   './desktop-app/update-model.js?v=204',
@@ -43,7 +43,7 @@ const APP_SHELL=[
   './chat-features-v181.css?v=181',
   './chat-preferences-model-v181.js?v=189',
   './chat-preferences-v181.js?v=189',
-  './whats-new-v181.js?v=204',
+  './whats-new-v181.js?v=205',
   './media-policy-v179.js?v=179',
   './media-auto-v179.js?v=184',
   './media-auto-v179.css?v=179',
