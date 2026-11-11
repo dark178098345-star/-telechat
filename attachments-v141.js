@@ -46,8 +46,8 @@
  function abortAutomaticReads(){for(const job of readFlights.values())if(job.automatic)job.controller.abort();}
  window.addEventListener('telechat-account-ready-v175',syncReadOwner);
  function errorToast(error){showToast(/PGRST202|function.*does not exist/i.test((error?.code||'')+' '+(error?.message||''))?'Хранилище файлов ещё не подключено':error?.message||'Не удалось загрузить файл');}
- function selected(file){if(!file||uploading)return;if(!conversationKey()||!canWriteCurrent()){showToast('Здесь нельзя отправлять файлы');return;}if(file.size<=0||file.size>max){showToast('Выбери непустой файл до 20 МБ');return;}
-  window.telechatVoiceV125?.cancel();pendingMedia={kind:'file',data:'',duration:0,_fileV141:file};renderPendingMedia();
+ function selected(file,{direct=false}={}){if(!file||uploading)return false;if(!conversationKey()||!canWriteCurrent()){showToast('Здесь нельзя отправлять файлы');return false;}if(file.size<=0||file.size>max){showToast('Выбери непустой файл до 20 МБ');return false;}
+  window.telechatVoiceV125?.cancel();pendingMedia={kind:'file',data:'',duration:0,_fileV141:file,...(direct?{_dropDirectV203:true}:{})};renderPendingMedia();return true;
  }
  renderPendingMedia=function(){if(pendingMedia?.kind!=='file'){const result=pendingBefore();if(uploading&&pendingMedia?.kind==='image'){const label=$('pending-media')?.querySelector('.pending-label');if(label)label.textContent='Загружаем фотографию…';}return result;}const file=pendingMedia._fileV141||descriptor(pendingMedia.data);if(!file)return;const box=$('pending-media');box.classList.add('show');box.innerHTML=icon('file')+'<div class="pending-label">'+esc(file.name)+'<small>'+size(file.size)+(uploading?' · Загружаем…':' · Готов к отправке')+'</small></div><button type="button" class="pending-remove" aria-label="Убрать файл">×</button>';box.querySelector('button').onclick=()=>cancelPendingMedia();};
  sendMsg=async function(...args){
@@ -59,7 +59,7 @@
   const key=conversationKey(),owner=me?.nick;if(!key||!canWriteCurrent())return;
   if(album&&(!Array.isArray(album)||album.length<2||album.length>10||album.some(item=>!(item.blob instanceof Blob))||album.reduce((n,item)=>n+item.blob.size,0)>40*1048576)){showToast('Выбери от 2 до 10 фото, до 40 МБ после сжатия');return;}
   if(navigator.onLine===false){showToast('Нет сети. Вложение осталось для повтора. Не закрывай приложение до отправки.');return;}
-  const captionAtSend=$('msg-input')?.value||'',encodedCaption=window.exstraEmojiComposerV182?.serialize(captionAtSend)??captionAtSend,controller=new AbortController();
+  const captionAtSend=media._dropDirectV203?'':$('msg-input')?.value||'',encodedCaption=window.exstraEmojiComposerV182?.serialize(captionAtSend)??captionAtSend,controller=new AbortController();
   uploadController=controller;let timedOut=false,handedOff=false;
   const timeout=setTimeout(()=>{timedOut=true;controller.abort();},album?180000:90000),tickets=[];
   uploading=true;$('input-area')?.setAttribute('aria-busy','true');renderPendingMedia();
@@ -87,7 +87,7 @@
    media.kind=album?'album':'file';media.data=data;delete media._fileV141;delete media._photoBlobV182;
    handedOff=true;clearTimeout(timeout);
    const input=$('msg-input'),nextDraft=input?.value||'',entities=window.exstraEmojiComposerV182?.capture(),edited=nextDraft!==captionAtSend;
-   media._captionSnapshotV182=encodedCaption;if(edited&&input)input.value=captionAtSend;
+   media._captionSnapshotV182=encodedCaption;if(edited&&input&&!media._dropDirectV203)input.value=captionAtSend;
    try{await sendBefore.apply(this,args);}finally{if(edited&&input&&me?.nick===owner&&conversationKey()===key&&(input.value===''||input.value===captionAtSend)){input.value=nextDraft;input.dispatchEvent(new Event('input',{bubbles:true}));window.exstraEmojiComposerV182?.restore(entities);window.autoResize?.(input);}delete media._captionSnapshotV182;}
   }catch(error){
    if(timedOut)showToast('Отправка заняла слишком много времени. Вложение осталось для повтора. Не закрывай приложение.');

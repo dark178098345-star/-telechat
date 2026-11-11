@@ -121,12 +121,12 @@
   }
 
   sendMsg=async function(){
-    const input=document.getElementById('msg-input'),caption=String(pendingMedia?._captionSnapshotV182??window.exstraEmojiComposerV182?.serialize(input.value)??input.value).trim(),key=conversationKey();
+    const input=document.getElementById('msg-input'),caption=String(pendingMedia?._dropDirectV203?'':pendingMedia?._captionSnapshotV182??window.exstraEmojiComposerV182?.serialize(input.value)??input.value).trim(),key=conversationKey();
     if(!key||(!caption&&!pendingMedia))return;if(!canWriteCurrent()){showToast('Писать в канал может только владелец');return;}
-    const media=pendingMedia,reply=replyTo,text=media?packMedia(media.kind,media.data,caption,media.duration):caption;
+    const media=pendingMedia,direct=!!media?._dropDirectV203,reply=direct?null:replyTo,text=media?packMedia(media.kind,media.data,caption,media.duration):caption;
     const clientId=crypto.randomUUID?.()||('m-'+Date.now()+'-'+Math.random().toString(16).slice(2));
     const item={clientId,state:'sending',createdAt:Date.now(),row:{chat_key:key,from_nick:me.nick,text,ts:nextTimestamp(),reply_text:reply?reply.text:null,read_by:[],deleted:false,client_id_v172:clientId}};
-    input.value='';input.style.height='';cancelReply();cancelPendingMedia();
+    if(!direct){input.value='';input.style.height='';cancelReply();}cancelPendingMedia();
     window.dispatchEvent(new CustomEvent('telechat-chat-action-v155',{detail:{action:'send',owner:me.nick,key,text}}));
     try{sb.from('typing').delete().eq('chat_key',key).eq('nick',me.nick).then(()=>{});}catch(error){}
     optimisticQueue=optimisticQueue.then(()=>renderOptimistic(item,true)).catch(()=>{});
