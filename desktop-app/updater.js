@@ -4,10 +4,24 @@ const {spawn}=require('node:child_process');
 const model=require('./update-model');
 const MANIFEST_URL='https://dark178098345-star.github.io/-telechat/desktop-update.json';
 const DOWNLOAD_HOSTS=new Set(['github.com','release-assets.githubusercontent.com','objects.githubusercontent.com']);
+function safeDownloadURL(url){try{const parsed=new URL(url);return parsed.protocol==='https:'&&DOWNLOAD_HOSTS.has(parsed.hostname)&&!parsed.username&&!parsed.password;}catch{return false;}}
+function resolveDownloadURL(net,url,signal){
+ return new Promise((resolve,reject)=>{
+  if(!safeDownloadURL(url))return reject(Error('Недопустимый сервер загрузки.'));
+  let current=url,redirects=0,settled=false;
+  const request=net.request({url,method:'HEAD',redirect:'manual',credentials:'omit',useSessionCookies:false,cache:'no-store'});
+  const finish=(error,value)=>{if(settled)return;settled=true;signal?.removeEventListener('abort',abort);if(error)reject(error);else resolve(value);};
+  const abort=()=>{finish(new DOMException('Aborted','AbortError'));request.abort();};
+  request.on('error',error=>finish(error));request.on('abort',()=>finish(new DOMException('Aborted','AbortError')));request.on('login',(_info,callback)=>callback());
+  request.on('redirect',(_status,_method,next)=>{if(++redirects>5||!safeDownloadURL(next)){finish(Error('Недопустимый переход при загрузке обновления.'));request.abort();return;}current=next;request.followRedirect();});
+  request.on('response',response=>{finish(response.statusCode>=200&&response.statusCode<300?null:Error('Не удалось получить установщик.'),current);request.abort();});
+  if(signal?.aborted)return abort();signal?.addEventListener('abort',abort,{once:true});request.end();
+ });
+}
 const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 function friendly(error){if(error.code==='ENOSPC')return 'Недостаточно места на диске. Освободи место и повтори.';if(['EACCES','EPERM'].includes(error.code))return 'Нет доступа к папке обновлений. Приложение оставлено открытым.';return /^[А-ЯЁ]/.test(error.message||'')?error.message:'Не удалось получить обновление. Проверь соединение и попробуй ещё раз.';}
 class DesktopUpdater{
- constructor({app,net,quit,spawnProcess=spawn,helperTimeout=20000}){this.app=app;this.fetch=net.fetch.bind(net);this.quit=quit;this.spawn=spawnProcess;this.helperTimeout=helperTimeout;this.busy=false;this.cached=null;this.checkedAt=0;this.checking=null;this.result=null;}
+ constructor({app,net,quit,spawnProcess=spawn,helperTimeout=20000}){this.app=app;this.net=net;this.fetch=net.fetch.bind(net);this.quit=quit;this.spawn=spawnProcess;this.helperTimeout=helperTimeout;this.busy=false;this.cached=null;this.checkedAt=0;this.checking=null;this.result=null;}
  get directory(){return path.join(this.app.getPath('userData'),'updates');}
  async check(force=false){
   if(!this.checking&&(force||!this.cached||Date.now()-this.checkedAt>5*60*1000)){
@@ -24,6 +38,13 @@ class DesktopUpdater{
   return {ok:true,current:this.app.getVersion(),available:model.newer(this.cached.version,this.app.getVersion()),update:{...this.cached,notes:[...this.cached.notes]},installationError:this.result||''};
  }
  async response(url,signal){
+  if(typeof this.net.request==='function'){
+   // Electron fetch cannot expose manual redirects as a normal 302 response.
+   // Resolve the chain with HEAD first, then stream the final URL without redirects.
+   const finalURL=await resolveDownloadURL(this.net,url,signal);
+   const response=await this.fetch(finalURL,{cache:'no-store',redirect:'error',credentials:'omit',signal});
+   if(!response.ok||!response.body)throw Error('Не удалось скачать обновление. Попробуй ещё раз.');return response;
+  }
   for(let redirects=0;redirects<6;redirects++){
    const parsed=new URL(url);if(parsed.protocol!=='https:'||!DOWNLOAD_HOSTS.has(parsed.hostname)||parsed.username||parsed.password)throw Error('Недопустимый сервер загрузки.');
    const response=await this.fetch(url,{cache:'no-store',redirect:'manual',credentials:'omit',signal});
@@ -35,7 +56,7 @@ class DesktopUpdater{
   await fs.mkdir(this.directory,{recursive:true});const job=await fs.mkdtemp(path.join(this.directory,'job-')),part=path.join(job,'installer.part'),installer=path.join(job,'ExstraChat-Setup-'+update.version+'.exe');
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15*60*1000);let file,reader,idle;
   try{
-   const response=await this.response(update.url,controller.signal);reader=response.body.getReader();file=await fs.open(part,'wx');const hash=crypto.createHash('sha256');let received=0,last=0;
+   idle=setTimeout(()=>controller.abort(),45000);const response=await this.response(update.url,controller.signal);clearTimeout(idle);reader=response.body.getReader();file=await fs.open(part,'wx');const hash=crypto.createHash('sha256');let received=0,last=0;
    while(true){idle=setTimeout(()=>controller.abort(),45000);let item;try{item=await reader.read();}finally{clearTimeout(idle);}if(item.done)break;const chunk=Buffer.from(item.value);received+=chunk.length;if(received>update.size)throw Error('Размер обновления не совпадает с ожидаемым.');hash.update(chunk);await file.writeFile(chunk);if(Date.now()-last>200){last=Date.now();report({state:'downloading',progress:Math.min(98,Math.floor(received/update.size*100)),received,total:update.size});}}
    await file.sync();await file.close();file=null;report({state:'verifying',progress:99});
    if(received!==update.size||hash.digest('hex')!==update.sha256)throw Error('Проверка файла не пройдена. Установка не запускалась.');
@@ -62,4 +83,4 @@ class DesktopUpdater{
   }catch(error){this.busy=false;if(downloaded){try{await fs.access(path.join(downloaded.job,'approved'));}catch{await fs.rm(downloaded.job,{recursive:true,force:true}).catch(()=>{});}}const message=friendly(error);report({state:'error',error:message});return {ok:false,error:message};}
  }
 }
-module.exports={DesktopUpdater,MANIFEST_URL};
+module.exports={DesktopUpdater,MANIFEST_URL,resolveDownloadURL};
