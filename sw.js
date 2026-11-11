@@ -1,5 +1,6 @@
-const CACHE_NAME='telechat-shell-v201-startup';
+const CACHE_NAME='telechat-shell-v202-sites';
 const APP_SHELL=[
+  './browser-entry-v202.js?v=202',
   './rounded-interface-v200.css?v=200',
   './interface-style-v200.js?v=200',
   './interface-doodles-v200.svg',
@@ -37,7 +38,7 @@ const APP_SHELL=[
   './chat-features-v181.css?v=181',
   './chat-preferences-model-v181.js?v=189',
   './chat-preferences-v181.js?v=189',
-  './whats-new-v181.js?v=201',
+  './whats-new-v181.js?v=202',
   './media-policy-v179.js?v=179',
   './media-auto-v179.js?v=184',
   './media-auto-v179.css?v=179',
@@ -122,7 +123,7 @@ const APP_SHELL=[
   './app-performance-v17.js?v=195',
   './chat-open-loader-v44.js?v=113',
   './message-context-v36.js?v=183',
-  './navigation-readers-v109.js?v=194',
+  './navigation-readers-v109.js?v=202',
   './navigation-readers-v109.css?v=194',
   './performance-v107.js?v=188',
   './mentions-v106.js?v=106',

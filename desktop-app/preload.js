@@ -137,6 +137,10 @@ if (document.readyState === 'loading') {
 
 contextBridge.exposeInMainWorld('telechatDesktop', {
   isDesktop: true,
+  browserVersion: 2,
+  openBrowser(url = '', mode = 'embedded') {
+    return ipcRenderer.invoke('telechat:open-browser', String(url || ''), mode === 'window' ? 'window' : 'embedded');
+  },
   notify(payload) {
     ipcRenderer.send('telechat:notify', payload);
   },

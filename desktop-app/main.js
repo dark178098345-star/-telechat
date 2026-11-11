@@ -4,13 +4,16 @@ const fs = require('node:fs');
 const crypto = require('node:crypto');
 const { once } = require('node:events');
 const { spawn } = require('node:child_process');
+const { SitesWorkspace } = require('./browser/workspace');
+const { trustedFrame } = require('./browser/policy');
 
 const TELECHAT_URL = 'https://dark178098345-star.github.io/-telechat/';
 const TELECHAT_ORIGIN = new URL(TELECHAT_URL).origin;
 const ALLOWED_PERMISSIONS = new Set(['media', 'notifications', 'fullscreen']);
 
 // Retain the existing account, local music and device preferences after rebranding.
-const legacyUserData = path.join(app.getPath('appData'), 'telechat-desktop');
+const legacyUserData = !app.isPackaged && process.env.EXSTRACHAT_DEV_USER_DATA
+  ? path.resolve(process.env.EXSTRACHAT_DEV_USER_DATA) : path.join(app.getPath('appData'), 'telechat-desktop');
 fs.mkdirSync(legacyUserData, { recursive: true });
 app.setPath('userData', legacyUserData);
 
@@ -19,14 +22,18 @@ let tray = null;
 let isQuitting = false;
 const recentNotifications = new Map();
 let updateInProgress = false;
+let sitesWorkspace = null;
 
 function isTelechatUrl(rawUrl) {
   try {
-    return new URL(rawUrl).origin === TELECHAT_ORIGIN;
+    const url = new URL(rawUrl);
+    return url.origin === TELECHAT_ORIGIN && (url.pathname === '/-telechat' || url.pathname.startsWith('/-telechat/'));
   } catch {
     return false;
   }
 }
+
+function isMainAppFrame(event) { return trustedFrame(event, mainWindow, isTelechatUrl); }
 
 function showMainWindow(payload = null) {
   if (!mainWindow || mainWindow.isDestroyed()) createWindow();
@@ -44,6 +51,7 @@ function createTray() {
   tray.setToolTip('ExstraChat — работает в фоне');
   tray.setContextMenu(Menu.buildFromTemplate([
     { label: 'Открыть ExstraChat', click: () => showMainWindow() },
+    { label: 'Окно сайтов', click: () => sitesWorkspace?.open() },
     { label: 'Скрыть окно', click: () => mainWindow?.hide() },
     { type: 'separator' },
     { label: 'Выйти', click: () => { isQuitting = true; app.quit(); } }
@@ -180,11 +188,9 @@ function createWindow() {
   const desktopUrl = new URL(TELECHAT_URL);
   desktopUrl.searchParams.set('desktop', app.getVersion());
   desktopUrl.searchParams.set('launch', String(Date.now()));
-  const desktopSession = mainWindow.webContents.session;
-  Promise.all([
-    desktopSession.clearCache(),
-    desktopSession.clearStorageData({ storages: ['serviceworkers', 'cachestorage'] })
-  ]).catch(() => {}).finally(() => mainWindow?.loadURL(desktopUrl.toString()));
+  // Versioned assets and the network-first entry point own updates. Preserve the
+  // warm cache instead of forcing a full cold download on every process launch.
+  mainWindow.loadURL(desktopUrl.toString());
   mainWindow.once('ready-to-show', () => mainWindow?.show());
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
@@ -197,7 +203,8 @@ function createWindow() {
     const key = String(input.key || '').toLowerCase();
     if (input.type === 'keyDown' && (key === 'f5' || (input.control && key === 'r'))) {
       event.preventDefault();
-      mainWindow?.webContents.reloadIgnoringCache();
+      if (input.shift) mainWindow?.webContents.reloadIgnoringCache();
+      else mainWindow?.webContents.reload();
     }
   });
 
@@ -231,24 +238,25 @@ function createWindow() {
 }
 
 ipcMain.on('telechat:notify', (event, payload) => {
-  const sourceUrl = event.senderFrame?.url || event.sender?.getURL?.() || '';
-  if (!isTelechatUrl(sourceUrl)) return;
+  if (!isMainAppFrame(event)) return;
   showNativeNotification(payload);
 });
 
 ipcMain.on('telechat:show-window', event => {
-  const sourceUrl = event.senderFrame?.url || event.sender?.getURL?.() || '';
-  if (isTelechatUrl(sourceUrl)) showMainWindow();
+  if (isMainAppFrame(event)) showMainWindow();
 });
 
 ipcMain.handle('telechat:get-version', event => {
-  const sourceUrl = event.senderFrame?.url || event.sender?.getURL?.() || '';
-  return isTelechatUrl(sourceUrl) ? app.getVersion() : '';
+  return isMainAppFrame(event) ? app.getVersion() : '';
+});
+
+ipcMain.handle('telechat:open-browser', (event, url, mode) => {
+  if (!isMainAppFrame(event) || typeof url !== 'string' || !['embedded','window'].includes(mode)) return { ok: false };
+  return sitesWorkspace?.open(url, mode) || { ok: false, error: 'Окно сайтов ещё не готово' };
 });
 
 ipcMain.on('telechat:close-choice', (event, choice) => {
-  const sourceUrl = event.senderFrame?.url || event.sender?.getURL?.() || '';
-  if (!isTelechatUrl(sourceUrl)) return;
+  if (!isMainAppFrame(event)) return;
 
   if (choice === 'background') {
     mainWindow?.hide();
@@ -262,8 +270,7 @@ ipcMain.on('telechat:close-choice', (event, choice) => {
 });
 
 ipcMain.handle('telechat:restart', event => {
-  const sourceUrl = event.senderFrame?.url || event.sender?.getURL?.() || '';
-  if (!isTelechatUrl(sourceUrl)) return { ok: false };
+  if (!isMainAppFrame(event)) return { ok: false };
   setTimeout(() => {
     isQuitting = true;
     app.relaunch();
@@ -273,8 +280,7 @@ ipcMain.handle('telechat:restart', event => {
 });
 
 ipcMain.on('telechat:open-external', (event, rawUrl) => {
-  const sourceUrl = event.senderFrame?.url || event.sender?.getURL?.() || '';
-  if (!isTelechatUrl(sourceUrl)) return;
+  if (!isMainAppFrame(event)) return;
   try {
     const target = new URL(String(rawUrl || ''));
     if (target.protocol === 'https:') shell.openExternal(target.toString());
@@ -282,9 +288,8 @@ ipcMain.on('telechat:open-external', (event, rawUrl) => {
 });
 
 ipcMain.handle('telechat:install-update', async (event, payload) => {
-  const sourceUrl = event.senderFrame?.url || event.sender?.getURL?.() || '';
   const url = String(payload?.url || '');
-  if (!isTelechatUrl(sourceUrl) || !isAllowedUpdateUrl(url)) return { ok: false, error: 'Недопустимый адрес обновления' };
+  if (!isMainAppFrame(event) || !isAllowedUpdateUrl(url)) return { ok: false, error: 'Недопустимый адрес обновления' };
   if (!app.isPackaged) return { ok: false, error: 'Обновление доступно только в установленном приложении' };
   if (updateInProgress) return { ok: false, error: 'Обновление уже загружается' };
 
@@ -319,9 +324,11 @@ if (!hasSingleInstanceLock) {
     app.setAppUserModelId('chat.tele.desktop');
     Menu.setApplicationMenu(null);
     createTray();
+    sitesWorkspace = new SitesWorkspace(require('electron'), () => { showMainWindow(); return mainWindow; });
 
     session.defaultSession.setPermissionCheckHandler((_webContents, permission, requestingOrigin) => {
-      return requestingOrigin.startsWith(TELECHAT_ORIGIN) && ALLOWED_PERMISSIONS.has(permission);
+      let origin = ''; try { origin = new URL(requestingOrigin).origin; } catch {}
+      return origin === TELECHAT_ORIGIN && ALLOWED_PERMISSIONS.has(permission);
     });
 
     session.defaultSession.setPermissionRequestHandler((webContents, permission, callback, details) => {
@@ -329,7 +336,8 @@ if (!hasSingleInstanceLock) {
       callback(isTelechatUrl(requestingUrl) && ALLOWED_PERMISSIONS.has(permission));
     });
 
-    createWindow();
+    if (!app.isPackaged && process.argv.includes('--sites-preview')) sitesWorkspace.open('', 'window');
+    else createWindow();
 
     app.on('activate', () => {
       showMainWindow();
@@ -343,4 +351,5 @@ app.on('window-all-closed', () => {
 
 app.on('before-quit', () => {
   isQuitting = true;
+  sitesWorkspace?.close();
 });

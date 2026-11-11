@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>ExstraChat · Окно сайтов</title><link rel="stylesheet" href="./style.css"></head><body>
+<header id="chrome">
+ <div class="tabbar"><button id="home" class="brand icon-button" title="Вернуться в чаты · вкладки сохранятся" aria-label="Вернуться в чаты"><svg viewBox="0 0 24 24"><path d="m14 6-6 6 6 6"/></svg></button><div id="tabs" role="tablist" aria-label="Открытые страницы"></div><button id="new" class="icon-button" title="Новая вкладка · Ctrl+T" aria-label="Новая вкладка">+</button><span class="drag-space"></span></div>
+ <div class="toolbar">
+  <button id="back" class="icon-button" title="Назад · Alt+←" aria-label="Назад" disabled><svg viewBox="0 0 24 24"><path d="m14 6-6 6 6 6"/></svg></button>
+  <button id="forward" class="icon-button" title="Вперёд · Alt+→" aria-label="Вперёд" disabled><svg viewBox="0 0 24 24"><path d="m10 6 6 6-6 6"/></svg></button>
+  <button id="reload" class="icon-button" title="Обновить · Ctrl+R" aria-label="Обновить"><svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2 6M20 4v7h-7"/></svg></button>
+  <form id="address-form"><span id="protocol" title="Протокол страницы">↗</span><input id="address" type="text" inputmode="url" maxlength="4096" autocomplete="off" autocapitalize="none" spellcheck="false" aria-label="Адрес сайта" placeholder="Вставь ссылку на сайт · Ctrl+L"><button id="go" type="submit" aria-label="Открыть адрес"><svg viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></button></form>
+  <button id="popup" class="popup" hidden title="Подтвердить открытие новой страницы">Открыть вкладку</button>
+  <button id="dock" class="popup" title="Вынести раздел в отдельное окно">Отдельное окно</button>
+  <button id="mute" class="icon-button" title="Выключить звук вкладки" aria-label="Выключить звук вкладки"><svg viewBox="0 0 24 24"><path d="m11 4-6 5H2v6h3l6 5ZM15 8q5 4 0 8m3-11q8 7 0 14"/></svg></button>
+  <button id="external" class="icon-button" title="Открыть снаружи в обычном браузере" aria-label="Открыть в обычном браузере"><svg viewBox="0 0 24 24"><path d="M14 3h7v7m0-7L10 14M10 4H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2v-5"/></svg></button>
+ </div><div id="progress" hidden></div>
+</header>
+<main id="stage"><section id="empty">
+ <div class="empty-art" aria-hidden="true"><svg viewBox="0 0 160 130"><rect x="19" y="17" width="122" height="92" rx="20"/><path d="M19 43h122M32 31h1m9 0h1m9 0h1M58 75h44M89 62l13 13-13 13"/><circle cx="128" cy="109" r="13"/></svg></div>
+ <p class="eyebrow">EXSTRACHAT / WEB</p><h1 id="empty-title">Чуть дальше привычного.</h1><p id="empty-copy">Вставь ссылку сверху — и открой свою следующую страницу.</p><button id="retry" hidden>Повторить</button>
+ <div id="shortcuts"><span><kbd>Ctrl</kbd> + <kbd>L</kbd> адрес</span><span><kbd>Ctrl</kbd> + <kbd>T</kbd> вкладка</span><span><kbd>Ctrl</kbd> + <kbd>W</kbd> закрыть</span></div>
+ <p class="privacy">Отдельное пространство. Без доступа к твоим чатам.<br>Вкладки и адреса не отправляются на сервер ExstraChat.</p>
+</section></main>
+<footer><span id="status" role="status" aria-live="polite">Страницы изолированы от чатов</span><button id="dismiss" hidden aria-label="Убрать уведомление">×</button><span id="count">1 / 8</span></footer>
+<script src="./renderer.js"></script></body></html>

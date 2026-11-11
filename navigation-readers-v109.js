@@ -49,7 +49,7 @@
       const to=expanded?extraList.getBoundingClientRect().height:0,job=extras.animate([{height:from+'px',opacity:expanded ? .25 : 1,transform:expanded?'translateY(-6px)':'translateY(0)'},{height:to+'px',opacity:expanded?1:0,transform:expanded?'translateY(0)':'translateY(-6px)'}],{duration:200,easing:'cubic-bezier(.2,.8,.2,1)'});animation=job;
       const done=()=>{if(animation!==job)return;animation=null;extras.hidden=!expanded;};job.finished.then(done,()=>{});
     }
-    function collect(){for(const node of [...rail.children])if(node.tagName==='BUTTON'&&node!==brand&&!node.matches('[data-rail-filter="all"],[data-rail-filter="group"],[data-rail-filter="channel"],.music-entry-v96'))extraList.append(node);}
+    function collect(){for(const node of [...rail.children])if(node.tagName==='BUTTON'&&node!==brand&&!node.matches('[data-rail-filter="all"],[data-rail-filter="group"],[data-rail-filter="channel"],.music-entry-v96,.browser-entry-v202'))extraList.append(node);}
     collect();new MutationObserver(collect).observe(rail,{childList:true});
     brand.onclick=()=>more(!expanded);rail.addEventListener('keydown',event=>{if(event.key==='Escape'&&expanded){more(false);brand.focus({preventScroll:true});event.preventDefault();event.stopPropagation();}});
     reduce.addEventListener?.('change',()=>more(expanded));window.addEventListener('exstra-motion-policy-v184',()=>more(expanded));document.addEventListener('visibilitychange',()=>{if(document.hidden)more(false);});
