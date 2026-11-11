@@ -17,5 +17,6 @@ vm.runInNewContext(source+';self.assets=APP_SHELL;self.cacheName=CACHE_NAME;',sa
  assert.equal(requests.length,assets.filter(a=>!a.includes('?v=')).length,'only mutable assets downloaded');assert(peak<=4,'bounded installation concurrency');
  const current=stores.get(sandbox.self.cacheName);assert.equal(current.size,assets.length);assert.equal(current.get(absolute('./index.html')).stale,undefined,'fresh HTML');
  handlers.activate({waitUntil:p=>work=p});await work;assert(stores.has('unrelated-app'));assert(!stores.has('telechat-shell-old'));
+ let fetched=0,response;sandbox.fetch=async(request,options)=>{fetched++;assert.equal(options.cache,'no-store');return{live:true};};handlers.fetch({request:{method:'GET',url:'https://telechat.test/app/desktop-update.json?check=1'},respondWith:p=>response=p});assert.equal((await response).live,true);assert.equal(fetched,1,'Update pointer must always bypass cache');
  console.log(`PASS startup cache: ${assets.length-requests.length} versioned resources reused, ${requests.length} mutable resources fetched, peak ${peak} requests, fresh HTML, unrelated caches preserved`);
 })().catch(e=>{console.error(e);process.exitCode=1;});

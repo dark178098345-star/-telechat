@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "version": "1.4.4",
+  "platform": "win32",
+  "arch": "x64",
+  "url": "https://github.com/dark178098345-star/-telechat/releases/download/v1.4.4/ExstraChat-Setup-1.4.4.exe",
+  "sha256": "3a7a65a800293bb77d70b42ab2a29aaaf01a823a156431ab51d4015ce8785075",
+  "size": 121394170,
+  "notes": [
+    "Обновления прямо в приложении",
+    "Ярлыки сайтов, фоновое прослушивание и окно поверх приложений"
+  ]
+}

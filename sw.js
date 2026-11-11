@@ -1,5 +1,8 @@
-const CACHE_NAME='telechat-shell-v203-drop';
+const CACHE_NAME='telechat-shell-v204-updates';
 const APP_SHELL=[
+  './desktop-update-v204.css?v=204',
+  './desktop-app/update-model.js?v=204',
+  './desktop-update-v204.js?v=204',
   './file-drop-v203.js?v=203',
   './file-drop-v203.css?v=203',
   './browser-entry-v202.js?v=202',
@@ -40,7 +43,7 @@ const APP_SHELL=[
   './chat-features-v181.css?v=181',
   './chat-preferences-model-v181.js?v=189',
   './chat-preferences-v181.js?v=189',
-  './whats-new-v181.js?v=203',
+  './whats-new-v181.js?v=204',
   './media-policy-v179.js?v=179',
   './media-auto-v179.js?v=184',
   './media-auto-v179.css?v=179',
@@ -244,6 +247,8 @@ self.addEventListener('fetch',event=>{
   if(request.method!=='GET')return;
   const url=new URL(request.url);
   if(url.origin!==self.location.origin)return;
+  // Never offer a cached installer pointer, including while offline.
+  if(url.pathname.endsWith('/desktop-update.json')){event.respondWith(fetch(request,{cache:'no-store'}));return;}
 
   if(request.mode==='navigate'){
     event.respondWith(
