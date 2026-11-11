@@ -1,11 +1,9 @@
 const { app, BrowserWindow, Menu, session, shell, Tray, Notification, ipcMain, nativeImage, net } = require('electron');
 const path = require('node:path');
 const fs = require('node:fs');
-const crypto = require('node:crypto');
-const { once } = require('node:events');
-const { spawn } = require('node:child_process');
 const { SitesWorkspace } = require('./browser/workspace');
 const { trustedFrame } = require('./browser/policy');
+const { DesktopUpdater } = require('./updater');
 
 const TELECHAT_URL = 'https://dark178098345-star.github.io/-telechat/';
 const TELECHAT_ORIGIN = new URL(TELECHAT_URL).origin;
@@ -21,8 +19,8 @@ let mainWindow = null;
 let tray = null;
 let isQuitting = false;
 const recentNotifications = new Map();
-let updateInProgress = false;
 let sitesWorkspace = null;
+let desktopUpdater = null;
 
 function isTelechatUrl(rawUrl) {
   try {
@@ -96,71 +94,9 @@ function showNativeNotification(payload) {
   notification.show();
 }
 
-function isAllowedUpdateUrl(rawUrl) {
-  try {
-    const url = new URL(String(rawUrl || ''));
-    return url.protocol === 'https:'
-      && url.hostname === 'github.com'
-      && url.pathname.startsWith('/dark178098345-star/-telechat/releases/download/');
-  } catch {
-    return false;
-  }
-}
-
 function sendUpdateStatus(sender, payload) {
   if (!sender || sender.isDestroyed()) return;
   sender.send('telechat:update-status', payload);
-}
-
-async function downloadUpdateInstaller(url, expectedSha256, version, sender) {
-  const safeVersion = String(version || 'next').replace(/[^0-9A-Za-z._-]/g, '').slice(0, 32) || 'next';
-  const destination = path.join(app.getPath('temp'), 'ExstraChat-update-' + safeVersion + '.exe');
-  const response = await net.fetch(url, { redirect: 'follow', cache: 'no-store' });
-  if (!response.ok || !response.body) throw new Error('Не удалось скачать обновление');
-
-  const total = Number(response.headers.get('content-length')) || 0;
-  const reader = response.body.getReader();
-  const output = fs.createWriteStream(destination, { flags: 'w' });
-  const hash = crypto.createHash('sha256');
-  let received = 0;
-
-  try {
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      const chunk = Buffer.from(value);
-      received += chunk.length;
-      hash.update(chunk);
-      if (!output.write(chunk)) await once(output, 'drain');
-      const progress = total ? Math.min(99, Math.round(received / total * 100)) : 0;
-      sendUpdateStatus(sender, { state: 'downloading', progress, received, total });
-    }
-    output.end();
-    await once(output, 'finish');
-  } catch (error) {
-    output.destroy();
-    try { fs.unlinkSync(destination); } catch {}
-    throw error;
-  }
-
-  const actualSha256 = hash.digest('hex').toLowerCase();
-  const expected = String(expectedSha256 || '').trim().toLowerCase();
-  if (expected && actualSha256 !== expected) {
-    try { fs.unlinkSync(destination); } catch {}
-    throw new Error('Проверка обновления не пройдена');
-  }
-  return destination;
-}
-
-function launchUpdateHelper(installerPath) {
-  const helperPath = path.join(__dirname, 'update-helper.js');
-  const helper = spawn(process.execPath, [helperPath, installerPath, process.execPath, String(process.pid)], {
-    detached: true,
-    windowsHide: true,
-    stdio: 'ignore',
-    env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' }
-  });
-  helper.unref();
 }
 
 function createWindow() {
@@ -288,27 +224,12 @@ ipcMain.on('telechat:open-external', (event, rawUrl) => {
 });
 
 ipcMain.handle('telechat:install-update', async (event, payload) => {
-  const url = String(payload?.url || '');
-  if (!isMainAppFrame(event) || !isAllowedUpdateUrl(url)) return { ok: false, error: 'Недопустимый адрес обновления' };
-  if (!app.isPackaged) return { ok: false, error: 'Обновление доступно только в установленном приложении' };
-  if (updateInProgress) return { ok: false, error: 'Обновление уже загружается' };
-
-  updateInProgress = true;
-  const sender = event.sender;
-  try {
-    sendUpdateStatus(sender, { state: 'starting', progress: 0 });
-    const installerPath = await downloadUpdateInstaller(url, payload?.sha256, payload?.version, sender);
-    sendUpdateStatus(sender, { state: 'ready', progress: 100 });
-    launchUpdateHelper(installerPath);
-    isQuitting = true;
-    setTimeout(() => app.quit(), 350);
-    return { ok: true };
-  } catch (error) {
-    updateInProgress = false;
-    const message = String(error?.message || 'Не удалось установить обновление');
-    sendUpdateStatus(sender, { state: 'error', error: message });
-    return { ok: false, error: message };
-  }
+  if (!isMainAppFrame(event) || !desktopUpdater) return { ok: false, error: 'Обновление сейчас недоступно.' };
+  return desktopUpdater.install({ version: payload?.version }, status => sendUpdateStatus(event.sender, status));
+});
+ipcMain.handle('telechat:check-update', async event => {
+  if (!isMainAppFrame(event) || !desktopUpdater) return { ok: false };
+  try { return await desktopUpdater.check(true); } catch (error) { return { ok: false, error: error.message || 'Не удалось проверить обновления.' }; }
 });
 
 const hasSingleInstanceLock = app.requestSingleInstanceLock();
@@ -323,6 +244,7 @@ if (!hasSingleInstanceLock) {
   app.whenReady().then(() => {
     app.setAppUserModelId('chat.tele.desktop');
     Menu.setApplicationMenu(null);
+    desktopUpdater = new DesktopUpdater({ app, net, quit: () => { isQuitting = true; setTimeout(() => app.quit(), 500); } });
     createTray();
     sitesWorkspace = new SitesWorkspace(require('electron'), () => { showMainWindow(); return mainWindow; });
 

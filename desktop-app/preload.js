@@ -137,6 +137,7 @@ if (document.readyState === 'loading') {
 
 contextBridge.exposeInMainWorld('telechatDesktop', {
   isDesktop: true,
+  updaterVersion: 2,
   browserVersion: 2,
   openBrowser(url = '', mode = 'embedded') {
     return ipcRenderer.invoke('telechat:open-browser', String(url || ''), mode === 'window' ? 'window' : 'embedded');
@@ -159,6 +160,7 @@ contextBridge.exposeInMainWorld('telechatDesktop', {
   installUpdate(payload) {
     return ipcRenderer.invoke('telechat:install-update', payload || {});
   },
+  checkUpdate() { return ipcRenderer.invoke('telechat:check-update'); },
   onUpdateStatus(callback) {
     if (typeof callback !== 'function') return () => {};
     const listener = (_event, payload) => callback(payload);

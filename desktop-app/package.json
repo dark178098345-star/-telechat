@@ -1,6 +1,6 @@
 {
   "name": "telechat-desktop",
-  "version": "1.4.2",
+  "version": "1.4.3",
   "description": "Официальное Windows-приложение ExstraChat",
   "main": "main.js",
   "author": "creator",
@@ -26,7 +26,9 @@
     "files": [
       "main.js",
       "preload.js",
-      "update-helper.js",
+      "updater.js",
+      "update-model.js",
+      "update-helper.ps1",
       "browser/**",
       "package.json",
       "assets/icon.png"
