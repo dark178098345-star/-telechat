@@ -237,6 +237,7 @@
     if(result.error||!result.data){err.textContent='Неверный логин или пароль';button.disabled=false;button.textContent='Войти';return;}
     if(bannedV19(result.data)){err.textContent=banMessageV19(result.data);button.disabled=false;button.textContent='Войти';return;}
     me=result.data;userCache[me.nick]=me;sessionVersionV19=Number(me.session_version||0);await updateOnline();
+    window.dispatchEvent(new CustomEvent('telechat-account-ready-v175',{detail:{nick:me.nick}}));
     clearInterval(heartbeatTimerV19);heartbeatTimerV19=0;
     if(!window.telechatPresenceV120)heartbeatTimerV19=setInterval(()=>{if(me)updateOnline();},25000);
     document.getElementById('auth-screen').classList.remove('active');document.getElementById('chat-screen').classList.add('active');

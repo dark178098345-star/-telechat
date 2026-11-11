@@ -116,6 +116,7 @@
  $('msg-input')?.addEventListener('input',schedule);document.addEventListener('click',()=>{if(phoneMode())schedule();});document.addEventListener('keydown',()=>{if(phoneMode())schedule();});document.addEventListener('close',()=>{if(phoneMode())schedule();},true);query.addEventListener?.('change',schedule);window.addEventListener('resize',schedule,{passive:true});
  window.addEventListener('popstate',()=>{if(droppingBackGuard){droppingBackGuard=false;schedule();return;}if(phoneMode()&&self()){back();schedule();}});
  window.addEventListener('telechat-chat-action-v155',schedule);window.addEventListener('telechat-user-updated-v123',event=>{if(event.detail?.nick===owner){accountMark='';schedule();}});
+ window.addEventListener('telechat-account-ready-v175',sync);
  document.addEventListener('visibilitychange',()=>{if(document.hidden)pauseAccount();else schedule();});
  window.telechatPhoneV159=Object.freeze({open:setPage,back,refresh:schedule,getState:()=>({phone,page,owner})});sync();
 })();

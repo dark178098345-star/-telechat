@@ -17,7 +17,7 @@
 <link rel="icon" type="image/png" sizes="48x48" href="./favicon-48.png?v=178">
 <link rel="shortcut icon" href="./favicon.ico?v=178">
 <link rel="apple-touch-icon" href="./apple-touch-icon.png?v=178">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="preload" as="script" href="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
 <style>
 :root{
   --bg:#0d0d14;--bg2:#13131e;--bg3:#1a1a28;--border:#252535;
@@ -278,9 +278,11 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
 #startup-loader{
   position:fixed;inset:0;z-index:5000;display:flex;align-items:center;justify-content:center;
   overflow:hidden;background:#090a12;
-  opacity:1;visibility:visible;transition:opacity .55s ease,visibility .55s ease;
+  opacity:1;visibility:visible;transition:opacity .16s ease;
 }
-#startup-loader.is-hidden{opacity:0;visibility:hidden;pointer-events:none;}
+#startup-loader.is-hidden{opacity:0;pointer-events:none;}
+@media(prefers-reduced-motion:reduce){#startup-loader{transition:none}}
+body[data-ui-motion-v184=off] #startup-loader{transition:none}
 .startup-inner{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;text-align:center;padding:28px;}
 .startup-mark{position:relative;width:112px;height:112px;margin-bottom:21px;display:grid;place-items:center;}
 .startup-title{font-size:27px;line-height:1;font-weight:800;letter-spacing:-.8px;color:#eeeefe;text-shadow:0 0 28px rgba(167,139,250,.22);}
@@ -400,7 +402,7 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
 <link rel="stylesheet" href="./message-send-animation-v35.css?v=164">
 <link rel="stylesheet" href="./voice-calls-v32.css?v=72">
 <link rel="stylesheet" href="./glass-context-v36.css?v=36">
-<link rel="stylesheet" href="./chat-boot-v41.css?v=51">
+<link rel="stylesheet" href="./chat-boot-v41.css?v=201">
 <link rel="stylesheet" href="./fluid-ui-v42.css?v=184">
 <link rel="stylesheet" href="./chat-open-loader-v44.css?v=51">
 <link rel="stylesheet" href="./desktop-panel-fix-v45.css?v=45">
@@ -452,33 +454,42 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
     <div class="startup-title">Exstra<span>Chat</span></div>
     <div class="startup-subtitle">твой космос общения</div>
     <div class="startup-progress"><div class="startup-progress-fill" id="startup-progress-fill"></div></div>
-    <div class="startup-status" id="startup-status">Зажигаем звёзды…</div>
+    <div class="startup-status" id="startup-status">Подготавливаем интерфейс…</div>
   </div>
 </div>
-<script>
+<script id="startup-controller-v201">
 (()=>{
   const loader=document.getElementById('startup-loader');
   const bar=document.getElementById('startup-progress-fill');
   const status=document.getElementById('startup-status');
-  const messages=['Зажигаем звёзды…','Подключаем чаты…','Почти готово…'];
-  let value=10,messageIndex=0,finished=false;
-  const timer=setInterval(()=>{
-    value=Math.min(86,value+8+Math.random()*10);
-    bar.style.width=value+'%';
-    messageIndex=Math.min(messages.length-1,messageIndex+1);
-    status.textContent=messages[messageIndex];
-  },280);
-  const finish=()=>{
-    if(finished)return;finished=true;clearInterval(timer);
-    bar.style.width='100%';status.textContent='Добро пожаловать ✦';
-    setTimeout(()=>{
-      loader.classList.add('is-hidden');
-      setTimeout(()=>loader.remove(),220);
-    },0);
+  let finished=false,settling=false,settleTimer=0,removeTimer=0;
+  const remove=()=>{clearTimeout(removeTimer);loader.remove();};
+  const reveal=()=>{
+    if(finished)return;finished=true;clearTimeout(settleTimer);
+    bar.style.width='100%';status.textContent='Всё готово';
+    document.body.dataset.startupV201='ready';
+    loader.setAttribute('aria-hidden','true');loader.classList.add('is-hidden');
+    const duration=parseFloat(getComputedStyle(loader).transitionDuration)||0;
+    if(!duration||document.hidden)remove();
+    else{loader.addEventListener('transitionend',event=>{if(event.target===loader&&event.propertyName==='opacity')remove();},{once:true});removeTimer=setTimeout(remove,Math.ceil(duration*1000)+80);}
   };
-  if(document.readyState!=='loading')finish();
-  else document.addEventListener('DOMContentLoaded',finish,{once:true});
-  setTimeout(finish,3500);
+  const settle=()=>{
+    if(settling)return;settling=true;
+    // Only after parsing/scripts/styles, never a wall-clock escape while loading.
+    // Two frames let queued phone/theme work settle; hidden tabs do not await RAF.
+    if(document.hidden){reveal();return;}
+    settleTimer=setTimeout(reveal,650);
+    requestAnimationFrame(()=>requestAnimationFrame(reveal));
+  };
+  const ready=()=>{
+    const local=window.telechatAccountsV75?.ready;
+    if(!local){settle();return;}
+    let timer;const budget=new Promise(resolve=>timer=setTimeout(resolve,200));
+    Promise.race([Promise.resolve(local).catch(()=>{}),budget]).then(()=>{clearTimeout(timer);settle();});
+  };
+  window.exstraStartupV201=Object.freeze({getState:()=>({ready:finished,settling})});
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',ready,{once:true});
+  else ready();
 })();
 </script>
 <div class="toast" id="toast"></div>
@@ -839,6 +850,7 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL='https://xvnazoervzccixtfhuaa.supabase.co';
 const SUPABASE_KEY='sb_publishable_XuzevkpQFrhxRccCR4kc6w_M_vIXTgG';
@@ -2464,7 +2476,7 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <script src="./room-media-v113.js?v=177"></script>
 <script src="./app-performance-v17.js?v=195"></script>
 <script src="./ui-polish-v16.js"></script>
-<script src="./moderation-v19.js?v=197"></script>
+<script src="./moderation-v19.js?v=201"></script>
 <script src="./transport-v172.js?v=190"></script>
 <script src="./chat-reliability-v24.js?v=182"></script>
 <script src="./message-send-animation-v35.js?v=184"></script>
@@ -2477,7 +2489,7 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <script src="./ui-symbols-v125.js?v=125"></script>
 <script src="./voice-send-v38.js?v=125"></script>
 <script src="./media-compat-v40.js?v=40"></script>
-<script src="./chat-boot-v41.js?v=174"></script>
+<script src="./chat-boot-v41.js?v=201"></script>
 <script src="./fluid-ui-v42.js?v=184"></script>
 <script src="./chat-open-loader-v44.js?v=113"></script>
 <script src="./chat-speed-v51.js?v=186"></script>
@@ -2486,7 +2498,7 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <script src="./chat-experience-v62.js?v=174"></script>
 <script src="./chat-flow-v64.js?v=181"></script>
 <script src="./interaction-v65.js?v=66"></script>
-<script src="./saved-accounts-v75.js?v=167"></script>
+<script src="./saved-accounts-v75.js?v=201"></script>
 <script src="./chat-privacy-v74.js?v=74"></script>
 <script src="./smooth-ui-v76.js?v=133"></script>
 <script src="./mobile-optimization-v100.js?v=183"></script>
@@ -2505,7 +2517,7 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <script src="./performance-v107.js?v=188"></script>
 <link rel="stylesheet" href="./navigation-readers-v109.css?v=194">
 <script src="./navigation-readers-v109.js?v=194"></script>
-<script src="./stories-v115.js?v=153"></script>
+<script src="./stories-v115.js?v=201"></script>
 <script src="./music-intro-v118.js?v=161"></script>
 <script src="./music-hub-v117.js?v=199"></script>
 <script src="./chat-wallpaper-v119.js?v=124"></script>
@@ -2545,7 +2557,7 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <script src="./pixel-emotions-v163.js?v=166"></script>
 <script src="./pixel-eyes-v155.js?v=186"></script>
 <link rel="stylesheet" href="./phone-shell-v159.css?v=182">
-<script src="./phone-shell-v159.js?v=197"></script>
+<script src="./phone-shell-v159.js?v=201"></script>
 <link rel="stylesheet" href="./settings-navigation-v160.css?v=165">
 <script src="./settings-navigation-v160.js?v=184"></script>
 <link rel="stylesheet" href="./chat-comfort-v167.css?v=167">
@@ -2571,7 +2583,7 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <link rel="stylesheet" href="./chat-features-v181.css?v=181">
 <script src="./chat-preferences-model-v181.js?v=189"></script>
 <script src="./chat-preferences-v181.js?v=189"></script>
-<script src="./whats-new-v181.js?v=199"></script>
+<script src="./whats-new-v181.js?v=201"></script>
 <link rel="stylesheet" href="./photo-album-v183.css?v=183">
 <script src="./photo-album-viewer-v183.js?v=184"></script>
 <script src="./photo-compose-v183.js?v=184"></script>

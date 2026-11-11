@@ -206,8 +206,9 @@
   }
 
   async function init(){await loadAccounts();renderAccounts();}
-  wrapLogin();init().catch(()=>renderAccounts());
+  wrapLogin();const ready=init().catch(()=>renderAccounts());
   window.telechatAccountsV75=Object.freeze({
+    ready,
     list:async()=> (await loadAccounts()).map(account=>({nick:account.nick,profile:{...account.profile},savedAt:account.savedAt})),
     use:useAccount,
     remove:removeAccount,

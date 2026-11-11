@@ -335,5 +335,6 @@
   if (typeof previousLogin === 'function' && !previousLogin.storiesWrappedV115) { const wrapped = async function (...args) { const result = await previousLogin.apply(this, args); if (currentUser()) init(); return result; }; wrapped.storiesWrappedV115 = true; window.doLogin = wrapped; }
   document.addEventListener('keydown', event => { if (event.key === 'Escape') { closeComposer(); closeViewer(); } });
   window.telechatStoriesV115 = Object.freeze({ init, refresh: loadStories, openComposer, closeComposer, openViewer: showStoryByAuthor });
+  window.addEventListener('telechat-account-ready-v175',()=>{const user=currentUser();if(user){state.users.set(safeNick(user.nick),user);renderStories();}});
   ensureUi();
 })();
