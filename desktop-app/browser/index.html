@@ -12,6 +12,8 @@
   <button id="popup" class="popup" hidden title="Подтвердить открытие новой страницы">Открыть вкладку</button>
   <button id="save-page" class="icon-button" title="Добавить сайт в ярлыки" aria-label="Добавить сайт в ярлыки" disabled><svg viewBox="0 0 24 24"><path d="M6 4h12v17l-6-4-6 4ZM9 9h6m-3-3v6"/></svg></button>
   <button id="dock" class="popup" title="Вынести раздел в отдельное окно">Отдельное окно</button>
+  <button id="background" class="icon-button media-toggle" title="Слушать в фоне · только эта вкладка" aria-label="Слушать в фоне" aria-pressed="false" disabled><svg viewBox="0 0 24 24"><path d="M4 14v-3a8 8 0 0 1 16 0v3M4 12H3v7h4v-7Zm16 0h1v7h-4v-7Z"/></svg></button>
+  <button id="pin" class="icon-button media-toggle" title="Вынести в небольшое окно поверх других приложений" aria-label="Поверх окон" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M16 3H8v6l-3 3v2h14v-2l-3-3ZM12 14v7"/></svg></button>
   <button id="mute" class="icon-button" title="Выключить звук вкладки" aria-label="Выключить звук вкладки"><svg viewBox="0 0 24 24"><path d="m11 4-6 5H2v6h3l6 5ZM15 8q5 4 0 8m3-11q8 7 0 14"/></svg></button>
   <button id="external" class="icon-button" title="Открыть снаружи в обычном браузере" aria-label="Открыть в обычном браузере"><svg viewBox="0 0 24 24"><path d="M14 3h7v7m0-7L10 14M10 4H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2v-5"/></svg></button>
  </div><div id="progress" hidden></div>
@@ -32,5 +34,5 @@
  <div id="edit-tools" hidden><span>Положение</span><button id="move-left" type="button" class="soft-button" aria-label="Переместить ярлык влево">←</button><button id="move-right" type="button" class="soft-button" aria-label="Переместить ярлык вправо">→</button><button id="remove-shortcut" type="button" class="delete-button">Удалить</button></div>
  <div class="editor-actions"><button id="editor-cancel" type="button" class="soft-button">Отмена</button><button id="editor-save" type="submit" class="primary-button">Сохранить</button></div></form>
 </section></div>
-<footer><span id="status" role="status" aria-live="polite">Страницы изолированы от чатов</span><button id="dismiss" hidden aria-label="Убрать уведомление">×</button><span id="count">1 / 8</span></footer>
+<footer><span id="status" role="status" aria-live="polite">Страницы изолированы от чатов</span><button id="dismiss" hidden aria-label="Убрать уведомление">×</button><button id="background-status" hidden title="Открыть вкладку с фоновым прослушиванием"><svg viewBox="0 0 24 24"><path d="M4 15v-4a8 8 0 0 1 16 0v4M4 12H3v7h4v-7Zm16 0h1v7h-4v-7Z"/></svg><span></span></button><span id="count">1 / 8</span></footer>
 <script src="./renderer.js"></script></body></html>

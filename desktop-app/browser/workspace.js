@@ -9,7 +9,7 @@ class SitesWorkspace {
     this.e = electron; this.getMainWindow = getMainWindow;
     this.window = null; this.host = null; this.chrome = null; this.mode = 'hidden';
     this.tabs = []; this.active = 0; this.nextId = 0; this.notice = ''; this.mark = '';
-    this.editorOpen = false;
+    this.editorOpen = false; this.alwaysOnTop = false;
     this.shortcuts = new ShortcutStore(electron.app ? path.join(electron.app.getPath('userData'), 'sites-shortcuts.json') : null);
     this.resizeHost = () => this.layout();
     this.chromeURL = pathToFileURL(path.join(__dirname, 'index.html')).href;
@@ -77,6 +77,7 @@ class SitesWorkspace {
   embed() {
     const main = this.getMainWindow(); if (!main || main.isDestroyed()) return false;
     const former = this.window; this.window = null;
+    this.alwaysOnTop = false;
     this.rehost(main, 'embedded');
     if (former && !former.isDestroyed()) former.close();
     if (main.isMinimized()) main.restore();
@@ -87,16 +88,18 @@ class SitesWorkspace {
   detach() {
     if (this.window && !this.window.isDestroyed()) { this.window.show(); this.window.focus(); return; }
     const win = new this.e.BrowserWindow({
-      width: 1220, height: 820, minWidth: 680, minHeight: 480, show: false,
+      width: this.alwaysOnTop ? 540 : 1220, height: this.alwaysOnTop ? 720 : 820, minWidth: 420, minHeight: 420, show: false,
       title: 'ExstraChat · Окно сайтов', backgroundColor: '#101116', autoHideMenuBar: true,
       icon: path.join(__dirname, '..', 'assets', 'icon.png'),
       titleBarStyle: 'hidden', titleBarOverlay: { color: '#15161c', symbolColor: '#c3c5d0', height: 44 },
       webPreferences: { nodeIntegration: false, contextIsolation: true, sandbox: true, webSecurity: true, webviewTag: false, devTools: false }
     });
     this.window = win;
+    win.setAlwaysOnTop(this.alwaysOnTop);
     win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
     for (const name of ['will-navigate', 'will-redirect']) win.webContents.on(name, event => event.preventDefault());
     win.on('closed', () => { if (this.window === win) { this.window = null; this.dispose(); } });
+    win.on('always-on-top-changed', (_event, value) => { if (this.window === win) { this.alwaysOnTop = !!value; this.publish(); } });
     this.rehost(win, 'window');
     this.chromeReady.then(() => { if (this.window === win && !win.isDestroyed()) { win.show(); win.focus(); this.focusCurrent(); } });
   }
@@ -120,16 +123,16 @@ class SitesWorkspace {
     this.removeFromHost();
     for (const tab of this.tabs) this.destroyView(tab);
     if (this.chrome && !this.chrome.webContents.isDestroyed()) this.chrome.webContents.close({ waitForBeforeUnload: false });
-    this.chrome = null; this.tabs = []; this.active = 0; this.mark = ''; this.mode = 'hidden'; this.editorOpen = false;
+    this.chrome = null; this.tabs = []; this.active = 0; this.mark = ''; this.mode = 'hidden'; this.editorOpen = false; this.alwaysOnTop = false;
   }
   current() { return this.tabs.find(tab => tab.id === this.active); }
   state() {
-    return { active: this.active, max: MAX_TABS, notice: this.notice, mode: this.mode,
+    return { active: this.active, max: MAX_TABS, notice: this.notice, mode: this.mode, alwaysOnTop: this.mode === 'window' && this.alwaysOnTop,
       shortcuts: this.shortcuts.list(), shortcutsReady: this.shortcuts.loaded, shortcutsError: this.shortcuts.error, shortcutsMax: MAX_SHORTCUTS,
       tabs: this.tabs.map(tab => ({ id: tab.id, url: tab.url, title: tab.title, loading: tab.loading,
         error: tab.error, sleeping: !tab.view && !!tab.url, popup: tab.popup ? new URL(tab.popup).hostname : '',
         canBack: !!tab.view?.webContents.navigationHistory.canGoBack(), canForward: !!tab.view?.webContents.navigationHistory.canGoForward(),
-        audible: !!tab.view?.webContents.isCurrentlyAudible(), muted: !!tab.view?.webContents.isAudioMuted() })) };
+        audible: !!tab.view?.webContents.isCurrentlyAudible(), muted: !!tab.view?.webContents.isAudioMuted(), background: !!tab.background })) };
   }
   publish() {
     if (!this.chrome || this.chrome.webContents.isDestroyed()) return;
@@ -144,7 +147,7 @@ class SitesWorkspace {
   tell(message) { this.notice = message; this.publish(); }
   add(url = '') {
     if (this.tabs.length >= MAX_TABS) { this.tell('Можно открыть до восьми вкладок. Закрой одну из лишних.'); return; }
-    const tab = { id: ++this.nextId, url, title: url ? new URL(url).hostname : 'Новая вкладка', loading: false, error: '', popup: '', view: null };
+    const tab = { id: ++this.nextId, url, title: url ? new URL(url).hostname : 'Новая вкладка', loading: false, error: '', popup: '', view: null, background: false };
     this.tabs.push(tab); this.active = tab.id; this.notice = '';
     if (url) this.navigate(tab, url);
     this.publish();
@@ -161,7 +164,7 @@ class SitesWorkspace {
     const view = new this.e.WebContentsView({ webPreferences: {
       session: this.session, nodeIntegration: false, nodeIntegrationInSubFrames: false, contextIsolation: true,
       sandbox: true, webSecurity: true, allowRunningInsecureContent: false, webviewTag: false,
-      navigateOnDragDrop: false, safeDialogs: true, devTools: false, backgroundThrottling: true, plugins: false
+      navigateOnDragDrop: false, safeDialogs: true, devTools: false, backgroundThrottling: !tab.background, plugins: false
     } });
     tab.view = view; view.setBackgroundColor('#ffffff'); view.setBorderRadius(14);
     this.host?.contentView.addChildView(view);
@@ -196,6 +199,16 @@ class SitesWorkspace {
     tab.url = url; tab.error = ''; tab.loading = true; tab.popup = ''; this.notice = '';
     const view = tab.view || this.attach(tab);
     view.webContents.loadURL(url).catch(() => {});
+    this.publish();
+  }
+  setBackground(tab, enabled) {
+    // Keep only the explicitly chosen page awake. Never inject scripts into websites.
+    for (const item of this.tabs) {
+      const next = item === tab && enabled;
+      if (!!item.background === next) continue;
+      item.background = next;
+      if (item.view && !item.view.webContents.isDestroyed()) item.view.webContents.setBackgroundThrottling(!next);
+    }
     this.publish();
   }
   layout() {
@@ -239,7 +252,13 @@ class SitesWorkspace {
   async command(payload) {
     if (!this.chrome || !this.tabs.length) return { ok: false };
     const action = payload?.action, tab = this.current();
-    if (action === 'shortcut-editor') { this.editorOpen = payload.open === true; this.layout(); if (!this.editorOpen) this.focusCurrent(); }
+    if (action === 'background' && tab?.url && tab.view && !tab.view.webContents.isDestroyed()) this.setBackground(tab, !tab.background);
+    else if (action === 'pin') {
+      if (this.mode === 'window' && this.window && !this.window.isDestroyed()) { this.alwaysOnTop = !this.alwaysOnTop; this.window.setAlwaysOnTop(this.alwaysOnTop); }
+      else { this.alwaysOnTop = true; this.detach(); }
+      this.publish();
+    }
+    else if (action === 'shortcut-editor') { this.editorOpen = payload.open === true; this.layout(); if (!this.editorOpen) this.focusCurrent(); }
     else if (action === 'shortcut-open') {
       await this.shortcuts.load();
       const saved = this.shortcuts.list().find(item => item.id === payload.id);
