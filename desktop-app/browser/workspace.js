@@ -2,19 +2,22 @@
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const { MAX_TABS, normalizeURL, safePage, safeFrame } = require('./policy');
+const { ShortcutStore, MAX_SHORTCUTS } = require('./shortcuts');
 
 class SitesWorkspace {
   constructor(electron, getMainWindow = () => null) {
     this.e = electron; this.getMainWindow = getMainWindow;
     this.window = null; this.host = null; this.chrome = null; this.mode = 'hidden';
     this.tabs = []; this.active = 0; this.nextId = 0; this.notice = ''; this.mark = '';
+    this.editorOpen = false;
+    this.shortcuts = new ShortcutStore(electron.app ? path.join(electron.app.getPath('userData'), 'sites-shortcuts.json') : null);
     this.resizeHost = () => this.layout();
     this.chromeURL = pathToFileURL(path.join(__dirname, 'index.html')).href;
     const trusted = event => {
       const wc = this.chrome?.webContents;
       return !!wc && !wc.isDestroyed() && event.sender === wc && event.senderFrame === wc.mainFrame && event.senderFrame.url === this.chromeURL;
     };
-    electron.ipcMain.handle('exstra-sites:state', event => trusted(event) ? this.state() : null);
+    electron.ipcMain.handle('exstra-sites:state', async event => { if (!trusted(event)) return null; await this.shortcuts.load(); return trusted(event) ? this.state() : null; });
     electron.ipcMain.handle('exstra-sites:command', (event, payload) => trusted(event) ? this.command(payload) : { ok: false });
   }
   get session() {
@@ -50,7 +53,7 @@ class SitesWorkspace {
     for (const name of ['will-navigate', 'will-redirect']) wc.on(name, event => event.preventDefault());
     wc.on('will-attach-webview', event => event.preventDefault());
     wc.on('before-input-event', (event, input) => this.shortcut(event, input));
-    this.chromeReady = wc.loadFile(path.join(__dirname, 'index.html')).catch(() => {});
+    this.chromeReady = Promise.all([wc.loadFile(path.join(__dirname, 'index.html')), this.shortcuts.load()]).then(() => this.publish()).catch(() => {});
   }
   removeFromHost() {
     if (this.host) {
@@ -98,10 +101,11 @@ class SitesWorkspace {
     this.chromeReady.then(() => { if (this.window === win && !win.isDestroyed()) { win.show(); win.focus(); this.focusCurrent(); } });
   }
   focusAddress() {
-    if (!this.host || !this.chrome || this.chrome.webContents.isDestroyed()) return;
+    if (this.editorOpen || !this.host || !this.chrome || this.chrome.webContents.isDestroyed()) return;
     this.chrome.webContents.focus(); this.chrome.webContents.send('exstra-sites:focus-address');
   }
   focusCurrent() {
+    if (this.editorOpen) { this.chrome?.webContents.focus(); return; }
     const tab = this.current();
     if (this.host && tab?.url && !tab.error && tab.view && !tab.view.webContents.isDestroyed()) tab.view.webContents.focus();
     else this.focusAddress();
@@ -116,11 +120,12 @@ class SitesWorkspace {
     this.removeFromHost();
     for (const tab of this.tabs) this.destroyView(tab);
     if (this.chrome && !this.chrome.webContents.isDestroyed()) this.chrome.webContents.close({ waitForBeforeUnload: false });
-    this.chrome = null; this.tabs = []; this.active = 0; this.mark = ''; this.mode = 'hidden';
+    this.chrome = null; this.tabs = []; this.active = 0; this.mark = ''; this.mode = 'hidden'; this.editorOpen = false;
   }
   current() { return this.tabs.find(tab => tab.id === this.active); }
   state() {
     return { active: this.active, max: MAX_TABS, notice: this.notice, mode: this.mode,
+      shortcuts: this.shortcuts.list(), shortcutsReady: this.shortcuts.loaded, shortcutsError: this.shortcuts.error, shortcutsMax: MAX_SHORTCUTS,
       tabs: this.tabs.map(tab => ({ id: tab.id, url: tab.url, title: tab.title, loading: tab.loading,
         error: tab.error, sleeping: !tab.view && !!tab.url, popup: tab.popup ? new URL(tab.popup).hostname : '',
         canBack: !!tab.view?.webContents.navigationHistory.canGoBack(), canForward: !!tab.view?.webContents.navigationHistory.canGoForward(),
@@ -199,7 +204,7 @@ class SitesWorkspace {
     const shown = (this.host.isVisible?.() ?? true) && !this.host.isMinimized();
     this.chrome.setVisible(shown); this.chrome.setBounds({ x: 0, y: 0, width, height });
     for (const tab of this.tabs) if (tab.view && !tab.view.webContents.isDestroyed()) {
-      const visible = shown && tab.id === this.active && !tab.error && !!tab.url;
+      const visible = shown && !this.editorOpen && tab.id === this.active && !tab.error && !!tab.url;
       tab.view.setVisible(visible);
       if (visible) tab.view.setBounds({ x: 10, y: 108, width: Math.max(1, width - 20), height: Math.max(1, height - 146) });
     }
@@ -218,7 +223,7 @@ class SitesWorkspace {
     this.publish();
   }
   shortcut(event, input) {
-    if (input.type !== 'keyDown') return;
+    if (input.type !== 'keyDown' || this.editorOpen) return;
     const key = String(input.key).toLowerCase(), ctrl = input.control || input.meta;
     let command;
     if (ctrl && key === 'l') command = 'focus';
@@ -234,7 +239,17 @@ class SitesWorkspace {
   async command(payload) {
     if (!this.chrome || !this.tabs.length) return { ok: false };
     const action = payload?.action, tab = this.current();
-    if (action === 'new') this.add();
+    if (action === 'shortcut-editor') { this.editorOpen = payload.open === true; this.layout(); if (!this.editorOpen) this.focusCurrent(); }
+    else if (action === 'shortcut-open') {
+      await this.shortcuts.load();
+      const saved = this.shortcuts.list().find(item => item.id === payload.id);
+      if (!saved) return { ok: false, error: 'Ярлык не найден.' };
+      if (payload.newTab === true) this.add(saved.url); else this.navigate(tab, saved.url);
+    }
+    else if (['shortcut-save','shortcut-remove','shortcut-move'].includes(action)) {
+      const result = await this.shortcuts.mutate(action.slice(9), payload); this.publish(); return result;
+    }
+    else if (action === 'new') this.add();
     else if (action === 'select' && Number.isInteger(payload.id)) this.select(payload.id);
     else if (action === 'close') this.closeTab(Number.isInteger(payload.id) ? payload.id : this.active);
     else if (action === 'navigate' && tab) this.navigate(tab, payload.url);

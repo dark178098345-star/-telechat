@@ -10,6 +10,7 @@
   <button id="reload" class="icon-button" title="Обновить · Ctrl+R" aria-label="Обновить"><svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2 6M20 4v7h-7"/></svg></button>
   <form id="address-form"><span id="protocol" title="Протокол страницы">↗</span><input id="address" type="text" inputmode="url" maxlength="4096" autocomplete="off" autocapitalize="none" spellcheck="false" aria-label="Адрес сайта" placeholder="Вставь ссылку на сайт · Ctrl+L"><button id="go" type="submit" aria-label="Открыть адрес"><svg viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></button></form>
   <button id="popup" class="popup" hidden title="Подтвердить открытие новой страницы">Открыть вкладку</button>
+  <button id="save-page" class="icon-button" title="Добавить сайт в ярлыки" aria-label="Добавить сайт в ярлыки" disabled><svg viewBox="0 0 24 24"><path d="M6 4h12v17l-6-4-6 4ZM9 9h6m-3-3v6"/></svg></button>
   <button id="dock" class="popup" title="Вынести раздел в отдельное окно">Отдельное окно</button>
   <button id="mute" class="icon-button" title="Выключить звук вкладки" aria-label="Выключить звук вкладки"><svg viewBox="0 0 24 24"><path d="m11 4-6 5H2v6h3l6 5ZM15 8q5 4 0 8m3-11q8 7 0 14"/></svg></button>
   <button id="external" class="icon-button" title="Открыть снаружи в обычном браузере" aria-label="Открыть в обычном браузере"><svg viewBox="0 0 24 24"><path d="M14 3h7v7m0-7L10 14M10 4H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2v-5"/></svg></button>
@@ -18,8 +19,18 @@
 <main id="stage"><section id="empty">
  <div class="empty-art" aria-hidden="true"><svg viewBox="0 0 160 130"><rect x="19" y="17" width="122" height="92" rx="20"/><path d="M19 43h122M32 31h1m9 0h1m9 0h1M58 75h44M89 62l13 13-13 13"/><circle cx="128" cy="109" r="13"/></svg></div>
  <p class="eyebrow">EXSTRACHAT / WEB</p><h1 id="empty-title">Чуть дальше привычного.</h1><p id="empty-copy">Вставь ссылку сверху — и открой свою следующую страницу.</p><button id="retry" hidden>Повторить</button>
+ <section id="favorites" aria-label="Мои ярлыки"><div class="favorites-heading"><h2>Твои сайты</h2><span>Всегда под рукой</span></div><div id="shortcut-grid"></div><p id="shortcut-error" role="status" hidden></p></section>
  <div id="shortcuts"><span><kbd>Ctrl</kbd> + <kbd>L</kbd> адрес</span><span><kbd>Ctrl</kbd> + <kbd>T</kbd> вкладка</span><span><kbd>Ctrl</kbd> + <kbd>W</kbd> закрыть</span></div>
  <p class="privacy">Отдельное пространство. Без доступа к твоим чатам.<br>Вкладки и адреса не отправляются на сервер ExstraChat.</p>
 </section></main>
+<div id="editor-backdrop" hidden><section id="shortcut-editor" role="dialog" aria-modal="true" aria-labelledby="editor-title" tabindex="-1">
+ <header class="editor-header"><div><p class="eyebrow">БЫСТРЫЙ ДОСТУП</p><h2 id="editor-title">Новый ярлык</h2></div><button id="editor-close" class="icon-button" aria-label="Закрыть">×</button></header>
+ <form id="shortcut-form"><label for="shortcut-name">Название</label><input id="shortcut-name" maxlength="48" autocomplete="off" placeholder="Например, моя музыка" required>
+ <label for="shortcut-url">Ссылка на сайт</label><input id="shortcut-url" type="text" inputmode="url" maxlength="4096" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="https://example.com" required>
+ <fieldset><legend>Значок</legend><div id="icon-options"></div></fieldset>
+ <p class="editor-note">Ярлыки хранятся только на этом компьютере.</p><p id="editor-error" role="alert" hidden></p>
+ <div id="edit-tools" hidden><span>Положение</span><button id="move-left" type="button" class="soft-button" aria-label="Переместить ярлык влево">←</button><button id="move-right" type="button" class="soft-button" aria-label="Переместить ярлык вправо">→</button><button id="remove-shortcut" type="button" class="delete-button">Удалить</button></div>
+ <div class="editor-actions"><button id="editor-cancel" type="button" class="soft-button">Отмена</button><button id="editor-save" type="submit" class="primary-button">Сохранить</button></div></form>
+</section></div>
 <footer><span id="status" role="status" aria-live="polite">Страницы изолированы от чатов</span><button id="dismiss" hidden aria-label="Убрать уведомление">×</button><span id="count">1 / 8</span></footer>
 <script src="./renderer.js"></script></body></html>
