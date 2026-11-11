@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
-<title>ExstraChat · Окно сайтов</title><link rel="stylesheet" href="./style.css"></head><body>
+<title>ExstraChat · Окно сайтов</title><link rel="stylesheet" href="./style.css"><link rel="stylesheet" href="./wave.css"></head><body>
 <header id="chrome">
  <div class="tabbar"><button id="home" class="brand icon-button" title="Вернуться в чаты · вкладки сохранятся" aria-label="Вернуться в чаты"><svg viewBox="0 0 24 24"><path d="m14 6-6 6 6 6"/></svg></button><div id="tabs" role="tablist" aria-label="Открытые страницы"></div><button id="new" class="icon-button" title="Новая вкладка · Ctrl+T" aria-label="Новая вкладка">+</button><span class="drag-space"></span></div>
  <div class="toolbar">
@@ -18,10 +18,26 @@
   <button id="external" class="icon-button" title="Открыть снаружи в обычном браузере" aria-label="Открыть в обычном браузере"><svg viewBox="0 0 24 24"><path d="M14 3h7v7m0-7L10 14M10 4H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2v-5"/></svg></button>
  </div><div id="progress" hidden></div>
 </header>
-<main id="stage"><section id="empty">
- <div class="empty-art" aria-hidden="true"><svg viewBox="0 0 160 130"><rect x="19" y="17" width="122" height="92" rx="20"/><path d="M19 43h122M32 31h1m9 0h1m9 0h1M58 75h44M89 62l13 13-13 13"/><circle cx="128" cy="109" r="13"/></svg></div>
- <p class="eyebrow">EXSTRACHAT / WEB</p><h1 id="empty-title">Чуть дальше привычного.</h1><p id="empty-copy">Вставь ссылку сверху — и открой свою следующую страницу.</p><button id="retry" hidden>Повторить</button>
- <section id="favorites" aria-label="Мои ярлыки"><div class="favorites-heading"><h2>Твои сайты</h2><span>Всегда под рукой</span></div><div id="shortcut-grid"></div><p id="shortcut-error" role="status" hidden></p></section>
+<main id="stage">
+ <div class="wave-scene" aria-hidden="true"><svg viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice"><defs>
+  <radialGradient id="sky"><stop stop-color="#5547a3"/><stop offset="1" stop-color="#12121e"/></radialGradient>
+  <linearGradient id="indigo" x1="0" y1="1" x2="1" y2="0"><stop stop-color="#171c40"/><stop offset=".48" stop-color="#6567d2"/><stop offset="1" stop-color="#9e9df1"/></linearGradient>
+  <linearGradient id="coral" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#bd718c"/><stop offset=".5" stop-color="#734365"/><stop offset="1" stop-color="#251d3b"/></linearGradient>
+  <linearGradient id="aqua"><stop stop-color="#17283f"/><stop offset=".56" stop-color="#3d737b"/><stop offset="1" stop-color="#91aca4"/></linearGradient>
+  <linearGradient id="shade" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#101018" stop-opacity=".08"/><stop offset=".42" stop-color="#101018" stop-opacity=".54"/><stop offset="1" stop-color="#101018" stop-opacity=".12"/></linearGradient>
+ </defs><rect width="1600" height="1000" fill="url(#sky)"/>
+ <path d="M820-90C1010 87 1009 242 1149 275c206 49 278-91 516 49V-90Z" fill="url(#indigo)"/>
+ <path d="M1015-60c16 162 83 280 213 279 147-1 221-67 437 31" fill="none" stroke="#d9d4ff" stroke-opacity=".16" stroke-width="2"/>
+ <path d="M-160 571C63 394 176 619 423 616c264-3 291-224 527-119 180 81 146 313 405 373 111 26 190 1 326-51v271H-160Z" fill="url(#coral)"/>
+ <path d="M-130 653C98 491 239 716 480 694c229-21 300-203 479-83 139 93 140 272 365 308" fill="none" stroke="#f0afbb" stroke-opacity=".13" stroke-width="2"/>
+ <path d="M-100 805C158 577 343 848 572 846c291-2 360-354 596-247 119 54 201 153 506 48v445H-100Z" fill="url(#aqua)"/>
+ <path d="M-96 895c294-235 445 24 714-21 234-39 331-292 532-224 133 45 234 161 524 52" fill="none" stroke="#c5e2dc" stroke-opacity=".14" stroke-width="2"/>
+ <rect width="1600" height="1000" fill="url(#shade)"/>
+ </svg></div>
+ <section id="empty">
+ <div class="empty-art" aria-hidden="true"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="29" fill="#b6a4ef" fill-opacity=".12" stroke="#d7c9ff" stroke-opacity=".28"/><path d="M10 32c13-19 31 20 44 0M13 24c13-14 25 15 38 0M13 40c13-14 25 15 38 0" fill="none" stroke="#ded4ff" stroke-width="2.7"/></svg></div>
+ <p class="eyebrow">EXSTRACHAT · ТВОЯ СТОРОНА ИНТЕРНЕТА</p><h1 id="empty-title">Открывай по-своему.</h1><p id="empty-copy">Любимые сайты, музыка и новые открытия — рядом с твоими чатами.</p><button id="retry" hidden>Повторить</button>
+ <section id="favorites" aria-label="Мои ярлыки"><div class="favorites-heading"><h2>Быстрый доступ</h2><span>Твоё — в одном касании</span></div><div id="shortcut-grid"></div><p id="shortcut-error" role="status" hidden></p></section>
  <div id="shortcuts"><span><kbd>Ctrl</kbd> + <kbd>L</kbd> адрес</span><span><kbd>Ctrl</kbd> + <kbd>T</kbd> вкладка</span><span><kbd>Ctrl</kbd> + <kbd>W</kbd> закрыть</span></div>
  <p class="privacy">Отдельное пространство. Без доступа к твоим чатам.<br>Вкладки и адреса не отправляются на сервер ExstraChat.</p>
 </section></main>

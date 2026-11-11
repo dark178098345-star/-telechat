@@ -3,6 +3,7 @@ const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const { MAX_TABS, normalizeURL, safePage, safeFrame } = require('./policy');
 const { ShortcutStore, MAX_SHORTCUTS } = require('./shortcuts');
+const { FaviconCache } = require('./favicons');
 
 class SitesWorkspace {
   constructor(electron, getMainWindow = () => null) {
@@ -11,13 +12,14 @@ class SitesWorkspace {
     this.tabs = []; this.active = 0; this.nextId = 0; this.notice = ''; this.mark = '';
     this.editorOpen = false; this.alwaysOnTop = false;
     this.shortcuts = new ShortcutStore(electron.app ? path.join(electron.app.getPath('userData'), 'sites-shortcuts.json') : null);
+    this.favicons = new FaviconCache({file:electron.app ? path.join(electron.app.getPath('userData'),'sites-favicons-v1.json') : null,net:electron.net,onChange:()=>this.publish()});
     this.resizeHost = () => this.layout();
     this.chromeURL = pathToFileURL(path.join(__dirname, 'index.html')).href;
     const trusted = event => {
       const wc = this.chrome?.webContents;
       return !!wc && !wc.isDestroyed() && event.sender === wc && event.senderFrame === wc.mainFrame && event.senderFrame.url === this.chromeURL;
     };
-    electron.ipcMain.handle('exstra-sites:state', async event => { if (!trusted(event)) return null; await this.shortcuts.load(); return trusted(event) ? this.state() : null; });
+    electron.ipcMain.handle('exstra-sites:state', async event => { if (!trusted(event)) return null; await Promise.all([this.shortcuts.load(),this.favicons.load()]); return trusted(event) ? this.state() : null; });
     electron.ipcMain.handle('exstra-sites:command', (event, payload) => trusted(event) ? this.command(payload) : { ok: false });
   }
   get session() {
@@ -53,7 +55,7 @@ class SitesWorkspace {
     for (const name of ['will-navigate', 'will-redirect']) wc.on(name, event => event.preventDefault());
     wc.on('will-attach-webview', event => event.preventDefault());
     wc.on('before-input-event', (event, input) => this.shortcut(event, input));
-    this.chromeReady = Promise.all([wc.loadFile(path.join(__dirname, 'index.html')), this.shortcuts.load()]).then(() => this.publish()).catch(() => {});
+    this.chromeReady = Promise.all([wc.loadFile(path.join(__dirname, 'index.html')), this.shortcuts.load(),this.favicons.load()]).then(() => {this.publish();this.favicons.ensure(this.shortcuts.list());}).catch(() => {});
   }
   removeFromHost() {
     if (this.host) {
@@ -120,6 +122,7 @@ class SitesWorkspace {
     if (previous && !previous.isDestroyed()) previous.webContents.focus();
   }
   dispose() {
+    this.favicons.pause();
     this.removeFromHost();
     for (const tab of this.tabs) this.destroyView(tab);
     if (this.chrome && !this.chrome.webContents.isDestroyed()) this.chrome.webContents.close({ waitForBeforeUnload: false });
@@ -128,7 +131,7 @@ class SitesWorkspace {
   current() { return this.tabs.find(tab => tab.id === this.active); }
   state() {
     return { active: this.active, max: MAX_TABS, notice: this.notice, mode: this.mode, alwaysOnTop: this.mode === 'window' && this.alwaysOnTop,
-      shortcuts: this.shortcuts.list(), shortcutsReady: this.shortcuts.loaded, shortcutsError: this.shortcuts.error, shortcutsMax: MAX_SHORTCUTS,
+      shortcuts: this.shortcuts.list().map(item=>({...item,favicon:item.icon==='auto'?this.favicons.get(item.url):''})), shortcutsReady: this.shortcuts.loaded, shortcutsError: this.shortcuts.error, shortcutsMax: MAX_SHORTCUTS,
       tabs: this.tabs.map(tab => ({ id: tab.id, url: tab.url, title: tab.title, loading: tab.loading,
         error: tab.error, sleeping: !tab.view && !!tab.url, popup: tab.popup ? new URL(tab.popup).hostname : '',
         canBack: !!tab.view?.webContents.navigationHistory.canGoBack(), canForward: !!tab.view?.webContents.navigationHistory.canGoForward(),
@@ -184,6 +187,7 @@ class SitesWorkspace {
     wc.on('did-navigate', (_event, url) => { if (safePage(url)) tab.url = url; tab.error = ''; changed(); });
     wc.on('did-navigate-in-page', (_event, url, main) => { if (main && safePage(url)) tab.url = url; changed(); });
     wc.on('page-title-updated', (_event, title) => { tab.title = String(title || new URL(tab.url).hostname).slice(0, 120); changed(); });
+    wc.on('page-favicon-updated', (_event, urls) => this.favicons.observe(tab.url,urls));
     wc.on('media-started-playing', changed); wc.on('media-paused', changed);
     wc.on('did-fail-load', (_event, code, _description, _url, main) => {
       if (!main || code === -3) return;
@@ -266,7 +270,7 @@ class SitesWorkspace {
       if (payload.newTab === true) this.add(saved.url); else this.navigate(tab, saved.url);
     }
     else if (['shortcut-save','shortcut-remove','shortcut-move'].includes(action)) {
-      const result = await this.shortcuts.mutate(action.slice(9), payload); this.publish(); return result;
+      const result = await this.shortcuts.mutate(action.slice(9), payload); this.publish(); if(result.ok)this.favicons.ensure(this.shortcuts.list()); return result;
     }
     else if (action === 'new') this.add();
     else if (action === 'select' && Number.isInteger(payload.id)) this.select(payload.id);

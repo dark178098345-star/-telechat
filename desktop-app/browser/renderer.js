@@ -7,9 +7,11 @@
  const icons={auto:['Автоматически','M5 5h5v5H5Zm9 0h5v5h-5ZM5 14h5v5H5Zm9 0h5v5h-5Z'],globe:['Сайт','M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0ZM3 12h18M12 3q-7 9 0 18 7-9 0-18'],music:['Музыка','M9 18V5l11-2v13M9 9l11-2M9 18c0 3-6 4-6 1s6-4 6-1Zm11-2c0 3-6 4-6 1s6-4 6-1Z'],video:['Видео','M4 4h16v16H4Zm5 4 7 4-7 4Z'],chat:['Общение','M5 4h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H9l-6 4V6a2 2 0 0 1 2-2Zm3 6h8m-8 4h5'],code:['Разработка','m8 6-6 6 6 6m8-12 6 6-6 6m-3-15-2 18'],book:['Чтение','M12 5v16M3 4q5-2 9 1 4-3 9-1v15q-5-2-9 2-4-4-9-2Z'],game:['Игры','M8 7h8q4 0 5 5l1 5q0 4-4 2l-3-3H9l-3 3q-4 2-4-2l1-5q1-5 5-5Zm-2 4v4m-2-2h4m8-2h.01m3 3h.01']};
  const svg=key=>'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+icons[key][1]+'"/></svg>';
  function paintIcon(node,item){
-  node.replaceChildren();node.style.background='';node.style.color='';
+  const mark=JSON.stringify([item.name,item.url,item.icon,item.favicon||'']);if(node._iconMark===mark)return;node._iconMark=mark;
+  node.replaceChildren();node.style.background='';node.style.color='';node.dataset.siteIcon='false';
   const key=icons[item.icon]?item.icon:'auto';
   if(key!=='auto'){node.innerHTML=svg(key);return;}
+  if(typeof item.favicon==='string'&&item.favicon.length<180000&&/^data:image\/(?:png|x-icon);base64,[A-Za-z0-9+/=]+$/.test(item.favicon)){const img=document.createElement('img');img.className='site-favicon';img.alt='';img.width=28;img.height=28;img.decoding='async';img.onerror=()=>{if(img.parentNode===node)paintIcon(node,{...item,favicon:''});};node.dataset.siteIcon='true';img.src=item.favicon;node.append(img);return;}
   let host='';try{host=new URL(item.url).hostname.toLowerCase().replace(/^www\./,'');}catch{}
   const matches=domain=>host===domain||host.endsWith('.'+domain);
   const brands=[['vk.com','VK','#1976f3','#fff'],['soundcloud.com','music','#ff6700','#fff'],['mail.google.com','M','#f3eee8','#db4843'],['gmail.com','M','#f3eee8','#db4843'],['tiktok.com','music','#0b0c10','#fb779f'],['pinterest.com','P','#e92746','#fff'],['chatgpt.com','✳','#e6ece9','#172722'],['yandex.ru','Я','#fc5445','#fff'],['ya.ru','Я','#fc5445','#fff'],['youtube.com','video','#ee3e44','#fff'],['github.com','code','#e3e5eb','#20222b'],['dark178098345-star.github.io','E','#ac99ed','#21182e']];
@@ -20,18 +22,15 @@
  function renderShortcuts(next){
   const items=Array.isArray(next.shortcuts)?next.shortcuts:[],ready=next.shortcutsReady!==false;
   const mark=JSON.stringify([items,ready,next.shortcutsError||'',next.shortcutsMax||24]);if(mark===gridMark)return;gridMark=mark;
-  const grid=$('shortcut-grid');grid.replaceChildren();
+  const grid=$('shortcut-grid'),old=new Map([...grid.querySelectorAll('.shortcut-tile')].map(node=>[node.dataset.id,node]));let index=0;
   for(const item of items){
-   const tile=document.createElement('div');tile.className='shortcut-tile';tile.dataset.id=item.id;
-   const open=document.createElement('button');open.className='shortcut-open';open.type='button';open.title=item.name+'\n'+item.url;
-   const icon=document.createElement('span');icon.className='shortcut-icon';icon.setAttribute('aria-hidden','true');paintIcon(icon,item);
-   const name=document.createElement('span');name.className='shortcut-name';name.textContent=item.name;open.append(icon,name);
-   open.onclick=event=>command('shortcut-open',{id:item.id,newTab:event.ctrlKey||event.metaKey});
-   open.onauxclick=event=>{if(event.button===1){event.preventDefault();command('shortcut-open',{id:item.id,newTab:true});}};
-   const menu=document.createElement('button');menu.type='button';menu.className='shortcut-menu';menu.textContent='···';menu.title='Изменить ярлык';menu.setAttribute('aria-label','Изменить: '+item.name);menu.onclick=()=>openEditor(item,menu);
-   tile.oncontextmenu=event=>{event.preventDefault();openEditor(item,menu);};tile.append(open,menu);grid.append(tile);
+   let tile=old.get(item.id);old.delete(item.id);
+   if(!tile){tile=document.createElement('div');tile.className='shortcut-tile';tile.dataset.id=item.id;tile.innerHTML='<button type="button" class="shortcut-open"><span class="shortcut-icon" aria-hidden="true"></span><span class="shortcut-name"></span></button><button type="button" class="shortcut-menu" title="Изменить ярлык">···</button>';const open=tile.querySelector('.shortcut-open'),menu=tile.querySelector('.shortcut-menu'),saved=()=>state?.shortcuts?.find(value=>value.id===item.id)||item;
+    open.onclick=event=>command('shortcut-open',{id:item.id,newTab:event.ctrlKey||event.metaKey});open.onauxclick=event=>{if(event.button===1){event.preventDefault();command('shortcut-open',{id:item.id,newTab:true});}};menu.onclick=()=>openEditor(saved(),menu);tile.oncontextmenu=event=>{event.preventDefault();openEditor(saved(),menu);};}
+   const open=tile.querySelector('.shortcut-open');open.title=item.name+'\n'+item.url;tile.querySelector('.shortcut-name').textContent=item.name;tile.querySelector('.shortcut-menu').setAttribute('aria-label','Изменить: '+item.name);paintIcon(tile.querySelector('.shortcut-icon'),item);
+   if(grid.children[index]!==tile)grid.insertBefore(tile,grid.children[index]||null);index++;
   }
-  const add=document.createElement('button');add.type='button';add.className='shortcut-add';add.innerHTML='<span class="shortcut-icon" aria-hidden="true">+</span><span class="shortcut-name">Добавить ярлык</span>';add.disabled=!ready||!!next.shortcutsError||items.length>=(next.shortcutsMax||24);add.title=add.disabled?'Можно сохранить до 24 ярлыков':'Добавить свой сайт';add.onclick=()=>openEditor({},add);grid.append(add);
+  old.forEach(node=>node.remove());let add=grid.querySelector('.shortcut-add');if(!add){add=document.createElement('button');add.type='button';add.className='shortcut-add';add.innerHTML='<span class="shortcut-icon" aria-hidden="true">+</span><span class="shortcut-name">Добавить ярлык</span>';add.onclick=()=>openEditor({},add);}add.disabled=!ready||!!next.shortcutsError||items.length>=(next.shortcutsMax||24);add.title=add.disabled?'Можно сохранить до 24 ярлыков':'Добавить свой сайт';if(grid.lastElementChild!==add)grid.append(add);
   $('shortcut-error').hidden=!next.shortcutsError;$('shortcut-error').textContent=next.shortcutsError||'';
   updateTools();
  }
@@ -97,8 +96,9 @@
   $('popup').hidden=!active?.popup;$('popup').title=active?.popup?'Открыть: '+active.popup:'';
   $('progress').hidden=!active?.loading;
   const empty=!active?.url||!!active?.error;$('empty').hidden=!empty;
-  $('empty-title').textContent=active?.error?'Страница не открылась.':'Чуть дальше привычного.';
-  $('empty-copy').textContent=active?.error||'Вставь ссылку сверху — и открой свою следующую страницу.';
+  document.body.dataset.surface=active?.error?'error':empty?'home':'page';
+  $('empty-title').textContent=active?.error?'Страница не открылась.':'Открывай по-своему.';
+  $('empty-copy').textContent=active?.error||'Любимые сайты, музыка и новые открытия — рядом с твоими чатами.';
   $('retry').hidden=!active?.error;$('shortcuts').hidden=!!active?.error;$('favorites').hidden=!!active?.error;renderShortcuts(next);
   $('status').textContent=next.notice||active?.error||(active?.loading?'Открываем страницу…':'Страницы изолированы от чатов');$('status').dataset.notice=String(!!next.notice);$('status').title=$('status').textContent;$('dismiss').hidden=!next.notice;
   $('count').textContent=next.tabs.length+' / '+next.max;
