@@ -1,8 +1,8 @@
 /* TELECHAT CHAT RELIABILITY V72 — optimistic delivery, durable outbox and safe retry. */
 (()=>{
   'use strict';
-  const DB='telechat-outbox-v72',STORE='items';
-  let databasePromise=null,lastTimestamp=0,draining=false,optimisticQueue=Promise.resolve(),retryTimer=0,retryDue=0,storageWarned=false;
+  const DB='telechat-outbox-v72',STORE='items',STORAGE_DEADLINE=1500;
+  let databasePromise=null,databaseRetryAt=0,lastTimestamp=0,draining=false,optimisticQueue=Promise.resolve(),retryTimer=0,retryDue=0,storageWarned=false;
   const deliveries=new Map(),ackWaiters=new Map(),confirmedRows=new WeakMap();
   const liveRows=new Map(),wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
   const errorText=error=>String(error?.message||error||'').trim();
@@ -17,25 +17,35 @@
   }
   const canRetry=error=>!/Аккаунт заблокирован|мут|Пользователь не найден|permission|row.level|policy|denied|Войди в аккаунт|Некорректн|Нет доступа|Чат не найден|Повторный идентификатор/i.test(errorText(error));
 
-  async function messageExists(row,strict=false){
-    const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),10000);
-    try{let query=sb.from('messages').select('*').eq('chat_key',row.chat_key).eq('from_nick',row.from_nick).eq('ts',row.ts).limit(1);if(query.abortSignal)query=query.abortSignal(controller.signal);const result=await query.maybeSingle();
-    if(strict&&result.error)throw result.error;
-    return !result.error&&result.data?result.data:null;
-    }finally{clearTimeout(timeout);}
+  function boundedQuery(work){
+    const controller=new AbortController();let timer;
+    const expiry=new Promise((_,reject)=>{timer=setTimeout(()=>{reject(Object.assign(Error('Сервер не успел подтвердить запрос. Проверим автоматически.'),{code:'TIMEOUT'}));controller.abort();},10000);});
+    return Promise.race([Promise.resolve().then(()=>work(controller.signal)),expiry]).finally(()=>clearTimeout(timer));
+  }
+  async function messageExists(row){
+    const result=await boundedQuery(signal=>{let query=sb.from('messages').select('*').eq('chat_key',row.chat_key).eq('from_nick',row.from_nick).eq('ts',row.ts).limit(1);if(query.abortSignal)query=query.abortSignal(signal);return query.maybeSingle();});
+    if(result.error)throw result.error;
+    return result.data||null;
   }
   async function persistMessage(row){
+    const owns=()=>me?.nick===row.from_nick;
+    const accountChanged=()=>({ok:false,error:Error('Аккаунт изменился. Повтори отправку.')});
+    if(!owns())return accountChanged();
     // Adopt acknowledgements from the old protocol before assigning a new server nonce.
-    if(row.legacy_retry_v172){try{const existing=await messageExists(row,true);if(existing)return {ok:true,row:existing};}catch(error){return {ok:false,error};}}
+    if(row.legacy_retry_v172){try{const existing=await messageExists(row);if(existing)return {ok:true,row:existing};}catch(error){return {ok:false,error};}}
     const modern=await window.telechatTransportV172?.send(row);if(modern)return modern;
+    if(!owns())return accountChanged();
     row.legacy_retry_v172=true;
     const legacy={...row};delete legacy.client_id_v172;delete legacy.client_hash_v172;delete legacy.legacy_retry_v172;
     let lastError=null;
     for(let attempt=0;attempt<2;attempt++){
-      const result=await sb.from('messages').insert(legacy).select('*').single();
+      if(!owns())return accountChanged();
+      let result;
+      try{result=await boundedQuery(signal=>{if(!owns())throw accountChanged().error;let query=sb.from('messages').insert(legacy).select('*');if(query.abortSignal)query=query.abortSignal(signal);return query.single();});}
+      catch(error){return {ok:false,error};}
       if(!result.error)return {ok:true,row:result.data||row};
       lastError=result.error;
-      const existing=await messageExists(row);
+      let existing;try{existing=await messageExists(row);}catch(error){return {ok:false,error};}
       if(existing)return {ok:true,row:existing};
       if(attempt===0&&canRetry(lastError))await wait(360);else break;
     }
@@ -44,26 +54,41 @@
 
   function nextTimestamp(){const now=Date.now(),latest=Number(window.telechatChatSpeedV51?.latestTimestamp?.(conversationKey()))||0;lastTimestamp=Math.max(now,lastTimestamp+1,latest+1);return lastTimestamp;}
   function openDatabase(){
-    if(!('indexedDB' in window))return Promise.resolve(null);
+    if(!('indexedDB' in window)||Date.now()<databaseRetryAt)return Promise.resolve(null);
     if(databasePromise)return databasePromise;
-    databasePromise=new Promise(resolve=>{
-      const request=indexedDB.open(DB,1);
+    const opening=new Promise(resolve=>{
+      let settled=false,request;
+      const finish=database=>{if(settled){database?.close();return;}settled=true;clearTimeout(timer);if(!database)databaseRetryAt=Date.now()+5000;resolve(database);};
+      const timer=setTimeout(()=>finish(null),STORAGE_DEADLINE);
+      try{request=indexedDB.open(DB,1);}catch(_){finish(null);return;}
       request.onupgradeneeded=()=>{if(!request.result.objectStoreNames.contains(STORE))request.result.createObjectStore(STORE,{keyPath:'clientId'});};
-      request.onsuccess=()=>resolve(request.result);request.onerror=()=>resolve(null);request.onblocked=()=>resolve(null);
+      request.onsuccess=()=>{const database=request.result;if(!settled)database.onversionchange=()=>{database.close();if(databasePromise===opening)databasePromise=null;};finish(database);};
+      request.onerror=request.onblocked=()=>finish(null);
     });
+    databasePromise=opening;
+    opening.then(database=>{if(!database&&databasePromise===opening)databasePromise=null;});
     return databasePromise;
   }
+  function storageTransaction(database,mode,work,fallback){
+    if(!database)return Promise.resolve(fallback);
+    return new Promise(resolve=>{
+      let settled=false,transaction;
+      const finish=value=>{if(settled)return;settled=true;clearTimeout(timer);resolve(value);};
+      const timer=setTimeout(()=>{finish(fallback);try{transaction?.abort();}catch(_){}},STORAGE_DEADLINE);
+      try{transaction=database.transaction(STORE,mode);transaction.onerror=transaction.onabort=()=>finish(fallback);work(transaction.objectStore(STORE),finish,transaction);}catch(_){finish(fallback);}
+    });
+  }
   async function outboxWrite(item){
-    try{const database=await openDatabase();if(!database)return false;
-    return await new Promise(resolve=>{const tx=database.transaction(STORE,'readwrite');tx.objectStore(STORE).put({...item,element:undefined});tx.oncomplete=()=>{window.dispatchEvent(new Event('exstra-delivery-change-v176'));resolve(true);};tx.onerror=tx.onabort=()=>resolve(false);});}catch(_){return false;}
+    const database=await openDatabase();
+    return storageTransaction(database,'readwrite',(store,finish,tx)=>{store.put({...item,element:undefined});tx.oncomplete=()=>{window.dispatchEvent(new Event('exstra-delivery-change-v176'));finish(true);};},false);
   }
   async function outboxDelete(clientId){
-    const database=await openDatabase();if(!database)return;
-    await new Promise(resolve=>{const tx=database.transaction(STORE,'readwrite');tx.objectStore(STORE).delete(clientId);tx.oncomplete=()=>{window.dispatchEvent(new Event('exstra-delivery-change-v176'));resolve();};tx.onerror=resolve;tx.onabort=resolve;});
+    const database=await openDatabase();
+    return storageTransaction(database,'readwrite',(store,finish,tx)=>{store.delete(clientId);tx.oncomplete=()=>{window.dispatchEvent(new Event('exstra-delivery-change-v176'));finish(true);};},false);
   }
   async function outboxRead(){
-    const database=await openDatabase();if(!database)return [];
-    return new Promise(resolve=>{const request=database.transaction(STORE,'readonly').objectStore(STORE).getAll();request.onsuccess=()=>resolve(request.result||[]);request.onerror=()=>resolve([]);});
+    const database=await openDatabase();
+    return storageTransaction(database,'readonly',(store,finish)=>{const request=store.getAll();request.onsuccess=()=>finish(request.result||[]);request.onerror=()=>finish([]);},[]);
   }
 
   function deliveryMarkup(state){
@@ -78,7 +103,7 @@
     if(state==='failed')next.onclick=()=>retryMessage(item.clientId);
   }
   async function renderOptimistic(item,animate=false){
-    if(!isMine(item))return;
+    if(!isMine(item)||item.row.chat_key!==conversationKey())return;
     const box=document.getElementById('messages');box?.querySelector('.v51-empty-chat')?.remove();
     const result=await appendMessage({...item.row});
     if(!isMine(item)){if(result?.classList?.contains('msg')&&!result.dataset.id)result.remove();return;}
@@ -92,7 +117,9 @@
   function deliver(item,options){if(deliveries.has(item.clientId))return deliveries.get(item.clientId);const job=Promise.resolve().then(()=>deliverOnce(item,options)).finally(()=>deliveries.delete(item.clientId));deliveries.set(item.clientId,job);return job;}
   async function deliverOnce(item,{silent=false}={}){
     if(!isMine(item))return false;
-    if(item.expiresAt&&Date.now()>item.expiresAt){await outboxDelete(item.clientId);setDeliveryState(item,'failed');return false;}
+    if(item.expiresAt&&Date.now()>item.expiresAt){await outboxDelete(item.clientId);liveRows.delete(item.clientId);setDeliveryState(item,'failed');return false;}
+    // Also retain explicit-target messages when the local database is unavailable.
+    liveRows.set(item.clientId,item);
     if(!item.row.client_id_v172){item.row.legacy_retry_v172=true;item.row.client_id_v172=item.clientId;}
     setDeliveryState(item,'sending');const durable=await outboxWrite(item);
     if(!durable&&!storageWarned){storageWarned=true;showToast('Не удалось сохранить очередь на устройстве. Не закрывай приложение до отправки.');}
@@ -115,9 +142,12 @@
   const isMine=item=>String(item?.row?.from_nick||'').toLowerCase()===String(me?.nick||'').toLowerCase();
   function scheduleRetry(at=Date.now()+200){if(document.hidden||navigator.onLine===false||retryTimer&&at>=retryDue)return;clearTimeout(retryTimer);retryDue=at;retryTimer=setTimeout(()=>{retryTimer=0;retryDue=0;drainOutbox();},Math.max(100,at-Date.now()));}
   async function drainOutbox(force=false){
-    if(draining||!me||navigator.onLine===false)return;draining=true;
-    try{for(const item of (await outboxRead()).filter(isMine).sort((a,b)=>a.row.ts-b.row.ts)){if(!isMine(item))break;if(item.permanent)continue;if(!force&&item.retryAt>Date.now()){scheduleRetry(item.retryAt);continue;}const live=liveRows.get(item.clientId);if(live?.element?.isConnected)item.element=live.element;if(!item.element&&item.row.chat_key===conversationKey())await renderOptimistic(item);await deliver(item,{silent:true});}}
-    finally{draining=false;}
+    if(draining||!me||navigator.onLine===false)return;draining=true;const owner=me.nick;
+    try{
+      const queued=new Map((await outboxRead()).filter(isMine).map(item=>[item.clientId,item]));
+      for(const [id,item] of liveRows)if(isMine(item)&&item.state!=='sent')queued.set(id,item);
+      for(const item of [...queued.values()].sort((a,b)=>a.row.ts-b.row.ts)){if(me?.nick!==owner||!isMine(item))break;if(item.permanent)continue;if(!force&&item.retryAt>Date.now()){scheduleRetry(item.retryAt);continue;}const live=liveRows.get(item.clientId);if(live?.state==='sent')continue;if(live?.element?.isConnected)item.element=live.element;if(!item.element&&item.row.chat_key===conversationKey())await renderOptimistic(item);await deliver(item,{silent:true});}
+    }finally{draining=false;if(me?.nick&&me.nick!==owner)scheduleRetry();}
   }
 
   sendMsg=async function(){
@@ -128,9 +158,9 @@
     const item={clientId,state:'sending',createdAt:Date.now(),row:{chat_key:key,from_nick:me.nick,text,ts:nextTimestamp(),reply_text:reply?reply.text:null,read_by:[],deleted:false,client_id_v172:clientId}};
     if(!direct){input.value='';input.style.height='';cancelReply();}cancelPendingMedia();
     window.dispatchEvent(new CustomEvent('telechat-chat-action-v155',{detail:{action:'send',owner:me.nick,key,text}}));
-    try{sb.from('typing').delete().eq('chat_key',key).eq('nick',me.nick).then(()=>{});}catch(error){}
+    try{sb.from('typing').delete().eq('chat_key',key).eq('nick',me.nick).then(()=>{}).catch(()=>{});}catch(error){}
     optimisticQueue=optimisticQueue.then(()=>renderOptimistic(item,true)).catch(()=>{});
-    await optimisticQueue;renderContacts();deliver(item).catch(error=>{setDeliveryState(item,'failed');outboxWrite({...item,state:'failed'});showToast(friendlyError(error));});
+    await optimisticQueue;Promise.resolve(renderContacts()).catch(()=>{});deliver(item).catch(error=>{setDeliveryState(item,'failed');outboxWrite({...item,state:'failed'});showToast(friendlyError(error));});
   };
   const previousLogin=doLogin;
   doLogin=async function(){const result=await previousLogin();if(me)setTimeout(drainOutbox,250);return result;};
@@ -152,7 +182,7 @@
     const owner=me?.nick;if(!owner)return {queued:0,failed:0,permanent:0,sending:0,durable:true};
     const database=await openDatabase(),items=new Map();
     // Stream only counters/IDs: do not retain a second copy of queued media bodies.
-    if(database)await new Promise(resolve=>{const tx=database.transaction(STORE,'readonly'),request=tx.objectStore(STORE).openCursor();request.onerror=tx.onabort=()=>resolve();request.onsuccess=()=>{const cursor=request.result;if(!cursor){resolve();return;}const item=cursor.value;if(item.row?.from_nick===owner&&(!item.expiresAt||item.expiresAt>Date.now()))items.set(item.clientId,{clientId:item.clientId,state:item.state,permanent:!!item.permanent});cursor.continue();};});
+    await storageTransaction(database,'readonly',(store,finish)=>{const request=store.openCursor();request.onerror=()=>finish();request.onsuccess=()=>{const cursor=request.result;if(!cursor){finish();return;}const item=cursor.value;if(item.row?.from_nick===owner&&(!item.expiresAt||item.expiresAt>Date.now()))items.set(item.clientId,{clientId:item.clientId,state:item.state,permanent:!!item.permanent});cursor.continue();};});
     for(const [id,item] of liveRows)if(item.row?.from_nick===owner&&item.state!=='sent'&&(!item.expiresAt||item.expiresAt>Date.now()))items.set(id,item);
     if(me?.nick!==owner)return null;
     const values=[...items.values()];return {queued:values.length,failed:values.filter(item=>item.state==='failed').length,permanent:values.filter(item=>item.permanent).length,sending:values.filter(item=>deliveries.has(item.clientId)).length,durable:!!database};

@@ -112,4 +112,6 @@
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)recover();},{passive:true});
   setInterval(()=>{const key=activeKey(),at=Date.now();if(!key||document.hidden||typeof navigator!=='undefined'&&navigator.onLine===false)return;const gap=unhealthy.size?7000:30000;if(at-lastProbeAt<gap)return;lastProbeAt=at;probeLatest(key);},7000);
   window.telechatMessageCoreV104={resync:recover,reconnect:subscribeCore,seen:eventKey,diagnostics:()=>({active:!!activeKey(),connected:!offline()&&!!activeKey()&&!!msgSub&&!unhealthy.size,reconnecting:connecting||!!reconnectTimer})};
+  // Account restoration may finish before this parser-loaded module arrives.
+  if(document.getElementById?.('chat-screen')?.classList.contains('active'))recover();
 })();
