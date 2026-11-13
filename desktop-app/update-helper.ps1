@@ -2,9 +2,11 @@ $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 $job = $null
 $mayRestart = $false
+$failureReason = 'installer-failed'
+$installerExitCode = $null
 function Write-Result($ok) {
   if ($job) {
-    @{ ok = $ok; version = $job.version; at = [DateTime]::UtcNow.ToString('o') } | ConvertTo-Json -Compress | Set-Content -LiteralPath $job.result -Encoding UTF8
+    @{ ok = $ok; version = $job.version; reason = $(if ($ok) { '' } else { $failureReason }); exitCode = $installerExitCode; at = [DateTime]::UtcNow.ToString('o') } | ConvertTo-Json -Compress | Set-Content -LiteralPath $job.result -Encoding UTF8
   }
 }
 function Check-Installer {
@@ -35,14 +37,18 @@ try {
   }
   $deadline = [DateTime]::UtcNow.AddSeconds(45)
   while (Get-Process -Id $job.parent -ErrorAction SilentlyContinue) {
-    if ([DateTime]::UtcNow -gt $deadline) { throw 'Application did not close; update aborted' }
+    if ([DateTime]::UtcNow -gt $deadline) { $failureReason = 'application-open'; throw 'Application did not close; update aborted' }
     Start-Sleep -Milliseconds 250
   }
   $mayRestart = $true
   Check-Installer
   $installDirectory = Split-Path -Parent $job.exe
   $process = Start-Process -FilePath $job.installer -ArgumentList @('--updated', '/S', ('/D=' + $installDirectory)) -WindowStyle Hidden -Wait -PassThru
-  if ($process.ExitCode -ne 0) { throw 'Installer did not finish successfully' }
+  $installerExitCode = $process.ExitCode
+  if ($installerExitCode -ne 0) {
+    $failureReason = switch ($installerExitCode) { 20 { 'application-open' } 21 { 'files-busy' } 22 { 'preflight-unavailable' } default { 'installer-failed' } }
+    throw 'Installer did not finish successfully'
+  }
   Write-Result $true
   Start-App
 } catch {

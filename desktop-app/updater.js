@@ -34,7 +34,7 @@ class DesktopUpdater{
    }catch(error){if(error.name==='AbortError')throw Error('Сервер обновлений не ответил вовремя. Попробуй ещё раз.');throw error;}finally{clearTimeout(timer);}})().finally(()=>{this.checking=null;});
   }
   if(this.checking)await this.checking;
-  if(this.result===null){try{const file=path.join(this.directory,'last-result.json'),stat=await fs.stat(file);if(stat.size<16384){const result=JSON.parse((await fs.readFile(file,'utf8')).replace(/^\uFEFF/,''));this.result=result.ok===false?'Предыдущая установка не завершилась. Приложение не удаляло твои данные. Попробуй обновить ещё раз.':'';}else this.result='';}catch{this.result='';}}
+  if(this.result===null){try{const file=path.join(this.directory,'last-result.json'),stat=await fs.stat(file);if(stat.size<16384){const result=JSON.parse((await fs.readFile(file,'utf8')).replace(/^\uFEFF/,''));const reasons={'application-open':'ExstraChat не закрылся полностью. Закрой приложение и окно сайтов, затем повтори обновление.','files-busy':'Файлы ExstraChat заняты или Windows не разрешает их заменить. Старая версия не удалялась. Полностью закрой приложение и попробуй ещё раз.','preflight-unavailable':'Windows не дала проверить папку приложения. Установка остановлена до замены файлов.'};this.result=result.ok===false?(reasons[result.reason]||'Предыдущая установка не завершилась. Приложение не удаляло твои данные. Попробуй обновить ещё раз.') :'';}else this.result='';}catch{this.result='';}}
   return {ok:true,current:this.app.getVersion(),available:model.newer(this.cached.version,this.app.getVersion()),update:{...this.cached,notes:[...this.cached.notes]},installationError:this.result||''};
  }
  async response(url,signal){

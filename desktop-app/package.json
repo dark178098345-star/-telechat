@@ -1,6 +1,6 @@
 {
   "name": "telechat-desktop",
-  "version": "1.4.5",
+  "version": "1.4.6",
   "description": "Официальное Windows-приложение ExstraChat",
   "main": "main.js",
   "author": "creator",
@@ -8,7 +8,7 @@
   "private": true,
   "scripts": {
     "start": "electron .",
-    "dist": "electron-builder --win nsis portable --x64"
+    "dist": "node ../scripts/build-installer-preflight.cjs && electron-builder --win nsis portable --x64"
   },
   "devDependencies": {
     "electron": "45.3.0",
@@ -47,6 +47,7 @@
       ]
     },
     "nsis": {
+      "include": "assets/installer.nsh",
       "artifactName": "ExstraChat-Setup-${version}.${ext}",
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
