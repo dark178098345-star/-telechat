@@ -13,7 +13,7 @@ assert.match(index, /id="saved-account-list-v75"/);
 assert.doesNotMatch(index, /id="remember-login-v70"/);
 assert.match(index, /autocomplete="username"/);
 assert.match(index, /autocomplete="current-password"/);
-assert.match(index, /saved-accounts-v75\.js\?v=210/);
+assert.match(index, /saved-accounts-v75\.js\?v=211/);
 assert.match(index, /saved-accounts-v75\.css\?v=210/);
 assert.match(script, /AES-GCM/);
 assert.match(script, /crypto\.subtle\.encrypt/);
@@ -27,7 +27,7 @@ assert.match(script, /LEGACY_STORAGE_CEILING=6/);
 assert.match(style, /saved-account-card-v75/);
 assert.match(style, /saved-account-balance-v75/);
 assert.match(worker, /telechat-shell-v\d+/);
-assert.match(worker, /saved-accounts-v75\.js\?v=210/);
+assert.match(worker, /saved-accounts-v75\.js\?v=211/);
 assert.match(worker, /saved-accounts-v75\.css\?v=210/);
 
 console.log('saved accounts V75 smoke: ok');

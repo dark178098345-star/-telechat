@@ -3,12 +3,19 @@
   'use strict';
   const FIELDS='nick,name,av,status,last_seen,avatar_video,animated_profile';
   const FRESH_MS=60000,DISK_TTL=7*86400000,MAX_RECORDS=200,MAX_BYTES=6*1024*1024;
-  const fresh=new Map(),versions=new Map(),jobs=new Map(),restored=new Set(),reads=new Map(),retryAt=new Map(),pending=new Map(),writes=new Map(),batches=[];
+  const fresh=new Map(),versions=new Map(),jobs=new Map(),restored=new Set(),reads=new Map(),retryAt=new Map(),pending=new Map(),writes=new Map(),batches=[],controllers=new Set();
   let owner='',generation=0,database=null,scheduled=false,writeTimer=0,activeRequests=0;
   const nick=value=>String(value||'').trim().toLowerCase();
   const account=()=>{try{return nick(me?.nick);}catch(_){return '';}};
   const memory=()=>userCache;
-  function syncOwner(){const next=account();if(next!==owner){owner=next;generation++;fresh.clear();versions.clear();jobs.clear();restored.clear();reads.clear();retryAt.clear();}return generation;}
+  function syncOwner(force=false){const next=account();if(force||next!==owner){owner=next;generation++;fresh.clear();versions.clear();jobs.clear();restored.clear();reads.clear();retryAt.clear();
+    for(const controller of controllers)controller.abort();
+    for(const entry of pending.values())entry.resolve(null);pending.clear();
+    for(const batch of batches.splice(0))for(const entry of batch)entry.resolve(null);
+    const saved=memory();for(const key of Object.keys(saved))if(key!==next)delete saved[key];
+    // Keep the just-authenticated own profile, not another account's snapshots.
+    try{if(next&&me?.nick===next){saved[next]=me;if(me.status!==undefined)fresh.set(next,Date.now());}}catch(_){}
+  }return generation;}
   function open(){
     try{if(!window.indexedDB)return Promise.resolve(null);}catch(_){return Promise.resolve(null);}
     if(database)return database;
@@ -42,12 +49,15 @@
     const id=JSON.stringify([owner,user.nick]);writes.set(id,{id,owner,at,value,bytes});
     clearTimeout(writeTimer);writeTimer=setTimeout(flush,200);
   }
-  function merge(user,{at=Date.now(),save=true}={}){
+  function merge(user,{at=Date.now(),save=true,notify=false}={}){
     if(!user?.nick)return null;syncOwner();const key=nick(user.nick),old=memory()[key];
     const next={...old,...user,nick:key};next.last_seen=Math.max(Number(old?.last_seen)||0,Number(user.last_seen)||0);
     memory()[key]=next;fresh.set(key,at);versions.set(key,(versions.get(key)||0)+1);retryAt.delete(key);
+    // Known fresh public fields also feed the own quick card/editor. Never copy
+    // credentials, role or session flags from an avatar/profile projection.
+    if(key===owner)try{if(me?.nick===key)for(const field of ['name','av','status','bio','banner','last_seen','avatar_video','animated_profile'])if(user[field]!==undefined)me[field]=next[field];}catch(_){}
     if(save)persist(next,at);
-    if(!old||['name','av','status','avatar_video','animated_profile'].some(field=>old[field]!==next[field]))window.dispatchEvent(new CustomEvent('telechat-user-updated-v123',{detail:{nick:key}}));
+    if(notify||!old||['name','av','status','bio','banner','role','verified','avatar_video','animated_profile'].some(field=>old[field]!==next[field]))window.dispatchEvent(new CustomEvent('telechat-user-updated-v123',{detail:{nick:key,profileSaved:notify===true}}));
     return next;
   }
   async function restore(keys){
@@ -73,7 +83,7 @@
     await Promise.all(keys.map(key=>reads.get(key)).filter(Boolean));
   }
   async function fetchPart(entries){
-    const first=entries[0],controller=new AbortController();let timeout;const deadline=new Promise((_,reject)=>{timeout=setTimeout(()=>{reject(Error('Не удалось загрузить данные профиля'));controller.abort();},8000);});
+    const first=entries[0],controller=new AbortController();controllers.add(controller);let timeout;const deadline=new Promise((_,reject)=>{timeout=setTimeout(()=>{reject(Error('Не удалось загрузить данные профиля'));controller.abort();},8000);controller.signal.addEventListener('abort',()=>reject(Error('Запрос профиля отменён')),{once:true});});
     try{
       if(first.token!==generation||first.owner!==account()){entries.forEach(entry=>entry.resolve(null));return;}
       const query=fields=>{const q=sb.from('users').select(fields).in('nick',entries.map(entry=>entry.nick));return Promise.race([Promise.resolve(q.abortSignal?q.abortSignal(controller.signal):q),deadline]);};
@@ -86,8 +96,8 @@
         if((versions.get(entry.nick)||0)!==entry.version){entry.resolve(memory()[entry.nick]||null);continue;}
         const user=data.get(entry.nick);if(!user)retryAt.set(entry.nick,Date.now()+15000);entry.resolve(user?merge(user):null);
       }
-    }catch(error){for(const entry of entries){if(entry.token===generation)retryAt.set(entry.nick,Date.now()+15000);entry.reject(error);}}
-    finally{clearTimeout(timeout);for(const entry of entries)if(jobs.get(entry.nick)===entry.promise)jobs.delete(entry.nick);}
+    }catch(error){for(const entry of entries){if(entry.token!==generation||entry.owner!==account()){entry.resolve(null);continue;}retryAt.set(entry.nick,Date.now()+15000);entry.reject(error);}}
+    finally{clearTimeout(timeout);controllers.delete(controller);for(const entry of entries)if(jobs.get(entry.nick)===entry.promise)jobs.delete(entry.nick);}
   }
   function drain(){
     scheduled=false;const entries=[...pending.values()];pending.clear();
@@ -126,5 +136,7 @@
     return request(key);
   }
   function warm(values){const keys=[...new Set(values.map(nick).filter(Boolean))];syncOwner();many(keys,true).catch(()=>{});return keys.map(key=>memory()[key]).filter(Boolean);}
+  owner=account();
+  window.addEventListener('telechat-account-ready-v175',()=>syncOwner(true));
   window.telechatUserCacheV123={get,many,warm,merge,restore:values=>restore(values.map(nick)),flush};
 })();

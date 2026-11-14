@@ -1553,22 +1553,9 @@ function handleAvatarFile(input){
 }
 var viewedProfileNickV5='';
 function openCurrentHeaderInfo(){if(currentRoom)openRoomPanel();else if(currentChat)openUserProfile(currentChat);}
-async function openUserProfile(nick){
-  if(!nick)return;
-  const {data:user,error}=await sb.from('users').select('*').eq('nick',nick).maybeSingle();
-  if(error||!user){showToast('Профиль не найден');return;}
-  userCache[nick]=user;viewedProfileNickV5=nick;
-  setAvatarElement(document.getElementById('view-profile-avatar'),user);
-  document.getElementById('view-profile-name').textContent=user.name||user.nick;
-  document.getElementById('view-profile-nick').textContent='@'+user.nick;
-  const online=isOnline(user.last_seen);
-  const seen=document.getElementById('view-profile-seen');seen.textContent=online?'● сейчас в сети':formatLastSeen(user.last_seen);seen.style.color=online?'var(--green)':'var(--text3)';
-  const profileData=unpackProfileData(user.status),status=profileData.status.trim();
-  document.getElementById('view-profile-status').textContent=status||'Статус не указан';
-  document.getElementById('view-profile-bio').textContent=(typeof user.bio==='string'&&user.bio.trim())?user.bio.trim():'Пользователь пока ничего о себе не рассказал.';
-  const messageBtn=document.getElementById('view-profile-message-btn');messageBtn.style.display=user.nick===me.nick?'none':'block';messageBtn.onclick=()=>{closeUserProfile();openChat(user.nick);};
-  document.getElementById('user-profile-modal').classList.add('show');
-}
+// The bounded controller in profile-performance-v11.js owns profile opening.
+// This early-parse fallback does not start a second legacy database request.
+function openUserProfile(){showToast('Карточка профиля ещё подготавливается. Попробуй снова.');}
 function closeUserProfile(){document.getElementById('user-profile-modal').classList.remove('show');viewedProfileNickV5='';}
 function buildProfPanel(){
   profAvIdx=me.av;
@@ -1581,18 +1568,7 @@ function buildProfPanel(){
   document.getElementById('my-nick-display').textContent='@'+me.nick;
   buildAvGrid('av-grid-prof',me.av,i=>{profAvIdx=i;profAvatarPhoto='';renderProfileAvatar();});
 }
-async function saveProfile(){
-  const nextName=document.getElementById('prof-name-inp').value.trim()||me.name;
-  const nextStatus=packProfileData(document.getElementById('prof-status-inp').value.trim(),profAvatarPhoto);
-  const nextBio=document.getElementById('prof-bio-inp').value.trim().slice(0,220);
-  const {error}=await sb.from('users').update({av:profAvIdx,name:nextName,status:nextStatus,bio:nextBio}).eq('nick',me.nick);
-  if(error){showToast(error.code==='PGRST204'?'Сначала обнови таблицу профилей':'Не удалось сохранить профиль');return;}
-  me.av=profAvIdx;me.name=nextName;me.status=nextStatus;me.bio=nextBio;
-  userCache[me.nick]=me;
-  closeAllPanels();showToast('Профиль сохранён ✅');
-  if(currentChat)renderMessages();
-  renderContacts();
-}
+var saveProfile; // Assigned once below, including banner and video handling.
 
 function escHtml(t){return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');}
 function autoResize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,100)+'px';}
@@ -2091,29 +2067,6 @@ buildProfPanel=function(){
   renderProfileBannerEditor();
 };
 
-const openUserProfileBeforeBanners=openUserProfile;
-openUserProfile=async function(nick){
-  await openUserProfileBeforeBanners(nick);
-  const user=userCache[nick];
-  applyProfileBanner(document.getElementById('view-profile-cover'),user&&user.banner);
-};
-
-saveProfile=async function(){
-  const nextName=document.getElementById('prof-name-inp').value.trim()||me.name;
-  const nextStatus=packProfileData(document.getElementById('prof-status-inp').value.trim(),profAvatarPhoto);
-  const nextBio=document.getElementById('prof-bio-inp').value.trim().slice(0,220);
-  const nextBanner=normalizeProfileBanner(selectedProfileBanner);
-  const {error}=await sb.from('users').update({av:profAvIdx,name:nextName,status:nextStatus,bio:nextBio,banner:nextBanner}).eq('nick',me.nick);
-  if(error){
-    showToast(error.code==='PGRST204'?'Сначала выполни обновление таблицы профилей':'Не удалось сохранить профиль');
-    return;
-  }
-  me.av=profAvIdx;me.name=nextName;me.status=nextStatus;me.bio=nextBio;me.banner=nextBanner;
-  userCache[me.nick]=me;
-  closeAllPanels();showToast('Профиль и баннер сохранены ✅');
-  if(currentChat)renderMessages();
-  renderContacts();
-};
 </script>
 
 <script>
@@ -2328,16 +2281,6 @@ buildProfPanel=function(){
   }
 };
 
-const openUserProfileBeforeVideo=openUserProfile;
-openUserProfile=async function(nick){
-  await openUserProfileBeforeVideo(nick);
-  const user=userCache[nick];
-  if(!user)return;
-  document.getElementById('view-profile-nick').innerHTML='@'+escHtml(user.nick)+verifiedBadgeHtml(user.nick,true);
-  applyProfileBanner(document.getElementById('view-profile-cover'),user.banner);
-  enhanceVerifiedBadges();
-};
-
 saveProfile=async function(){
   const button=document.querySelector('#profile-panel .auth-btn');
   const originalText=button.textContent;
@@ -2366,7 +2309,7 @@ saveProfile=async function(){
     if(!result.data||typeof result.data.status!=='string')throw Error('Профиль не найден');
     if(me!==profileOwner)return;
     me.av=profAvIdx;me.name=nextName;me.status=result.data.status;me.bio=nextBio;me.banner=storedBanner;me.avatar_video=nextAvatarVideo;
-    userCache[me.nick]=me;
+    if(window.telechatUserCacheV123)window.telechatUserCacheV123.merge(me,{notify:true});else userCache[me.nick]=me;
     if(oldAvatarVideo&&oldAvatarVideo!==nextAvatarVideo)removeOldProfileVideo(oldAvatarVideo);
     if(oldBanner.startsWith('video:')&&oldBanner!==nextBanner)removeOldProfileVideo(oldBanner.slice(6));
     clearObjectPreview('avatar');clearObjectPreview('banner');
@@ -2416,9 +2359,9 @@ const openChatBeforeVerified=openChat;
 openChat=async function(nick){const value=await openChatBeforeVerified(nick);enhanceVerifiedBadges(document.getElementById('active-chat'));return value;};
 </script>
 <script src="./storage-watch-v124.js?v=161"></script>
-<script src="./user-cache-v123.js?v=195"></script>
-<script src="./profile-performance-v11.js?v=197"></script>
-<script src="./followers-v12.js?v=167"></script>
+<script src="./user-cache-v123.js?v=211"></script>
+<script src="./profile-performance-v11.js?v=211"></script>
+<script src="./followers-v12.js?v=211"></script>
 <script src="./room-media-v113.js?v=177"></script>
 <script src="./app-performance-v17.js?v=195"></script>
 <script src="./ui-polish-v16.js"></script>
@@ -2444,7 +2387,7 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <script src="./chat-experience-v62.js?v=174"></script>
 <script src="./chat-flow-v64.js?v=181"></script>
 <script src="./interaction-v65.js?v=66"></script>
-<script src="./saved-accounts-v75.js?v=210"></script>
+<script src="./saved-accounts-v75.js?v=211"></script>
 <script src="./chat-privacy-v74.js?v=74"></script>
 <script src="./smooth-ui-v76.js?v=133"></script>
 <script src="./mobile-optimization-v100.js?v=183"></script>
@@ -2454,7 +2397,7 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <script src="./profile-quick-v91.js?v=197"></script>
 <script src="./profile-studio-v92.js?v=167"></script>
 <script src="./soundcloud-v98.js?v=117"></script>
-<script src="./profile-music-v97.js?v=168"></script>
+<script src="./profile-music-v97.js?v=211"></script>
 <script src="./music-library-v96.js?v=185"></script>
 <script src="./profile-follow-compact-v102.js?v=167"></script>
 <script src="./message-core-v104.js?v=206"></script>
@@ -2482,7 +2425,7 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <link rel="stylesheet" href="./attachments-v141.css?v=141">
 <script src="./photo-album-model-v183.js?v=183"></script>
 <script src="./attachments-v141.js?v=203"></script>
-<link rel="stylesheet" href="./profile-card-v143.css?v=167">
+<link rel="stylesheet" href="./profile-card-v143.css?v=211">
 <link rel="stylesheet" href="./listening-v145.css?v=145">
 <link rel="stylesheet" href="./music-together-v147.css?v=148">
 <link rel="stylesheet" href="./light-theme-v147.css?v=167">
@@ -2529,7 +2472,7 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <link rel="stylesheet" href="./chat-features-v181.css?v=181">
 <script src="./chat-preferences-model-v181.js?v=189"></script>
 <script src="./chat-preferences-v181.js?v=189"></script>
-<script src="./whats-new-v181.js?v=210"></script>
+<script src="./whats-new-v181.js?v=211"></script>
 <link rel="stylesheet" href="./photo-album-v183.css?v=183">
 <script src="./photo-album-viewer-v183.js?v=184"></script>
 <script src="./photo-compose-v183.js?v=184"></script>

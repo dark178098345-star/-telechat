@@ -27,6 +27,15 @@
   document.head.appendChild(css);
 
   const state={target:'',following:false,followers:0,followingCount:0,request:0,ready:false},followCacheV25=new Map(),FOLLOW_TTL_V25=30000;
+  const account=()=>{try{return String(me?.nick||'').toLowerCase();}catch(_){return '';}};
+  const cacheKey=(actor,target)=>JSON.stringify([actor,target]);
+  let owner=account(),generation=0,followController=null;
+  function syncOwner(force=false){const next=account();if(force||owner!==next){owner=next;generation++;state.request++;state.target='';state.ready=false;followCacheV25.clear();followController?.abort();followController=null;closeFollowListV14();}return owner;}
+  async function bounded(tasks,controller=new AbortController()){
+    let timer;const expired=new Promise((_,reject)=>{timer=setTimeout(()=>{reject(Error('Подписки не ответили вовремя'));controller.abort();},8000);controller.signal.addEventListener('abort',()=>reject(Error('Запрос подписок отменён')),{once:true});});
+    try{return await Promise.race([Promise.all(tasks.map(q=>q?.abortSignal?q.abortSignal(controller.signal):q)),expired]);}finally{clearTimeout(timer);}
+  }
+  function remember(actor,target){followCacheV25.set(cacheKey(actor,target),{time:Date.now(),data:{followers:state.followers,followingCount:state.followingCount,following:state.following}});while(followCacheV25.size>128)followCacheV25.delete(followCacheV25.keys().next().value);}
   function ensureUi(){
     const seen=document.getElementById('view-profile-seen'),actions=document.querySelector('.user-profile-actions');
     if(!seen||!actions)return;
@@ -53,29 +62,38 @@
     ensureUi();
     document.getElementById('followers-count').textContent=state.ready?String(Math.max(0,state.followers)):'—';
     document.getElementById('following-count').textContent=state.ready?String(Math.max(0,state.followingCount)):'—';
-    const button=document.getElementById('follow-btn'),own=!me||state.target===me.nick;
-    button.style.display=own?'none':'';button.classList.toggle('following',state.following);button.textContent=state.following?'✓ Вы подписаны':'Подписаться';
+    const button=document.getElementById('follow-btn'),own=!me||!state.target||state.target===me.nick;
+    button.style.display=own?'none':'';button.classList.toggle('following',state.following);button.textContent=state.following?'✓ Вы подписаны':'Подписаться';button.title='';
   }
   async function loadFollowV12(nick){
-    ensureUi();state.target=String(nick||'').toLowerCase();const request=++state.request,cached=followCacheV25.get(state.target);if(cached&&Date.now()-cached.time<FOLLOW_TTL_V25){Object.assign(state,cached.data,{ready:true});render();loading(false);return;}state.ready=false;loading(true);render();
+    const actor=syncOwner(),epoch=generation,target=String(nick||'').toLowerCase();
+    ensureUi();followController?.abort();followController=null;state.target=target;const request=++state.request,cached=followCacheV25.get(cacheKey(actor,target));
+    const current=()=>request===state.request&&state.target===target&&actor===account()&&epoch===generation;
+    if(cached&&Date.now()-cached.time<FOLLOW_TTL_V25){Object.assign(state,cached.data,{ready:true});render();loading(false);return;}
+    state.ready=false;state.following=false;loading(true);render();const controller=new AbortController();followController=controller;
     try{
-      const followers=sb.from('user_follows').select('follower_nick',{count:'exact',head:true}).eq('following_nick',state.target);
-      const following=sb.from('user_follows').select('following_nick',{count:'exact',head:true}).eq('follower_nick',state.target);
-      const mine=me&&me.nick!==state.target?sb.from('user_follows').select('follower_nick').eq('follower_nick',me.nick).eq('following_nick',state.target).maybeSingle():Promise.resolve({data:null,error:null});
-      const [a,b,c]=await Promise.all([followers,following,mine]);if(request!==state.request)return;
+      const followers=sb.from('user_follows').select('follower_nick',{count:'exact',head:true}).eq('following_nick',target);
+      const following=sb.from('user_follows').select('following_nick',{count:'exact',head:true}).eq('follower_nick',target);
+      const mine=actor&&actor!==target?sb.from('user_follows').select('follower_nick').eq('follower_nick',actor).eq('following_nick',target).maybeSingle():Promise.resolve({data:null,error:null});
+      const [a,b,c]=await bounded([followers,following,mine],controller);if(!current())return;
       if(a.error||b.error||c.error)throw a.error||b.error||c.error;
-      state.followers=a.count||0;state.followingCount=b.count||0;state.following=!!c.data;state.ready=true;followCacheV25.set(state.target,{time:Date.now(),data:{followers:state.followers,followingCount:state.followingCount,following:state.following}});render();
+      state.followers=a.count||0;state.followingCount=b.count||0;state.following=!!c.data;state.ready=true;remember(actor,target);render();
     }catch(e){
-      if(request!==state.request)return;state.followers=0;state.followingCount=0;state.following=false;render();
-      const button=document.getElementById('follow-btn');if(button&&state.target!==me?.nick){button.textContent='Подписки скоро';button.disabled=true;}
-    }finally{if(request===state.request){loading(false);if(!state.ready){const b=document.getElementById('follow-btn');if(b&&state.target!==me?.nick)b.disabled=true;}}}
+      if(!current())return;state.followers=0;state.followingCount=0;state.following=false;render();
+      const button=document.getElementById('follow-btn');if(button&&state.target!==me?.nick){button.textContent='Не удалось загрузить';button.title='Открой профиль ещё раз, чтобы повторить проверку подписок';button.disabled=true;}
+    }finally{if(followController===controller)followController=null;if(current()){loading(false);if(!state.ready){const b=document.getElementById('follow-btn');if(b&&state.target!==me?.nick)b.disabled=true;}}}
   }
   async function toggleFollowV12(){
     if(!me||!state.target||state.target===me.nick||!state.ready)return;
-    const was=state.following;state.following=!was;state.followers+=was?-1:1;render();document.getElementById('follow-btn').disabled=true;
-    const result=was?await sb.from('user_follows').delete().eq('follower_nick',me.nick).eq('following_nick',state.target):await sb.from('user_follows').insert({follower_nick:me.nick,following_nick:state.target,created_at:Date.now()});
-    if(result.error){state.following=was;state.followers+=was?1:-1;render();showToast('Не удалось изменить подписку');}else{followCacheV25.set(state.target,{time:Date.now(),data:{followers:state.followers,followingCount:state.followingCount,following:state.following}});showToast(state.following?'Вы подписались ✅':'Подписка отменена');}
-    document.getElementById('follow-btn').disabled=false;
+    const actor=account(),target=state.target,request=state.request,epoch=generation,was=state.following,count=state.followers;
+    const current=()=>actor===account()&&target===state.target&&request===state.request&&epoch===generation;
+    state.following=!was;state.followers+=was?-1:1;render();document.getElementById('follow-btn').disabled=true;
+    try{
+      const query=was?sb.from('user_follows').delete().eq('follower_nick',actor).eq('following_nick',target):sb.from('user_follows').insert({follower_nick:actor,following_nick:target,created_at:Date.now()});
+      const [result]=await bounded([query]);followCacheV25.delete(cacheKey(actor,target));followCacheV25.delete(cacheKey(actor,actor));if(!current())return;
+      if(result.error)throw result.error;remember(actor,target);showToast(state.following?'Вы подписались ✅':'Подписка отменена');
+    }catch(_){followCacheV25.delete(cacheKey(actor,target));if(!current())return;state.following=was;state.followers=count;render();showToast('Не удалось подтвердить подписку. Открой профиль заново.');}
+    finally{if(current())document.getElementById('follow-btn').disabled=false;}
   }
   let listRequestV14=0;
   function ensureFollowListUiV14(){
@@ -93,7 +111,8 @@
   async function openFollowListV14(kind){
     if(!state.target)return;
     ensureFollowListUiV14();
-    const target=state.target,request=++listRequestV14,isFollowing=kind==='following';
+    const actor=account(),epoch=generation,target=state.target,request=++listRequestV14,isFollowing=kind==='following';
+    const current=()=>request===listRequestV14&&actor===account()&&epoch===generation;
     const modal=document.getElementById('follow-list-modal'),body=document.getElementById('follow-list-body');
     document.getElementById('follow-list-title').textContent=isFollowing?'Подписки':'Подписчики';
     document.getElementById('follow-list-subtitle').textContent='@'+target;
@@ -101,19 +120,19 @@
     modal.classList.add('open');
     try{
       const column=isFollowing?'following_nick':'follower_nick',filter=isFollowing?'follower_nick':'following_nick';
-      const result=await sb.from('user_follows').select(column+',created_at').eq(filter,target).order('created_at',{ascending:false}).limit(200);
+      const [result]=await bounded([sb.from('user_follows').select(column+',created_at').eq(filter,target).order('created_at',{ascending:false}).limit(200)]);
       if(result.error)throw result.error;
-      if(request!==listRequestV14)return;
+      if(!current())return;
       const nicks=[...new Set((result.data||[]).map(row=>row[column]).filter(Boolean))];
       if(!nicks.length){
         body.innerHTML='<div class="follow-list-message">'+(isFollowing?'Этот пользователь пока ни на кого не подписан':'У этого пользователя пока нет подписчиков')+'</div>';
         return;
       }
-      const usersResult=await sb.from('users').select('nick,name,av,status,last_seen,avatar_video').in('nick',nicks);
+      const [usersResult]=await bounded([sb.from('users').select('nick,name,av,status,last_seen,avatar_video').in('nick',nicks)]);
       if(usersResult.error)throw usersResult.error;
-      if(request!==listRequestV14)return;
+      if(!current())return;
       const usersByNick=new Map((usersResult.data||[]).map(user=>{
-        userCache[user.nick]={...(userCache[user.nick]||{}),...user};
+        if(window.telechatUserCacheV123)window.telechatUserCacheV123.merge(user);else userCache[user.nick]={...(userCache[user.nick]||{}),...user};
         return[user.nick,userCache[user.nick]];
       }));
       body.innerHTML='';
@@ -126,13 +145,14 @@
         body.appendChild(row);
       });
     }catch(error){
-      if(request===listRequestV14)body.innerHTML='<div class="follow-list-message">Не удалось загрузить список.<br>Попробуй ещё раз.</div>';
+      if(current())body.innerHTML='<div class="follow-list-message">Не удалось загрузить список.<br>Попробуй ещё раз.</div>';
     }
   }
   document.addEventListener('keydown',event=>{if(event.key==='Escape')closeFollowListV14();});
   window.openFollowListV14=openFollowListV14;
   window.closeFollowListV14=closeFollowListV14;
   window.loadFollowV12=loadFollowV12;window.toggleFollowV12=toggleFollowV12;ensureUi();
+  window.addEventListener('telechat-account-ready-v175',()=>syncOwner(true));
   const openBefore=openUserProfile;openUserProfile=async function(nick,...args){const profileTask=openBefore(nick,...args),followTask=loadFollowV12(nick);const [value]=await Promise.all([profileTask,followTask]);return value;};
-  const closeBefore=closeUserProfile;closeUserProfile=function(){state.request++;state.target='';closeFollowListV14();closeBefore();};
+  const closeBefore=closeUserProfile;closeUserProfile=function(){state.request++;state.target='';followController?.abort();followController=null;closeFollowListV14();closeBefore();};
 })();

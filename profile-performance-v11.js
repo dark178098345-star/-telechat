@@ -11,39 +11,45 @@
   .profile-skeleton-avatar-v191{width:76px;height:76px;border:4px solid var(--pc-bg,var(--bg2));border-radius:22px;background:var(--border);margin-top:-30px;position:relative}
   .profile-skeleton-line-v191{height:12px;margin:18px 0;border-radius:6px;background:var(--bg3);width:68%}.profile-skeleton-line-v191.short{width:36%;height:9px}.profile-skeleton-line-v191.wide{width:100%;height:64px;margin-top:28px;border-radius:14px}
   #profile-load-text{font:500 12px/1.5 system-ui;color:var(--text3);margin-top:24px}#profile-load-retry{pointer-events:auto;color:var(--text);border-color:var(--border);background:var(--bg3);font:500 13px system-ui}
-  #profile-load-orbit,.profile-load-orbit{display:none!important;animation:none!important}
-  #profile-refresh{display:none!important}#view-profile-avatar{width:84px;height:84px}#view-profile-name{min-height:28px}#view-profile-nick{min-height:18px}
+  #view-profile-avatar{width:84px;height:84px}#view-profile-name{min-height:28px}#view-profile-nick{min-height:18px}
   @media(prefers-reduced-motion:reduce){#profile-load{transition:none}}
   body[data-ui-motion-v184=off] #profile-load{transition:none}
   `;document.head.append(calm);
 
   const card=document.querySelector('.user-profile-card');
   if(card&&!document.getElementById('profile-load')){
-    const refresh=document.createElement('div');refresh.id='profile-refresh';refresh.className='profile-refresh';refresh.textContent='◌ обновляем профиль';card.appendChild(refresh);
     const load=document.createElement('div');load.id='profile-load';load.className='profile-load';load.innerHTML='<div class="profile-load-box"><div class="profile-skeleton-cover-v191" aria-hidden="true"></div><div class="profile-skeleton-avatar-v191" aria-hidden="true"></div><div class="profile-skeleton-line-v191" aria-hidden="true"></div><div class="profile-skeleton-line-v191 short" aria-hidden="true"></div><div class="profile-skeleton-line-v191 wide" aria-hidden="true"></div><div class="profile-load-text" id="profile-load-text" role="status">Загружаем профиль…</div><button class="profile-load-retry" id="profile-load-retry">Повторить</button></div>';card.appendChild(load);
   }
 
   const lightFields='nick,name,av,status,last_seen,avatar_video,animated_profile',profileFields='nick,name,av,status,bio,banner,last_seen,avatar_video,animated_profile';
-  const cache=new Map(),inflight=new Map(),lightInflight=new Map(),times=new Map();let token=0,lastNick='';
+  const cache=new Map(),inflight=new Map(),lightInflight=new Map(),times=new Map(),controllers=new Set();let token=0,generation=0,lastNick='';
   const account=()=>{try{return String(me?.nick||'');}catch(_){return '';}};let owner=account();
-  function syncOwner(){if(owner===account())return;owner=account();token++;cache.clear();inflight.clear();lightInflight.clear();times.clear();}
+  function syncOwner(force=false){if(!force&&owner===account())return;owner=account();generation++;token++;for(const controller of controllers)controller.abort();cache.clear();inflight.clear();lightInflight.clear();times.clear();}
   async function prepareImages(user){const sources=[];try{const photo=unpackProfileData(user.status).photo;if(photo)sources.push(photo);if(/^data:image\/(png|jpeg|webp);base64,/i.test(user.banner||''))sources.push(user.banner);}catch(_){}if(!sources.length)return;let timer;await Promise.race([Promise.allSettled(sources.slice(0,2).map(src=>{const img=new Image();img.src=src;return img.decode?img.decode():Promise.resolve();})),new Promise(r=>timer=setTimeout(r,120))]);clearTimeout(timer);}
   function merge(user){if(window.telechatUserCacheV123)return window.telechatUserCacheV123.merge(user);if(!user||!user.nick)return null;userCache[user.nick]=Object.assign({},userCache[user.nick]||{},user);times.set(user.nick,Date.now());return userCache[user.nick];}
   async function light(nick){
+    syncOwner();const epoch=generation,actor=owner;
     if(lightInflight.has(nick))return lightInflight.get(nick);
-    const task=(async()=>{let r=await sb.from('users').select(lightFields).eq('nick',nick).maybeSingle();if(r.error&&/avatar_video|animated_profile/.test(String(r.error.message)))r=await sb.from('users').select('nick,name,av,status,last_seen').eq('nick',nick).maybeSingle();return r.data?merge(r.data):null;})().finally(()=>lightInflight.delete(nick));
+    const controller=new AbortController();controllers.add(controller);let timer;const deadline=new Promise((_,reject)=>{timer=setTimeout(()=>{reject(Error('Не удалось загрузить профиль'));controller.abort();},8000);controller.signal.addEventListener('abort',()=>reject(Error('Запрос профиля отменён')),{once:true});});
+    const query=fields=>{let q=sb.from('users').select(fields).eq('nick',nick);if(q.abortSignal)q=q.abortSignal(controller.signal);return q.maybeSingle();};
+    const task=Promise.race([(async()=>{let r=await query(lightFields);if(r.error&&/avatar_video|animated_profile/.test(String(r.error.message)))r=await query('nick,name,av,status,last_seen');return r.data;})(),deadline]).then(data=>epoch===generation&&actor===account()&&data?.nick===nick?merge(data):null).finally(()=>{clearTimeout(timer);controllers.delete(controller);if(lightInflight.get(nick)===task)lightInflight.delete(nick);});
     lightInflight.set(nick,task);return task;
   }
-  getUser=async function(nick){if(window.telechatUserCacheV123)return window.telechatUserCacheV123.get(nick);nick=String(nick||'').toLowerCase();if(!nick)return null;const saved=userCache[nick];if(saved){if(Date.now()-(times.get(nick)||0)>45000)light(nick).catch(()=>{});return saved;}return light(nick);};
+  getUser=async function(nick){if(window.telechatUserCacheV123)return window.telechatUserCacheV123.get(nick);syncOwner();nick=String(nick||'').toLowerCase();if(!nick)return null;const saved=userCache[nick];if(saved){if(Date.now()-(times.get(nick)||0)>45000)light(nick).catch(()=>{});return saved;}return light(nick);};
   async function full(nick,force){
-    syncOwner();const actor=owner;
-    const saved=cache.get(nick);if(!force&&saved&&Date.now()-saved.time<90000){cache.delete(nick);cache.set(nick,saved);return saved.user;}if(inflight.has(nick))return inflight.get(nick);
-    let timer;const controller=new AbortController();const query=fields=>{let q=sb.from('users').select(fields).eq('nick',nick);if(q.abortSignal)q=q.abortSignal(controller.signal);return q.maybeSingle();};
-    const deadline=new Promise((_,reject)=>timer=setTimeout(()=>{reject(Error('Не удалось дождаться профиля. Попробуй ещё раз.'));controller.abort();},8000));
-    const task=Promise.race([(async()=>{let r=await query(profileFields);if(r.error&&/avatar_video|animated_profile/.test(String(r.error.message)))r=await query('nick,name,av,status,bio,banner,last_seen');if(r.error)throw r.error;if(!r.data)throw Error('Профиль не найден');return r.data;})(),deadline]).then(async data=>{if(actor!==account())throw Error('Аккаунт изменился');await prepareImages(data);if(actor!==account())throw Error('Аккаунт изменился');const user=merge(data);cache.delete(nick);cache.set(nick,{user,time:Date.now(),bytes:JSON.stringify(data).length*2});while(cache.size>24||[...cache.values()].reduce((n,v)=>n+(v.bytes||0),0)>8*1024*1024)cache.delete(cache.keys().next().value);return user;}).finally(()=>{clearTimeout(timer);if(inflight.get(nick)===task)inflight.delete(nick);});
+    syncOwner();const actor=owner,epoch=generation;
+    const saved=cache.get(nick);if(!force&&saved&&Date.now()-saved.time<90000){cache.delete(nick);cache.set(nick,saved);return {...saved.user,...userCache[nick]};}if(inflight.has(nick))return inflight.get(nick);
+    const before={...userCache[nick]};
+    let timer;const controller=new AbortController();controllers.add(controller);const query=fields=>{let q=sb.from('users').select(fields).eq('nick',nick);if(q.abortSignal)q=q.abortSignal(controller.signal);return q.maybeSingle();};
+    const deadline=new Promise((_,reject)=>{timer=setTimeout(()=>{reject(Error('Не удалось дождаться профиля. Попробуй ещё раз.'));controller.abort();},8000);controller.signal.addEventListener('abort',()=>reject(Error('Запрос профиля отменён')),{once:true});});
+    const task=Promise.race([(async()=>{let r=await query(profileFields);if(r.error&&/avatar_video|animated_profile/.test(String(r.error.message)))r=await query('nick,name,av,status,bio,banner,last_seen');if(r.error)throw r.error;if(!r.data)throw Error('Профиль не найден');if(String(r.data.nick||'').toLowerCase()!==nick)throw Error('Некорректный профиль');return r.data;})(),deadline]).then(async data=>{if(epoch!==generation||actor!==account())throw Error('Аккаунт изменился');await prepareImages(data);if(epoch!==generation||actor!==account())throw Error('Аккаунт изменился');
+      // Keep fields edited/refreshed since this request began; a slow snapshot
+      // must not roll them back while still filling unrelated full-profile data.
+      const latest=userCache[nick]||{},safe={...data};for(const field of Object.keys(safe))if(Object.hasOwn(latest,field)&&latest[field]!==before[field])safe[field]=latest[field];
+      const user=merge(safe);cache.delete(nick);cache.set(nick,{user,time:Date.now(),bytes:JSON.stringify(safe).length*2});while(cache.size>24||[...cache.values()].reduce((n,v)=>n+(v.bytes||0),0)>8*1024*1024)cache.delete(cache.keys().next().value);return user;}).finally(()=>{clearTimeout(timer);controllers.delete(controller);if(inflight.get(nick)===task)inflight.delete(nick);});
     inflight.set(nick,task);return task;
   }
-  function mode(type,text){const load=document.getElementById('profile-load'),refresh=document.getElementById('profile-refresh');if(!load)return;card?.setAttribute('aria-busy',String(type==='load'));const body=card?.querySelector('.user-profile-body');if(body)body.inert=type==='load'||type==='error';load.classList.remove('show','error');refresh.classList.remove('show');if(type==='load'){document.getElementById('profile-load-text').textContent='Загружаем профиль…';load.classList.add('show');}if(type==='refresh')refresh.classList.add('show');if(type==='error'){load.classList.add('show','error');document.getElementById('profile-load-text').textContent=text||'Не удалось загрузить профиль';}}
+  function mode(type,text){const load=document.getElementById('profile-load');if(!load)return;card?.setAttribute('aria-busy',String(type==='load'));const body=card?.querySelector('.user-profile-body');if(body)body.inert=type==='load'||type==='error';load.classList.remove('show','error');if(type==='load'){document.getElementById('profile-load-text').textContent='Загружаем профиль…';load.classList.add('show');}if(type==='error'){load.classList.add('show','error');document.getElementById('profile-load-text').textContent=text||'Не удалось загрузить профиль';}}
   const mediaPaints=new WeakMap();
   const suspendedMedia=new Set();
   function syncMedia(){
@@ -86,8 +92,8 @@
   }
   openUserProfile=async function(nick,force=false){
     syncOwner();const actor=owner;nick=String(nick||'').toLowerCase();if(!nick)return;lastNick=nick;
-    if(!force&&me&&String(me.nick).toLowerCase()===nick&&Object.hasOwn(me,'banner'))cache.set(nick,{user:me,time:Date.now()});
-    const request=++token,modal=document.getElementById('user-profile-modal'),saved=cache.get(nick),preview=saved?.user||userCache[nick];
+    if(!force&&!cache.has(nick)&&me&&String(me.nick).toLowerCase()===nick&&Object.hasOwn(me,'banner'))cache.set(nick,{user:me,time:Date.now()});
+    const request=++token,modal=document.getElementById('user-profile-modal'),saved=cache.get(nick),preview=saved?{...saved.user,...userCache[nick]}:userCache[nick];
     const complete=!!saved||!!preview&&Object.hasOwn(preview,'bio');
     if(preview){paint(preview,complete);mode('idle');}else{paint({nick,name:nick,status:'',bio:'',banner:'preset:cosmos'},false);mode('load');}
     modal.classList.add('show');modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');modal.setAttribute('aria-labelledby','view-profile-name');
@@ -107,6 +113,6 @@
   // Intentional hover/focus still prepares a likely profile on a good network.
   document.addEventListener('visibilitychange',()=>{if(document.hidden){clearTimeout(prepareTimer);prepareTimer=0;}});
   window.addEventListener('telechat-native-visibility',event=>{nativeHidden=event.detail?.background===true;if(nativeHidden){clearTimeout(prepareTimer);prepareTimer=0;}});
-  window.addEventListener('telechat-account-ready-v175',()=>{if(owner!==account()){syncOwner();closeUserProfile();}clearTimeout(prepareTimer);prepareTimer=0;});
+  window.addEventListener('telechat-account-ready-v175',()=>{syncOwner(true);closeUserProfile();clearTimeout(prepareTimer);prepareTimer=0;});
   window.telechatProfileLoadingV191=Object.freeze({prepare,info:()=>({cached:cache.size,inflight:inflight.size,preparing,queued:!!prepareTimer})});
 })();

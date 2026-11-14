@@ -61,7 +61,7 @@
         if(typeof result.data.status==='string')stored=result.data.status;
       }
       user.status=stored;
-      if(typeof userCache!=='undefined')userCache[nick]={...(userCache[nick]||{}),...user,status:stored};
+      if(window.telechatUserCacheV123)window.telechatUserCacheV123.merge({nick,status:stored},{notify:true});else if(typeof userCache!=='undefined')userCache[nick]={...(userCache[nick]||{}),...user,status:stored};
       document.querySelectorAll('.profile-music-v97').forEach(node=>{if(node.dataset.nick===nick)renderAfter(node.previousElementSibling,user);});
       window.dispatchEvent(new CustomEvent('telechat-profile-music-updated-v97',{detail:{nick}}));
       return music;

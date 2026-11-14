@@ -27,7 +27,7 @@ const root=path.resolve(__dirname,'..');
     });
     assert.equal(await page.locator('#view-profile-cover').getAttribute('data-banner'),'video:test');
     assert.equal(await page.locator('#view-profile-bio').textContent(),'Hello');
-    assert(!(await page.locator('#profile-refresh').evaluate(el=>el.classList.contains('show'))));
+    assert.equal(await page.locator('#profile-refresh').count(),0,'Unused refresh overlay is retired');
     await page.evaluate(async()=>{pending.friend({data:{...userCache.friend}});await openTask;});
     assert(await page.evaluate(()=>firstAvatar===document.querySelector('#view-profile-avatar video')&&firstBanner===document.querySelector('#view-profile-cover video')));
     assert.deepEqual(await page.evaluate(()=>[avatarWrites,bannerWrites]),[1,1]);

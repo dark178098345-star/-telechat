@@ -11,7 +11,7 @@
   // Read old six-card records without silently deleting saved credentials.
   const LEGACY_STORAGE_CEILING=6,BASE_LIMIT=2,PREMIUM_LIMIT=4;
   const premiumCache=new Map();
-  let databasePromise=null,accountsCache=[],accountsReady=false,selectedNick='',changeQueue=Promise.resolve(),limit=BASE_LIMIT,premiumUnavailable=false;
+  let databasePromise=null,accountsCache=[],accountsReady=false,selectedNick='',changeQueue=Promise.resolve(),limit=BASE_LIMIT,premiumUnavailable=false,profileTimer=0;
 
   const byId=id=>document.getElementById(id);
   const normalizeNick=value=>String(value||'').trim().toLowerCase();
@@ -266,4 +266,19 @@
     clear:()=>changeAccounts(async()=>{await persistAccounts([]);premiumCache.clear();limit=BASE_LIMIT;renderAccounts();})
   });
   window.addEventListener?.('exstra-wallet-updated-v197',event=>{const nick=normalizeNick(event.detail?.nick);if(nick)premiumCache.delete(nick);});
+  // Refresh an already-saved card after a confirmed own-profile save only.
+  // Routine avatar/cache reads must not re-encrypt the account vault.
+  window.addEventListener?.('telechat-user-updated-v123',event=>{
+    const source=currentUser(),nick=normalizeNick(event.detail?.nick);
+    if(event.detail?.profileSaved!==true||!source||nick!==normalizeNick(source.nick))return;
+    clearTimeout(profileTimer);profileTimer=setTimeout(()=>{profileTimer=0;
+      changeAccounts(async()=>{
+        if(currentUser()!==source)return;const accounts=await loadAccounts(true);
+        if(currentUser()!==source)return;const old=accounts.find(a=>a.nick===nick);if(!old)return;
+        const profile=safeProfile(source,nick);if(JSON.stringify(old.profile)===JSON.stringify(profile))return;
+        await persistAccounts(accounts.map(a=>a.nick===nick?{...a,profile}:a));renderAccounts();
+      }).catch(()=>{try{window.showToast?.('Не удалось обновить сохранённую карточку. Аккаунт остаётся в списке.');}catch(_){}});
+    },200);
+  });
+  window.addEventListener?.('telechat-account-ready-v175',()=>{clearTimeout(profileTimer);profileTimer=0;});
 })();

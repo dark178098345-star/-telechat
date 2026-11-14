@@ -48,7 +48,7 @@ html body #user-profile-modal .user-profile-actions .modal-btn.primary{backgroun
 html body #user-profile-modal .user-profile-actions [hidden]{display:none!important}
 html body.theme-light #user-profile-modal .user-profile-actions .modal-btn.secondary{background:#f3f5f8!important;color:#425064!important;border-color:#dae0e8!important}
 html body #user-profile-modal .user-profile-body>[hidden]{display:none!important}
-html body #profile-load{background:var(--pc-bg);transition:none!important}html body #profile-load .profile-load-orbit{display:none}html body #profile-load .profile-load-logo{font-size:16px;font-weight:600;color:var(--pc-text)}html body #profile-refresh{display:none!important}
+html body #profile-load{background:var(--pc-bg);transition:none!important}
 html body #profile-quick-v91{--pq-surface:var(--pc-bg);--pq-block:var(--pc-block);--pq-line:var(--pc-line);--pq-text:var(--pc-text);--pq-muted:var(--pc-muted);position:fixed;z-index:12000;box-sizing:border-box;width:328px;overflow:auto;overscroll-behavior:contain;border:1px solid var(--pq-line);border-radius:14px;background:var(--pq-surface);color:var(--pq-text);font-family:inherit;animation:none!important;box-shadow:0 12px 36px #0004}
 html body #profile-quick-v91[hidden]{display:none!important}#profile-quick-v91 *{box-sizing:border-box}#profile-quick-v91 button{font-family:inherit;cursor:pointer;text-align:left;color:inherit;scale:1!important;letter-spacing:normal}
 html body #profile-quick-v91 .pq-cover{position:relative;overflow:hidden;background-size:cover;background-position:center;background-color:var(--pc-block)}#profile-quick-v91 .pq-cover video{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
