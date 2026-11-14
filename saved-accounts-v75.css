@@ -14,3 +14,4 @@
 @media(max-height:680px){.saved-accounts-v75{padding:8px;margin-bottom:9px}.saved-accounts-head-v75{padding-bottom:6px}.saved-account-list-v75{max-height:113px}.saved-account-empty-v75{padding:6px}.saved-account-empty-v75 small{display:none}.saved-account-divider-v75{margin-bottom:8px}}
 @media(max-width:370px){.saved-account-main-v75{grid-template-columns:40px minmax(0,1fr) auto 10px;gap:8px}.saved-account-avatar-v75{width:40px;height:40px}.saved-account-balance-v75{font-size:7.8px;padding:4px 6px}}
 @media(prefers-reduced-motion:reduce){.saved-account-main-v75,.saved-account-remove-v75{transition:none}}
+.saved-account-limit-v210{margin:9px 2px 0;color:var(--muted,#9793ac);font-size:10px;line-height:1.5;overflow-wrap:anywhere}

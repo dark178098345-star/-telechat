@@ -95,6 +95,7 @@ function makeContext() {
     Boolean,
     setTimeout,
     clearTimeout,
+    AbortController,
     confirm: () => true
   });
   return { context, window, elements };

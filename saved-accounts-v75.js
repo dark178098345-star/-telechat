@@ -8,14 +8,43 @@
   const KEY_ID='remember-key-v70';
   const ACCOUNTS_ID='saved-accounts-v75';
   const LEGACY_LOGIN_ID='remember-login-v70';
-  const MAX_ACCOUNTS=6;
-  let databasePromise=null,accountsCache=[],accountsReady=false,selectedNick='';
+  // Read old six-card records without silently deleting saved credentials.
+  const LEGACY_STORAGE_CEILING=6,BASE_LIMIT=2,PREMIUM_LIMIT=4;
+  const premiumCache=new Map();
+  let databasePromise=null,accountsCache=[],accountsReady=false,selectedNick='',changeQueue=Promise.resolve(),limit=BASE_LIMIT,premiumUnavailable=false;
 
   const byId=id=>document.getElementById(id);
   const normalizeNick=value=>String(value||'').trim().toLowerCase();
   const currentUser=()=>{
     try{return typeof me!=='undefined'&&me?me:(window.me||null);}catch(error){return window.me||null;}
   };
+  const premiumActive=row=>row?.premium===true&&(row.premium_forever===true||!row.premium_until||Date.parse(row.premium_until)>Date.now());
+  const cachedLimit=nicks=>nicks.some(n=>{const v=premiumCache.get(n);return v&&Date.now()-v.at<=300000&&premiumActive(v.row);})?PREMIUM_LIMIT:BASE_LIMIT;
+  function serverClient(){try{return typeof sb!=='undefined'?sb:window.sb;}catch(_){return window.sb;}}
+  async function accountLimit(accounts,extraNick=''){
+    const nicks=[...new Set([...accounts.map(a=>a.nick),normalizeNick(extraNick)].filter(Boolean))];
+    const missing=nicks.filter(n=>!premiumCache.has(n)||Date.now()-premiumCache.get(n).at>300000);
+    premiumUnavailable=false;
+    if(missing.length){let timer;const controller=new AbortController();
+      try{
+        const client=serverClient();if(!client?.from)throw Error('PREMIUM_UNAVAILABLE');
+        let q=client.from('exstra_badges_public_v197').select('nick,premium,premium_until,premium_forever').in('nick',missing);
+        if(q.abortSignal)q=q.abortSignal(controller.signal);
+        const result=await Promise.race([q,new Promise((_,reject)=>{timer=setTimeout(()=>{controller.abort();reject(Error('PREMIUM_TIMEOUT'));},5000);})]);
+        if(result?.error||!Array.isArray(result?.data))throw Error('PREMIUM_UNAVAILABLE');
+        const rows=new Map(result.data.map(row=>[normalizeNick(row.nick),row]));
+        for(const nick of missing)premiumCache.set(nick,{row:rows.get(nick)||null,at:Date.now()});
+        while(premiumCache.size>16)premiumCache.delete(premiumCache.keys().next().value);
+      }catch(_){premiumUnavailable=true;}finally{clearTimeout(timer);}
+    }
+    limit=cachedLimit(accountsCache.map(a=>a.nick));
+    return cachedLimit(nicks);
+  }
+  function changeAccounts(work){
+    const run=()=>window.navigator?.locks?.request?window.navigator.locks.request('exstra-saved-accounts-v210',work):work();
+    const next=changeQueue.then(run,run);changeQueue=next.catch(()=>{});return next;
+  }
+  function notice(message){const node=byId('saved-account-limit-v210');if(node)node.textContent=message;try{window.showToast?.(message);}catch(_){}}
 
   function openDatabase(){
     if(!('indexedDB' in window))return Promise.reject(new Error('NO_INDEXED_DB'));
@@ -50,14 +79,15 @@
     });
   }
 
-  async function deleteRecord(id){
+  async function commitRecords(records){
     const database=await openDatabase();
     return new Promise((resolve,reject)=>{
       const transaction=database.transaction(STORE_NAME,'readwrite');
-      transaction.objectStore(STORE_NAME).delete(id);
+      const store=transaction.objectStore(STORE_NAME);
+      for(const [id,value] of records){if(value===null)store.delete(id);else store.put(value,id);}
       transaction.oncomplete=()=>resolve();
-      transaction.onerror=()=>reject(transaction.error||new Error('DB_DELETE_FAILED'));
-      transaction.onabort=()=>reject(transaction.error||new Error('DB_DELETE_ABORTED'));
+      transaction.onerror=()=>reject(transaction.error||new Error('DB_WRITE_FAILED'));
+      transaction.onabort=()=>reject(transaction.error||new Error('DB_WRITE_ABORTED'));
     });
   }
 
@@ -69,11 +99,11 @@
     await writeRecord(KEY_ID,newKey);return newKey;
   }
 
-  async function encryptRecord(id,value){
-    const key=await encryptionKey(),iv=crypto.getRandomValues(new Uint8Array(12));
+  async function encryptRecord(key,value){
+    const iv=crypto.getRandomValues(new Uint8Array(12));
     const encoded=new TextEncoder().encode(JSON.stringify(value));
     const encrypted=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,encoded);
-    await writeRecord(id,{version:2,iv:Array.from(iv),data:Array.from(new Uint8Array(encrypted)),savedAt:Date.now()});
+    return {version:2,iv:Array.from(iv),data:Array.from(new Uint8Array(encrypted)),savedAt:Date.now()};
   }
 
   async function decryptRecord(id){
@@ -105,33 +135,38 @@
     const seen=new Set(),result=[];
     for(const raw of source){
       const account=safeAccount(raw);if(!account||seen.has(account.nick))continue;
-      seen.add(account.nick);result.push(account);if(result.length>=MAX_ACCOUNTS)break;
+      seen.add(account.nick);result.push(account);if(result.length>=LEGACY_STORAGE_CEILING)break;
     }
     return result.sort((a,b)=>b.savedAt-a.savedAt);
   }
 
   async function loadAccounts(force=false){
     if(accountsReady&&!force)return accountsCache;
-    let accounts=[];
-    try{accounts=sanitizeAccounts(await decryptRecord(ACCOUNTS_ID));}catch(error){}
+    let accounts=[],readError=null;
+    try{accounts=sanitizeAccounts(await decryptRecord(ACCOUNTS_ID));}catch(error){readError=error;}
     if(!accounts.length){
       try{
         const legacy=await decryptRecord(LEGACY_LOGIN_ID),account=safeAccount(legacy&&{...legacy,profile:{nick:legacy.nick,name:legacy.nick,av:0},savedAt:legacy.savedAt});
         if(account)accounts=[account];
-      }catch(error){}
+      }catch(error){readError=readError||error;}
     }
+    // A failed read is not an empty vault. Never overwrite it after a login.
+    if(readError&&force)throw Error('SAVED_ACCOUNTS_UNAVAILABLE');
     accountsCache=accounts;accountsReady=true;return accountsCache;
   }
 
   async function persistAccounts(accounts){
-    accountsCache=accounts.slice(0,MAX_ACCOUNTS);accountsReady=true;
-    if(!accountsCache.length){
-      await Promise.all([deleteRecord(ACCOUNTS_ID).catch(()=>{}),deleteRecord(LEGACY_LOGIN_ID).catch(()=>{})]);
+    const next=accounts.slice(0,LEGACY_STORAGE_CEILING);
+    if(!next.length){
+      await commitRecords([[ACCOUNTS_ID,null],[LEGACY_LOGIN_ID,null]]);
+      accountsCache=[];accountsReady=true;
       return;
     }
-    await encryptRecord(ACCOUNTS_ID,{version:1,accounts:accountsCache});
-    const latest=accountsCache[0];
-    await encryptRecord(LEGACY_LOGIN_ID,{nick:latest.nick,password:latest.password,savedAt:latest.savedAt});
+    const latest=next[0],key=await encryptionKey();
+    const saved=await encryptRecord(key,{version:1,accounts:next});
+    const legacy=await encryptRecord(key,{nick:latest.nick,password:latest.password,savedAt:latest.savedAt});
+    await commitRecords([[ACCOUNTS_ID,saved],[LEGACY_LOGIN_ID,legacy]]);
+    accountsCache=next;accountsReady=true;
   }
 
   function avatarInto(element,account){
@@ -145,6 +180,11 @@
     shell.classList.toggle('has-accounts',accountsCache.length>0);
     if(empty)empty.hidden=accountsCache.length>0;
     if(divider)divider.hidden=!accountsCache.length;
+    let hint=byId('saved-account-limit-v210');
+    if(!hint){hint=document.createElement('p');hint.id='saved-account-limit-v210';hint.className='saved-account-limit-v210';hint.setAttribute('role','status');shell.append(hint);}
+    hint.textContent=accountsCache.length>limit
+      ?'Сохранено '+accountsCache.length+' из '+limit+'. Прежние карточки сохранены; убери лишние вручную, чтобы добавить другую.'
+      :'На этом устройстве: '+accountsCache.length+' из '+limit+'. '+(limit===PREMIUM_LIMIT?'Premium — до 4 аккаунтов.':'С Premium — до 4 аккаунтов.')+(premiumUnavailable?' Проверка Premium недоступна; новые места пока не добавлены.':'');
     list.replaceChildren();
     for(const account of accountsCache){
       const card=document.createElement('article');card.className='saved-account-card-v75';card.dataset.nick=account.nick;if(account.nick===selectedNick)card.classList.add('selected');
@@ -157,18 +197,26 @@
       const arrow=document.createElement('span');arrow.className='saved-account-arrow-v75';arrow.textContent='›';arrow.setAttribute('aria-hidden','true');
       main.append(avatar,copy,arrow);main.onclick=()=>useAccount(account.nick);
       const remove=document.createElement('button');remove.type='button';remove.className='saved-account-remove-v75';remove.textContent='×';remove.title='Убрать аккаунт';remove.setAttribute('aria-label','Убрать @'+account.nick+' из списка');
-      remove.onclick=event=>{event.stopPropagation();removeAccount(account.nick);};
+      remove.onclick=event=>{event.stopPropagation();removeAccount(account.nick).catch(()=>notice('Не удалось изменить список аккаунтов. Прежние карточки сохранены.'));};
       card.append(main,remove);list.appendChild(card);
     }
   }
 
   async function saveAccount(nick,password){
     const safeNick=normalizeNick(nick),user=currentUser();if(!safeNick||!password)return;
-    const accounts=await loadAccounts();
-    const profile=safeProfile(user&&normalizeNick(user.nick)===safeNick?user:null,safeNick);
-    const next={nick:safeNick,password,profile,savedAt:Date.now()};
-    const merged=[next,...accounts.filter(account=>account.nick!==safeNick)].slice(0,MAX_ACCOUNTS);
-    await persistAccounts(merged);renderAccounts();
+    return changeAccounts(async()=>{
+      const accounts=await loadAccounts(true),exists=accounts.some(a=>a.nick===safeNick);
+      // The first two places and existing cards need no subscription round trip.
+      const max=!exists&&accounts.length>=BASE_LIMIT?await accountLimit(accounts,safeNick):BASE_LIMIT;
+      if(!exists&&accounts.length>=max){renderAccounts();notice('Вход выполнен, но аккаунт не сохранён: доступно '+max+' места. Убери одну карточку'+(max===BASE_LIMIT?' или подключи Premium.':'.'));return false;}
+      const profile=safeProfile(user&&normalizeNick(user.nick)===safeNick?user:null,safeNick);
+      const next={nick:safeNick,password,profile,savedAt:Date.now()};
+      const merged=[next,...accounts.filter(account=>account.nick!==safeNick)];
+      await persistAccounts(merged);limit=cachedLimit(merged.map(a=>a.nick));renderAccounts();
+      // Enrichment is background-only; it cannot delay ordinary sign-in hooks.
+      accountLimit(merged).then(renderAccounts).catch(()=>{});
+      return true;
+    });
   }
 
   async function useAccount(nick){
@@ -182,36 +230,40 @@
   async function removeAccount(nick){
     const target=normalizeNick(nick);if(!target)return;
     if(typeof confirm==='function'&&!confirm('Убрать @'+target+' из списка аккаунтов?'))return;
-    const accounts=(await loadAccounts()).filter(account=>account.nick!==target);
-    await persistAccounts(accounts);if(selectedNick===target)selectedNick='';renderAccounts();
+    await changeAccounts(async()=>{const accounts=(await loadAccounts(true)).filter(account=>account.nick!==target);
+    await persistAccounts(accounts);await accountLimit(accounts);if(selectedNick===target)selectedNick='';renderAccounts();});
     try{window.showToast?.('Аккаунт убран с этого устройства');}catch(error){}
   }
 
-  function loginSucceeded(nick,result){
-    if(result===true)return true;
+  function loginSucceeded(nick,result,before){
+    if(result===false)return false;
     const authHidden=!byId('auth-screen')?.classList.contains('active');
     const chatVisible=byId('chat-screen')?.classList.contains('active');
-    return Boolean(authHidden&&chatVisible&&normalizeNick(currentUser()?.nick)===nick);
+    const user=currentUser();
+    return Boolean(authHidden&&chatVisible&&normalizeNick(user?.nick)===nick&&(result===true||before.authVisible||user!==before.user));
   }
 
   function wrapLogin(){
     const previousLogin=window.doLogin;if(typeof previousLogin!=='function'||previousLogin.savedAccountsWrappedV75)return;
     const wrapped=async function(...args){
       const nick=normalizeNick(byId('l-login')?.value),password=byId('l-pass')?.value||'';
+      const before={user:currentUser(),authVisible:byId('auth-screen')?.classList.contains('active')};
       const result=await previousLogin.apply(this,args);
-      if(loginSucceeded(nick,result))await saveAccount(nick,password).catch(()=>{try{window.showToast?.('Не удалось сохранить аккаунт на этом устройстве');}catch(error){}});
+      if(loginSucceeded(nick,result,before))await saveAccount(nick,password).catch(()=>{try{window.showToast?.('Не удалось сохранить аккаунт на этом устройстве');}catch(error){}});
       return result;
     };
     wrapped.savedAccountsWrappedV75=true;window.doLogin=wrapped;
   }
 
-  async function init(){await loadAccounts();renderAccounts();}
+  async function init(){const accounts=await loadAccounts();renderAccounts();await accountLimit(accounts);renderAccounts();}
   wrapLogin();const ready=init().catch(()=>renderAccounts());
   window.telechatAccountsV75=Object.freeze({
     ready,
     list:async()=> (await loadAccounts()).map(account=>({nick:account.nick,profile:{...account.profile},savedAt:account.savedAt})),
     use:useAccount,
     remove:removeAccount,
-    clear:async()=>{await persistAccounts([]);renderAccounts();}
+    limits:async()=>{const accounts=await loadAccounts();await accountLimit(accounts);renderAccounts();return {count:accounts.length,max:limit,premium:limit===PREMIUM_LIMIT,overLimit:accounts.length>limit,unavailable:premiumUnavailable};},
+    clear:()=>changeAccounts(async()=>{await persistAccounts([]);premiumCache.clear();limit=BASE_LIMIT;renderAccounts();})
   });
+  window.addEventListener?.('exstra-wallet-updated-v197',event=>{const nick=normalizeNick(event.detail?.nick);if(nick)premiumCache.delete(nick);});
 })();
