@@ -3,7 +3,7 @@
   'use strict';
 
   const SUPER_ADMIN_V36 = 'creator';
-  const REACTIONS_V36 = ['❤️', '🥰', '😘', '👍', '🔥', '😍'];
+  const REACTIONS_V36 = ['❤️', '😂', '😮', '👍', '🔥', '😍'];
   const STORAGE_V36 = {
     glass: 'telechat_glass_v36',
     context: 'telechat_context_menu_v36'
@@ -19,6 +19,15 @@
   let reactionRefreshTimerV36 = 0;
   let reactionRequestV105=0;
   const pendingReactionsV126=new Map();
+  let reactionOwnerV213='',reactionKeyV213='',reactionGenerationV213=0;
+  const reactionReadsV213=new Set();
+  const reactionAccountV213=()=>{try{return String(me?.nick||'');}catch(_){return '';}};
+  const reactionIdV213=id=>/^[1-9]\d*$/.test(String(id||''));
+  const reactionTokenV213=value=>value==='❤'?'❤️':String(value||'');
+  function validReactionV213(value){return typeof value==='string'&&value.length<=80&&(!!window.telechatEmojiArtV127?.get(value)||/^(?:\p{Extended_Pictographic}(?:[\uFE0E\uFE0F]|\p{Emoji_Modifier})*(?:\u200D\p{Extended_Pictographic}(?:[\uFE0E\uFE0F]|\p{Emoji_Modifier})*)*)$/u.test(value));}
+  const sameReactionContextV213=ctx=>ctx.generation===reactionGenerationV213&&ctx.owner===reactionAccountV213()&&ctx.key===conversationKey();
+  function reactionContextV213(force=false){const owner=reactionAccountV213(),key=conversationKey();if(force||owner!==reactionOwnerV213||key!==reactionKeyV213){reactionGenerationV213++;reactionRequestV105++;for(const controller of reactionReadsV213)controller.abort();clearTimeout(reactionRefreshTimerV36);reactionRefreshTimerV36=0;reactionRowsV36.clear();pendingReactionsV126.clear();if(force||owner!==reactionOwnerV213){const old=reactionSubscriptionV36;reactionSubscriptionV36=null;if(old)Promise.resolve().then(()=>sb.removeChannel?.(old)).catch(()=>{});}reactionOwnerV213=owner;reactionKeyV213=key;}return {owner,key,generation:reactionGenerationV213};}
+  async function reactionRequestV213(query,ms=8000,read=true){const controller=new AbortController();if(read)reactionReadsV213.add(controller);if(query.abortSignal)query=query.abortSignal(controller.signal);let timer;try{return await Promise.race([query,new Promise((_,reject)=>{timer=setTimeout(()=>{const error=Error('Нет подтверждения от сервера');error.code='REACTION_TIMEOUT';reject(error);controller.abort();},ms);controller.signal.addEventListener('abort',()=>reject(new DOMException('Cancelled','AbortError')),{once:true});})]);}finally{clearTimeout(timer);reactionReadsV213.delete(controller);}}
   const reactionInfoV126=emoji=>window.telechatReactionArtV126?.info(emoji)||{label:emoji,color:'#c5b4ee',html:''};
   let contextOpenedAtV36 = 0;
   let manualMessageScrollAtV36 = 0;
@@ -180,7 +189,7 @@
     const canDelete = !!message.id && !message.deleted && (own || me?.nick === SUPER_ADMIN_V36);
     const canEdit = !!message.id && own && !message.deleted && !isSpecialMessageV36(message.text);
     const canPin = !!message.id && !message.deleted;
-    document.getElementById('ctx-reactions-v36').style.display = message.id && !message.deleted ? 'grid' : 'none';
+    document.getElementById('ctx-reactions-v36').style.display = reactionIdV213(message.id) && !message.deleted ? 'grid' : 'none';
     syncReactionPickerV126(message.id);
     document.getElementById('ctx-edit-v36').style.display = canEdit ? 'flex' : 'none';
     document.getElementById('ctx-pin-v36').style.display = canPin ? 'flex' : 'none';
@@ -554,7 +563,8 @@
   }
 
   function renderMessageReactionsV36(message, element) {
-    if (!element || !message?.id || message.deleted) return;
+    if (!element || !message?.id) return;
+    if(message.deleted){element.querySelector('.msg-reactions-v36')?.remove();return;}
     const rows = reactionRowsV36.get(String(message.id)) || [];
     let container = element.querySelector('.msg-reactions-v36');
     if (!rows.length) { container?.remove(); return; }
@@ -586,7 +596,7 @@
       remaining.delete(emoji);
       button.classList.add('message-reaction-v36');button.classList.toggle('mine',nicks.includes(me?.nick));
       button.title = nicks.map(nick => '@' + nick).join(', ');
-      const art=reactionInfoV126(emoji),mine=nicks.includes(me?.nick),busy=pendingReactionsV126.has(String(message.id));
+      const pending=pendingReactionsV126.get(String(message.id)),art=reactionInfoV126(emoji),mine=nicks.includes(me?.nick),busy=!!pending&&sameReactionContextV213(pending);
       button.style.setProperty('--reaction-tone',art.color);button.disabled=busy;button.setAttribute('aria-busy',String(busy));button.setAttribute('aria-pressed',String(mine));button.setAttribute('aria-label',art.label+' · '+nicks.length+(mine?' · твоя реакция, нажми чтобы убрать':' · поставить реакцию'));
       if(!button.querySelector('.reaction-icon-v126')){const icon=document.createElement('span');icon.className='reaction-icon-v126';if(art.html)icon.innerHTML=art.html;else icon.textContent=emoji;const count=document.createElement('span');count.className='reaction-count-v126';button.replaceChildren(icon,count);}
       const count=button.querySelector('.reaction-count-v126');if(count.textContent!==String(nicks.length))count.textContent=String(nicks.length);
@@ -612,32 +622,31 @@
   }
 
   async function refreshVisibleReactionsV36() {
-    const request=++reactionRequestV105,key=conversationKey();
-    const messages = Array.from(visibleMessagesV36.values()).filter(message => message.id && !message.deleted);
+    const ctx=reactionContextV213(),request=++reactionRequestV105,key=ctx.key;if(!ctx.owner||!key)return;
+    const messages = Array.from(visibleMessagesV36.values()).filter(message => reactionIdV213(message.id) && !message.deleted&&(!message.chat_key||message.chat_key===key));
     const ids = Array.from(new Set(messages.map(message => message.id)));
+    const wantedIdsV213=new Set(ids.map(String));
     const nextRows = new Map();
     if (ids.length) {
-      let result;
-      try { result = await sb.from('message_reactions').select('*').in('message_id', ids); }
-      catch (error) { return; } // Keep the last good snapshot while offline.
-      if (result.error) return;
-      (result.data || []).forEach(row => {
-        const key = String(row.message_id);
-        if (!nextRows.has(key)) nextRows.set(key, []);
-        nextRows.get(key).push(row);
-      });
+      const latest=new Map();
+      for(let offset=0;offset<ids.length;offset+=80){let result;try { result = await reactionRequestV213(sb.from('message_reactions').select('*').in('message_id', ids.slice(offset,offset+80))); }catch (error) { return; } // Keep the last good snapshot while offline.
+        if(result?.error||!sameReactionContextV213(ctx)||request!==reactionRequestV105)return;
+        for(const row of result.data||[]){if(!wantedIdsV213.has(String(row.message_id))||typeof row.user_nick!=='string'||!validReactionV213(row.emoji))continue;const key=String(row.message_id)+'|'+row.user_nick,before=latest.get(key);if(!before||Number(row.created_at||0)>=Number(before.created_at||0))latest.set(key,{...row,emoji:reactionTokenV213(row.emoji)});}
+      }
+      for(const row of latest.values()){const key=String(row.message_id);if(!nextRows.has(key))nextRows.set(key,[]);nextRows.get(key).push(row);}
     }
-    if(request!==reactionRequestV105||key!==conversationKey())return;
+    if(request!==reactionRequestV105||!sameReactionContextV213(ctx))return;
     // Realtime can arrive before our write finishes; keep the local intent visible.
     for (const [id, pending] of pendingReactionsV126) {
-      if (pending.key !== key || pending.owner !== me?.nick) continue;
+      if (!sameReactionContextV213(pending)) continue;
       const rows = (nextRows.get(id) || []).filter(row => row.user_nick !== pending.owner);
       if (pending.emoji) rows.push({message_id:pending.id, user_nick:pending.owner, emoji:pending.emoji});
       nextRows.set(id, rows);
     }
     reactionRowsV36 = nextRows;
+    const elements=new Map([...document.querySelectorAll('#messages .msg')].map(element=>[element.dataset.contextKeyV36,element]));
     visibleMessagesV36.forEach((message, key) => {
-      const element = Array.from(document.querySelectorAll('#messages .msg')).find(item => item.dataset.contextKeyV36 === key);
+      const element = elements.get(key);
       if (element) renderMessageReactionsV36(message, element);
     });
     if (typeof ctxMsg !== 'undefined' && ctxMsg?.id) syncReactionPickerV126(ctxMsg.id);
@@ -649,17 +658,16 @@
   }
 
   function ensureReactionSubscriptionV36() {
-    if (reactionSubscriptionV36 || !me?.nick) return;
-    reactionSubscriptionV36 = sb.channel('message-reactions-v36-' + me.nick + '-' + Date.now())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'message_reactions' }, scheduleReactionRefreshV36)
-      .subscribe();
+    reactionContextV213();const owner=reactionAccountV213();if (reactionSubscriptionV36 || !owner) return;
+    const channel=sb.channel('message-reactions-v36-' + owner + '-' + Date.now());reactionSubscriptionV36=channel;
+    channel.on('postgres_changes', { event: '*', schema: 'public', table: 'message_reactions' }, payload=>{if(reactionSubscriptionV36!==channel||reactionAccountV213()!==owner)return;const id=payload?.new?.message_id??payload?.old?.message_id;if(id&&!visibleMessagesV36.has('id:'+id))return;scheduleReactionRefreshV36();}).subscribe(status=>{if(status==='SUBSCRIBED'&&reactionSubscriptionV36===channel)scheduleReactionRefreshV36();});
   }
 
   function syncReactionPickerV126(messageId) {
     const mine = (reactionRowsV36.get(String(messageId)) || []).find(row => row.user_nick === me?.nick);
     document.querySelectorAll('[data-reaction-v36]').forEach(button => {
       button.setAttribute('aria-pressed', String(button.dataset.reactionV36 === mine?.emoji));
-      button.disabled = pendingReactionsV126.has(String(messageId));
+      const pending=pendingReactionsV126.get(String(messageId));button.disabled = !!pending&&sameReactionContextV213(pending);
     });
   }
 
@@ -674,12 +682,12 @@
   }
 
   async function toggleMessageReactionV36(messageId, emoji) {
-    const id = String(messageId), owner = me?.nick, key = conversationKey();
-    if (!messageId || !owner || !key || !REACTIONS_V36.includes(emoji) || pendingReactionsV126.has(id)) return;
+    const ctx=reactionContextV213(),id=String(messageId),owner=ctx.owner,key=ctx.key;emoji=reactionTokenV213(emoji);
+    if (!reactionIdV213(messageId) || !owner || !key || !validReactionV213(emoji) || pendingReactionsV126.has(id)) return;
     const rows = reactionRowsV36.get(id) || [];
     const mine = rows.find(row => row.user_nick === owner);
     const selected = mine?.emoji === emoji ? null : emoji;
-    pendingReactionsV126.set(id, {id:messageId, owner, key, emoji:selected});
+    const job={...ctx,id:messageId,emoji:selected};pendingReactionsV126.set(id,job);
     reactionRequestV105++;
     const optimistic = rows.filter(row => row.user_nick !== owner);
     if (selected) optimistic.push({message_id:messageId, user_nick:owner, emoji:selected});
@@ -692,21 +700,22 @@
       window.telechatReactionArtV126?.animate(button);
     }
     try {
-      const result = selected === null
-        ? await sb.from('message_reactions').delete().eq('message_id', messageId).eq('user_nick', owner)
-        : await sb.from('message_reactions').upsert({message_id:messageId, user_nick:owner, emoji, created_at:Date.now()}, {onConflict:'message_id,user_nick'});
+      const query = selected === null
+        ? sb.from('message_reactions').delete().eq('message_id', messageId).eq('user_nick', owner)
+        : sb.from('message_reactions').upsert({message_id:messageId, user_nick:owner, emoji, created_at:Date.now()}, {onConflict:'message_id,user_nick'});
+      const result=await reactionRequestV213(query,30000,false);
       if (result.error) throw result.error;
-      window.dispatchEvent(new CustomEvent('telechat-chat-action-v155',{detail:{action:'reaction',owner,key,text:selected||''}}));
+      if(sameReactionContextV213(ctx))window.dispatchEvent(new CustomEvent('telechat-chat-action-v155',{detail:{action:'reaction',owner,key,text:selected||''}}));
     } catch (error) {
-      if (key === conversationKey() && owner === me?.nick) {
+      if (sameReactionContextV213(ctx)&&pendingReactionsV126.get(id)===job) {
         const current = (reactionRowsV36.get(id) || []).filter(row => row.user_nick !== owner);
         if (mine) current.push(mine);
         reactionRowsV36.set(id, current);
-        showToast('Не удалось сохранить реакцию. Попробуй ещё раз.');
+        showToast(error?.code==='REACTION_TIMEOUT'?'Сервер не подтвердил реакцию. Проверим состояние ещё раз.':error?.code==='42501'?'Сервер запретил сохранять реакции. Сообщи об этом создателю.':'Не удалось сохранить реакцию. Проверь соединение и попробуй ещё раз.');
       }
     } finally {
-      pendingReactionsV126.delete(id);
-      if (key === conversationKey() && owner === me?.nick) {
+      if(pendingReactionsV126.get(id)===job)pendingReactionsV126.delete(id);
+      if (sameReactionContextV213(ctx)) {
         reactionRequestV105++;
         paintReactionV126(id);
         scheduleReactionRefreshV36();
@@ -741,6 +750,7 @@
   window.telechatRefreshReactionsV36 = refreshVisibleReactionsV36;
   window.telechatResetVisibleReactionsV36 = () => visibleMessagesV36.clear();
   window.telechatSyncVisibleMessagesV105 = items => {
+    reactionContextV213();
     reactionRequestV105++;
     visibleMessagesV36.clear();
     const elements=new Map([...document.querySelectorAll('#messages .msg[data-id]')].map(element=>[String(element.dataset.id),element]));
@@ -751,6 +761,8 @@
     ensureReactionSubscriptionV36();
     scheduleReactionRefreshV36();
   };
+  window.addEventListener('telechat-account-ready-v175',()=>{reactionContextV213(true);visibleMessagesV36.clear();closeContextMenuV36();document.querySelectorAll('#messages .msg-reactions-v36').forEach(node=>node.remove());});
+  window.addEventListener('online',()=>{ensureReactionSubscriptionV36();scheduleReactionRefreshV36();});
 
   installInterfaceSettingsV36();
   buildContextMenuV36();

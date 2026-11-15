@@ -1,0 +1,7 @@
+.spell-host-v213{position:relative}
+.spell-mirror-v213{position:absolute;z-index:3;box-sizing:border-box;margin:0;border-style:solid;border-color:transparent;background:transparent;color:transparent!important;-webkit-text-fill-color:transparent;white-space:pre-wrap;overflow-wrap:break-word;word-break:normal;overflow:hidden;pointer-events:none!important;user-select:none;text-shadow:none!important;scrollbar-width:none;clip-path:inset(0 round 4px)}
+.spell-mirror-v213[hidden]{display:none!important}
+.spell-word-v213{text-decoration-line:underline;text-decoration-style:wavy;text-decoration-color:#eb8195;text-decoration-thickness:1.1px;text-underline-offset:3px}
+.spell-letter-v213{color:#ff6e87!important;-webkit-text-fill-color:#ff6e87}
+.theme-light .spell-word-v213{text-decoration-color:#d85b75}.theme-light .spell-letter-v213{color:#c82e50!important;-webkit-text-fill-color:#c82e50}
+.spell-settings-v213>.setting-note{margin:8px 0 0;font-size:11px;line-height:1.5}

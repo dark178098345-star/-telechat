@@ -1,0 +1,10 @@
+{
+  "dictionary": "dictionary-ru@3.0.0",
+  "builder": "nspell@2.1.5",
+  "words": 1366410,
+  "states": 70355,
+  "edges": 194453,
+  "bytes": 2118484,
+  "gzip": 652225,
+  "sha256": "49e9fc366116df43b36f1b1aae71152842d18b6470af3f19c08bc98cd39cb5ac"
+}
