@@ -20,6 +20,10 @@
   let queue = [], repeat = false, shuffle = false;
   let loading=false,playError=null,playRequest=0,pauseEpoch=0,audioStartAbort=null;
   let userVolume=audio.volume,sleepGain=1;
+  let ownerGeneration=0,libraryRevision=0,libraryFlight=null,busyOperation=null,sessionAbort=new AbortController();
+  const valid=context=>context&&context.nick===owner()&&context.nick===activeOwner&&context.generation===ownerGeneration;
+  function check(context){if(!valid(context))throw new Error('Аккаунт изменился. Открой библиотеку заново.');}
+  function scope(){const nick=syncOwner();return {nick,generation:ownerGeneration,signal:sessionAbort.signal};}
   function applyVolume(){audio.volume=userVolume*sleepGain;cloudPlayer?.setVolume?.(audio.volume);}
   const soundcloud = window.telechatSoundCloudV98;
   let cloudPlayer = null, cloudAbort = null, pendingAutoPlay = false;
@@ -86,14 +90,22 @@
       tx.onabort=tx.onerror=()=>finish(tx.error||new Error('Не удалось прочитать локальное хранилище музыки.'));
     });
   }
-  async function write(track, blob, remove = false) {
+  async function write(track, blob, remove = false, context) {
+    if(context){check(context);if(track.owner!==context.nick)throw new Error('Трек принадлежит другому аккаунту.');}
     const db = await database();
+    if(context)check(context);
     return new Promise((resolve,reject) => {
       const tx = db.transaction(['tracks','files'],'readwrite');
-      if (remove) { tx.objectStore('tracks').delete(track.id); tx.objectStore('files').delete(track.id); }
-      else { tx.objectStore('tracks').put(track); if (blob) tx.objectStore('files').put(blob,track.id); }
-      tx.oncomplete = resolve;
-      tx.onabort = tx.onerror = () => reject(tx.error || new Error('Не удалось сохранить трек.'));
+      let settled=false;const finish=error=>{if(settled)return;settled=true;clearTimeout(timer);context?.signal.removeEventListener('abort',abort);if(error)reject(error);else resolve();};
+      const abort=()=>{try{tx.abort();}catch(_){}finish(new Error('Аккаунт изменился. Сохранение остановлено.'));};
+      const timer=setTimeout(()=>{finish(new Error('Не удалось подтвердить сохранение локального трека. Открой библиотеку заново перед повтором.'));try{tx.abort();}catch(_){}},30000);
+      context?.signal.addEventListener('abort',abort,{once:true});
+      tx.oncomplete = () => finish();
+      tx.onabort = tx.onerror = () => finish(tx.error || new Error('Не удалось сохранить трек.'));
+      try{
+        if (remove) { tx.objectStore('tracks').delete(track.id); tx.objectStore('files').delete(track.id); }
+        else { tx.objectStore('tracks').put(track); if (blob) tx.objectStore('files').put(blob,track.id); }
+      }catch(error){try{tx.abort();}catch(_){}finish(error);}
     });
   }
   function errorText(error) {
@@ -120,17 +132,24 @@
     if ('mediaSession' in navigator) {navigator.mediaSession.metadata = null;navigator.mediaSession.playbackState = 'none';}
   }
   async function loadLibrary() {
-    const nick = syncOwner();
-    const rows = await read('tracks',nick,'owner');
-    if (owner() !== nick) return;
-    const sorted = rows.sort((a,b) => b.added - a.added);
-    const changed = JSON.stringify(sorted) !== JSON.stringify(tracks);
-    tracks = sorted;
-    if (changed || !byId('music-list-v96')?.childElementCount) renderList();
+    const context=scope(),revision=libraryRevision;
+    if(libraryFlight?.generation===context.generation)return libraryFlight.promise;
+    const flight={generation:context.generation};flight.promise=(async()=>{
+      const rows=await read('tracks',context.nick,'owner');check(context);
+      if(revision!==libraryRevision)return;
+      const sorted=(rows||[]).filter(t=>t?.owner===context.nick).sort((a,b)=>b.added-a.added);
+      const changed=JSON.stringify(sorted)!==JSON.stringify(tracks);tracks=sorted;
+      if(changed||!byId('music-list-v96')?.childElementCount)renderList();
+    })().finally(()=>{if(libraryFlight===flight)libraryFlight=null;});libraryFlight=flight;return flight.promise;
+  }
+  function resetAccount(nick){
+    activeOwner=nick;ownerGeneration++;libraryRevision++;libraryFlight=null;sessionAbort.abort();sessionAbort=new AbortController();
+    busyOperation=null;tracks=[];queue=[];setBusy(false);stop();close();renderList();
+    for(const id of ['music-url-v96','music-title-v96','music-files-v96'])if(byId(id))byId(id).value='';status('');
   }
   function syncOwner(){
-    const nick=owner();if(!nick)throw new Error('Войди в аккаунт, чтобы открыть музыку.');
-    if(activeOwner!==nick){stop();tracks=[];queue=[];activeOwner=nick;renderList();}
+    const nick=owner();if(activeOwner!==nick)resetAccount(nick);
+    if(!nick)throw new Error('Войди в аккаунт, чтобы открыть музыку.');
     return nick;
   }
   function normalizeLink(value) {
@@ -144,12 +163,14 @@
     }
     return url.href;
   }
-  function inspectAudio(src) {
+  function inspectAudio(src,signal) {
     return new Promise((resolve,reject) => {
+      if(signal?.aborted){reject(new DOMException('Cancelled','AbortError'));return;}
       const probe = new Audio(); probe.preload = 'metadata';
+      let settled=false;const abort=()=>finish(new DOMException('Cancelled','AbortError'));
       const timer = setTimeout(() => finish(new Error('Аудио не отвечает. Проверь ссылку или выбери файл.')),15000);
       function finish(error) {
-        clearTimeout(timer); probe.onloadedmetadata = probe.onerror = null;
+        if(settled)return;settled=true;clearTimeout(timer);signal?.removeEventListener('abort',abort);probe.onloadedmetadata = probe.onerror = null;
         const seconds = probe.duration;
         probe.removeAttribute('src');probe.load();
         if (error) reject(error);
@@ -158,14 +179,16 @@
       }
       probe.onloadedmetadata = () => finish();
       probe.onerror = () => finish(new Error('Не удалось прочитать аудио. Подойдёт MP3, M4A, WAV, OGG или другой формат, который воспроизводит браузер.'));
+      signal?.addEventListener('abort',abort,{once:true});
       probe.src = src;
     });
   }
   function setBusy(value) {
     busy = value;
-    dialog.querySelectorAll('[data-music-add],#music-url-v96,#music-title-v96').forEach(el => el.disabled = value);
+    dialog?.querySelectorAll('[data-music-add],#music-url-v96,#music-title-v96').forEach(el => el.disabled = value);
   }
-  async function addFile(file, nick) {
+  async function addFile(file, context) {
+    check(context);const nick=context.nick;
     if (!file || !file.size) throw new Error('Выбери непустой аудиофайл.');
     if (file.size > TRACK_LIMIT) throw new Error('Один трек — до 50 МБ.');
     if (!file.type.startsWith('audio/') && !/\.(mp3|m4a|aac|wav|ogg|opus|flac|webm)$/i.test(file.name)) throw new Error('Выбери аудиофайл.');
@@ -173,28 +196,29 @@
     if (tracks.reduce((sum,t) => sum + t.size,0) + file.size > LIBRARY_LIMIT) throw new Error('Библиотека вмещает до 250 МБ файлов. Удали ненужные треки.');
     const src = URL.createObjectURL(file);
     let seconds;
-    try { seconds = await inspectAudio(src); } finally { URL.revokeObjectURL(src); }
-    if (owner() !== nick) throw new Error('Аккаунт изменился. Открой библиотеку заново.');
+    try { seconds = await inspectAudio(src,context.signal); } finally { URL.revokeObjectURL(src); }
+    check(context);
     const track = {id:crypto.randomUUID(),owner:nick,title:file.name.replace(/\.[^.]+$/,'').slice(0,160),kind:'file',size:file.size,duration:seconds,added:Date.now()};
-    await write(track,file);tracks.unshift(track);renderList();return track;
+    await write(track,file,false,context);check(context);libraryRevision++;tracks.unshift(track);renderList();return track;
   }
   async function addFiles(files) {
+    const context=scope();
     if (busy) return {added:[],error:'Дождись завершения предыдущей загрузки.'};
     if (!files.length) return {added:[],error:''};
-    setBusy(true);let count = 0;const added=[];let failure='';
+    const operation={};busyOperation=operation;setBusy(true);let count = 0;const added=[];let failure='';
     try {
-      await loadLibrary();const nick = owner();
-      for (const file of files) {status('Сохраняем: ' + file.name);added.push(await addFile(file,nick));count++;}
+      await loadLibrary();check(context);
+      for (const file of files) {check(context);status('Сохраняем: ' + file.name);added.push(await addFile(file,context));count++;}
       status(`Сохранено треков: ${count}. Можно слушать без интернета.`);
-    } catch (error) {failure=errorText(error);status((count ? `Сохранено: ${count}. ` : '') + failure,true);}
-    finally {setBusy(false);byId('music-files-v96').value = '';}
+    } catch (error) {failure=valid(context)?errorText(error):'Аккаунт изменился. Открой библиотеку заново.';if(valid(context))status((count ? `Сохранено: ${count}. ` : '') + failure,true);}
+    finally {if(busyOperation===operation){busyOperation=null;setBusy(false);byId('music-files-v96').value = '';}}
     return {added:added.map(t=>({...t})),error:failure};
   }
   async function addLink(event) {
     event.preventDefault();if (busy) return;
-    setBusy(true);
+    const context=scope(),operation={};busyOperation=operation;setBusy(true);
     try {
-      await loadLibrary();const nick = owner(), url = normalizeLink(byId('music-url-v96').value);
+      await loadLibrary();check(context);const nick = context.nick, url = normalizeLink(byId('music-url-v96').value);
       if (tracks.some(t => t.url === url)) throw new Error('Эта ссылка уже есть в библиотеке.');
       if (tracks.length >= COUNT_LIMIT) throw new Error('В библиотеке уже 100 треков.');
       status('Проверяем аудио по ссылке…');
@@ -202,17 +226,18 @@
       if(soundcloud?.isLink(url)) {
         const host=byId('music-soundcloud-probe-v98');
         status('Открываем официальный плеер SoundCloud…');position();
-        const probe=await soundcloud.create(url,host,{canPlay:()=>false});
-        seconds=probe.duration;cloudTitle=probe.title;probe.destroy();position();
-      } else seconds = await inspectAudio(url);
-      if (owner() !== nick) throw new Error('Аккаунт изменился. Открой библиотеку заново.');
+        const probe=await soundcloud.create(url,host,{signal:context.signal,canPlay:()=>false});
+        try{check(context);seconds=probe.duration;cloudTitle=probe.title;}finally{probe.destroy();}position();
+      } else seconds = await inspectAudio(url,context.signal);
+      check(context);
       let filename = new URL(url).pathname.split('/').pop() || 'Трек по ссылке';
       try {filename = decodeURIComponent(filename);} catch (_) {}
       const title = byId('music-title-v96').value.trim() || cloudTitle || filename.replace(/\.[^.]+$/,'');
       const track = {id:crypto.randomUUID(),owner:nick,title:title.slice(0,160),kind:'link',url,size:0,duration:seconds,added:Date.now()};
-      await write(track);tracks.unshift(track);renderList();event.target.reset();
+      await write(track,null,false,context);check(context);libraryRevision++;tracks.unshift(track);renderList();event.target.reset();
+      window.dispatchEvent(new Event('telechat-music-library-v117'));
       status('Ссылка сохранена. Для прослушивания нужен интернет.');
-    } catch (error) {status(errorText(error),true);} finally {setBusy(false);}
+    } catch (error) {if(valid(context))status(errorText(error),true);} finally {if(busyOperation===operation){busyOperation=null;setBusy(false);}}
   }
   async function play(track,autoplay=true,reload=false) {
     const request=++playRequest;loading=true;playError=null;updatePlayers();
@@ -232,11 +257,12 @@
       stop(true);const token=playToken;current=track;pendingAutoPlay=autoplay&&intent===pauseEpoch;cloudAbort=new AbortController();
       ensureDialog();dialog.classList.add('has-soundcloud-v98');updatePlayers();position();
       try {
-        cloudPlayer=await soundcloud.create(track.url,byId('music-soundcloud-widget-v98'),{
+        const created=await soundcloud.create(track.url,byId('music-soundcloud-widget-v98'),{
           signal:cloudAbort.signal,canPlay:()=>token===playToken&&owner()===track.owner&&!inCall()&&pendingAutoPlay,
-          onState:()=>{if(token!==playToken)return;audio.pause();updatePlayers();},onEnd:ended,onError:error=>{if(token!==playToken)return;playError=playbackFailure(error);notify(playError.message);updatePlayers();}
+          onState:()=>{if(token!==playToken||owner()!==track.owner)return;audio.pause();updatePlayers();},onEnd:()=>{if(token===playToken&&owner()===track.owner)ended();},onError:error=>{if(token!==playToken||owner()!==track.owner)return;playError=playbackFailure(error);notify(playError.message);updatePlayers();}
         });
-        if(token!==playToken||owner()!==track.owner){cloudPlayer?.destroy();cloudPlayer=null;return;}
+        if(token!==playToken||owner()!==track.owner){created.destroy();return;}
+        cloudPlayer=created;
         current.duration=cloudPlayer.duration;
         cloudPlayer.setVolume?.(audio.volume);
         if('mediaSession' in navigator&&'MediaMetadata' in window)navigator.mediaSession.metadata=new MediaMetadata({title:track.title,artist:'SoundCloud · ExstraChat'});
@@ -357,22 +383,25 @@
       profileButton.addEventListener('click',async () => {
         if (track.kind !== 'link') {status('В профиль можно добавить трек по прямой ссылке. Файл хранится только на этом устройстве.',true);position();return;}
         if (!profileMusic || profileButton.disabled) return;
-        profileButton.disabled = true;status('Сохраняем трек в профиле…');
+        const context=scope();profileButton.disabled = true;status('Сохраняем трек в профиле…');
         try {
           const removing = profileMusic.getOwn()?.url === track.url;
           await profileMusic.save(removing ? null : track);
+          check(context);
           status(removing ? 'Трек убран из профиля.' : 'Трек добавлен в профиль — другие смогут его послушать.');renderList();
-        } catch(error) {status(errorText(error),true);profileButton.disabled=false;}
+        } catch(error) {if(valid(context)){status(errorText(error),true);profileButton.disabled=false;}}
         position();
       });
       row.querySelector('.music-track-remove').addEventListener('click',async event => {
         if (busy || owner() !== track.owner || !confirm(`Удалить «${track.title}» из своей библиотеки?`)) return;
+        const context=scope();
         const button = event.currentTarget;button.disabled = true;
         try {
-          await write(track,null,true);
+          await write(track,null,true,context);check(context);libraryRevision++;
           if (current?.id === track.id) stop();
           tracks = tracks.filter(t => t.id !== track.id);renderList();status('Трек удалён из библиотеки.');
-        } catch (error) {status(errorText(error),true);button.disabled = false;}
+          window.dispatchEvent(new Event('telechat-music-library-v117'));
+        } catch (error) {if(valid(context)){status(errorText(error),true);button.disabled = false;}}
       });
       list.append(row);
     }
@@ -448,11 +477,12 @@
   async function open(trigger, legacy = false) {
     if (!owner()) {window.showToast?.('Сначала войди в аккаунт');return;}
     if(!legacy&&window.telechatMusicHubV117)return window.telechatMusicHubV117.open();
+    const context=scope();
     ensureDialog();opener = trigger || document.activeElement;
     if (!dialog.open) dialog.show();
     trigger?.setAttribute('aria-expanded','true');position();
     if(!tracks.length)status('Открываем библиотеку…');
-    try {await loadLibrary();status('');} catch (error) {status(errorText(error),true);}
+    try {await loadLibrary();check(context);status('');} catch (error) {if(valid(context))status(errorText(error),true);}
     position();
   }
   const top = document.querySelector('.sidebar-top');if (!top) return;
@@ -467,15 +497,15 @@
   document.addEventListener('visibilitychange',()=>{if(document.hidden)close();});
   window.addEventListener('telechat-profile-music-updated-v97',()=>{if(dialog)renderList();});
   window.telechatMusicV96 = {
-    async getTracks(){ensureDialog();await loadLibrary();return tracks.map(t=>({...t}));},
-    getState(){const media=player();return {track:current?{...current}:null,paused:media.paused,time:media.currentTime||0,duration:media.duration||current?.duration||0,repeat,shuffle,loading,error:playError,volume:userVolume};},
+    async getTracks(){const context=scope();ensureDialog();await loadLibrary();check(context);return tracks.map(t=>({...t}));},
+    getState(){if(activeOwner!==owner())resetAccount(owner());const media=player();return {track:current?{...current}:null,paused:media.paused,time:media.currentTime||0,duration:media.duration||current?.duration||0,repeat,shuffle,loading,error:playError,volume:userVolume};},
     resume:resumeMusic,
     async playTrack(track,items=[],options={}){const nick=syncOwner();ensureDialog();queue=items.map(t=>({...t,owner:nick}));return play({...track,owner:nick},options.autoplay!==false);},
-    async getFile(id){await loadLibrary();if(!tracks.some(t=>t.id===id))throw new Error('Трек не найден');return read('files',id);},
-    async importFiles(files){ensureDialog();await addFiles(files);window.dispatchEvent(new Event('telechat-music-library-v117'));return tracks.map(t=>({...t}));},
-    async importFilesReport(files){ensureDialog();const result=await addFiles(files);window.dispatchEvent(new Event('telechat-music-library-v117'));return result;},
-    async removeLocal(id){await loadLibrary();const t=tracks.find(t=>t.id===id);if(!t)return;await write(t,null,true);if(current?.id===id)stop();tracks=tracks.filter(t=>t.id!==id);renderList();},
-    async saveLink(track){ensureDialog();await loadLibrary();const url=normalizeLink(track.url);if(tracks.some(t=>t.url===url))return;if(tracks.length>=COUNT_LIMIT)throw new Error('В библиотеке уже 100 треков');const item={...track,id:crypto.randomUUID(),owner:owner(),url,kind:'link',size:0,added:Date.now()};await write(item);tracks.unshift(item);renderList();},
+    async getFile(id){const context=scope();await loadLibrary();check(context);if(!tracks.some(t=>t.id===id&&t.owner===context.nick))throw new Error('Трек не найден');const file=await read('files',id);check(context);return file;},
+    async importFiles(files){const context=scope();ensureDialog();await addFiles(files);check(context);window.dispatchEvent(new Event('telechat-music-library-v117'));return tracks.map(t=>({...t}));},
+    async importFilesReport(files){const context=scope();ensureDialog();const result=await addFiles(files);check(context);window.dispatchEvent(new Event('telechat-music-library-v117'));return result;},
+    async removeLocal(id){const context=scope();await loadLibrary();check(context);const t=tracks.find(t=>t.id===id&&t.owner===context.nick);if(!t)return;await write(t,null,true,context);check(context);libraryRevision++;if(current?.id===id)stop();tracks=tracks.filter(t=>t.id!==id);renderList();window.dispatchEvent(new Event('telechat-music-library-v117'));},
+    async saveLink(track){const context=scope();ensureDialog();await loadLibrary();check(context);const url=normalizeLink(track.url);if(tracks.some(t=>t.url===url))return;if(tracks.length>=COUNT_LIMIT)throw new Error('В библиотеке уже 100 треков');const item={...track,id:crypto.randomUUID(),owner:context.nick,url,kind:'link',size:0,added:Date.now()};await write(item,null,false,context);check(context);libraryRevision++;tracks.unshift(item);renderList();window.dispatchEvent(new Event('telechat-music-library-v117'));},
     inspectAudio,normalizeLink,pause:pauseMusic,seek:seekTo,step,stop,
     toggle(){if(loading){pauseMusic();return;}if(current)return play(current,true,!!playError);},
     retry(){if(current)return play(current,true,true);},
@@ -507,4 +537,5 @@
   document.addEventListener('play',event => {if (event.target !== audio && event.target instanceof HTMLMediaElement && !event.target.muted && event.target.volume > 0) pauseMusic();},true);
   new MutationObserver(() => {if(inCall()) pauseMusic();}).observe(document.body,{attributes:true,attributeFilter:['class']});
   window.addEventListener('pagehide',stop);
+  window.addEventListener('telechat-account-ready-v175',()=>resetAccount(owner()));
 })();

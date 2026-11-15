@@ -1,0 +1,21 @@
+'use strict';
+// Isolated invitation UI; no real chats, accounts, channels or server writes.
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict'),{chromium}=require('playwright');
+const source=fs.readFileSync(path.resolve(__dirname,'../music-room-invites-v148.js'),'utf8');
+async function fixture(browser){
+ const p=await browser.newPage();await p.route('https://invite-cache.test/**',r=>r.fulfill({contentType:'text/html',body:'<div id="panel"></div><div id="messages"></div>'}));await p.goto('https://invite-cache.test/');
+ await p.evaluate(()=>{
+  window.me={nick:'alice'};window.userCache={};window.sent=[];window.lookups=[];window.holdLookup=true;window.testRoom={id:'fixture-room',host:true};window.joinGate=null;
+  window.telechatTogetherV147={state:()=>testRoom,invitation:()=>({id:'fixture-room',key:'fixture-key'}),open(){},join:()=>new Promise(ok=>joinGate=ok)};
+  window.telechatDeliveryV72={sendDirect:async(nick,text)=>{sent.push({nick,text});return true;}};window.renderMessageContent=()=>'';
+  window.sb={from(){const q={select(){return q;},eq(_,nick){q.nick=nick;return q;},abortSignal(){return q;},maybeSingle(){return holdLookup?new Promise(ok=>lookups.push(()=>ok({data:{nick:q.nick},error:null}))):Promise.resolve({data:{nick:q.nick},error:null});}};return q;}};
+  window.roomInfo={id:'fixture-room',owner:'alice',link:location.href+'#listen=fixture'};
+ });await p.addScriptTag({content:source});await p.evaluate(()=>telechatRoomInvitesV148.open(document.getElementById('panel'),roomInfo));return p;
+}
+(async()=>{const browser=await chromium.launch({channel:'msedge',headless:true});try{
+ let p=await fixture(browser);await p.locator('form input').fill('oldfriend');await p.locator('form button').click();await p.waitForFunction(()=>lookups.length===1);await p.locator('form input').fill('newfriend');await p.evaluate(()=>lookups.shift()());await p.waitForTimeout(20);assert.deepEqual(await p.evaluate(()=>sent),[],'Old input lookup must not send an invite');assert.equal(await p.locator('[role=status]').textContent(),'');await p.locator('form button').click();await p.waitForFunction(()=>lookups.length===1);await p.evaluate(()=>lookups.shift()());await p.waitForFunction(()=>sent.length===1);assert.equal(await p.evaluate(()=>sent[0].nick),'newfriend');await p.close();
+ p=await fixture(browser);await p.locator('form input').fill('friend');await p.locator('form button').click();await p.waitForFunction(()=>lookups.length===1);await p.evaluate(()=>{dispatchEvent(new Event('telechat-account-ready-v175'));telechatRoomInvitesV148.open(document.getElementById('panel'),roomInfo);lookups.shift()();});await p.waitForTimeout(20);assert.deepEqual(await p.evaluate(()=>sent),[],'Same nickname/new login cannot continue an old invitation');assert.equal(await p.locator('[role=status]').textContent(),'');assert(await p.locator('form button').isEnabled());await p.close();
+ p=await fixture(browser);await p.clock.install();await p.locator('form input').fill('friend');await p.locator('form button').click();await p.waitForFunction(()=>lookups.length===1);await p.clock.fastForward(8100);assert.match(await p.locator('[role=status]').textContent(),/вовремя/);assert(await p.locator('form button').isEnabled(),'Non-cancellable lookup has a bounded wait');await p.close();
+ p=await fixture(browser);await p.evaluate(()=>{const url=new URL(location.href);url.hash='listen=fixture';url.searchParams.set('invite',String(Date.now()));document.getElementById('messages').innerHTML=renderMessageContent('Приглашение слушать вместе\n'+url.href);testRoom=null;});await p.getByRole('button',{name:'Войти',exact:true}).click();await p.waitForFunction(()=>!!joinGate);await p.evaluate(()=>{dispatchEvent(new Event('telechat-account-ready-v175'));joinGate();});await p.waitForTimeout(20);assert.equal(await p.locator('.room-invite-result-v148').textContent(),'','Old join result cannot paint into a new same-nickname session');await p.close();
+ console.log('PASS invitation lifecycle: newer input wins, same-account session isolation, bounded lookup, and stale Join UI suppression. Dummy messages only.');
+}finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

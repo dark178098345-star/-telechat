@@ -50,7 +50,7 @@
       const latest=await sb.from('users').select('nick,status').eq('nick',nick).maybeSingle();
       if(latest.error)throw latest.error;
       if(!latest.data)throw new Error('Профиль не найден.');
-      if(meNow()?.nick!==nick)throw new Error('Аккаунт изменился. Повтори действие.');
+      if(meNow()!==user)throw new Error('Аккаунт изменился. Повтори действие.');
       if(user.status!==initialStatus)throw new Error('Профиль успел измениться. Нажми ещё раз — сохраним свежую версию.');
       const before=latest.data.status,next=encode(before,music);let stored=next;
       if(next!==before){
@@ -60,6 +60,7 @@
         if(!result.data)throw new Error('Не удалось сохранить профиль. Повтори действие.');
         if(typeof result.data.status==='string')stored=result.data.status;
       }
+      if(meNow()!==user)throw new Error('Аккаунт изменился. Повтори действие.');
       user.status=stored;
       if(window.telechatUserCacheV123)window.telechatUserCacheV123.merge({nick,status:stored},{notify:true});else if(typeof userCache!=='undefined')userCache[nick]={...(userCache[nick]||{}),...user,status:stored};
       document.querySelectorAll('.profile-music-v97').forEach(node=>{if(node.dataset.nick===nick)renderAfter(node.previousElementSibling,user);});
