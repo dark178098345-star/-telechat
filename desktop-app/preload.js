@@ -138,7 +138,7 @@ if (document.readyState === 'loading') {
 contextBridge.exposeInMainWorld('telechatDesktop', {
   isDesktop: true,
   updaterVersion: 2,
-  browserVersion: 2,
+  browserVersion: 3,
   openBrowser(url = '', mode = 'embedded') {
     return ipcRenderer.invoke('telechat:open-browser', String(url || ''), mode === 'window' ? 'window' : 'embedded');
   },

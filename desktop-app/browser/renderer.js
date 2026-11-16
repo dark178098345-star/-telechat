@@ -1,9 +1,12 @@
 'use strict';
 (()=>{
  const api=window.exstraSites,$=id=>document.getElementById(id),input=$('address');
- let state=null,currentId=0,gridMark='',editing=null,editorPending=false,busy=false,opener=null,removeConfirm=false;
+ let state=null,currentId=0,gridMark='',editing=null,editorPending=false,busy=false,opener=null,removeConfirm=false,editorEpoch=0;
  const command=(action,data={})=>api.command({action,...data});
- const focus=()=>{if(editing)return;input.focus();input.select();};
+ const shortcutProfile=(value=state)=>value?.profiles?(value.profiles.screen==='browser'?value.profiles.active?.id||null:null):undefined;
+ const shortcutCommand=(action,data={},owner=shortcutProfile())=>owner===null?Promise.resolve({ok:false,error:'Сначала войди в профиль сайтов.'}):command(action,owner===undefined?data:{...data,profileId:owner});
+ const editorCurrent=(stamp,owner)=>stamp===editorEpoch&&shortcutProfile()===owner;
+ const focus=()=>{if(editing||window.exstraSitesProfilesV214?.isOpen())return;input.focus();input.select();};
  const icons={auto:['Автоматически','M5 5h5v5H5Zm9 0h5v5h-5ZM5 14h5v5H5Zm9 0h5v5h-5Z'],globe:['Сайт','M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0ZM3 12h18M12 3q-7 9 0 18 7-9 0-18'],music:['Музыка','M9 18V5l11-2v13M9 9l11-2M9 18c0 3-6 4-6 1s6-4 6-1Zm11-2c0 3-6 4-6 1s6-4 6-1Z'],video:['Видео','M4 4h16v16H4Zm5 4 7 4-7 4Z'],chat:['Общение','M5 4h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H9l-6 4V6a2 2 0 0 1 2-2Zm3 6h8m-8 4h5'],code:['Разработка','m8 6-6 6 6 6m8-12 6 6-6 6m-3-15-2 18'],book:['Чтение','M12 5v16M3 4q5-2 9 1 4-3 9-1v15q-5-2-9 2-4-4-9-2Z'],game:['Игры','M8 7h8q4 0 5 5l1 5q0 4-4 2l-3-3H9l-3 3q-4 2-4-2l1-5q1-5 5-5Zm-2 4v4m-2-2h4m8-2h.01m3 3h.01']};
  const svg=key=>'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+icons[key][1]+'"/></svg>';
  function paintIcon(node,item){
@@ -26,7 +29,7 @@
   for(const item of items){
    let tile=old.get(item.id);old.delete(item.id);
    if(!tile){tile=document.createElement('div');tile.className='shortcut-tile';tile.dataset.id=item.id;tile.innerHTML='<button type="button" class="shortcut-open"><span class="shortcut-icon" aria-hidden="true"></span><span class="shortcut-name"></span></button><button type="button" class="shortcut-menu" title="Изменить ярлык">···</button>';const open=tile.querySelector('.shortcut-open'),menu=tile.querySelector('.shortcut-menu'),saved=()=>state?.shortcuts?.find(value=>value.id===item.id)||item;
-    open.onclick=event=>command('shortcut-open',{id:item.id,newTab:event.ctrlKey||event.metaKey});open.onauxclick=event=>{if(event.button===1){event.preventDefault();command('shortcut-open',{id:item.id,newTab:true});}};menu.onclick=()=>openEditor(saved(),menu);tile.oncontextmenu=event=>{event.preventDefault();openEditor(saved(),menu);};}
+    open.onclick=event=>shortcutCommand('shortcut-open',{id:item.id,newTab:event.ctrlKey||event.metaKey});open.onauxclick=event=>{if(event.button===1){event.preventDefault();shortcutCommand('shortcut-open',{id:item.id,newTab:true});}};menu.onclick=()=>openEditor(saved(),menu);tile.oncontextmenu=event=>{event.preventDefault();openEditor(saved(),menu);};}
    const open=tile.querySelector('.shortcut-open');open.title=item.name+'\n'+item.url;tile.querySelector('.shortcut-name').textContent=item.name;tile.querySelector('.shortcut-menu').setAttribute('aria-label','Изменить: '+item.name);paintIcon(tile.querySelector('.shortcut-icon'),item);
    if(grid.children[index]!==tile)grid.insertBefore(tile,grid.children[index]||null);index++;
   }
@@ -40,23 +43,31 @@
  }
  function setBusy(value){busy=value;for(const control of $('shortcut-editor').querySelectorAll('button,input'))control.disabled=value;updateTools();$('editor-save').textContent=value?'Сохраняем…':'Сохранить';}
  function editorError(message=''){$('editor-error').hidden=!message;$('editor-error').textContent=message;}
+ function resetEditor(){
+  editorEpoch++;editing=null;editorPending=false;opener=null;removeConfirm=false;
+  $('editor-backdrop').hidden=true;document.body.dataset.editing='false';$('chrome').inert=false;$('stage').inert=false;
+  $('shortcut-name').value='';$('shortcut-url').value='';$('editor-title').textContent='Новый ярлык';$('edit-tools').hidden=true;$('remove-shortcut').textContent='Удалить';
+  for(const node of $('icon-options').children)node.setAttribute('aria-checked',String(node.dataset.icon==='auto'));
+  editorError();setBusy(false);
+ }
  async function openEditor(item,source){
-  if(editing||editorPending)return;editorPending=true;
-  try{const result=await command('shortcut-editor',{open:true});if(!result?.ok)return;
+  if(editing||editorPending||window.exstraSitesProfilesV214?.isOpen())return;
+  const owner=shortcutProfile();if(owner===null)return;const stamp=++editorEpoch;editorPending=true;
+  try{const result=await shortcutCommand('shortcut-editor',{open:true},owner);if(!editorCurrent(stamp,owner)||!result?.ok)return;
    editing={...item,icon:icons[item.icon]?item.icon:'auto'};opener=source||document.activeElement;removeConfirm=false;
    $('editor-title').textContent=item.id?'Изменить ярлык':'Новый ярлык';$('shortcut-name').value=item.name||'';$('shortcut-url').value=item.url||'';$('edit-tools').hidden=!item.id;$('remove-shortcut').textContent='Удалить';
    for(const node of $('icon-options').children)node.setAttribute('aria-checked',String(node.dataset.icon===editing.icon));
    editorError();setBusy(false);document.body.dataset.editing='true';$('chrome').inert=true;$('stage').inert=true;$('editor-backdrop').hidden=false;$('shortcut-name').focus();$('shortcut-name').select();
-  }catch{$('status').textContent='Не удалось открыть редактор. Попробуй ещё раз.';}finally{editorPending=false;}
+  }catch{if(editorCurrent(stamp,owner))$('status').textContent='Не удалось открыть редактор. Попробуй ещё раз.';}finally{if(editorCurrent(stamp,owner))editorPending=false;}
  }
  async function closeEditor(){
-  if(!editing||busy)return;editing=null;$('editor-backdrop').hidden=true;document.body.dataset.editing='false';$('chrome').inert=false;$('stage').inert=false;
-  try{await command('shortcut-editor',{open:false});}catch{}
-  if(!state?.tabs.find(tab=>tab.id===state.active)?.url&&opener?.isConnected)opener.focus();
+  if(!editing||busy)return;const owner=shortcutProfile(),source=opener;resetEditor();const stamp=editorEpoch;
+  try{await shortcutCommand('shortcut-editor',{open:false},owner);}catch{}
+  if(editorCurrent(stamp,owner)&&!state?.tabs.find(tab=>tab.id===state.active)?.url&&source?.isConnected)source.focus();
  }
  async function changeShortcut(action,data,close=true){
-  if(busy)return;setBusy(true);editorError();
-  try{const result=await command(action,data);if(!result?.ok)editorError(result?.error||'Не удалось сохранить. Попробуй ещё раз.');else{setBusy(false);if(close)await closeEditor();return;}}catch{editorError('Нет ответа от приложения. Попробуй ещё раз.');}finally{setBusy(false);}
+  if(busy||!editing)return;const stamp=editorEpoch,owner=shortcutProfile();setBusy(true);editorError();
+  try{const result=await shortcutCommand(action,data,owner);if(!editorCurrent(stamp,owner)||!editing)return;if(!result?.ok)editorError(result?.error||'Не удалось сохранить. Попробуй ещё раз.');else{setBusy(false);if(close)await closeEditor();return;}}catch{if(editorCurrent(stamp,owner)&&editing)editorError('Нет ответа от приложения. Попробуй ещё раз.');}finally{if(editorCurrent(stamp,owner))setBusy(false);}
  }
  for(const [key,[label]]of Object.entries(icons)){
   const button=document.createElement('button');button.type='button';button.className='icon-option';button.dataset.icon=key;button.title=label;button.setAttribute('role','radio');button.setAttribute('aria-label',label);button.setAttribute('aria-checked','false');button.innerHTML=svg(key);button.onclick=()=>{if(!editing)return;editing.icon=key;for(const node of $('icon-options').children)node.setAttribute('aria-checked',String(node===button));};$('icon-options').append(button);
@@ -70,7 +81,8 @@
  $('editor-backdrop').onclick=event=>{if(event.target===$('editor-backdrop'))closeEditor();};
  document.addEventListener('keydown',event=>{if(!editing)return;if(event.key==='Escape'){event.preventDefault();closeEditor();}if(event.key==='Tab'){const controls=[...$('shortcut-editor').querySelectorAll('button:not(:disabled),input:not(:disabled)')].filter(node=>!node.closest('[hidden]'));if(!controls.length){event.preventDefault();return;}const first=controls[0],last=controls.at(-1);if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}}});
  function render(next){
-  if(!next||!Array.isArray(next.tabs))return;state=next;
+  if(!next||!Array.isArray(next.tabs))return;const previousProfile=shortcutProfile();state=next;if(previousProfile!==shortcutProfile())resetEditor();
+  window.exstraSitesProfilesV214?.render(next,command);
   document.body.dataset.mode=next.mode||'embedded';$('dock').textContent=next.mode==='window'?'В раздел':'Отдельное окно';$('dock').title=next.mode==='window'?'Вернуть внутрь ExstraChat':'Вынести раздел в отдельное окно';
   const active=next.tabs.find(t=>t.id===next.active),switched=currentId!==next.active;currentId=next.active;
   const old=new Map([...$('tabs').children].map(n=>[Number(n.dataset.id),n]));

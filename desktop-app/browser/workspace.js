@@ -4,42 +4,52 @@ const { pathToFileURL } = require('node:url');
 const { MAX_TABS, normalizeURL, safePage, safeFrame } = require('./policy');
 const { ShortcutStore, MAX_SHORTCUTS } = require('./shortcuts');
 const { FaviconCache } = require('./favicons');
+const { ProfileStore, MAX_PROFILES } = require('./profiles');
 
 class SitesWorkspace {
   constructor(electron, getMainWindow = () => null) {
     this.e = electron; this.getMainWindow = getMainWindow;
     this.window = null; this.host = null; this.chrome = null; this.mode = 'hidden';
     this.tabs = []; this.active = 0; this.nextId = 0; this.notice = ''; this.mark = '';
-    this.editorOpen = false; this.alwaysOnTop = false;
-    this.shortcuts = new ShortcutStore(electron.app ? path.join(electron.app.getPath('userData'), 'sites-shortcuts.json') : null);
-    this.favicons = new FaviconCache({file:electron.app ? path.join(electron.app.getPath('userData'),'sites-favicons-v1.json') : null,net:electron.net,onChange:()=>this.publish()});
+    this.editorOpen = false; this.alwaysOnTop = false; this.profileDialog = false;
+    this.userData = electron.app ? electron.app.getPath('userData') : null;
+    this.profiles = new ProfileStore(this.userData ? path.join(this.userData, 'sites-profiles-v1.json') : null);
+    this.profileActive = null; this.profileEpoch = 0; this.profileJob = null; this.profileBusy = false; this.pendingURL = '';
+    this.profileSnapshots = new Map(); this.profileSessions = new Map();
+    this.shortcuts = new ShortcutStore(); this.favicons = new FaviconCache();
     this.resizeHost = () => this.layout();
     this.chromeURL = pathToFileURL(path.join(__dirname, 'index.html')).href;
     const trusted = event => {
       const wc = this.chrome?.webContents;
       return !!wc && !wc.isDestroyed() && event.sender === wc && event.senderFrame === wc.mainFrame && event.senderFrame.url === this.chromeURL;
     };
-    electron.ipcMain.handle('exstra-sites:state', async event => { if (!trusted(event)) return null; await Promise.all([this.shortcuts.load(),this.favicons.load()]); return trusted(event) ? this.state() : null; });
+    electron.ipcMain.handle('exstra-sites:state', async event => { if (!trusted(event)) return null; await this.profiles.load(); return trusted(event) ? this.state() : null; });
     electron.ipcMain.handle('exstra-sites:command', (event, payload) => trusted(event) ? this.command(payload) : { ok: false });
   }
   get session() {
-    if (this._session) return this._session;
-    const s = this.e.session.fromPartition('persist:exstra-sites-v202');
+    const id = this.profileActive?.id;
+    if (!id) throw Error('Сначала войди в профиль сайтов.');
+    if (this.profileSessions.has(id)) return this.profileSessions.get(id);
+    const s = this.e.session.fromPartition(this.profiles.paths(id, this.userData || '').partition);
     s.setPermissionCheckHandler(() => false);
     s.setPermissionRequestHandler((_wc, _permission, callback) => callback(false));
     s.setDevicePermissionHandler(() => false);
     s.setDisplayMediaRequestHandler((_request, callback) => callback({}));
-    s.on('will-download', event => { event.preventDefault(); this.tell('Загрузки здесь отключены. Используй кнопку «Открыть снаружи».'); });
+    s.on('will-download', event => { event.preventDefault(); if (this.profileActive?.id === id) this.tell('Загрузки здесь отключены. Используй кнопку «Открыть снаружи».'); });
     // Never inherit chat cookies, permissions, preloads or filesystem access.
-    this._session = s;
+    this.profileSessions.set(id, s);
     return s;
   }
   open(input = '', mode = 'embedded') {
     const url = input ? normalizeURL(input) : '';
     if (input && !url) return { ok: false, error: 'Нужна обычная ссылка http:// или https://' };
-    if (!this.chrome || this.chrome.webContents.isDestroyed()) this.createChrome();
+    if (!this.chrome?.webContents || this.chrome.webContents.isDestroyed()) {
+      if (this.chrome) { this.lockProfile(false); this.removeFromHost(); }
+      this.createChrome();
+    }
     if (mode === 'window') this.detach(); else if (!this.embed()) return { ok: false, error: 'Главное окно недоступно' };
-    if (!this.tabs.length || url) this.add(url);
+    if (this.profileActive) { if (!this.tabs.length || url) this.add(url); }
+    else if (url) this.pendingURL = url;
     const host = this.host;
     this.chromeReady.then(() => { if (this.host === host && this.mode !== 'hidden') this.focusCurrent(); });
     return { ok: true };
@@ -55,7 +65,7 @@ class SitesWorkspace {
     for (const name of ['will-navigate', 'will-redirect']) wc.on(name, event => event.preventDefault());
     wc.on('will-attach-webview', event => event.preventDefault());
     wc.on('before-input-event', (event, input) => this.shortcut(event, input));
-    this.chromeReady = Promise.all([wc.loadFile(path.join(__dirname, 'index.html')), this.shortcuts.load(),this.favicons.load()]).then(() => {this.publish();this.favicons.ensure(this.shortcuts.list());}).catch(() => {});
+    this.chromeReady = Promise.all([wc.loadFile(path.join(__dirname, 'index.html')), this.profiles.load()]).then(() => {this.publish();}).catch(() => {});
   }
   removeFromHost() {
     if (this.host) {
@@ -74,7 +84,7 @@ class SitesWorkspace {
       for (const tab of this.tabs) if (tab.view) host.contentView.addChildView(tab.view);
       for (const name of ['resize','show','hide','minimize','restore']) host.on(name, this.resizeHost);
     }
-    this.mode = mode; this.mark = ''; this.publish(); this.layout();
+    this.mode = mode; this.mark = ''; this.publish();
   }
   embed() {
     const main = this.getMainWindow(); if (!main || main.isDestroyed()) return false;
@@ -88,10 +98,10 @@ class SitesWorkspace {
     return true;
   }
   detach() {
-    if (this.window && !this.window.isDestroyed()) { this.window.show(); this.window.focus(); return; }
+    if (this.window && !this.window.isDestroyed()) { if (this.host !== this.window) this.rehost(this.window, 'window'); this.window.show(); this.window.focus(); return; }
     const win = new this.e.BrowserWindow({
       width: this.alwaysOnTop ? 540 : 1220, height: this.alwaysOnTop ? 720 : 820, minWidth: 420, minHeight: 420, show: false,
-      title: 'ExstraChat · Окно сайтов', backgroundColor: '#101116', autoHideMenuBar: true,
+      title: 'ExstraChat · Окно сайтов', backgroundColor: '#101116', autoHideMenuBar: true, alwaysOnTop: this.alwaysOnTop,
       icon: path.join(__dirname, '..', 'assets', 'icon.png'),
       titleBarStyle: 'hidden', titleBarOverlay: { color: '#15161c', symbolColor: '#c3c5d0', height: 44 },
       webPreferences: { nodeIntegration: false, contextIsolation: true, sandbox: true, webSecurity: true, webviewTag: false, devTools: false }
@@ -106,39 +116,45 @@ class SitesWorkspace {
     this.chromeReady.then(() => { if (this.window === win && !win.isDestroyed()) { win.show(); win.focus(); this.focusCurrent(); } });
   }
   focusAddress() {
-    if (this.editorOpen || !this.host || !this.chrome || this.chrome.webContents.isDestroyed()) return;
+    if (!this.profileActive || this.profileDialog || this.editorOpen || !this.host || !this.chrome?.webContents || this.chrome.webContents.isDestroyed()) return;
     this.chrome.webContents.focus(); this.chrome.webContents.send('exstra-sites:focus-address');
   }
   focusCurrent() {
-    if (this.editorOpen) { this.chrome?.webContents.focus(); return; }
+    if (!this.profileActive || this.profileDialog || this.editorOpen) { const wc = this.chrome?.webContents; if (wc && !wc.isDestroyed()) wc.focus(); return; }
     const tab = this.current();
-    if (this.host && tab?.url && !tab.error && tab.view && !tab.view.webContents.isDestroyed()) tab.view.webContents.focus();
+    if (this.host && tab?.url && !tab.error && tab.view?.webContents && !tab.view.webContents.isDestroyed()) tab.view.webContents.focus();
     else this.focusAddress();
   }
   hide() {
+    if (this.profileActive?.settings.lockOnHide) this.lockProfile();
+    else if (this.profileBusy && !this.profileActive) { this.profileEpoch++; this.profileJob = null; this.profileBusy = false; this.pendingURL = ''; }
     if (this.mode === 'window') { this.getMainWindow()?.webContents.focus(); return; }
     const previous = this.host;
     this.removeFromHost(); this.mode = 'hidden'; this.publish();
     if (previous && !previous.isDestroyed()) previous.webContents.focus();
   }
   dispose() {
+    this.profileEpoch++; this.profileJob = null; this.profileBusy = false; this.profileActive = null; this.profileDialog = false; this.pendingURL = '';
+    this.profileSnapshots.clear();
     this.favicons.pause();
     this.removeFromHost();
     for (const tab of this.tabs) this.destroyView(tab);
-    if (this.chrome && !this.chrome.webContents.isDestroyed()) this.chrome.webContents.close({ waitForBeforeUnload: false });
+    if (this.chrome?.webContents && !this.chrome.webContents.isDestroyed()) this.chrome.webContents.close({ waitForBeforeUnload: false });
     this.chrome = null; this.tabs = []; this.active = 0; this.mark = ''; this.mode = 'hidden'; this.editorOpen = false; this.alwaysOnTop = false;
+    this.shortcuts = new ShortcutStore(); this.favicons = new FaviconCache();
   }
   current() { return this.tabs.find(tab => tab.id === this.active); }
   state() {
     return { active: this.active, max: MAX_TABS, notice: this.notice, mode: this.mode, alwaysOnTop: this.mode === 'window' && this.alwaysOnTop,
-      shortcuts: this.shortcuts.list().map(item=>({...item,favicon:item.icon==='auto'?this.favicons.get(item.url):''})), shortcutsReady: this.shortcuts.loaded, shortcutsError: this.shortcuts.error, shortcutsMax: MAX_SHORTCUTS,
+      profiles: { ready: this.profiles.loaded, error: this.profiles.error, fatal: this.profiles.fatal, screen: this.profileActive ? 'browser' : 'chooser', busy: this.profileBusy, max: MAX_PROFILES, active: this.profileActive ? { ...this.profileActive, settings: { ...this.profileActive.settings } } : null, items: this.profileActive ? [] : this.profiles.list() },
+      shortcuts: this.profileActive ? this.shortcuts.list().map(item=>({...item,favicon:item.icon==='auto'?this.favicons.get(item.url):''})) : [], shortcutsReady: !!this.profileActive && this.shortcuts.loaded, shortcutsError: this.profileActive ? this.shortcuts.error : '', shortcutsMax: MAX_SHORTCUTS,
       tabs: this.tabs.map(tab => ({ id: tab.id, url: tab.url, title: tab.title, loading: tab.loading,
         error: tab.error, sleeping: !tab.view && !!tab.url, popup: tab.popup ? new URL(tab.popup).hostname : '',
-        canBack: !!tab.view?.webContents.navigationHistory.canGoBack(), canForward: !!tab.view?.webContents.navigationHistory.canGoForward(),
-        audible: !!tab.view?.webContents.isCurrentlyAudible(), muted: !!tab.view?.webContents.isAudioMuted(), background: !!tab.background })) };
+        canBack: !!tab.view?.webContents?.navigationHistory.canGoBack(), canForward: !!tab.view?.webContents?.navigationHistory.canGoForward(),
+        audible: !!tab.view?.webContents?.isCurrentlyAudible(), muted: !!tab.view?.webContents?.isAudioMuted(), background: !!tab.background })) };
   }
   publish() {
-    if (!this.chrome || this.chrome.webContents.isDestroyed()) return;
+    if (!this.chrome?.webContents || this.chrome.webContents.isDestroyed()) return;
     const state = this.state(), mark = JSON.stringify(state);
     if (this.mark === mark) return;
     this.mark = mark;
@@ -149,6 +165,7 @@ class SitesWorkspace {
   }
   tell(message) { this.notice = message; this.publish(); }
   add(url = '') {
+    if (!this.profileActive) return;
     if (this.tabs.length >= MAX_TABS) { this.tell('Можно открыть до восьми вкладок. Закрой одну из лишних.'); return; }
     const tab = { id: ++this.nextId, url, title: url ? new URL(url).hostname : 'Новая вкладка', loading: false, error: '', popup: '', view: null, background: false };
     this.tabs.push(tab); this.active = tab.id; this.notice = '';
@@ -160,10 +177,11 @@ class SitesWorkspace {
     const tab = this.tabs.find(item => item.id === id); if (!tab) return;
     this.active = id; this.notice = '';
     if (tab.url && !tab.view) this.navigate(tab, tab.url);
-    this.layout(); this.publish();
+    this.publish();
     this.focusCurrent();
   }
   attach(tab) {
+    const profile = this.profileActive?.id, epoch = this.profileEpoch, icons = this.favicons;
     const view = new this.e.WebContentsView({ webPreferences: {
       session: this.session, nodeIntegration: false, nodeIntegrationInSubFrames: false, contextIsolation: true,
       sandbox: true, webSecurity: true, allowRunningInsecureContent: false, webviewTag: false,
@@ -172,29 +190,31 @@ class SitesWorkspace {
     tab.view = view; view.setBackgroundColor('#ffffff'); view.setBorderRadius(14);
     this.host?.contentView.addChildView(view);
     const wc = view.webContents;
-    const changed = () => { if (tab.view === view && !wc.isDestroyed()) this.publish(); };
+    const valid = () => tab.view === view && !wc.isDestroyed() && this.profileActive?.id === profile && this.profileEpoch === epoch;
+    const changed = () => { if (valid()) this.publish(); };
+    wc.setAudioMuted(!!tab.muted);
     wc.setWindowOpenHandler(({ url }) => {
-      if (safePage(url)) { tab.popup = normalizeURL(url); this.tell('Сайт предлагает открыть ещё одну страницу. Подтверди кнопкой рядом с адресом.'); }
+      if (valid() && safePage(url)) { tab.popup = normalizeURL(url); this.tell('Сайт предлагает открыть ещё одну страницу. Подтверди кнопкой рядом с адресом.'); }
       return { action: 'deny' };
     });
-    wc.on('will-navigate', (event, url) => { if (!safePage(event.url || url)) { event.preventDefault(); this.tell('Этот тип ссылки здесь не открывается.'); } });
-    wc.on('will-redirect', (event, url) => { if (!safePage(event.url || url)) { event.preventDefault(); this.tell('Переход на небезопасный тип ссылки заблокирован.'); } });
+    wc.on('will-navigate', (event, url) => { if (!valid() || !safePage(event.url || url)) { event.preventDefault(); if (valid()) this.tell('Этот тип ссылки здесь не открывается.'); } });
+    wc.on('will-redirect', (event, url) => { if (!valid() || !safePage(event.url || url)) { event.preventDefault(); if (valid()) this.tell('Переход на небезопасный тип ссылки заблокирован.'); } });
     wc.on('will-frame-navigate', event => { if (!safeFrame(event.url)) event.preventDefault(); });
     wc.on('will-attach-webview', event => event.preventDefault());
-    wc.on('login', (event, _details, _auth, callback) => { event.preventDefault(); callback(); this.tell('Для этого способа входа открой сайт в обычном браузере.'); });
+    wc.on('login', (event, _details, _auth, callback) => { event.preventDefault(); callback(); if (valid()) this.tell('Для этого способа входа открой сайт в обычном браузере.'); });
     wc.on('did-start-loading', () => { tab.loading = true; changed(); });
     wc.on('did-stop-loading', () => { tab.loading = false; changed(); });
     wc.on('did-navigate', (_event, url) => { if (safePage(url)) tab.url = url; tab.error = ''; changed(); });
     wc.on('did-navigate-in-page', (_event, url, main) => { if (main && safePage(url)) tab.url = url; changed(); });
     wc.on('page-title-updated', (_event, title) => { tab.title = String(title || new URL(tab.url).hostname).slice(0, 120); changed(); });
-    wc.on('page-favicon-updated', (_event, urls) => this.favicons.observe(tab.url,urls));
+    wc.on('page-favicon-updated', (_event, urls) => { if (valid()) icons.observe(tab.url,urls); });
     wc.on('media-started-playing', changed); wc.on('media-paused', changed);
     wc.on('did-fail-load', (_event, code, _description, _url, main) => {
       if (!main || code === -3) return;
       tab.loading = false; tab.error = [-200, -201, -202, -203].includes(code) ? 'Не удалось проверить безопасность соединения.' : 'Не удалось открыть страницу. Проверь адрес и подключение.'; changed();
     });
     wc.on('render-process-gone', () => { tab.loading = false; tab.error = 'Страница остановилась. Нажми «Повторить», чтобы открыть её заново.'; changed(); });
-    wc.on('before-input-event', (event, input) => this.shortcut(event, input));
+    wc.on('before-input-event', (event, input) => { if (valid()) this.shortcut(event, input); });
     return view;
   }
   navigate(tab, input) {
@@ -211,17 +231,17 @@ class SitesWorkspace {
       const next = item === tab && enabled;
       if (!!item.background === next) continue;
       item.background = next;
-      if (item.view && !item.view.webContents.isDestroyed()) item.view.webContents.setBackgroundThrottling(!next);
+      if (item.view?.webContents && !item.view.webContents.isDestroyed()) item.view.webContents.setBackgroundThrottling(!next);
     }
     this.publish();
   }
   layout() {
-    if (!this.host || this.host.isDestroyed()) return;
+    if (!this.host || this.host.isDestroyed() || !this.chrome?.webContents) return;
     const [width, height] = this.host.getContentSize();
     const shown = (this.host.isVisible?.() ?? true) && !this.host.isMinimized();
     this.chrome.setVisible(shown); this.chrome.setBounds({ x: 0, y: 0, width, height });
-    for (const tab of this.tabs) if (tab.view && !tab.view.webContents.isDestroyed()) {
-      const visible = shown && !this.editorOpen && tab.id === this.active && !tab.error && !!tab.url;
+    for (const tab of this.tabs) if (tab.view?.webContents && !tab.view.webContents.isDestroyed()) {
+      const visible = shown && !!this.profileActive && !this.profileDialog && !this.editorOpen && tab.id === this.active && !tab.error && !!tab.url;
       tab.view.setVisible(visible);
       if (visible) tab.view.setBounds({ x: 10, y: 108, width: Math.max(1, width - 20), height: Math.max(1, height - 146) });
     }
@@ -230,7 +250,7 @@ class SitesWorkspace {
     const view = tab.view; tab.view = null; tab.loading = false;
     if (!view) return;
     if (this.host && !this.host.isDestroyed()) this.host.contentView.removeChildView(view);
-    if (!view.webContents.isDestroyed()) view.webContents.close({ waitForBeforeUnload: false });
+    if (view.webContents && !view.webContents.isDestroyed()) view.webContents.close({ waitForBeforeUnload: false });
   }
   closeTab(id) {
     const index = this.tabs.findIndex(tab => tab.id === id); if (index < 0) return;
@@ -240,7 +260,7 @@ class SitesWorkspace {
     this.publish();
   }
   shortcut(event, input) {
-    if (input.type !== 'keyDown' || this.editorOpen) return;
+    if (input.type !== 'keyDown' || this.editorOpen || this.profileDialog || !this.profileActive) return;
     const key = String(input.key).toLowerCase(), ctrl = input.control || input.meta;
     let command;
     if (ctrl && key === 'l') command = 'focus';
@@ -254,9 +274,17 @@ class SitesWorkspace {
     event.preventDefault(); this.command({ action: command });
   }
   async command(payload) {
-    if (!this.chrome || !this.tabs.length) return { ok: false };
+    if (!this.chrome?.webContents || this.chrome.webContents.isDestroyed()) return { ok: false };
     const action = payload?.action, tab = this.current();
-    if (action === 'background' && tab?.url && tab.view && !tab.view.webContents.isDestroyed()) this.setBackground(tab, !tab.background);
+    if (typeof action !== 'string') return { ok: false };
+    if (action.startsWith('profile-')) return this.profileCommand(payload);
+    if (action === 'home') { this.hide(); return { ok: true }; }
+    if (action === 'dock') { if (this.mode === 'window') this.embed(); else this.detach(); return { ok: true }; }
+    if (!this.profileActive || !this.tabs.length || this.profileBusy) return { ok: false, error: 'Сначала войди в профиль сайтов.' };
+    if (action.startsWith('shortcut-') && payload.profileId !== this.profileActive.id) return { ok: false, error: 'Профиль изменился. Открой редактор заново.' };
+    const profile = this.profileActive.id, epoch = this.profileEpoch, shortcuts = this.shortcuts, icons = this.favicons;
+    const current = () => this.profileActive?.id === profile && this.profileEpoch === epoch && this.shortcuts === shortcuts;
+    if (action === 'background' && tab?.url && tab.view?.webContents && !tab.view.webContents.isDestroyed()) this.setBackground(tab, !tab.background);
     else if (action === 'pin') {
       if (this.mode === 'window' && this.window && !this.window.isDestroyed()) { this.alwaysOnTop = !this.alwaysOnTop; this.window.setAlwaysOnTop(this.alwaysOnTop); }
       else { this.alwaysOnTop = true; this.detach(); }
@@ -264,13 +292,14 @@ class SitesWorkspace {
     }
     else if (action === 'shortcut-editor') { this.editorOpen = payload.open === true; this.layout(); if (!this.editorOpen) this.focusCurrent(); }
     else if (action === 'shortcut-open') {
-      await this.shortcuts.load();
-      const saved = this.shortcuts.list().find(item => item.id === payload.id);
+      await shortcuts.load();
+      if (!current()) return { ok: false, error: 'Профиль изменился.' };
+      const saved = shortcuts.list().find(item => item.id === payload.id);
       if (!saved) return { ok: false, error: 'Ярлык не найден.' };
       if (payload.newTab === true) this.add(saved.url); else this.navigate(tab, saved.url);
     }
     else if (['shortcut-save','shortcut-remove','shortcut-move'].includes(action)) {
-      const result = await this.shortcuts.mutate(action.slice(9), payload); this.publish(); if(result.ok)this.favicons.ensure(this.shortcuts.list()); return result;
+      const result = await shortcuts.mutate(action.slice(9), payload); if (!current()) return { ok: false, error: 'Профиль изменился.' }; this.publish(); if(result.ok)icons.ensure(shortcuts.list()); return result;
     }
     else if (action === 'new') this.add();
     else if (action === 'select' && Number.isInteger(payload.id)) this.select(payload.id);
@@ -281,15 +310,61 @@ class SitesWorkspace {
     else if (action === 'back' && tab?.view?.webContents.navigationHistory.canGoBack()) tab.view.webContents.navigationHistory.goBack();
     else if (action === 'forward' && tab?.view?.webContents.navigationHistory.canGoForward()) tab.view.webContents.navigationHistory.goForward();
     else if (action === 'focus') this.focusAddress();
-    else if (action === 'dock') { if (this.mode === 'window') this.embed(); else this.detach(); }
-    else if (action === 'home') this.hide();
     else if (action === 'external' && safePage(tab?.url)) this.e.shell.openExternal(tab.url);
     else if (action === 'popup' && tab?.popup) { const url = tab.popup; tab.popup = ''; this.notice = ''; this.add(url); }
     else if (action === 'dismiss') { this.notice = ''; if (tab) tab.popup = ''; this.publish(); }
-    else if (action === 'mute' && tab?.view) { const wc = tab.view.webContents; wc.setAudioMuted(!wc.isAudioMuted()); this.publish(); }
+    else if (action === 'mute' && tab?.view) { const wc = tab.view.webContents; tab.muted = !wc.isAudioMuted(); wc.setAudioMuted(tab.muted); this.publish(); }
     else if (action === 'next-tab' || action === 'previous-tab') { const index = this.tabs.findIndex(t => t.id === this.active), step = action === 'next-tab' ? 1 : -1; this.select(this.tabs[(index + step + this.tabs.length) % this.tabs.length].id); }
     else return { ok: false };
     return { ok: true };
+  }
+  lockProfile(remember = true) {
+    if (this.profileActive && remember) this.profileSnapshots.set(this.profileActive.id, { active: this.tabs.findIndex(tab => tab.id === this.active), tabs: this.tabs.map(tab => ({ url: safePage(tab.url) ? tab.url : '', title: tab.title, muted: tab.view?.webContents?.isAudioMuted() ?? !!tab.muted })) });
+    this.profileEpoch++; this.profileJob = null; this.profileBusy = false; this.profileDialog = false; this.editorOpen = false;
+    this.favicons.pause(); for (const tab of this.tabs) this.destroyView(tab);
+    this.tabs = []; this.active = 0; this.profileActive = null; this.notice = ''; this.pendingURL = '';
+    this.shortcuts = new ShortcutStore(); this.favicons = new FaviconCache(); this.publish(); this.focusCurrent();
+  }
+  async activateProfile(profile, job) {
+    const paths = this.profiles.paths(profile.id, this.userData || ''), shortcuts = new ShortcutStore(this.userData ? paths.shortcuts : null);
+    let icons; icons = new FaviconCache({ file: this.userData ? paths.favicons : null, net: this.e.net, onChange: () => { if (this.favicons === icons && this.profileActive?.id === profile.id) this.publish(); } });
+    await Promise.all([shortcuts.load(), icons.load()]);
+    if (this.profileJob !== job || this.profileEpoch !== job.epoch || this.chrome !== job.chrome || !this.chrome?.webContents || this.chrome.webContents.isDestroyed() || this.mode === 'hidden') { icons.pause(); return false; }
+    this.profileEpoch++; this.profileActive = this.profiles.get(profile.id); this.profileDialog = false; this.editorOpen = false;
+    this.shortcuts = shortcuts; this.favicons = icons; this.tabs = []; this.active = 0; this.notice = shortcuts.error || '';
+    const snapshot = this.profileSnapshots.get(profile.id), pending = this.pendingURL; this.pendingURL = '';
+    this.profileSnapshots.delete(profile.id);
+    if (snapshot?.tabs.length) {
+      this.tabs = snapshot.tabs.slice(0, MAX_TABS).map(saved => ({ ...saved, id: ++this.nextId, loading: false, error: '', popup: '', view: null, background: false }));
+      this.active = this.tabs[Math.max(0, Math.min(this.tabs.length - 1, snapshot.active))].id;
+    } else this.add(pending || profile.settings.home || '');
+    if (pending && snapshot?.tabs.length) { if (this.tabs.length < MAX_TABS) this.add(pending); else this.navigate(this.current(), pending); }
+    else if (this.current()?.url && !this.current().view) this.navigate(this.current(), this.current().url);
+    icons.ensure(shortcuts.list()); this.publish(); this.focusCurrent(); return true;
+  }
+  async profileCommand(payload) {
+    const action = payload.action;
+    if (action === 'profile-dialog') { if (!this.profileActive || payload.profileId !== this.profileActive.id) return { ok: false, error: 'Профиль изменился.' }; this.profileDialog = payload.open === true; this.layout(); if (!this.profileDialog) this.focusCurrent(); return { ok: true }; }
+    if (this.profileBusy) return { ok: false, error: 'Дождись завершения предыдущего действия.' };
+    if (action === 'profile-show') { if (payload.profileId && payload.profileId !== this.profileActive?.id) return { ok: false, error: 'Профиль изменился.' }; this.lockProfile(); return { ok: true }; }
+    if (!['profile-create', 'profile-enter', 'profile-update', 'profile-password'].includes(action)) return { ok: false };
+    if (['profile-create', 'profile-enter'].includes(action) && this.profileActive) return { ok: false, error: 'Сначала открой список профилей.' };
+    if (['profile-update', 'profile-password'].includes(action) && !this.profileActive) return { ok: false, error: 'Сначала войди в профиль.' };
+    if (['profile-update', 'profile-password'].includes(action) && payload.profileId !== this.profileActive.id) return { ok: false, error: 'Профиль изменился. Открой настройки заново.' };
+    const job = { epoch: this.profileEpoch, chrome: this.chrome, profile: this.profileActive?.id }; this.profileJob = job; this.profileBusy = true; this.publish();
+    try {
+      let result;
+      if (action === 'profile-create') result = await this.profiles.create(payload);
+      else if (action === 'profile-enter') result = await this.profiles.verify(payload.id, payload.password);
+      else if (action === 'profile-update') result = await this.profiles.update(job.profile, payload);
+      else result = await this.profiles.changePassword(job.profile, payload.currentPassword, payload.newPassword);
+      if (this.profileJob !== job || this.profileEpoch !== job.epoch || this.chrome !== job.chrome) return { ok: false, error: 'Окно или профиль изменились. Проверь список профилей.' };
+      if (!result.ok) return result;
+      if (action === 'profile-create' || action === 'profile-enter') { if (!await this.activateProfile(result.profile, job)) return { ok: false, error: 'Окно закрыто. Профиль сохранён в списке.' }; }
+      else { this.profileActive = result.profile; this.publish(); }
+      return { ok: true, profile: result.profile };
+    } catch (_) { return { ok: false, error: 'Не удалось выполнить действие с профилем. Попробуй ещё раз.' }; }
+    finally { if (this.profileJob === job) { this.profileJob = null; this.profileBusy = false; this.publish(); } }
   }
   close() { if (this.window && !this.window.isDestroyed()) this.window.close(); else this.dispose(); }
 }
