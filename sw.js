@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v214-profiles-performance';
+const CACHE_NAME='telechat-shell-v215-sites-utilities';
 const APP_SHELL=[
   './spellcheck-v213.css?v=213',
   './spellcheck-v213.js?v=213',
@@ -48,7 +48,7 @@ const APP_SHELL=[
   './chat-features-v181.css?v=181',
   './chat-preferences-model-v181.js?v=189',
   './chat-preferences-v181.js?v=189',
-  './whats-new-v181.js?v=214',
+  './whats-new-v181.js?v=215',
   './media-policy-v179.js?v=179',
   './media-auto-v179.js?v=184',
   './media-auto-v179.css?v=179',
