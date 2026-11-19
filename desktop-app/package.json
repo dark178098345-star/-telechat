@@ -1,6 +1,6 @@
 {
   "name": "telechat-desktop",
-  "version": "1.4.7",
+  "version": "1.4.8",
   "description": "Официальное Windows-приложение ExstraChat",
   "main": "main.js",
   "author": "creator",

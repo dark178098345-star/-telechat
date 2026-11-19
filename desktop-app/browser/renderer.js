@@ -6,7 +6,7 @@
  const shortcutProfile=(value=state)=>value?.profiles?(value.profiles.screen==='browser'?value.profiles.active?.id||null:null):undefined;
  const shortcutCommand=(action,data={},owner=shortcutProfile())=>owner===null?Promise.resolve({ok:false,error:'Сначала войди в профиль сайтов.'}):command(action,owner===undefined?data:{...data,profileId:owner});
  const editorCurrent=(stamp,owner)=>stamp===editorEpoch&&shortcutProfile()===owner;
- const focus=()=>{if(editing||window.exstraSitesProfilesV214?.isOpen())return;input.focus();input.select();};
+ const focus=()=>{if(editing||state?.toolsMenu||state?.downloadPanel||state?.historyPanel||window.exstraSitesProfilesV214?.isOpen())return;input.focus();input.select();};
  const icons={auto:['Автоматически','M5 5h5v5H5Zm9 0h5v5h-5ZM5 14h5v5H5Zm9 0h5v5h-5Z'],globe:['Сайт','M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0ZM3 12h18M12 3q-7 9 0 18 7-9 0-18'],music:['Музыка','M9 18V5l11-2v13M9 9l11-2M9 18c0 3-6 4-6 1s6-4 6-1Zm11-2c0 3-6 4-6 1s6-4 6-1Z'],video:['Видео','M4 4h16v16H4Zm5 4 7 4-7 4Z'],chat:['Общение','M5 4h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H9l-6 4V6a2 2 0 0 1 2-2Zm3 6h8m-8 4h5'],code:['Разработка','m8 6-6 6 6 6m8-12 6 6-6 6m-3-15-2 18'],book:['Чтение','M12 5v16M3 4q5-2 9 1 4-3 9-1v15q-5-2-9 2-4-4-9-2Z'],game:['Игры','M8 7h8q4 0 5 5l1 5q0 4-4 2l-3-3H9l-3 3q-4 2-4-2l1-5q1-5 5-5Zm-2 4v4m-2-2h4m8-2h.01m3 3h.01']};
  const svg=key=>'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+icons[key][1]+'"/></svg>';
  function paintIcon(node,item){
@@ -83,6 +83,8 @@
  function render(next){
   if(!next||!Array.isArray(next.tabs))return;const previousProfile=shortcutProfile();state=next;if(previousProfile!==shortcutProfile())resetEditor();
   window.exstraSitesProfilesV214?.render(next,command);
+  for(const node of $('chrome').querySelectorAll('button,input'))node.inert=false;
+  window.exstraSitesUtilities?.render(next,command);
   document.body.dataset.mode=next.mode||'embedded';$('dock').textContent=next.mode==='window'?'В раздел':'Отдельное окно';$('dock').title=next.mode==='window'?'Вернуть внутрь ExstraChat':'Вынести раздел в отдельное окно';
   const active=next.tabs.find(t=>t.id===next.active),switched=currentId!==next.active;currentId=next.active;
   const old=new Map([...$('tabs').children].map(n=>[Number(n.dataset.id),n]));

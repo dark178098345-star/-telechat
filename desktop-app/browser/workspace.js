@@ -5,6 +5,10 @@ const { MAX_TABS, normalizeURL, safePage, safeFrame } = require('./policy');
 const { ShortcutStore, MAX_SHORTCUTS } = require('./shortcuts');
 const { FaviconCache } = require('./favicons');
 const { ProfileStore, MAX_PROFILES } = require('./profiles');
+const { PagePermissions } = require('./page-permissions');
+const { SiteDownloads } = require('./downloads');
+const { SiteHistory } = require('./history');
+const { showPageMenu } = require('./context-menu');
 
 class SitesWorkspace {
   constructor(electron, getMainWindow = () => null) {
@@ -16,6 +20,9 @@ class SitesWorkspace {
     this.profiles = new ProfileStore(this.userData ? path.join(this.userData, 'sites-profiles-v1.json') : null);
     this.profileActive = null; this.profileEpoch = 0; this.profileJob = null; this.profileBusy = false; this.pendingURL = '';
     this.profileSnapshots = new Map(); this.profileSessions = new Map();
+    this.downloadPanel = false; this.toolsMenu = false; this.historyPanel = false; this.history = new SiteHistory(); this.histories = new Map();
+    this.pagePermissions = new PagePermissions(wc => this.activePage(wc, this.profileActive?.id, true));
+    this.downloads = new SiteDownloads(electron, (wc, owner) => this.activePage(wc, owner), () => this.publish(), message => this.tell(message));
     this.shortcuts = new ShortcutStore(); this.favicons = new FaviconCache();
     this.resizeHost = () => this.layout();
     this.chromeURL = pathToFileURL(path.join(__dirname, 'index.html')).href;
@@ -31,11 +38,11 @@ class SitesWorkspace {
     if (!id) throw Error('Сначала войди в профиль сайтов.');
     if (this.profileSessions.has(id)) return this.profileSessions.get(id);
     const s = this.e.session.fromPartition(this.profiles.paths(id, this.userData || '').partition);
-    s.setPermissionCheckHandler(() => false);
-    s.setPermissionRequestHandler((_wc, _permission, callback) => callback(false));
+    s.setPermissionCheckHandler((wc, permission, requestingOrigin, details) => this.pagePermissions.allow(wc, permission, requestingOrigin, details));
+    s.setPermissionRequestHandler((wc, permission, callback, details) => callback(this.pagePermissions.allow(wc, permission, details?.requestingUrl, details)));
     s.setDevicePermissionHandler(() => false);
     s.setDisplayMediaRequestHandler((_request, callback) => callback({}));
-    s.on('will-download', event => { event.preventDefault(); if (this.profileActive?.id === id) this.tell('Загрузки здесь отключены. Используй кнопку «Открыть снаружи».'); });
+    s.on('will-download', (event, item, wc) => this.downloads.accept(event, item, wc, id));
     // Never inherit chat cookies, permissions, preloads or filesystem access.
     this.profileSessions.set(id, s);
     return s;
@@ -116,16 +123,17 @@ class SitesWorkspace {
     this.chromeReady.then(() => { if (this.window === win && !win.isDestroyed()) { win.show(); win.focus(); this.focusCurrent(); } });
   }
   focusAddress() {
-    if (!this.profileActive || this.profileDialog || this.editorOpen || !this.host || !this.chrome?.webContents || this.chrome.webContents.isDestroyed()) return;
+    if (!this.profileActive || this.profileDialog || this.editorOpen || this.downloadPanel || this.toolsMenu || this.historyPanel || !this.host || !this.chrome?.webContents || this.chrome.webContents.isDestroyed()) return;
     this.chrome.webContents.focus(); this.chrome.webContents.send('exstra-sites:focus-address');
   }
   focusCurrent() {
-    if (!this.profileActive || this.profileDialog || this.editorOpen) { const wc = this.chrome?.webContents; if (wc && !wc.isDestroyed()) wc.focus(); return; }
+    if (!this.profileActive || this.profileDialog || this.editorOpen || this.downloadPanel || this.toolsMenu || this.historyPanel) { const wc = this.chrome?.webContents; if (wc && !wc.isDestroyed()) wc.focus(); return; }
     const tab = this.current();
     if (this.host && tab?.url && !tab.error && tab.view?.webContents && !tab.view.webContents.isDestroyed()) tab.view.webContents.focus();
     else this.focusAddress();
   }
   hide() {
+    this.downloadPanel = false; this.toolsMenu = false; this.historyPanel = false;
     if (this.profileActive?.settings.lockOnHide) this.lockProfile();
     else if (this.profileBusy && !this.profileActive) { this.profileEpoch++; this.profileJob = null; this.profileBusy = false; this.pendingURL = ''; }
     if (this.mode === 'window') { this.getMainWindow()?.webContents.focus(); return; }
@@ -134,6 +142,7 @@ class SitesWorkspace {
     if (previous && !previous.isDestroyed()) previous.webContents.focus();
   }
   dispose() {
+    this.downloads.cancel(); this.history.flush(); this.downloadPanel = false; this.toolsMenu = false; this.historyPanel = false;
     this.profileEpoch++; this.profileJob = null; this.profileBusy = false; this.profileActive = null; this.profileDialog = false; this.pendingURL = '';
     this.profileSnapshots.clear();
     this.favicons.pause();
@@ -144,8 +153,16 @@ class SitesWorkspace {
     this.shortcuts = new ShortcutStore(); this.favicons = new FaviconCache();
   }
   current() { return this.tabs.find(tab => tab.id === this.active); }
+  activePage(wc, owner, focused = false) {
+    const tab = this.current(), host = this.host;
+    return !!owner && this.profileActive?.id === owner && this.mode !== 'hidden' && !this.profileBusy && !this.profileDialog && !this.editorOpen && !this.downloadPanel && !this.toolsMenu && !this.historyPanel
+      && !!host && !host.isDestroyed() && (host.isVisible?.() ?? false) && !host.isMinimized() && (!focused || (host.isFocused?.() ?? false))
+      && !!wc && !wc.isDestroyed() && tab?.view?.webContents === wc && !!safePage(wc.mainFrame?.url);
+  }
   state() {
     return { active: this.active, max: MAX_TABS, notice: this.notice, mode: this.mode, alwaysOnTop: this.mode === 'window' && this.alwaysOnTop,
+      downloads: this.downloads.list(this.profileActive?.id), downloadPanel: this.downloadPanel,
+      toolsMenu:this.toolsMenu, historyPanel:this.historyPanel, history:this.profileActive && this.historyPanel ? this.history.list() : [], historyError:this.profileActive ? this.history.error : '',
       profiles: { ready: this.profiles.loaded, error: this.profiles.error, fatal: this.profiles.fatal, screen: this.profileActive ? 'browser' : 'chooser', busy: this.profileBusy, max: MAX_PROFILES, active: this.profileActive ? { ...this.profileActive, settings: { ...this.profileActive.settings } } : null, items: this.profileActive ? [] : this.profiles.list() },
       shortcuts: this.profileActive ? this.shortcuts.list().map(item=>({...item,favicon:item.icon==='auto'?this.favicons.get(item.url):''})) : [], shortcutsReady: !!this.profileActive && this.shortcuts.loaded, shortcutsError: this.profileActive ? this.shortcuts.error : '', shortcutsMax: MAX_SHORTCUTS,
       tabs: this.tabs.map(tab => ({ id: tab.id, url: tab.url, title: tab.title, loading: tab.loading,
@@ -181,7 +198,7 @@ class SitesWorkspace {
     this.focusCurrent();
   }
   attach(tab) {
-    const profile = this.profileActive?.id, epoch = this.profileEpoch, icons = this.favicons;
+    const profile = this.profileActive?.id, epoch = this.profileEpoch, icons = this.favicons, history = this.history;
     const view = new this.e.WebContentsView({ webPreferences: {
       session: this.session, nodeIntegration: false, nodeIntegrationInSubFrames: false, contextIsolation: true,
       sandbox: true, webSecurity: true, allowRunningInsecureContent: false, webviewTag: false,
@@ -190,6 +207,11 @@ class SitesWorkspace {
     tab.view = view; view.setBackgroundColor('#ffffff'); view.setBorderRadius(14);
     this.host?.contentView.addChildView(view);
     const wc = view.webContents;
+    const input = (_event, data) => this.pagePermissions.input(wc, data);
+    wc.on('input-event', input); wc.on('before-mouse-event', input); wc.on('before-input-event', input);
+    wc.on('blur', () => this.pagePermissions.clear(wc));
+    wc.on('did-start-navigation', (_event, url, _inPlace, main) => { if (main) this.pagePermissions.clear(wc); });
+    wc.on('context-menu', (event, params) => { event.preventDefault?.(); showPageMenu(this.e, this, tab, wc, params); });
     const valid = () => tab.view === view && !wc.isDestroyed() && this.profileActive?.id === profile && this.profileEpoch === epoch;
     const changed = () => { if (valid()) this.publish(); };
     wc.setAudioMuted(!!tab.muted);
@@ -203,10 +225,10 @@ class SitesWorkspace {
     wc.on('will-attach-webview', event => event.preventDefault());
     wc.on('login', (event, _details, _auth, callback) => { event.preventDefault(); callback(); if (valid()) this.tell('Для этого способа входа открой сайт в обычном браузере.'); });
     wc.on('did-start-loading', () => { tab.loading = true; changed(); });
-    wc.on('did-stop-loading', () => { tab.loading = false; changed(); });
-    wc.on('did-navigate', (_event, url) => { if (safePage(url)) tab.url = url; tab.error = ''; changed(); });
-    wc.on('did-navigate-in-page', (_event, url, main) => { if (main && safePage(url)) tab.url = url; changed(); });
-    wc.on('page-title-updated', (_event, title) => { tab.title = String(title || new URL(tab.url).hostname).slice(0, 120); changed(); });
+    wc.on('did-stop-loading', () => { tab.loading = false; if (valid() && !tab.error) history.visit(tab.url, tab.title); changed(); });
+    wc.on('did-navigate', (_event, url) => { if (safePage(url)) tab.url = url; tab.error = ''; if (valid()) history.visit(tab.url, tab.title); changed(); });
+    wc.on('did-navigate-in-page', (_event, url, main) => { if (main && safePage(url)) { tab.url = url; if (valid()) history.visit(tab.url, tab.title); } changed(); });
+    wc.on('page-title-updated', (_event, title) => { tab.title = String(title || new URL(tab.url).hostname).slice(0, 120); if (valid() && !tab.loading) history.visit(tab.url, tab.title); changed(); });
     wc.on('page-favicon-updated', (_event, urls) => { if (valid()) icons.observe(tab.url,urls); });
     wc.on('media-started-playing', changed); wc.on('media-paused', changed);
     wc.on('did-fail-load', (_event, code, _description, _url, main) => {
@@ -241,7 +263,7 @@ class SitesWorkspace {
     const shown = (this.host.isVisible?.() ?? true) && !this.host.isMinimized();
     this.chrome.setVisible(shown); this.chrome.setBounds({ x: 0, y: 0, width, height });
     for (const tab of this.tabs) if (tab.view?.webContents && !tab.view.webContents.isDestroyed()) {
-      const visible = shown && !!this.profileActive && !this.profileDialog && !this.editorOpen && tab.id === this.active && !tab.error && !!tab.url;
+      const visible = shown && !!this.profileActive && !this.profileDialog && !this.editorOpen && !this.downloadPanel && !this.toolsMenu && !this.historyPanel && tab.id === this.active && !tab.error && !!tab.url;
       tab.view.setVisible(visible);
       if (visible) tab.view.setBounds({ x: 10, y: 108, width: Math.max(1, width - 20), height: Math.max(1, height - 146) });
     }
@@ -249,6 +271,7 @@ class SitesWorkspace {
   destroyView(tab) {
     const view = tab.view; tab.view = null; tab.loading = false;
     if (!view) return;
+    this.pagePermissions.clear(view.webContents);
     if (this.host && !this.host.isDestroyed()) this.host.contentView.removeChildView(view);
     if (view.webContents && !view.webContents.isDestroyed()) view.webContents.close({ waitForBeforeUnload: false });
   }
@@ -265,6 +288,8 @@ class SitesWorkspace {
     let command;
     if (ctrl && key === 'l') command = 'focus';
     if (ctrl && key === 't') command = 'new';
+    if (ctrl && key === 'j') { event.preventDefault(); this.command({ action:'downloads-panel', open:!this.downloadPanel, profileId:this.profileActive.id }); return; }
+    if (ctrl && key === 'h') { event.preventDefault(); this.command({ action:'history-panel', open:!this.historyPanel, profileId:this.profileActive.id }); return; }
     if (ctrl && key === 'w') command = 'close';
     if (ctrl && key === 'tab') command = input.shift ? 'previous-tab' : 'next-tab';
     if (key === 'f5' || ctrl && key === 'r') command = 'reload';
@@ -280,6 +305,24 @@ class SitesWorkspace {
     if (action.startsWith('profile-')) return this.profileCommand(payload);
     if (action === 'home') { this.hide(); return { ok: true }; }
     if (action === 'dock') { if (this.mode === 'window') this.embed(); else this.detach(); return { ok: true }; }
+    if (['sites-tools','history-panel','downloads-panel'].includes(action)) {
+      if (!this.profileActive || payload.profileId !== this.profileActive.id || this.profileBusy || this.profileDialog || this.editorOpen) return { ok:false, error:'Профиль изменился или открыто другое окно.' };
+      this.toolsMenu = action === 'sites-tools' && payload.open === true;
+      this.historyPanel = action === 'history-panel' && payload.open === true;
+      this.downloadPanel = action === 'downloads-panel' && payload.open === true;
+      this.publish(); this.focusCurrent(); return { ok:true };
+    }
+    if (action === 'history-clear' || action === 'history-open') {
+      if (!this.profileActive || payload.profileId !== this.profileActive.id) return { ok:false, error:'Профиль изменился.' };
+      if (action === 'history-clear') return this.history.clear();
+      const row = this.history.list().find(item => item.id === payload.id);
+      if (!row) return { ok:false, error:'Страница не найдена.' };
+      this.historyPanel = false; this.toolsMenu = false; this.add(row.url); return { ok:true };
+    }
+    if (action.startsWith('download-')) {
+      if (!this.profileActive || payload.profileId !== this.profileActive.id) return { ok:false, error:'Профиль изменился.' };
+      return this.downloads.action(this.profileActive.id, payload);
+    }
     if (!this.profileActive || !this.tabs.length || this.profileBusy) return { ok: false, error: 'Сначала войди в профиль сайтов.' };
     if (action.startsWith('shortcut-') && payload.profileId !== this.profileActive.id) return { ok: false, error: 'Профиль изменился. Открой редактор заново.' };
     const profile = this.profileActive.id, epoch = this.profileEpoch, shortcuts = this.shortcuts, icons = this.favicons;
@@ -290,7 +333,7 @@ class SitesWorkspace {
       else { this.alwaysOnTop = true; this.detach(); }
       this.publish();
     }
-    else if (action === 'shortcut-editor') { this.editorOpen = payload.open === true; this.layout(); if (!this.editorOpen) this.focusCurrent(); }
+    else if (action === 'shortcut-editor') { this.toolsMenu = false; this.historyPanel = false; this.downloadPanel = false; this.editorOpen = payload.open === true; this.publish(); this.layout(); if (!this.editorOpen) this.focusCurrent(); }
     else if (action === 'shortcut-open') {
       await shortcuts.load();
       if (!current()) return { ok: false, error: 'Профиль изменился.' };
@@ -319,6 +362,7 @@ class SitesWorkspace {
     return { ok: true };
   }
   lockProfile(remember = true) {
+    this.downloads.cancel(this.profileActive?.id); this.history.flush(); this.downloadPanel = false; this.toolsMenu = false; this.historyPanel = false;
     if (this.profileActive && remember) this.profileSnapshots.set(this.profileActive.id, { active: this.tabs.findIndex(tab => tab.id === this.active), tabs: this.tabs.map(tab => ({ url: safePage(tab.url) ? tab.url : '', title: tab.title, muted: tab.view?.webContents?.isAudioMuted() ?? !!tab.muted })) });
     this.profileEpoch++; this.profileJob = null; this.profileBusy = false; this.profileDialog = false; this.editorOpen = false;
     this.favicons.pause(); for (const tab of this.tabs) this.destroyView(tab);
@@ -327,11 +371,12 @@ class SitesWorkspace {
   }
   async activateProfile(profile, job) {
     const paths = this.profiles.paths(profile.id, this.userData || ''), shortcuts = new ShortcutStore(this.userData ? paths.shortcuts : null);
+    let history = this.histories.get(profile.id); if (!history) history = new SiteHistory(this.userData ? paths.history : null, () => { if (this.history === history && this.profileActive?.id === profile.id && this.historyPanel) this.publish(); });
     let icons; icons = new FaviconCache({ file: this.userData ? paths.favicons : null, net: this.e.net, onChange: () => { if (this.favicons === icons && this.profileActive?.id === profile.id) this.publish(); } });
-    await Promise.all([shortcuts.load(), icons.load()]);
+    await Promise.all([shortcuts.load(), icons.load(), history.load()]);
     if (this.profileJob !== job || this.profileEpoch !== job.epoch || this.chrome !== job.chrome || !this.chrome?.webContents || this.chrome.webContents.isDestroyed() || this.mode === 'hidden') { icons.pause(); return false; }
     this.profileEpoch++; this.profileActive = this.profiles.get(profile.id); this.profileDialog = false; this.editorOpen = false;
-    this.shortcuts = shortcuts; this.favicons = icons; this.tabs = []; this.active = 0; this.notice = shortcuts.error || '';
+    this.shortcuts = shortcuts; this.favicons = icons; this.history = history; this.histories.set(profile.id, history); this.tabs = []; this.active = 0; this.notice = shortcuts.error || '';
     const snapshot = this.profileSnapshots.get(profile.id), pending = this.pendingURL; this.pendingURL = '';
     this.profileSnapshots.delete(profile.id);
     if (snapshot?.tabs.length) {
@@ -344,7 +389,7 @@ class SitesWorkspace {
   }
   async profileCommand(payload) {
     const action = payload.action;
-    if (action === 'profile-dialog') { if (!this.profileActive || payload.profileId !== this.profileActive.id) return { ok: false, error: 'Профиль изменился.' }; this.profileDialog = payload.open === true; this.layout(); if (!this.profileDialog) this.focusCurrent(); return { ok: true }; }
+    if (action === 'profile-dialog') { if (!this.profileActive || payload.profileId !== this.profileActive.id) return { ok: false, error: 'Профиль изменился.' }; this.downloadPanel = false; this.toolsMenu = false; this.historyPanel = false; this.profileDialog = payload.open === true; this.publish(); this.layout(); if (!this.profileDialog) this.focusCurrent(); return { ok: true }; }
     if (this.profileBusy) return { ok: false, error: 'Дождись завершения предыдущего действия.' };
     if (action === 'profile-show') { if (payload.profileId && payload.profileId !== this.profileActive?.id) return { ok: false, error: 'Профиль изменился.' }; this.lockProfile(); return { ok: true }; }
     if (!['profile-create', 'profile-enter', 'profile-update', 'profile-password'].includes(action)) return { ok: false };

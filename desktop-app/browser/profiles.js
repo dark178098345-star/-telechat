@@ -184,11 +184,13 @@ class ProfileStore {
           partition: 'persist:exstra-sites-v202',
           shortcuts: path.join(userData, 'sites-shortcuts.json'),
           favicons: path.join(userData, 'sites-favicons-v1.json'),
+          history: path.join(userData, 'sites-history-v1.json'),
         }
       : {
           partition: 'persist:exstra-sites-profile-' + id,
           shortcuts: path.join(userData, 'sites-profiles-v1', id, 'shortcuts.json'),
           favicons: path.join(userData, 'sites-profiles-v1', id, 'favicons.json'),
+          history: path.join(userData, 'sites-profiles-v1', id, 'history.json'),
         };
   }
   async commit(items) {
