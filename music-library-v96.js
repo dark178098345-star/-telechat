@@ -198,7 +198,7 @@
     let seconds;
     try { seconds = await inspectAudio(src,context.signal); } finally { URL.revokeObjectURL(src); }
     check(context);
-    const track = {id:crypto.randomUUID(),owner:nick,title:file.name.replace(/\.[^.]+$/,'').slice(0,160),kind:'file',size:file.size,duration:seconds,added:Date.now()};
+    const track = {id:crypto.randomUUID(),owner:nick,title:file.name.replace(/\.[^.]+$/,'').slice(0,160),fileName:file.name.slice(0,240),kind:'file',size:file.size,duration:seconds,added:Date.now()};
     await write(track,file,false,context);check(context);libraryRevision++;tracks.unshift(track);renderList();return track;
   }
   async function addFiles(files) {
@@ -287,6 +287,7 @@
         const blob = await read('files',track.id);
         if (token !== playToken || owner() !== track.owner) return;
         if (!blob) throw new Error('Файл больше не хранится на устройстве. Добавь его заново.');
+        if(!track.fileName&&typeof blob.name==='string')track={...track,fileName:blob.name.slice(0,240)};
         src = objectUrl = URL.createObjectURL(blob);
       }
       if (token !== playToken || owner() !== track.owner) return;

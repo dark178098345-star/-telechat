@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v215-sites-utilities';
+const CACHE_NAME='telechat-shell-v216-music-start';
 const APP_SHELL=[
   './spellcheck-v213.css?v=213',
   './spellcheck-v213.js?v=213',
@@ -48,7 +48,8 @@ const APP_SHELL=[
   './chat-features-v181.css?v=181',
   './chat-preferences-model-v181.js?v=189',
   './chat-preferences-v181.js?v=189',
-  './whats-new-v181.js?v=215',
+  './whats-new-v181.js?v=216',
+  './app-restart-v216.js?v=216',
   './media-policy-v179.js?v=179',
   './media-auto-v179.js?v=184',
   './media-auto-v179.css?v=179',
@@ -148,7 +149,9 @@ const APP_SHELL=[
   './branding/soundcloud-white.png',
   './music-card-v97.css?v=97',
   './profile-music-v97.js?v=212',
-  './music-library-v96.js?v=212',
+  './music-library-v96.js?v=216',
+  './music-start-v216.js?v=216',
+  './music-start-v216.css?v=216',
   './music-library-v96.css?v=96',
   './appearance-mode-v95.js?v=95',
   './chat-foundation-v94.css?v=94',
