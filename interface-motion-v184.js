@@ -2,9 +2,37 @@
 (() => {
   'use strict';
   const reduce = matchMedia('(prefers-reduced-motion: reduce)'), coarse = matchMedia('(pointer: coarse)'), active = new Map(), surfaces = new Map();
-  const selector = 'dialog,.side-panel,.modal-overlay,.message-modal-overlay-v36,#user-profile-modal,#profile-quick-v91,#emoji-picker,#attachment-menu-v141,#ctx-menu,.contact-menu,#pending-media';
+  const classState = name => node => node.classList.contains(name);
+  const visible = node => !node.hidden;
+  const child = selector => node => node.querySelector(selector) || node;
+  // Watch actual open states, not generic DOM changes or button mutations.
+  const rules = [
+    ['dialog', node => node.open, 'dialog', null, 'open'],
+    ['.side-panel', classState('open'), 'drawer'],
+    ['.modal-overlay,.message-modal-overlay-v36,#user-profile-modal,.moderation-overlay', classState('show'), 'dialog', child('.user-profile-card,.modal,.modal-box,.message-modal-card-v36,.moderation-card')],
+    ['.follow-list-overlay', classState('open'), 'dialog', child('.follow-list-card')],
+    ['#emoji-picker', classState('open'), 'sheet'],
+    ['#ctx-menu,.contact-menu,.chat-actions-v52,.chat-pin-icons-v59', classState('show'), 'menu'],
+    ['#profile-quick-v91,#attachment-menu-v141,#mention-picker-v106', visible, 'menu', null, 'hidden'],
+    ['#search-results', node => node.style.display === 'block', 'menu', null, 'style'],
+    ['#pending-media,#reply-bar,#pinned-bar,#chat-search-bar,#message-selection-toolbar-v36', classState('show'), 'strip'],
+    ['#music-hub-v117', visible, 'screen', child('.mh-workspace'), 'hidden'],
+    ['#music-hub-v117', node => !node.hidden && node.classList.contains('mh-show-now'), 'drawer', child('.mh-listening'), 'class hidden'],
+    ['#mh-sheet,#mc-picker-v187,#shared-media-preview-v152', visible, 'sheet', child('.mh-sheet'), 'hidden'],
+    ['[data-wallet-pane],[data-gift-collection],[data-gift-send]', visible, 'section', null, 'hidden'],
+    ['#voice-call-overlay', classState('show'), 'screen', child('.voice-call-surface')],
+    ['.voice-call-sheet,#call-chat-panel-v152', classState('show'), 'sheet'],
+    ['#voice-call-mini', classState('show'), 'menu'],
+    ['#media-viewer', classState('show'), 'screen']
+  ];
+  const selector = [...new Set(rules.map(rule => rule[0]))].join(',');
+  const buttonSelector = 'button,[role="button"],[role="tab"],[role="menuitem"],summary,input:is([type="button"],[type="submit"],[type="reset"]),.contact[data-chat-key],.search-result-item';
+  const profiles = {
+    surface:[.73,0,7,.992,180],dialog:[.75,0,12,.987,220],sheet:[.77,0,12,1,205],drawer:[.8,14,0,1,215],
+    menu:[.74,0,5,.985,165],strip:[.81,0,4,1,145],section:[.81,0,6,1,185],screen:[.89,0,0,1,190],photo:[.64,0,0,1,200]
+  };
   const stats = { started: 0, skipped: 0, peak: 0, surfaceChanges: 0 };
-  let mode = 'auto', owner = '', nativeHidden = false, pressed = null, pointer = null, control;
+  let mode = 'auto', owner = '', nativeHidden = false, pressed = null, pointer = null, control, clickAnimation = null;
   const self = () => { try { return String(me?.nick || 'guest'); } catch (_) { return 'guest'; } };
   const key = () => 'exstrachat.interface-motion.v184.' + self();
   function policy() {
@@ -14,7 +42,7 @@
   }
   function enabled() { return policy() !== 'off' && !document.hidden && !nativeHidden; }
   function release() { pressed?.classList.remove('is-pressing-v184'); pressed = pointer = null; }
-  function stop() { for (const animation of active.values()) animation.cancel(); active.clear(); release(); }
+  function stop() { for (const animation of active.values()) animation.cancel(); active.clear(); clickAnimation?.cancel(); clickAnimation = null; release(); }
   function sync() {
     const next = self(); if (owner !== next) { owner = next; try { mode = localStorage.getItem(key()) || 'auto'; } catch (_) { mode = 'auto'; } }
     if (!['auto', 'full', 'off'].includes(mode)) mode = 'auto';
@@ -27,15 +55,15 @@
     try { localStorage.setItem(key(), value); } catch (_) { window.showToast?.('Не удалось сохранить настройку'); if (control) control.value = mode; return; }
     mode = value; sync();
   }
-  function play(node, frames, duration = 180, kind = 'surface') {
+  function play(node, frames, duration = 180) {
     if (!node?.isConnected || typeof node.animate !== 'function' || !enabled()) { stats.skipped++; return null; }
+    const current = active.get(node); if (current) { current.cancel(); active.delete(node); }
+    const lite = policy() === 'lite', limit = lite ? 1 : coarse.matches ? 3 : 4;
+    if (active.size >= limit) { stats.skipped++; return null; }
     const rect = node.getBoundingClientRect();
     if (!rect.width || !rect.height || rect.bottom <= 0 || rect.top >= innerHeight || rect.right <= 0 || rect.left >= innerWidth) { stats.skipped++; return null; }
-    const current = active.get(node); if (current) { current.cancel(); active.delete(node); }
-    const limit = policy() === 'lite' ? 1 : coarse.matches ? 3 : 4;
-    if (active.size >= limit) { stats.skipped++; return null; }
-    const animation = node.animate(policy() === 'lite' ? [{ opacity: .72 }, { opacity: 1 }] : frames, {
-      duration: policy() === 'lite' ? 110 : duration, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'none'
+    const animation = node.animate(lite ? [{ opacity: .9 }, { opacity: 1 }] : typeof frames === 'function' ? frames(rect) : frames, {
+      duration: lite ? 105 : duration, easing: 'cubic-bezier(.22,.8,.23,1)', fill: 'none'
     });
     active.set(node, animation); stats.started++; stats.peak = Math.max(stats.peak, active.size);
     const finish = () => { if (active.get(node) === animation) active.delete(node); };
@@ -43,10 +71,18 @@
     return animation;
   }
   function reveal(node, kind = 'surface') {
-    const still = kind === 'photo' || node?.matches('.side-panel,.user-profile-card,.modal-overlay,.message-modal-overlay-v36') || (node?.matches('dialog') && innerWidth < 600);
-    return play(node, still ? [{ opacity: .55 }, { opacity: 1 }] : [
-      { opacity: .5, transform: 'translateY(7px) scale(.99)' }, { opacity: 1, transform: 'translateY(0) scale(1)' }
-    ], kind === 'photo' ? 200 : 160, kind);
+    const [opacity,x,y,scale,duration] = Object.hasOwn(profiles,kind)?profiles[kind]:profiles.surface;
+    return play(node, rect => {
+      if ((!x&&!y)||kind!=='drawer'&&(rect.height>=innerHeight*.86||rect.width>=innerWidth*.96)) return [{ opacity }, { opacity: 1 }];
+      // Keep small surfaces inside the viewport throughout their entrance.
+      const tall = innerWidth < 700 && rect.height > innerHeight * .54;
+      const clamp=(delta,start,end)=>Math.max(Math.min(0,-start),Math.min(Math.max(0,end),delta));
+      const dx=clamp(tall?0:x*(node.classList.contains('left')?-1:1),rect.left,innerWidth-rect.right);
+      const dy=clamp(tall?Math.min(y||7,7):y,rect.top,innerHeight-rect.bottom);
+      // Keep existing centering/positioning transforms on anchored menus and modal cards.
+      const base = getComputedStyle(node).transform, suffix = base === 'none' ? '' : ' '+base;
+      return [{ opacity, transform:'translate('+dx+'px,'+dy+'px)'+suffix+' scale('+(tall ? 1 : scale)+')' }, { opacity:1,transform:base }];
+    }, duration);
   }
   function reorder(rail, before) {
     if (!enabled() || !rail?.isConnected || !(before instanceof Map)) return;
@@ -56,52 +92,88 @@
       active.get(node)?.cancel(); active.delete(node);
       const now = node.getBoundingClientRect(), dx = old.left - now.left, dy = old.top - now.top;
       if (Math.abs(dx) + Math.abs(dy) < 1 || now.right <= clip.left || now.left >= clip.right) continue;
-      play(node, [{ transform: 'translate(' + dx + 'px,' + dy + 'px)' }, { transform: 'translate(0,0)' }], 210, 'reorder');
+      play(node, [{ transform: 'translate(' + dx + 'px,' + dy + 'px)' }, { transform: 'translate(0,0)' }], 210);
     }
   }
-  function opened(node) {
-    if (node.matches('dialog')) return node.open;
-    if (node.id === 'attachment-menu-v141') return !node.hidden;
-    return node.classList.contains(node.matches('.side-panel,#emoji-picker') ? 'open' : 'show');
+  function cancelWithin(root) {
+    if(!root)return;
+    for (const [item, animation] of active) if (item === root || root.contains(item)) { animation.cancel(); active.delete(item); }
   }
-  function target(node) { return node.matches('.modal-overlay,.message-modal-overlay-v36') ? node.querySelector('.user-profile-card,.modal,.modal-box,.message-modal-v36') || node : node; }
-  function register(node) {
-    if (surfaces.has(node) || surfaces.size >= 80) return;
-    let was = opened(node);
-    const observer = new MutationObserver(() => {
-      const now = opened(node); if (now === was) return; was = now; stats.surfaceChanges++;
-      const item = target(node);
-      if (now) reveal(item); else for (const [node, animation] of active) if (node === item || item.contains(node)) { animation.cancel(); active.delete(node); }
+  function register(node, animateNew) {
+    if (surfaces.has(node) || surfaces.size >= 120) return;
+    const matched=rules.filter(rule=>node.matches(rule[0]));
+    const before=matched.map(rule=>!animateNew&&rule[1](node));
+    const update=()=>matched.forEach((rule,i)=>{
+      const now=rule[1](node);
+      if(now===before[i])return;before[i]=now;stats.surfaceChanges++;
+      const item=rule[3]?.(node)||node;
+      if(now){
+        // Opening a whole dialog and its initial tab are one visual entrance.
+        if(!item.closest('[inert]')&&![...active.keys()].some(parent=>parent!==item&&parent.contains(item)))reveal(item,rule[2]);
+      }
+      else cancelWithin(item);
     });
-    observer.observe(node, { attributes: true, attributeFilter: ['class', 'hidden', 'open'] }); surfaces.set(node, observer);
+    const observer=new MutationObserver(update);
+    observer.observe(node,{attributes:true,attributeFilter:[...new Set(matched.flatMap(rule=>(rule[4]||'class').split(' ')))]});
+    surfaces.set(node,observer);if(animateNew)update();
   }
-  function discover(root) { if (root.matches?.(selector)) register(root); root.querySelectorAll?.(selector).forEach(register); }
+  function discover(root,animateNew=false) { if (root.matches?.(selector)) register(root,animateNew); root.querySelectorAll?.(selector).forEach(node=>register(node,animateNew)); }
   discover(document);
   // App portals/dialogs are direct body children. Message subtree mutations are irrelevant.
-  new MutationObserver(records => {
+  const mounts=new MutationObserver(records => {
+    let removed=false;
     for (const record of records) {
-      for (const node of record.removedNodes) if (node.nodeType === 1) {
-        for (const [surface, observer] of surfaces) if (surface === node || node.contains(surface)) { observer.disconnect(); surfaces.delete(surface); }
-        for (const [item, animation] of active) if (item === node || node.contains(item)) { animation.cancel(); active.delete(item); }
+      for (const node of record.removedNodes) if (node.nodeType===1&&!node.isConnected) { removed=true;cancelWithin(node); }
+      for (const node of record.addedNodes) if(node.nodeType===1&&node.parentNode===record.target){
+        discover(node,true);
+        const call=node.id==='voice-call-overlay'&&node.querySelector('.voice-call-surface');
+        if(call)mounts.observe(call,{childList:true});
       }
-      for (const node of record.addedNodes) if (node.nodeType === 1) discover(node);
     }
-  }).observe(document.body, { childList: true });
+    if(removed)for(const [surface,observer] of surfaces)if(!surface.isConnected){observer.disconnect();surfaces.delete(surface);}
+  });
+  mounts.observe(document.body,{childList:true});
+  const call=document.querySelector('#voice-call-overlay .voice-call-surface');
+  if(call)mounts.observe(call,{childList:true});
   // Single delegated press owner: no per-button listeners, tagging or subtree scanner.
-  function press(node) { release(); if (!enabled() || !node || node.disabled || node.getAttribute('aria-disabled') === 'true') return; pressed = node; node.classList.add('is-pressing-v184'); }
-  document.addEventListener('pointerdown', event => { if (event.button !== 0) return; press(event.target.closest?.('button,[role="button"]')); if (pressed) pointer = { x: event.clientX, y: event.clientY }; }, { passive: true });
-  document.addEventListener('pointermove', event => { if (pointer && Math.abs(event.clientX - pointer.x) + Math.abs(event.clientY - pointer.y) > 12) release(); }, { passive: true });
-  document.addEventListener('keydown', event => { if (!event.repeat && ['Enter', ' '].includes(event.key) && event.target.matches?.('button,[role="button"]')) press(event.target); });
-  document.addEventListener('keyup', release); for (const name of ['pointerup', 'pointercancel', 'blur']) window.addEventListener(name, release, { passive: true });
+  function actionable(node){return node?.isConnected&&!node.matches(':disabled')&&!node.closest('[aria-disabled="true"],[inert]');}
+  function press(node) { release(); if (!enabled() || !actionable(node)) return; pressed = node; node.classList.add('is-pressing-v184'); }
+  document.addEventListener('pointerdown', event => {
+    if(event.button!==0||event.isPrimary===false)return;
+    press(event.target.closest?.(buttonSelector));if(pressed)pointer={id:event.pointerId,x:event.clientX,y:event.clientY};
+  },{capture:true,passive:true});
+  document.addEventListener('pointermove', event => { if (pointer&&pointer.id===event.pointerId && Math.abs(event.clientX - pointer.x) + Math.abs(event.clientY - pointer.y) > 12) release(); }, { capture:true,passive:true });
+  document.addEventListener('keydown', event => { if (!event.repeat && ['Enter',' '].includes(event.key) && event.target.matches?.(buttonSelector)) press(event.target); },true);
+  document.addEventListener('keyup', event=>{if(!pointer&&['Enter',' '].includes(event.key))release();},true);
+  for (const name of ['pointerup','pointercancel','lostpointercapture']) window.addEventListener(name,event=>{if(pointer?.id===event.pointerId)release();},{capture:true,passive:true});
+  window.addEventListener('blur',release);
+  // A quick tap can end before a press frame paints. Give it a single soft afterglow.
+  document.addEventListener('click',event=>{
+    if(!event.isTrusted||!enabled())return;
+    const node=event.target.closest?.(buttonSelector);
+    if(!actionable(node)||typeof node.animate!=='function')return;
+    clickAnimation?.cancel();
+    const opacity=Number(getComputedStyle(node).opacity)||1;
+    const job=clickAnimation=node.animate([{opacity:opacity*.86},{opacity}],{duration:145,easing:'ease-out',fill:'none'});
+    const done=()=>{if(clickAnimation===job)clickAnimation=null;};job.finished.then(done,done);
+  },true);
+  document.addEventListener('toggle',event=>{
+    const details=event.target;if(!details.matches?.('details'))return;
+    const content=details.querySelector(':scope > :not(summary)');
+    if(details.open)reveal(content,'strip');else cancelWithin(details);
+  },true);
   document.addEventListener('exstra-settings-view-v184', event => { reveal(event.detail?.target, 'section'); if (event.detail?.content) reveal(event.detail.content, 'section'); });
+  let phoneView=document.body.dataset.phonePage;
   const phone = new MutationObserver(() => {
     const page = document.body.dataset.phonePage;
+    if(page===phoneView)return;phoneView=page;
     if (page === 'you' || page === 'more') reveal(document.querySelector('#phone-' + page + '-v159 .phone-page-scroll-v159'), 'section');
+    else if(page==='chats'&&document.body.classList.contains('telechat-phone-v159'))reveal(document.getElementById('contacts-list'),'screen');
   }); phone.observe(document.body, { attributes: true, attributeFilter: ['data-phone-page'] });
   const settings = document.getElementById('settings-panel');
   if (settings) {
     const section = document.createElement('section'); section.className = 'panel-section'; section.id = 'interface-motion-settings-v184';
-    section.innerHTML = '<div class="panel-section-title">Интерфейс и плавность</div><label class="motion-field-v184">Анимации интерфейса<select aria-label="Анимации интерфейса"><option value="auto">Автоматически</option><option value="full">Плавные</option><option value="off">Без эффектов</option></select></label><p>Короткие переходы меню, разделов и фото. Автоматический режим упрощает эффекты на слабых устройствах и при экономии трафика. Системное уменьшение движения учитывается всегда. Анимации глазок и смайликов настраиваются отдельно.</p>';
+    section.innerHTML = '<div class="panel-section-title">Интерфейс и плавность</div><label class="motion-field-v184">Анимации интерфейса<select aria-label="Анимации интерфейса"><option value="auto">Автоматически</option><option value="full">Плавные</option><option value="off">Без эффектов</option></select></label><p>Отклик кнопок и плавное открытие окон, меню и разделов. Автоматический режим упрощает эффекты на слабых устройствах и при экономии трафика. Системное уменьшение движения учитывается всегда. Анимации глазок и смайликов настраиваются отдельно.</p>';
     settings.append(section); control = section.querySelector('select'); control.onchange = () => set(control.value);
   }
   document.body.classList.add('exstra-motion-v184');
@@ -111,6 +183,6 @@
   document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); });
   window.addEventListener('pagehide', stop);
   window.addEventListener('telechat-native-visibility', event => { nativeHidden = !!event.detail?.background; if (nativeHidden) stop(); });
-  window.exstraMotionV184 = Object.freeze({ reveal, reorder, enabled, stop, set, getState: () => ({ mode, policy: policy(), active: active.size, surfaces: surfaces.size, ...stats }) });
+  window.exstraMotionV184 = Object.freeze({ reveal, reorder, enabled, stop, set, getState: () => ({ mode, policy: policy(), active: active.size, feedback:!!clickAnimation, surfaces: surfaces.size, ...stats }) });
   sync();
 })();

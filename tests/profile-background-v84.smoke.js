@@ -27,7 +27,7 @@ assert.match(js,/element\.id==='view-profile-cover'/);
 assert.match(js,/window\.buildProfPanel/);
 assert.match(js,/window\.openUserProfile=async/);
 assert.match(js,/const user=isOwn\?currentUser:cached/);
-assert.match(worker,/telechat-shell-v219-story-scenes/);
+assert.match(worker,/telechat-shell-v220-interface-motion/);
 assert.match(worker,/profile-background-v84\.css\?v=167/);
 assert.match(worker,/profile-background-v84\.js\?v=93/);
 

@@ -23,7 +23,7 @@
   let root, lastFocus, searchTimer, uploadFile=null, coverFile=null, coverPreview='', publishing=false, uploadObjectUrl='', importPlaylist='', importing=false;
   let openVersionV199=0,renderVersionV199=0,renderMarkupV199='',playerViewV199='',queueMarkupV199='',libraryFlightV199=null,feedFlightV199=null;
   let generationV212=0,sheetVersionV212=0,publicationVersionV212=0,importVersionV212=0,profileVersionV212=0,playerTrackViewV212='',catalogRevisionV212=0,libraryRevisionV212=0;
-  let linkCheckV217=null;
+  let linkCheckV217=null,motionViewV220='';
   const requestsV212=new Set(),catalogAtV212=new Map(),catalogVersionsV212=new Map(),profileFlightsV212=new Map(),authorViewsV212=new Map();
   const captureV212=()=>({owner:state.owner,epoch:generationV212});
   const currentV212=ctx=>!!ctx.owner&&ctx.owner===state.owner&&ctx.owner===user()?.nick&&ctx.epoch===generationV212;
@@ -106,7 +106,7 @@
   }
   async function open() {
     if(!user()?.nick){toast('Сначала войди в аккаунт');return;}
-    const firstOpen=!state.opened;
+    const firstOpen=!state.opened;if(firstOpen)motionViewV220='';
     ensure();lastFocus=document.activeElement;state.opened=true;root.hidden=false;document.body.classList.add('music-hub-open-v117');document.querySelector('.music-entry-v96')?.setAttribute('aria-expanded','true');
     const changed=state.owner!==user().nick;
     if(changed)resetOwnerV212(user().nick);
@@ -202,7 +202,8 @@
       else content+=empty(state.query?'Пока ничего не нашлось':state.view==='home'?'Здесь начинается новая волна':'Добавь немного своего ритма',state.query?'Попробуй другое название или исполнителя.':state.view==='home'?'Выложи первый трек — его услышат другие пользователи ExstraChat.':'Сохраняй треки из общей ленты или загрузи свою музыку.',state.query?'':state.view==='home'||state.view==='profile'?'publish':state.view==='playlist'?'playlist-files':state.view==='local'?'import':'discover',state.view==='home'||state.view==='profile'?'Выложить трек':state.view==='playlist'||state.view==='local'?'Добавить с устройства':'Открыть музыку');
       if(state.view==='home'&&state.more&&items.length)content+=`<button class="mh-load-more" data-action="load-more" ${state.loading?'disabled':''}>${state.loading?'Загружаем…':'Показать ещё'}</button>`;
     }
-    if(content!==renderMarkupV199){const scroll=$('mh-scroll'),top=scroll.scrollTop,shelves=[...scroll.querySelectorAll('[data-shelf-v171]')].map(n=>[n.dataset.shelfV171,n.scrollLeft]);const body=$('mh-content'),previousEmpty=body.querySelector('[data-empty-view-v218]')?.dataset.emptyViewV218;body.innerHTML=content;const nextEmpty=body.querySelector('[data-empty-view-v218]');if(nextEmpty&&nextEmpty.dataset.emptyViewV218===previousEmpty)nextEmpty.querySelector('.es-animate')?.classList.remove('es-animate');renderMarkupV199=content;renderVersionV199++;scroll.scrollTop=top;for(const [key,left] of shelves){const shelf=[...scroll.querySelectorAll('[data-shelf-v171]')].find(n=>n.dataset.shelfV171===key);if(shelf)shelf.scrollLeft=left;}}syncPlayer(core()?.getState());
+    const view=JSON.stringify([state.view,state.view==='profile'?state.profile:state.view==='playlist'?state.selectedPlaylist:'']),viewChanged=!!motionViewV220&&motionViewV220!==view;motionViewV220=view;
+    if(content!==renderMarkupV199){const scroll=$('mh-scroll'),top=scroll.scrollTop,shelves=[...scroll.querySelectorAll('[data-shelf-v171]')].map(n=>[n.dataset.shelfV171,n.scrollLeft]);const body=$('mh-content'),previousEmpty=body.querySelector('[data-empty-view-v218]')?.dataset.emptyViewV218;body.innerHTML=content;const nextEmpty=body.querySelector('[data-empty-view-v218]');if(nextEmpty&&nextEmpty.dataset.emptyViewV218===previousEmpty)nextEmpty.querySelector('.es-animate')?.classList.remove('es-animate');renderMarkupV199=content;renderVersionV199++;scroll.scrollTop=top;for(const [key,left] of shelves){const shelf=[...scroll.querySelectorAll('[data-shelf-v171]')].find(n=>n.dataset.shelfV171===key);if(shelf)shelf.scrollLeft=left;}if(viewChanged)window.exstraMotionV184?.reveal(body,'section');}syncPlayer(core()?.getState());
   }
   function resolveTrack(id){return state.catalog.get(id)||state.local.find(t=>t.id===id);}
   function playable(t){return {...t,kind:t.kind||'link',owner:state.owner,artist:t.artist||t.author_nick||'Моя музыка'};}

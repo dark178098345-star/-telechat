@@ -5,8 +5,9 @@ const root=path.resolve(__dirname,'..');
 const mime={'.html':'text/html','.js':'application/javascript','.css':'text/css','.svg':'image/svg+xml','.png':'image/png','.webp':'image/webp'};
 const read=f=>fs.readFileSync(path.join(root,f),'utf8');
 for(const file of ['empty-scenes-v218.js','empty-scenes-v218.css','shared-media-v152.js','music-hub-v117.js','quick-jump-v154.js','emoji-picker-v182.js','my-center-v187.js','wallet-ui-v197.js','whats-new-v181.js']){
- assert(read('index.html').includes('./'+file+'?v=219'),file);
- assert(read('sw.js').includes('./'+file+'?v=219'),file+' offline');
+ const version=['music-hub-v117.js','whats-new-v181.js'].includes(file)?220:219;
+ assert(read('index.html').includes('./'+file+'?v='+version),file);
+ assert(read('sw.js').includes('./'+file+'?v='+version),file+' offline');
 }
 (async()=>{const browser=await chromium.launch({channel:'msedge',headless:true});try{
  for(const width of [320,390,1440]){

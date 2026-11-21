@@ -88,7 +88,6 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
 .footer-btn{flex:1;background:none;border:none;color:var(--text3);cursor:pointer;padding:8px;border-radius:10px;font-size:20px;font-family:inherit;transition:transform .22s ease,background .22s ease,color .22s ease;}
 .footer-btn:active{background:var(--bg3);color:var(--accent3);}
 .chat-main{flex:1;display:flex;flex-direction:column;min-width:0;height:100%;background:linear-gradient(180deg,rgba(7,8,16,.08),rgba(8,10,20,.20));}
-#active-chat.chat-enter{animation:chatEnter .42s cubic-bezier(.2,.8,.2,1) both;}
 .chat-header{padding:12px 14px;border-bottom:1px solid rgba(124,110,247,.16);display:flex;align-items:center;gap:10px;background:rgba(19,19,30,.68);background:color-mix(in srgb,var(--bg2) 70%,transparent);flex-shrink:0;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 8px 24px rgba(0,0,0,.10);}
 .chat-name{font-size:14px;font-weight:700;color:var(--text);}
 .chat-status-text{font-size:11px;margin-top:2px;}
@@ -254,7 +253,6 @@ body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;font-f
 .spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px;}
 @keyframes spin{to{transform:rotate(360deg);}}
 @keyframes softFadeIn{from{opacity:0;}to{opacity:1;}}
-@keyframes chatEnter{from{opacity:0;transform:translate3d(12px,0,0) scale(.995);}to{opacity:1;transform:translate3d(0,0,0) scale(1);}}
 @keyframes messageIn{from{opacity:0;transform:translate3d(0,7px,0) scale(.985);}to{opacity:1;transform:translate3d(0,0,0) scale(1);}}
 @keyframes stripIn{from{opacity:0;transform:translate3d(0,-7px,0);}to{opacity:1;transform:translate3d(0,0,0);}}
 @keyframes panelPop{from{opacity:0;transform:translate3d(0,10px,0) scale(.97);}to{opacity:1;transform:translate3d(0,0,0) scale(1);}}
@@ -1221,7 +1219,7 @@ async function openChat(nick){
   const other=await getUser(nick);
   document.getElementById('empty-state').style.display='none';
   const ac=document.getElementById('active-chat');ac.style.display='flex';
-  ac.classList.remove('chat-enter');void ac.offsetWidth;ac.classList.add('chat-enter');
+  window.exstraMotionV184?.reveal(ac,'screen');
   const av=document.getElementById('chat-av');
   setAvatarElement(av,other);av.className='av';
   document.getElementById('chat-name-hdr').textContent=other.name;
@@ -1241,7 +1239,6 @@ async function openChat(nick){
 function goBack(){
   document.getElementById('sidebar').classList.remove('hidden');
   const activeChat=document.getElementById('active-chat');
-  activeChat.classList.remove('chat-enter');
   activeChat.style.display='none';
   document.getElementById('empty-state').style.display='flex';
   document.getElementById('emoji-picker').classList.remove('open');
@@ -1805,7 +1802,7 @@ openChat=async function(nick){
   currentRoom=null;currentChat=nick;pinnedMsgId=null;pinnedMsgText='';cancelPendingMedia();
   const other=await getUser(nick);
   document.getElementById('empty-state').style.display='none';
-  const ac=document.getElementById('active-chat');ac.style.display='flex';ac.classList.remove('chat-enter');void ac.offsetWidth;ac.classList.add('chat-enter');
+  const ac=document.getElementById('active-chat');ac.style.display='flex';window.exstraMotionV184?.reveal(ac,'screen');
   const av=document.getElementById('chat-av');setAvatarElement(av,other);av.className='av';
   document.getElementById('chat-name-hdr').textContent=other.name;
   document.getElementById('room-info-btn').style.display='none';document.getElementById('clear-chat-btn').style.display='';
@@ -1816,7 +1813,7 @@ openChat=async function(nick){
 async function openRoom(room){
   currentChat=null;currentRoom=room;pinnedMsgId=null;pinnedMsgText='';cancelPendingMedia();
   document.getElementById('empty-state').style.display='none';
-  const ac=document.getElementById('active-chat');ac.style.display='flex';ac.classList.remove('chat-enter');void ac.offsetWidth;ac.classList.add('chat-enter');
+  const ac=document.getElementById('active-chat');ac.style.display='flex';window.exstraMotionV184?.reveal(ac,'screen');
   const av=document.getElementById('chat-av');av.className='room-avatar';av.innerHTML=roomAvatarMarkupV113(room);
   document.getElementById('chat-name-hdr').textContent=room.name;document.getElementById('room-info-btn').style.display='';
   document.getElementById('clear-chat-btn').style.display=room.owner_nick===me.nick?'':'none';
@@ -1830,7 +1827,7 @@ function updateComposerAccess(){
 }
 
 goBack=function(){
-  document.getElementById('sidebar').classList.remove('hidden');const active=document.getElementById('active-chat');active.classList.remove('chat-enter');active.style.display='none';
+  document.getElementById('sidebar').classList.remove('hidden');document.getElementById('active-chat').style.display='none';
   document.getElementById('empty-state').style.display='flex';document.getElementById('emoji-picker').classList.remove('open');document.querySelectorAll('.contact.active').forEach(el=>el.classList.remove('active'));
   currentChat=null;currentRoom=null;cancelPendingMedia();if(lastSeenTimer)clearInterval(lastSeenTimer);if(msgSub)Promise.resolve(sb.removeChannel(msgSub)).catch(()=>{});if(typingSub)Promise.resolve(sb.removeChannel(typingSub)).catch(()=>{});if(pollSub)Promise.resolve(sb.removeChannel(pollSub)).catch(()=>{});msgSub=typingSub=pollSub=null;
 };
@@ -2418,7 +2415,7 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <script src="./navigation-readers-v109.js?v=202"></script>
 <script src="./stories-v115.js?v=201"></script>
 <script src="./music-intro-v118.js?v=161"></script>
-<script src="./music-hub-v117.js?v=219"></script>
+<script src="./music-hub-v117.js?v=220"></script>
 <script src="./chat-wallpaper-v119.js?v=124"></script>
 <script src="./presence-model-v120.js?v=172"></script>
 <script src="./presence-v120.js?v=176"></script>
@@ -2483,13 +2480,13 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <script src="./chat-preferences-model-v181.js?v=189"></script>
 <script src="./chat-preferences-v181.js?v=189"></script>
 <script src="./app-restart-v216.js?v=216"></script>
-<script src="./whats-new-v181.js?v=219"></script>
+<script src="./whats-new-v181.js?v=220"></script>
 <link rel="stylesheet" href="./photo-album-v183.css?v=183">
 <script src="./photo-album-viewer-v183.js?v=184"></script>
 <script src="./photo-compose-v183.js?v=184"></script>
 <script src="./emoji-composer-v182.js?v=182"></script>
-<link rel="stylesheet" href="./interface-motion-v184.css?v=184">
-<script src="./interface-motion-v184.js?v=191"></script>
+<link rel="stylesheet" href="./interface-motion-v184.css?v=220">
+<script src="./interface-motion-v184.js?v=220"></script>
 <link rel="stylesheet" href="./my-center-v187.css?v=187">
 <script src="./my-center-v187.js?v=219"></script>
 <link rel="stylesheet" href="./bubble-styles-v189.css?v=189">
