@@ -16,10 +16,18 @@
    else if(['file','audio','video'].includes(tab)){const b=document.createElement('button');b.type='button';b.className='sm-row-v152';b.innerHTML=symbol(tab==='audio'?'music':tab==='video'?'video':'file');const copy=document.createElement('span'),name=document.createElement('strong'),meta=document.createElement('small');name.textContent=item.file.name;meta.textContent=author+' · '+date+' · '+Math.max(1,Math.ceil(item.file.size/1024))+' КБ';copy.append(name,meta);b.append(copy);b.setAttribute('aria-label','Скачать '+item.file.name);b.onclick=()=>window.telechatAttachmentsV141?.saveMessage(row);list.append(b);}
    else for(const url of item.urls){const a=document.createElement('a');a.className='sm-row-v152';a.href=url;a.target='_blank';a.rel='noopener noreferrer';a.innerHTML=symbol('link');const copy=document.createElement('span'),name=document.createElement('strong'),meta=document.createElement('small');name.textContent=url;meta.textContent=author+' · '+date;copy.append(name,meta);a.append(copy);list.append(a);}
   }}
-  $('shared-media-empty-v152').hidden=count>0;$('shared-media-empty-v152').textContent=busy?'Загружаем историю…':ended?'Здесь пока ничего нет':'В этой части переписки ничего нет. Можно загрузить более ранние сообщения.';
+  const empty=$('shared-media-empty-v152'),failed=!!$('shared-media-error-v152').textContent;
+  const emptyKey=count||failed?'hidden':busy?'loading':ended?tab:'partial';
+  if(empty.dataset.stateV218!==emptyKey){
+   empty.dataset.stateV218=emptyKey;empty.hidden=emptyKey==='hidden';
+   if(emptyKey===tab){
+    const [kind,copy]={image:['media','Пока нет фотографий'],file:['files','Пока нет файлов'],link:['links','Пока нет ссылок'],video:['media','Пока нет видео'],audio:['music','Пока нет музыки']}[tab];
+    empty.innerHTML=window.exstraEmptyV218?.art(kind)||'';empty.append(copy);
+   }else empty.textContent=emptyKey==='loading'?'Загружаем историю…':emptyKey==='partial'?'В этой части переписки ничего нет. Можно загрузить более ранние сообщения.':'';
+  }
   const more=$('shared-media-more-v152');more.hidden=ended;more.disabled=busy;more.textContent=busy?'Загружаем…':'Загрузить ещё';window.exstraAutoMediaV179?.scan();
  }
- async function load(){if(busy||ended||!dialog?.open||self()!==owner)return;busy=true;render();const version=epoch,who=owner,request=new AbortController();controller=request;let timer;const deadline=new Promise((_,reject)=>timer=setTimeout(()=>{reject(Error('History timeout'));request.abort();},12000));$('shared-media-error-v152').textContent='';
+ async function load(){if(busy||ended||!dialog?.open||self()!==owner)return;busy=true;$('shared-media-error-v152').textContent='';render();const version=epoch,who=owner,request=new AbortController();controller=request;let timer;const deadline=new Promise((_,reject)=>timer=setTimeout(()=>{reject(Error('History timeout'));request.abort();},12000));
   try{let q=sb.from('messages').select('id,text,ts,from_nick').eq('chat_key',key).eq('deleted',false).order('ts',{ascending:false}).order('id',{ascending:false}).limit(40);
    if(cursor)q=q.or('ts.lt.'+cursor.ts+',and(ts.eq.'+cursor.ts+',id.lt.'+cursor.id+')');
    const result=await Promise.race([Promise.resolve(q.abortSignal?q.abortSignal(request.signal):q),deadline]);if(version!==epoch||self()!==who)return;if(result.error)throw result.error;

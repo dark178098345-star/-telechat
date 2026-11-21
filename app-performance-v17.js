@@ -33,7 +33,7 @@
   const rowMarkupV105=new WeakMap();
   let sidebarLayoutV105='',sidebarPaintV105=0;
 
-  function commitSidebarV105(list,fragment){
+  function commitSidebarV105(list,fragment,emptyState){
     const existing=new Map([...list.querySelectorAll('.contact[data-chat-key]')].map(row=>[row.dataset.chatKey,row]));
     const desired=[...fragment.children].map(next=>{
       const key=next.dataset.chatKey,old=key&&existing.get(key);
@@ -52,9 +52,24 @@
       Object.assign(old.dataset,next.dataset);old.onclick=next.onclick;
       rowMarkupV105.set(old,marks);existing.delete(key);return old;
     });
+    if(emptyState){
+      const [kind,title,detail]=emptyState,signature=kind+'|'+roomsAvailable;
+      let empty=list.querySelector('[data-empty-filter-v218]');
+      if(empty?.dataset.emptyFilterV218!==signature){
+        empty=window.exstraEmptyV218?.state(kind,title,detail)||document.createElement('div');
+        if(!empty.childElementCount)empty.textContent=title;
+        if(!roomsAvailable){const note=document.createElement('p');note.textContent='Группы и каналы пока недоступны.';empty.append(note);}
+        empty.dataset.emptyFilterV218=signature;
+      }
+      desired.push(empty);
+    }
+    // Preserve the mounted empty illustration through background list paints.
+    // The unread renderer removes it when there actually is an unread row.
+    const unreadEmpty=sidebarFilter==='unread'&&list.querySelector('#unread-empty-v174');
     const layout=JSON.stringify([sidebarFilter,desired.map(row=>row.dataset.chatKey||row.textContent)]);
-    if(layout!==sidebarLayoutV105||desired.some(row=>row.dataset.chatKey&&row.parentNode!==list)){
+    if(layout!==sidebarLayoutV105||desired.some(row=>(row.dataset.chatKey||row.dataset.emptyFilterV218)&&row.parentNode!==list)){
       const keep=new Set(desired);
+      if(unreadEmpty)keep.add(unreadEmpty);
       [...list.children].forEach(row=>{if(!keep.has(row))row.remove();});
       desired.forEach((row,index)=>{if(list.children[index]!==row){if(list.moveBefore&&row.parentNode===list)list.moveBefore(row,list.children[index]||null);else list.insertBefore(row,list.children[index]||null);}});
       sidebarLayoutV105=layout;
@@ -208,12 +223,8 @@
         element.onclick=()=>openChat(chat.nick);fragment.appendChild(element);rendered++;
       }
     }
-    if(!rendered){
-      const empty=document.createElement('div'),setup=!roomsAvailable?'<br><span style="color:#fbbf24">Сначала выполни файл supabase-groups.sql</span>':'';
-      empty.style.cssText='padding:22px 14px;font-size:13px;color:var(--text3);line-height:1.55';empty.hidden=sidebarFilter==='unread';
-      empty.innerHTML=(sidebarFilter==='all'?'Найди друга или создай первое пространство':'Здесь пока пусто')+setup;fragment.appendChild(empty);
-    }
-    commitSidebarV105(list,fragment);
+    const emptyState=rendered||sidebarFilter==='unread'?null:sidebarFilter==='group'?['group','Пока нет групп','Найди группу или создай своё пространство.']:sidebarFilter==='channel'?['channel','Пока нет каналов','Найди канал через поиск или создай свой.']:['chats','Пока нет чатов','Найди друга или создай первое пространство.'];
+    commitSidebarV105(list,fragment,emptyState);
     if(typeof window.telechatApplySidebarCustomV52==='function')window.telechatApplySidebarCustomV52();
     if(typeof enhanceVerifiedBadges==='function')enhanceVerifiedBadges(list);
     window.telechatExperienceV62?.decorate();

@@ -445,6 +445,7 @@ body[data-ui-motion-v184=off] #startup-loader{transition:none}
 <link rel="stylesheet" href="./chat-scroll-v132.css?v=132">
 <link rel="stylesheet" href="./music-intro-v118.css?v=118">
 <link rel="stylesheet" href="./branding-v178.css?v=178">
+<link rel="stylesheet" href="./empty-scenes-v218.css?v=218">
 </head>
 <body>
 <div id="startup-loader" role="status" aria-live="polite" aria-label="Загрузка ExstraChat">
@@ -1669,7 +1670,13 @@ doSearch=async function(){
       el.onclick=()=>{closeGlobalSearch();openChat(u.nick);};box.appendChild(el);
     });
   }
-  if(!rooms.length&&!users.length)box.innerHTML='<div style="padding:11px 12px;font-size:12px;color:var(--text3)">Ничего не найдено</div>';
+  if(!rooms.length&&!users.length){
+    const failed=membersRes.error||results.some(result=>result.error);
+    const text=failed?'Не удалось завершить поиск':'Ничего не найдено';
+    const empty=!failed&&window.exstraEmptyV218?.state('search',text,'Проверь написание или попробуй другой запрос.');
+    if(empty)box.append(empty);
+    else {const note=document.createElement('div');note.style.cssText='padding:11px 12px;font-size:12px;color:var(--text3)';note.textContent=text;box.append(note);}
+  }
 };
 function setSidebarFilter(filter,btn){
   sidebarFilter=filter;
@@ -2359,12 +2366,13 @@ renderContacts=async function(){const value=await renderContactsBeforeVerified()
 const openChatBeforeVerified=openChat;
 openChat=async function(nick){const value=await openChatBeforeVerified(nick);enhanceVerifiedBadges(document.getElementById('active-chat'));return value;};
 </script>
+<script src="./empty-scenes-v218.js?v=218"></script>
 <script src="./storage-watch-v124.js?v=161"></script>
 <script src="./user-cache-v123.js?v=211"></script>
 <script src="./profile-performance-v11.js?v=211"></script>
 <script src="./followers-v12.js?v=211"></script>
 <script src="./room-media-v113.js?v=177"></script>
-<script src="./app-performance-v17.js?v=195"></script>
+<script src="./app-performance-v17.js?v=218"></script>
 <script src="./ui-polish-v16.js"></script>
 <script src="./moderation-v19.js?v=201"></script>
 <script src="./transport-v172.js?v=190"></script>
@@ -2382,10 +2390,10 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <script src="./chat-boot-v41.js?v=201"></script>
 <script src="./fluid-ui-v42.js?v=184"></script>
 <script src="./chat-open-loader-v44.js?v=113"></script>
-<script src="./chat-speed-v51.js?v=186"></script>
+<script src="./chat-speed-v51.js?v=218"></script>
 <script src="./chat-actions-v52.js?v=105"></script>
 <script src="./sound-studio-v53.js?v=181"></script>
-<script src="./chat-experience-v62.js?v=174"></script>
+<script src="./chat-experience-v62.js?v=218"></script>
 <script src="./chat-flow-v64.js?v=181"></script>
 <script src="./interaction-v65.js?v=66"></script>
 <script src="./saved-accounts-v75.js?v=211"></script>
@@ -2410,7 +2418,7 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <script src="./navigation-readers-v109.js?v=202"></script>
 <script src="./stories-v115.js?v=201"></script>
 <script src="./music-intro-v118.js?v=161"></script>
-<script src="./music-hub-v117.js?v=217"></script>
+<script src="./music-hub-v117.js?v=218"></script>
 <script src="./chat-wallpaper-v119.js?v=124"></script>
 <script src="./presence-model-v120.js?v=172"></script>
 <script src="./presence-v120.js?v=176"></script>
@@ -2439,7 +2447,7 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <script src="./game-status-v151.js?v=151"></script>
 <link rel="stylesheet" href="./social-v152.css?v=152">
 <link rel="stylesheet" href="./call-design-v152.css?v=152">
-<script src="./shared-media-v152.js?v=193"></script>
+<script src="./shared-media-v152.js?v=218"></script>
 <script src="./story-replies-v152.js?v=152"></script>
 <script src="./call-chat-v152.js?v=152"></script>
 <link rel="stylesheet" href="./quick-jump-v154.css?v=154">
@@ -2475,7 +2483,7 @@ openChat=async function(nick){const value=await openChatBeforeVerified(nick);enh
 <script src="./chat-preferences-model-v181.js?v=189"></script>
 <script src="./chat-preferences-v181.js?v=189"></script>
 <script src="./app-restart-v216.js?v=216"></script>
-<script src="./whats-new-v181.js?v=217"></script>
+<script src="./whats-new-v181.js?v=218"></script>
 <link rel="stylesheet" href="./photo-album-v183.css?v=183">
 <script src="./photo-album-viewer-v183.js?v=184"></script>
 <script src="./photo-compose-v183.js?v=184"></script>

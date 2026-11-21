@@ -1,0 +1,52 @@
+/* Motion tells the story once, inside a fixed-size illustration. */
+.exstra-scene-v218{
+  --es-ink:var(--accent3,#ae9afa);
+  --es-line:color-mix(in srgb,var(--es-ink) 70%,currentColor);
+  --es-base:var(--bg2,#171923);
+  display:block;width:136px;height:auto;max-width:100%;aspect-ratio:152/128;margin-inline:auto;
+  color:var(--text,#ede9ff);flex:none;pointer-events:none;overflow:hidden
+}
+.exstra-scene-v218 .es-halo{fill:color-mix(in srgb,var(--es-ink) 8%,transparent)}
+.exstra-scene-v218 .es-ground{stroke:color-mix(in srgb,var(--es-ink) 24%,transparent);stroke-width:1.2}
+.exstra-scene-v218 .es-panel{fill:color-mix(in srgb,var(--es-ink) 12%,var(--es-base));stroke:var(--es-line);stroke-width:1.55}
+.exstra-scene-v218 .es-face{fill:color-mix(in srgb,var(--es-ink) 19%,var(--es-base));stroke:var(--es-line);stroke-width:1.55}
+.exstra-scene-v218 :is(.es-card,.es-detail){fill:color-mix(in srgb,var(--es-ink) 24%,var(--es-base));stroke:var(--es-line);stroke-width:1.35}
+.exstra-scene-v218 .es-ink{fill:var(--es-line)}
+.exstra-scene-v218 .es-stroke{stroke:var(--es-line);stroke-width:1.65}
+.exstra-scene-v218 .es-fine{stroke:var(--es-line);stroke-width:1.15;opacity:.68}
+body.theme-light .exstra-scene-v218{--es-ink:#6d55a0;--es-base:#f9f6ff;color:#403253}
+
+.exstra-empty-v218{display:grid;justify-items:center;gap:8px;padding:20px 14px 24px;text-align:center;color:var(--text3)}
+.exstra-empty-v218 strong{font-size:14px;font-weight:650;line-height:1.35;color:var(--text);overflow-wrap:anywhere}
+.exstra-empty-v218 p{max-width:28ch;margin:0;font-size:12px;line-height:1.55;color:var(--text2)}
+#contacts-list #unread-empty-v174{padding:22px 12px 24px;gap:9px}
+#contacts-list #unread-empty-v174 .exstra-scene-v218{width:148px;height:auto;color:var(--text)}
+#contacts-list #unread-empty-v174 button{margin-top:4px}
+#contacts-list[aria-busy=true] .exstra-empty-v218{display:none}
+#search-results .exstra-empty-v218{padding:10px 12px 16px}
+#search-results .exstra-scene-v218{width:82px}
+#messages .v51-empty-chat .exstra-empty-v218{padding:10px 12px 14px}
+#messages .v51-empty-chat .exstra-scene-v218{width:108px}
+#shared-media-v152 #shared-media-empty-v152 .exstra-scene-v218{width:112px;margin:2px auto 8px}
+#shared-media-v152 #shared-media-empty-v152{text-align:center}
+#music-hub-v117 .mh-empty>.exstra-scene-v218{width:120px;margin:0 auto 10px}
+html body #empty-state .empty-mark-v77.es-welcome{width:152px;height:128px;background:none!important;border:0!important}
+html body #empty-state .empty-mark-v77.es-welcome .exstra-scene-v218{width:100%;height:auto}
+
+.es-animate{--es-ease:cubic-bezier(.2,.72,.24,1)}
+.es-animate .es-lid{transform-box:view-box;transform-origin:72px 109px;animation:es-open-v218 530ms var(--es-ease) backwards}
+.es-animate .es-web{animation:es-reveal-v218 490ms 130ms var(--es-ease) backwards}
+.es-animate .es-spider{animation:es-drop-v218 670ms 260ms var(--es-ease) backwards}
+.es-animate :is(.es-lift,.es-enter){animation:es-rise-v218 560ms var(--es-ease) backwards}
+.es-animate :is(.es-signal,.es-typing,.es-spark){animation:es-reveal-v218 380ms 230ms var(--es-ease) backwards}
+.es-animate .es-search{animation:es-scan-v218 600ms var(--es-ease) backwards}
+.es-animate .es-disc{transform-box:view-box;transform-origin:65px 70px;animation:es-turn-v218 670ms var(--es-ease) backwards}
+@keyframes es-open-v218{from{transform:scaleY(1.54)}to{transform:none}}
+@keyframes es-reveal-v218{from{opacity:0}to{opacity:1}}
+@keyframes es-drop-v218{0%{transform:translateY(-30px);opacity:0}28%{opacity:1}74%{transform:translateY(3px)}100%{transform:none}}
+@keyframes es-rise-v218{from{transform:translateY(10px);opacity:0}to{transform:none;opacity:1}}
+@keyframes es-scan-v218{from{transform:translate(-16px,-8px);opacity:.18}to{transform:none;opacity:1}}
+@keyframes es-turn-v218{from{transform:rotate(-78deg);opacity:.28}to{transform:none;opacity:1}}
+@media (max-width:520px){#contacts-list #unread-empty-v174 .exstra-scene-v218{width:126px}#music-hub-v117 .mh-empty>.exstra-scene-v218{width:100px}}
+@media (prefers-reduced-motion:reduce){.es-animate *{animation:none!important}}
+body:is([data-ui-motion-v184=off],[data-ui-motion-v184=lite]) .es-animate *{animation:none!important}

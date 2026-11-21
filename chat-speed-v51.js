@@ -337,7 +337,9 @@
         lastRenderedDate = '';
         if (!visibleItems.length) {
           const empty=box.querySelector('.v51-empty-chat')||document.createElement('div');
-          empty.className='v51-empty-chat';empty.textContent='Начни первым! 👋';desired.push(empty);
+          empty.className='v51-empty-chat';
+          if(!empty.childNodes.length)empty.append(window.exstraEmptyV218?.state('chats','Здесь пока тихо','Первое сообщение начнёт разговор.')||'Напиши первое сообщение.');
+          desired.push(empty);
         } else {
           for (const item of visibleItems) {
             if (token !== renderTokenV51 || state.key !== activeKeyV51()) return false;
