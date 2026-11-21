@@ -21,7 +21,7 @@
   if(empty.dataset.stateV218!==emptyKey){
    empty.dataset.stateV218=emptyKey;empty.hidden=emptyKey==='hidden';
    if(emptyKey===tab){
-    const [kind,copy]={image:['media','Пока нет фотографий'],file:['files','Пока нет файлов'],link:['links','Пока нет ссылок'],video:['media','Пока нет видео'],audio:['music','Пока нет музыки']}[tab];
+    const [kind,copy]={image:['media','Пока нет фотографий'],file:['files','Пока нет файлов'],link:['links','Пока нет ссылок'],video:['video','Пока нет видео'],audio:['music','Пока нет музыки']}[tab];
     empty.innerHTML=window.exstraEmptyV218?.art(kind)||'';empty.append(copy);
    }else empty.textContent=emptyKey==='loading'?'Загружаем историю…':emptyKey==='partial'?'В этой части переписки ничего нет. Можно загрузить более ранние сообщения.':'';
   }

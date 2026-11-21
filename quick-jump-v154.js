@@ -37,7 +37,8 @@
       const row=document.createElement('button');row.type='button';row.className='qj-item-v154';row.innerHTML='<span class="qj-symbol-v154">'+icon(item.symbol)+'</span><span class="qj-copy-v154"><strong></strong><small></small></span><span class="qj-arrow-v154" aria-hidden="true">↗</span>';
       row.querySelector('strong').textContent=item.name;row.querySelector('small').textContent=item.description;row.onclick=()=>choose(index);list.append(row);
     });
-    dialog.querySelector('.qj-empty-v154').hidden=shown.length>0;
+    const empty=dialog.querySelector('.qj-empty-v154');empty.hidden=shown.length>0;
+    if(!empty.hidden&&!empty.querySelector('.exstra-scene-v218'))empty.insertAdjacentHTML('afterbegin',window.exstraEmptyV218?.art('jump')||'');
     dialog.querySelector('.qj-count-v154').textContent=query?'Найдено: '+shown.length:'Разделы и твои разговоры';setSelected(0);
   }
   function close(focus=true){restore=focus;dialog?.close();}
