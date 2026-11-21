@@ -163,21 +163,22 @@
     }
     return url.href;
   }
-  function inspectAudio(src,signal) {
+  function inspectAudio(src,signal,decode=false) {
     return new Promise((resolve,reject) => {
       if(signal?.aborted){reject(new DOMException('Cancelled','AbortError'));return;}
-      const probe = new Audio(); probe.preload = 'metadata';
+      const probe = new Audio(); probe.preload = decode ? 'auto' : 'metadata';
       let settled=false;const abort=()=>finish(new DOMException('Cancelled','AbortError'));
       const timer = setTimeout(() => finish(new Error('Аудио не отвечает. Проверь ссылку или выбери файл.')),15000);
       function finish(error) {
-        if(settled)return;settled=true;clearTimeout(timer);signal?.removeEventListener('abort',abort);probe.onloadedmetadata = probe.onerror = null;
+        if(settled)return;settled=true;clearTimeout(timer);signal?.removeEventListener('abort',abort);probe.onloadedmetadata = probe.onloadeddata = probe.oncanplay = probe.onerror = null;
         const seconds = probe.duration;
         probe.removeAttribute('src');probe.load();
         if (error) reject(error);
         else if (!Number.isFinite(seconds) || seconds <= 0) reject(new Error('Нужен обычный аудиотрек с конечной длительностью.'));
         else resolve(seconds);
       }
-      probe.onloadedmetadata = () => finish();
+      probe.onloadedmetadata = () => {if(!decode||probe.readyState>=2)finish();};
+      if(decode)probe.onloadeddata = probe.oncanplay = () => finish();
       probe.onerror = () => finish(new Error('Не удалось прочитать аудио. Подойдёт MP3, M4A, WAV, OGG или другой формат, который воспроизводит браузер.'));
       signal?.addEventListener('abort',abort,{once:true});
       probe.src = src;

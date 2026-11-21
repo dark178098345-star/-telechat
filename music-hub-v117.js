@@ -20,9 +20,10 @@
   const time = n => Number.isFinite(n)&&n>0 ? Math.floor(n/60)+':'+String(Math.floor(n%60)).padStart(2,'0') : '—';
   const safeUrl = url => { try { const u=new URL(url);return u.protocol==='https:'&&!u.username&&!u.password?u.href:''; } catch(_){return '';} };
   const state = {owner:'',view:'home',filter:'new',query:'',catalog:new Map(),feed:[],local:[],saved:new Set(),liked:new Set(),playlists:[],profiles:new Map(),offset:0,more:true,loading:false,request:0,server:true,selectedPlaylist:'',profile:'',busy:new Set(),queue:[],opened:false,genre:'',feedAt:0,feedKey:'',libraryAt:0,localAt:0};
-  let root, lastFocus, searchTimer, uploadFile=null, coverFile=null, coverPreview='', publishing=false, probe=null, uploadObjectUrl='', importPlaylist='', importing=false;
+  let root, lastFocus, searchTimer, uploadFile=null, coverFile=null, coverPreview='', publishing=false, uploadObjectUrl='', importPlaylist='', importing=false;
   let openVersionV199=0,renderVersionV199=0,renderMarkupV199='',playerViewV199='',queueMarkupV199='',libraryFlightV199=null,feedFlightV199=null;
   let generationV212=0,sheetVersionV212=0,publicationVersionV212=0,importVersionV212=0,profileVersionV212=0,playerTrackViewV212='',catalogRevisionV212=0,libraryRevisionV212=0;
+  let linkCheckV217=null;
   const requestsV212=new Set(),catalogAtV212=new Map(),catalogVersionsV212=new Map(),profileFlightsV212=new Map(),authorViewsV212=new Map();
   const captureV212=()=>({owner:state.owner,epoch:generationV212});
   const currentV212=ctx=>!!ctx.owner&&ctx.owner===state.owner&&ctx.owner===user()?.nick&&ctx.epoch===generationV212;
@@ -225,9 +226,68 @@
   async function toggleCollection(id,kind){const ctx=captureV212(),key=ctx.epoch+':'+id+':'+kind;if(state.busy.has(key))return;state.busy.add(key);const set=kind==='like'?state.liked:state.saved, enabled=!set.has(id);
     try{await api(kind,{track_id:id,enabled},ctx);assertV212(ctx);enabled?set.add(id):set.delete(id);if(kind==='like'){const t=state.catalog.get(id);if(t)rememberTracksV212([{...t,likes_count:Math.max(0,(t.likes_count||0)+(enabled?1:-1))}]);}render();}catch(error){if(currentV212(ctx))toast(err(error));}finally{state.busy.delete(key);}
   }
-  function sheet(title,html){ensure();const version=++sheetVersionV212;$('mh-sheet-title').textContent=title;$('mh-sheet-body').innerHTML=html;$('mh-sheet').hidden=false;setTimeout(()=>{if(version===sheetVersionV212&&!$('mh-sheet').hidden)$('mh-sheet').querySelector('input,button')?.focus();},0);}
-  function closeSheet(){if(publishing)return;sheetVersionV212++;if($('mh-sheet'))$('mh-sheet').hidden=true;probe?.destroy();probe=null;if(coverPreview)URL.revokeObjectURL(coverPreview);coverPreview='';if(uploadObjectUrl)URL.revokeObjectURL(uploadObjectUrl);uploadObjectUrl='';uploadFile=null;coverFile=null;}
-  function more(id){const t=resolveTrack(id);if(!t)return;const isLocal=state.local.some(x=>x.id===id)&&!state.catalog.has(id);sheet(t.title,`<div class="mh-track-detail">${cover(t)}<div><strong>${esc(t.artist||t.author_nick||'На устройстве')}</strong><p>${esc(t.description||'Этот трек уже часть твоей волны.')}</p></div></div><div class="mh-action-list">${!isLocal?`<button data-action="menu-save" data-id="${esc(id)}">${icon(state.saved.has(id)?'check':'plus')} ${state.saved.has(id)?'Убрать из моей музыки':'В мою музыку'}</button><button data-action="to-playlist" data-id="${esc(id)}">${icon('list')} Добавить в плейлист</button><button data-action="share" data-id="${esc(id)}">${icon('share')} Поделиться в чате</button><button data-action="profile-track" data-id="${esc(id)}">${icon('user')} Поставить в профиль</button>${state.view==='playlist'?`<button data-action="playlist-remove" data-id="${esc(id)}">${icon('close')} Убрать из плейлиста</button>`:''}`:`<button data-action="to-playlist" data-id="${esc(id)}">${icon('list')} Добавить в плейлист</button>${state.view==='playlist'?`<button data-action="playlist-remove" data-id="${esc(id)}">${icon('close')} Убрать из плейлиста</button>`:''}<button data-action="publish-local" data-id="${esc(id)}">${icon('upload')} Выложить этот трек</button>`}${isLocal||t.author_nick===state.owner?`<button class="mh-danger" data-action="delete-track" data-id="${esc(id)}">${icon('trash')} ${isLocal?'Удалить с устройства':'Удалить публикацию'}</button>`:''}</div>`);}
+  function sheet(title,html){ensure();linkCheckV217?.dispose();linkCheckV217=null;const version=++sheetVersionV212;$('mh-sheet-title').textContent=title;$('mh-sheet-body').innerHTML=html;$('mh-sheet').hidden=false;setTimeout(()=>{if(version===sheetVersionV212&&!$('mh-sheet').hidden)$('mh-sheet').querySelector('input,button')?.focus();},0);}
+  function closeSheet(){if(publishing)return;linkCheckV217?.dispose();linkCheckV217=null;sheetVersionV212++;if($('mh-sheet'))$('mh-sheet').hidden=true;if(coverPreview)URL.revokeObjectURL(coverPreview);coverPreview='';if(uploadObjectUrl)URL.revokeObjectURL(uploadObjectUrl);uploadObjectUrl='';uploadFile=null;coverFile=null;}
+  // Validate on demand, not by crawling the library. Media loading works even
+  // when a host does not allow CORS; an optional HEAD only explains failures.
+  async function explainLinkFailureV217(url,signal,error){
+    if(signal.aborted||error?.name==='AbortError')throw new DOMException('Cancelled','AbortError');
+    const controller=new AbortController(),abort=()=>controller.abort();signal.addEventListener('abort',abort,{once:true});
+    const timer=setTimeout(abort,2000);let message='';
+    try{const response=await fetch(url,{method:'HEAD',mode:'cors',credentials:'omit',referrerPolicy:'no-referrer',cache:'no-store',signal:controller.signal});
+      if(response.status===404||response.status===410)message='Файл по ссылке удалён или не найден. Вставь новую ссылку либо загрузи аудиофайл.';
+      else if(response.status===401||response.status===403)message='Сайт закрыл доступ к файлу. Ссылка может требовать входа или уже истечь.';
+      else if(response.status===429||response.status>=500)message='Сервер аудио временно недоступен. Проверь ссылку позже или загрузи файл.';
+      else if(response.ok&&/text\/html|application\/xhtml/i.test(response.headers.get('content-type')||''))message='По ссылке открывается страница сайта, а не аудиофайл. Нужна прямая ссылка на музыку.';
+    }catch(_){}finally{clearTimeout(timer);signal.removeEventListener('abort',abort);controller.abort();}
+    if(signal.aborted)throw new DOMException('Cancelled','AbortError');
+    return new Error(message||'Не удалось подтвердить воспроизведение. Ссылка недоступна, формат не поддерживается или сайт ограничивает доступ. Попробуй ещё раз либо загрузи аудиофайл.');
+  }
+  function createLinkCheckV217(container,getValue,active,input){
+    const panel=document.createElement('section');panel.className='mh-link-check-v217';panel.hidden=true;panel.setAttribute('aria-label','Проверка ссылки');
+    panel.innerHTML=`<div class="mh-link-result-v217" role="status" aria-live="polite" aria-atomic="true"><span class="mh-link-symbol-v217">${icon('check')}</span><div><strong></strong><p id="mh-link-result-v217"></p></div></div><p class="mh-link-risk-v217">Проверка показывает доступность только сейчас. Сторонний сайт может удалить файл или закрыть доступ позже. Надёжнее загрузить аудиофайл в ExstraChat.</p><button type="button" class="mh-subtle">Проверить снова</button><div class="mh-link-probe-v217" hidden></div>`;
+    container.append(panel);const title=panel.querySelector('strong'),message=panel.querySelector('.mh-link-result-v217 p'),retry=panel.querySelector('button'),host=panel.querySelector('.mh-link-probe-v217');
+    if(input)input.setAttribute('aria-describedby','mh-link-result-v217');
+    let generation=0,timer=0,controller=null,pending=null,cached=null,disposed=false;
+    const current=job=>!disposed&&active()&&job===generation;
+    function paint(state,text,detail=''){panel.dataset.state=state;title.textContent=text;message.textContent=detail;retry.disabled=state==='checking';panel.setAttribute('aria-busy',String(state==='checking'));input?.setAttribute('aria-invalid',String(state==='error'));}
+    function cancel(){generation++;clearTimeout(timer);timer=0;controller?.abort();controller=null;pending=null;cached=null;}
+    async function check(force=false){
+      if(disposed||!active())throw new DOMException('Cancelled','AbortError');
+      clearTimeout(timer);timer=0;panel.hidden=false;let url;
+      try{url=core().normalizeLink(String(getValue()||''));if(new URL(url).searchParams.has('secret_token'))throw new Error('Для общей ленты нужна публичная ссылка');}
+      catch(error){cancel();paint('error','Ссылку нужно исправить',error.message);throw error;}
+      if(pending?.url===url)return pending.task;
+      if(!force&&cached?.url===url&&performance.now()-cached.at<30000)return cached.result;
+      cancel();const job=generation,abort=controller=new AbortController();paint('checking','Проверяем ссылку…','Открываем аудио без воспроизведения звука.');
+      const flight={url,task:null};flight.task=(async()=>{let cloud=null;
+        try{let duration,source='link';
+          if(window.telechatSoundCloudV98?.isLink(url)){source='soundcloud';cloud=await window.telechatSoundCloudV98.create(url,host,{signal:abort.signal,canPlay:()=>false});duration=cloud.duration;}
+          else{try{duration=await core().inspectAudio(url,abort.signal,true);}catch(error){throw await explainLinkFailureV217(url,abort.signal,error);}}
+          if(!current(job)||abort.signal.aborted)throw new DOMException('Cancelled','AbortError');
+          if(!Number.isFinite(duration)||duration<=0||duration>21600)throw new Error('Нужен аудиотрек с конечной длительностью до 6 часов.');
+          const temporary=[...new URL(url).searchParams.keys()].some(key=>/^(?:expires?|exp|token|sig|signature|x-amz-.+|x-goog-.+)$/i.test(key));
+          const result={url,duration,source};cached={url,result,at:performance.now()};
+          paint(temporary?'warning':'success',temporary?'Аудио доступно · ссылка может быть временной':'Ссылка работает сейчас',temporary?'В адресе есть параметры доступа. Они могут истечь — для постоянного доступа лучше загрузить файл.':`${source==='soundcloud'?'Официальный плеер SoundCloud доступен':'Браузер прочитал аудио'} · ${time(duration)}. Можно публиковать.`);
+          return result;
+        }catch(error){if(current(job)&&error.name!=='AbortError')paint('error','Не удалось проверить аудио',error.message);throw error;}
+        finally{cloud?.destroy();if(current(job)){pending=null;controller=null;retry.disabled=false;panel.setAttribute('aria-busy','false');}}
+      })();pending=flight;return flight.task;
+    }
+    function schedule(enabled=true){cancel();panel.hidden=!enabled;if(!enabled)return;input?.removeAttribute('aria-invalid');
+      if(!String(getValue()||'').trim()){paint('idle','Вставь ссылку на трек','ExstraChat автоматически проверит, доступно ли аудио.');return;}
+      paint('checking','Проверяем ссылку…','Открываем аудио без воспроизведения звука.');timer=setTimeout(()=>{timer=0;check().catch(()=>{});},500);
+    }
+    retry.onclick=()=>{check(true).catch(()=>{});};
+    return {check,schedule,dispose(){disposed=true;cancel();}};
+  }
+  function more(id){const t=resolveTrack(id);if(!t)return;const isLocal=state.local.some(x=>x.id===id)&&!state.catalog.has(id);
+    sheet(t.title,`<div class="mh-track-detail">${cover(t)}<div><strong>${esc(t.artist||t.author_nick||'На устройстве')}</strong><p>${esc(t.description||'Этот трек уже часть твоей волны.')}</p></div></div><div class="mh-action-list">${!isLocal?`<button data-action="menu-save" data-id="${esc(id)}">${icon(state.saved.has(id)?'check':'plus')} ${state.saved.has(id)?'Убрать из моей музыки':'В мою музыку'}</button><button data-action="to-playlist" data-id="${esc(id)}">${icon('list')} Добавить в плейлист</button><button data-action="share" data-id="${esc(id)}">${icon('share')} Поделиться в чате</button><button data-action="profile-track" data-id="${esc(id)}">${icon('user')} Поставить в профиль</button>${state.view==='playlist'?`<button data-action="playlist-remove" data-id="${esc(id)}">${icon('close')} Убрать из плейлиста</button>`:''}`:`<button data-action="to-playlist" data-id="${esc(id)}">${icon('list')} Добавить в плейлист</button>${state.view==='playlist'?`<button data-action="playlist-remove" data-id="${esc(id)}">${icon('close')} Убрать из плейлиста</button>`:''}<button data-action="publish-local" data-id="${esc(id)}">${icon('upload')} Выложить этот трек</button>`}${isLocal||t.author_nick===state.owner?`<button class="mh-danger" data-action="delete-track" data-id="${esc(id)}">${icon('trash')} ${isLocal?'Удалить с устройства':'Удалить публикацию'}</button>`:''}</div>`);
+    if(t.url&&t.source!=='upload'&&!window.telechatSoundCloudV98?.isLink(t.url)){
+      const context=captureV212(),version=sheetVersionV212,area=document.createElement('div');area.className='mh-track-link-check-v217';$('mh-sheet-body').querySelector('.mh-track-detail').after(area);
+      linkCheckV217=createLinkCheckV217(area,()=>t.url,()=>currentV212(context)&&version===sheetVersionV212&&!$('mh-sheet').hidden);linkCheckV217.check().catch(()=>{});
+    }
+  }
   function playlistPicker(id){sheet('Добавить в плейлист',`<div class="mh-action-list">${state.playlists.map(p=>`<button data-action="playlist-add" data-id="${esc(id)}" data-list="${esc(p.id)}">${icon(playlistTracks(p).some(t=>t.id===id)?'check':'list')} ${esc(p.title)}<small>${playlistTracks(p).length} треков</small></button>`).join('')}<button data-action="create-playlist" data-id="${esc(id)}">${icon('plus')} Создать плейлист</button></div>`);}
   function devicePlaylistPicker(){sheet('Музыка с устройства',`<p class="mh-form-hint">Файлы останутся личными. Они хранятся на этом устройстве и не публикуются в общей ленте.</p><button class="mh-primary" data-action="playlist-import">${icon('upload')} Выбрать аудиофайлы</button><div class="mh-action-list mh-device-tracks">${state.local.map(t=>`<button data-action="playlist-add" data-id="${esc(t.id)}" data-list="${esc(state.selectedPlaylist)}">${icon(localPlaylistIds(state.selectedPlaylist).includes(t.id)?'check':'music')}<span>${esc(t.title)}</span><small>${time(t.duration)}</small></button>`).join('')}</div><p class="mh-form-hint">До 50 МБ на файл · до 100 файлов и 250 МБ на устройстве. Очистка данных приложения удалит локальные файлы.</p>`);}
   function createPlaylist(trackId){sheet('Новый плейлист',`<form id="mh-playlist-form" class="mh-form"><label>Название<input name="title" maxlength="80" placeholder="Например, ночные прогулки" required></label><p class="mh-form-hint">Треки из ленты синхронизируются. Файлы с устройства остаются только здесь.</p><button class="mh-primary" type="submit">Создать плейлист</button><p class="mh-form-status" role="status"></p></form>`);
@@ -253,10 +313,14 @@
   function composer(prefill){closeSheet();sheet('Поделись своим звуком',`<form id="mh-publish-form" class="mh-form"><div class="mh-upload-grid"><label class="mh-cover-picker" id="mh-cover-picker"><span>${icon('plus')}<strong>Обложка</strong><small>JPG, PNG, WebP</small></span><input name="cover" type="file" accept="image/jpeg,image/png,image/webp" hidden></label><div><div class="mh-tabs mh-source-tabs"><button type="button" data-source="file" class="is-active">Аудиофайл</button><button type="button" data-source="link">Ссылка / SoundCloud</button></div><label class="mh-file-picker" id="mh-file-picker">${icon('upload')}<strong id="mh-file-label">Выбери аудиофайл</strong><span>MP3, M4A, WAV, OGG, FLAC · до 50 МБ</span><input name="audio" type="file" accept="audio/*,.mp3,.m4a,.wav,.ogg,.opus,.flac" hidden></label><label id="mh-link-field" hidden>Ссылка на трек<input name="url" type="url" placeholder="https://soundcloud.com/artist/track" maxlength="4096"></label><div id="mh-publish-probe"></div></div></div><div class="mh-fields-two"><label>Название<input name="title" required maxlength="160" placeholder="Как называется твой трек?"></label><label>Исполнитель<input name="artist" maxlength="100" placeholder="Имя исполнителя" value="${esc(user()?.name||state.owner)}"></label></div><label>Описание<textarea name="description" maxlength="1000" rows="3" placeholder="Расскажи историю этого трека…"></textarea></label><label>Жанр<select name="genre"><option value="">Выбери настроение</option>${['Электроника','Хип-хоп','Поп','Рок','Фонк','Эмбиент','Инди','Лоу-фай','Другое'].map(g=>`<option>${g}</option>`).join('')}</select></label><p class="mh-form-hint">Публикацию увидят все пользователи ExstraChat. Файлы — до 50 МБ на трек и 250 МБ суммарно. Публикуй свою музыку или ту, которой можешь делиться.</p><label class="mh-consent"><input name="rights" type="checkbox" required> У меня есть право делиться этим треком</label><div class="mh-publish-bottom"><span class="mh-form-status" id="mh-publish-status" role="status"></span><button class="mh-primary" type="submit">${icon('upload')} Опубликовать</button></div></form>`);
     const form=$('mh-publish-form'),context=captureV212(),version=sheetVersionV212;let selection=0;
     const active=()=>currentV212(context)&&version===sheetVersionV212&&form.isConnected&&!$('mh-sheet').hidden;
-    form.dataset.source='file';form.querySelectorAll('[data-source]').forEach(b=>b.onclick=()=>{if(!active())return;selection++;form.dataset.source=b.dataset.source;form.querySelectorAll('[data-source]').forEach(x=>x.classList.toggle('is-active',x===b));form.querySelector('#mh-file-picker').hidden=b.dataset.source!=='file';form.querySelector('#mh-link-field').hidden=b.dataset.source!=='link';});
+    const linkArea=document.createElement('div');form.querySelector('.mh-upload-grid').after(linkArea);
+    const checker=createLinkCheckV217(linkArea,()=>form.elements.url.value,()=>active()&&form.dataset.source==='link',form.elements.url);linkCheckV217=checker;form.linkCheckV217=checker;
+    form.dataset.source='file';form.querySelectorAll('[data-source]').forEach(b=>b.onclick=()=>{if(!active())return;selection++;form.dataset.source=b.dataset.source;form.querySelectorAll('[data-source]').forEach(x=>x.classList.toggle('is-active',x===b));form.querySelector('#mh-file-picker').hidden=b.dataset.source!=='file';form.querySelector('#mh-link-field').hidden=b.dataset.source!=='link';checker.schedule(b.dataset.source==='link');});
+    form.elements.url.oninput=()=>{if(!active()||form.dataset.source!=='link')return;form.querySelector('#mh-publish-status').textContent='';checker.schedule();};
+    form.elements.url.onblur=()=>{if(active()&&form.dataset.source==='link'&&form.elements.url.value.trim())checker.check().catch(()=>{});};
     form.elements.audio.onchange=e=>{if(!active())return;selection++;uploadFile=e.target.files[0]||null;if(uploadFile){form.querySelector('#mh-file-label').textContent=uploadFile.name;if(!form.elements.title.value)form.elements.title.value=uploadFile.name.replace(/\.[^.]+$/,'').slice(0,160);}};
     form.elements.cover.onchange=e=>{if(!active())return;const f=e.target.files[0];if(!f)return;if(f.size>5*1024*1024){form.querySelector('#mh-publish-status').textContent='Обложка — до 5 МБ';return;}coverFile=f;if(coverPreview)URL.revokeObjectURL(coverPreview);coverPreview=URL.createObjectURL(f);form.querySelector('#mh-cover-picker').style.backgroundImage='url('+JSON.stringify(coverPreview)+')';form.querySelector('#mh-cover-picker').classList.add('has-cover');};
-    if(prefill){form.elements.title.value=prefill.title||'';if(prefill.kind==='file'){const selected=selection;core().getFile(prefill.id).then(blob=>{if(!active()||selection!==selected||form.dataset.source!=='file')return;uploadFile=blob;form.querySelector('#mh-file-label').textContent=prefill.title;}).catch(e=>{if(active())toast(err(e));});}else{form.querySelector('[data-source=link]').click();form.elements.url.value=prefill.url||'';}}
+    if(prefill){form.elements.title.value=prefill.title||'';if(prefill.kind==='file'){const selected=selection;core().getFile(prefill.id).then(blob=>{if(!active()||selection!==selected||form.dataset.source!=='file')return;uploadFile=blob;form.querySelector('#mh-file-label').textContent=prefill.title;}).catch(e=>{if(active())toast(err(e));});}else{form.querySelector('[data-source=link]').click();form.elements.url.value=prefill.url||'';checker.schedule();}}
     form.onsubmit=e=>{if(!active()){e.preventDefault();return;}return publish(e);};
   }
   async function resizeCover(file){const image=await createImageBitmap(file);try{const canvas=document.createElement('canvas');canvas.width=canvas.height=640;const size=Math.min(image.width,image.height);canvas.getContext('2d').drawImage(image,(image.width-size)/2,(image.height-size)/2,size,size,0,0,640,640);return await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('Не удалось обработать обложку')),'image/webp',.85));}finally{image.close();}}
@@ -264,16 +328,13 @@
   async function publish(e){e.preventDefault();if(publishing)return;const form=e.currentTarget,context=captureV212(),version=sheetVersionV212;
     if(!form.isConnected||form!==$('mh-publish-form')||$('mh-sheet').hidden||form.dataset.publishUncertain==='true')return;
     const publication=++publicationVersionV212,values=new FormData(form),nick=context.owner,file=uploadFile,image=coverFile,isFile=form.dataset.source==='file',uploaded=[];
-    let bucket,ticket,localUrl='',localProbe=null,publishAttempted=false;
+    let bucket,ticket,localUrl='',publishAttempted=false;
     const currentForm=()=>currentV212(context)&&publication===publicationVersionV212&&version===sheetVersionV212&&form.isConnected&&form===$('mh-publish-form')&&!$('mh-sheet').hidden;
     const check=()=>{assertV212(context);if(!currentForm()){const error=Error('Окно публикации изменилось');error.code='MUSIC_CONTEXT_CHANGED';throw error;}};
     publishing=true;const buttons=[...form.querySelectorAll('button,input,textarea,select')];buttons.forEach(b=>b.disabled=true);const status=form.querySelector('#mh-publish-status');
     try{check();let url='',duration=0,source='link';
       if(isFile){if(!file)throw new Error('Выбери аудиофайл');if(file.size>50*1024*1024)throw new Error('Трек должен быть не больше 50 МБ');status.textContent='Проверяем аудио…';localUrl=URL.createObjectURL(file);uploadObjectUrl=localUrl;duration=await core().inspectAudio(localUrl);check();source='upload';}
-      else{url=core().normalizeLink(values.get('url')||'');if(new URL(url).searchParams.has('secret_token'))throw new Error('Для общей ленты нужна публичная ссылка');status.textContent='Проверяем ссылку…';
-        if(window.telechatSoundCloudV98?.isLink(url)){source='soundcloud';localProbe=await window.telechatSoundCloudV98.create(url,form.querySelector('#mh-publish-probe'),{canPlay:()=>false});check();probe=localProbe;duration=localProbe.duration;localProbe.destroy();if(probe===localProbe)probe=null;localProbe=null;}
-        else{duration=await core().inspectAudio(url);check();}
-      }
+      else{status.textContent='Проверяем ссылку…';const verified=await form.linkCheckV217.check();check();url=verified.url;duration=verified.duration;source=verified.source;}
       if(duration>21600)throw new Error('Трек должен быть не длиннее 6 часов');check();
       ticket=await api('upload_ticket',{size:isFile?file.size:0},context);check();bucket=storage(ticket);let coverUrl='';
       if(isFile){status.textContent='Загружаем трек…';const mime=file.type||'audio/mpeg',ext=({'audio/mpeg':'mp3','audio/mp4':'m4a','audio/x-m4a':'m4a','audio/ogg':'ogg','audio/wav':'wav','audio/x-wav':'wav','audio/flac':'flac','audio/webm':'webm','audio/aac':'aac'})[mime]||'audio';const path=ticket.id+'/audio.'+ext;check();const result=await bucket.upload(path,file,{contentType:mime,cacheControl:'31536000',upsert:false});if(result.error)throw result.error;uploaded.push(path);check();url=bucket.getPublicUrl(path).data.publicUrl;}
@@ -291,7 +352,7 @@
         if(publishAttempted){form.dataset.publishUncertain='true';const verify=document.createElement('button');verify.type='button';verify.className='mh-subtle';verify.textContent='Проверить мои треки';verify.onclick=()=>{if(!currentForm())return;closeSheet();showProfile(nick);};status.after(verify);}
       }
     }finally{
-      try{localProbe?.destroy();}catch(_){}if(probe===localProbe)probe=null;if(localUrl)URL.revokeObjectURL(localUrl);if(uploadObjectUrl===localUrl)uploadObjectUrl='';
+      if(localUrl)URL.revokeObjectURL(localUrl);if(uploadObjectUrl===localUrl)uploadObjectUrl='';
       if(publication===publicationVersionV212){publishing=false;if(currentV212(context)&&version===sheetVersionV212)buttons.forEach(b=>b.disabled=form.dataset.publishUncertain==='true');}
     }
   }
