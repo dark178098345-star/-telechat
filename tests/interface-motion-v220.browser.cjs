@@ -90,7 +90,7 @@ const root=path.resolve(__dirname,'..'),mime={'.html':'text/html','.js':'applica
   await p.locator('[data-wallet-close]').click();
   await p.evaluate(()=>exstraMotionV184.set('off'));await clear();
   await p.locator('#attach-button-v141').click();assert(await p.locator('#attachment-menu-v141').isVisible());assert.equal(await p.evaluate(()=>motionTrace.length),0);
-  await p.keyboard.press('Escape');await p.evaluate(()=>exstraMotionV184.set('full'));await p.emulateMedia({reducedMotion:'reduce'});
+  await p.keyboard.press('Escape');await p.emulateMedia({reducedMotion:'reduce'});await p.evaluate(()=>exstraMotionV184.set('full'));await clear();
   await p.locator('#attach-button-v141').click();assert(await p.locator('#attachment-menu-v141').isVisible());assert.equal(await p.evaluate(()=>motionTrace.length),0);
   assert.deepEqual(errors,[]);await context.close();
  }

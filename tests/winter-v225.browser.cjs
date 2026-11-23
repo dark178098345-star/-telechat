@@ -194,6 +194,7 @@ function sameLayout(actual,expected){
       await page.emulateMedia({reducedMotion:'reduce'});await runningSnow(page,false);
       assert.equal(await winter(page),'on');
       assert(await decorationIsVisible(page),'reduced motion does not remove the static winter art');
+      await page.waitForFunction(()=>Array.from(document.querySelectorAll('.winter-bubble-cap-v226')).every(cap=>!cap.getAnimations().length));
       await page.emulateMedia({reducedMotion:'no-preference'});await runningSnow(page,true);
 
       await page.evaluate(()=>openPanel('settings-panel'));

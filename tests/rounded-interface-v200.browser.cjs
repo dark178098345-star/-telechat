@@ -42,7 +42,8 @@ const root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f
    // Radius controls belong to the user, not the shared shell stylesheet.
    await p.addScriptTag({content:read('settings-navigation-v160.js')});await p.addScriptTag({content:read('chat-comfort-v167.js')});
    await p.evaluate(()=>openPanel('settings-panel'));await p.locator('[data-settings-section=appearance]').click();await p.locator('[data-settings-section=effects]').click();assert(await p.locator('[data-interface-choice-v200=drawings]').isVisible());await p.locator('[data-interface-choice-v200=drawings]').click();assert.equal(await p.evaluate(()=>exstraInterfaceV200.getState().mode),'drawings');
-   await p.evaluate(()=>telechatSettingsV160.openSection('chats'));await p.locator('#chat-radius-v167').fill('8');await p.locator('#chat-radius-v167').dispatchEvent('input');
+   await p.locator('#settings-back-v160').click();await p.locator('[data-settings-section=style]').click();
+   await p.locator('#chat-radius-v167').fill('8');await p.locator('#chat-radius-v167').dispatchEvent('input');
    assert.equal(await p.locator('.comfort-me-v167').first().evaluate(n=>getComputedStyle(n).borderRadius),'8px');
    await p.evaluate(async()=>{closeAllPanels();await openChat('friend0');});await p.waitForTimeout(230);assert(await p.locator('.composer-shell').isVisible());
    await p.screenshot({path:path.join(root,'outputs/rounded-interface-v200-'+width+'.png')});assert.deepEqual(errors,[]);await p.close();
