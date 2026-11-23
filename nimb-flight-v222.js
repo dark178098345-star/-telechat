@@ -3,6 +3,8 @@
   'use strict';
   const pet=window.exstraNimbV221,clamp=(value,min,max)=>Math.min(Math.max(value,min),max);
   if(!pet)return;
+  const flightEmotions=new Set(['love','laugh','surprised']),cooldownMs=25000;
+  const celebrates=expression=>flightEmotions.has(expression);
   // Bake a damped spring once per launch; no per-frame JS or layout reads during flight.
   function gelFrames(points,duration){
     const steps=40,dt=duration/steps/1000,damping=Math.exp(-9*dt);
@@ -26,13 +28,15 @@
       if(layer)return;
       layer=document.createElement('div');layer.className='nimb-air-v222';layer.hidden=true;layer.setAttribute('aria-hidden','true');
       glider=document.createElement('div');glider.className='nimb-glider-v222';ship=pet.make();ship.classList.add('nimb-air-sprite-v222');
+      const frost=document.createElement('div');frost.className='nimb-frost-v223';frost.setAttribute('aria-hidden','true');
       seed=document.createElement('span');seed.className='nimb-seed-v222';
       wake=document.createElement('span');wake.className='nimb-wake-v222';
-      glider.append(ship);layer.append(seed,wake,glider);document.body.append(layer);
+      glider.append(frost,ship);layer.append(seed,wake,glider);document.body.append(layer);
     }
     function land(){
       const current=flight;flight=null;
       if(current)for(const animation of current)animation.cancel();
+      if(ship)pet.stop(ship);
       if(layer)layer.hidden=true;
       stage.removeAttribute('data-nimb-away');
     }
@@ -60,7 +64,7 @@
        spriteWidth=clamp(origin.width,60,95),spriteHeight=spriteWidth*105/152;
       const x=origin.left+origin.width/2-left,y=origin.top+origin.height/2-top;
       const bx=side<0?mark.left-left:mark.right-left,by=mark.top+Math.min(23,mark.height/2)-top;
-      const tx=clamp(bx+side*spriteWidth*.34,spriteWidth*.52,width-spriteWidth*.52);
+      const tx=clamp(bx+side*spriteWidth*.13,spriteWidth*.52,width-spriteWidth*.52);
       const ty=clamp(by-12,spriteHeight*.6,height-spriteHeight*.55);
       const dx=tx-x,dy=ty-y,arc=clamp(Math.abs(dx)*.27+Math.abs(dy)*.09,16,45),bend=side*arc;
       if(Math.hypot(dx,dy)<32)return;
@@ -108,11 +112,12 @@
          [0,0,0],[.09,0,4],[.33,dx*.53+bend,dy*.42],[.49,dx,dy],[.61,dx,dy-3],
          [.8,dx*.40-bend,dy*.46],[.94,0,-2],[1,0,0]
         ],duration),{duration}));
+        pet.deform?.(ship,'flight',{duration,side});
         last=performance.now();swoop.finished.then(took,took);
       }catch(_){land();}
     }
     function request(row,expression,details){
-      if(!row||flight||!eligible()||!pet.motionAllowed()||performance.now()-last<1900)return;
+      if(!row||!celebrates(expression)||flight||!eligible()||!pet.motionAllowed()||performance.now()-last<cooldownMs)return;
       pending={row,expression,details,identity:row.dataset.messageKeyV105||row.dataset.id};
       if(!wait)wait=setTimeout(launch,230); // Let message insertion and autoscroll settle.
     }
@@ -124,5 +129,5 @@
     matchMedia('(prefers-reduced-motion: reduce)').addEventListener?.('change',cancel);
     return Object.freeze({request,cancel});
   }
-  window.exstraNimbFlightV222=Object.freeze({create});
+  window.exstraNimbFlightV222=Object.freeze({create,celebrates});
 })();

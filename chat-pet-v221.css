@@ -3,6 +3,11 @@
 .nimb-v221[hidden],#pixel-eyes-dialog-v155 [data-nimb-control][hidden],#pixel-eyes-dialog-v155 .pe-catalog-v155[hidden],#pixel-eyes-dialog-v155 [data-pe-pet-demo][hidden]{display:none!important}
 #pixel-eyes-stage-v155 canvas[hidden],#pixel-eyes-dialog-v155 canvas[hidden]{display:none!important}
 .nimb-glow-stop{stop-color:var(--nimb-glow)}
+.nimb-volume-v223{display:none;pointer-events:none}
+.nimb-v221[data-volume-v223] .nimb-volume-v223{display:inline}
+.nimb-v221[data-volume-v223] :is(.nimb-shell-fallback-v223,.nimb-depth,.nimb-refraction){display:none}
+.nimb-volume-v223 canvas{display:block!important;width:100%!important;height:100%!important;max-width:none!important;image-rendering:auto!important;filter:none!important}
+.nimb-v221[data-volume-v223] .nimb-face{transform-box:fill-box;filter:drop-shadow(0 1px 1px #20182f6b)}
 .nimb-body,.nimb-pose{transform-box:view-box;transform-origin:76px 53px}
 .nimb-current{transform-box:view-box;transform-origin:77px 60px}
 .nimb-face,.nimb-eyes{transform-origin:75px 49px}
@@ -90,6 +95,8 @@ html body.telechat-phone-v159:is(.telechat-mobile-keyboard-v100,.telechat-mobile
 .nimb-air-v222[hidden],body:is([data-ui-motion-v184=off],[data-ui-motion-v184=lite]) .nimb-air-v222{display:none!important}
 .nimb-glider-v222,.nimb-seed-v222,.nimb-wake-v222{position:absolute}
 .nimb-glider-v222{transform-origin:center center}
+.nimb-frost-v223{position:absolute;inset:0;border-radius:50%;clip-path:ellipse(30.5% 29% at 50% 49%);backdrop-filter:blur(3.2px) saturate(1.08);-webkit-backdrop-filter:blur(3.2px) saturate(1.08);pointer-events:none}
+.nimb-glider-v222 .nimb-v221{position:relative}
 .nimb-air-sprite-v222 .nimb-body,.nimb-air-sprite-v222 .nimb-current{animation:none}
 .nimb-seed-v222{width:15px;height:15px;margin:-7px;border-radius:50%;opacity:0;background:radial-gradient(circle at 39% 35%,#fff 7%,#d6c7ff 27%,#a887fa91 48%,#b993ff00 72%);box-shadow:0 0 12px #bb9af377}
 .nimb-wake-v222{width:46px;height:22px;margin:-11px -23px;border-radius:50%;opacity:0;background:radial-gradient(ellipse,#c9a8ffb3 3%,#a17bfc70 28%,transparent 72%)}

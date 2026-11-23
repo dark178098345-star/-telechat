@@ -3,6 +3,13 @@
   'use strict';
   let sequence=0;
   const contour='M23 50C22 36 33 25 46 23C53 14 67 12 78 16C92 11 106 16 113 26C125 31 132 42 129 54C132 67 122 77 111 80C101 89 87 91 74 87C60 91 46 87 37 79C26 76 20 64 23 50Z';
+  const coords=contour.match(/\d+/g).map(Number),centerX=76,centerY=51;
+  const membrane=Array.from({length:coords.length/2},(_,i)=>{
+    const x=coords[i*2],y=coords[i*2+1],dx=x-centerX,dy=y-centerY,normal=Math.hypot(dx,dy);
+    return {x,y,angle:Math.atan2(dy/39,dx/54),nx:dx/normal,ny:dy/normal};
+  });
+  const gels=new WeakMap();
+  const volumes=new WeakMap();
   const spark='M0-5Q1.5-1.5 5 0Q1.5 1.5 0 5Q-1.5 1.5-5 0Q-1.5-1.5 0-5Z';
   const heart='M0 5.5-5.9-.3C-9-4-4.7-8 0-4.6C4.7-8 9-4 5.9-.3Z';
   const moods=new Map(Object.entries({idle:'calm',welcome:'glad',pet:'glad',happy:'glad',laugh:'laugh',excited:'glad',love:'love',sad:'sad',angry:'angry',jealous:'angry',dance:'dance',sleep:'sleep',surprised:'wow',dizzy:'wow',wink:'glad',curious:'watch',typing:'watch',think:'watch',focus:'watch',read:'watch',record:'watch',attach:'glad'}));
@@ -43,12 +50,16 @@
         </radialGradient>
         <linearGradient id="${uid}-face" x1="0" y1="0" x2=".12" y2="1"><stop stop-color="#fff"/><stop offset="1" stop-color="#e2d9ff"/></linearGradient>
         <radialGradient id="${uid}-shadow"><stop stop-color="#291a52" stop-opacity=".6"/><stop offset="1" stop-color="#291a52" stop-opacity="0"/></radialGradient>
-        <clipPath id="${uid}-mask"><path d="${contour}"/></clipPath>
+        <path class="nimb-membrane-v223" id="${uid}-membrane" d="${contour}"/>
+        <clipPath id="${uid}-mask"><use href="#${uid}-membrane"/></clipPath>
       </defs>
       <ellipse class="nimb-shadow" cx="76" cy="97" rx="43" ry="6" fill="url(#${uid}-shadow)"/>
       <g class="nimb-pose">
         <g class="nimb-body">
-          <path d="${contour}" fill="url(#${uid}-shell)" stroke="#31234b" stroke-opacity=".55" stroke-width="2.8"/>
+          <foreignObject class="nimb-volume-v223" x="18" y="8" width="116" height="90">
+            <canvas xmlns="http://www.w3.org/1999/xhtml" class="nimb-3d-canvas-v223" width="144" height="112" aria-hidden="true"></canvas>
+          </foreignObject>
+          <use class="nimb-shell-fallback-v223" href="#${uid}-membrane" fill="url(#${uid}-shell)" stroke="#31234b" stroke-opacity=".55" stroke-width="2.8"/>
           <g clip-path="url(#${uid}-mask)">
             <g class="nimb-depth">
               <ellipse cx="77" cy="55" rx="54" ry="39" fill="url(#${uid}-halo)"/>
@@ -84,7 +95,7 @@
               <path d="M96 81q11-2 17-8" fill="none" stroke="#fff0ff" stroke-width="1.45" stroke-linecap="round" opacity=".79"/>
             </g>
           </g>
-          <path d="${contour}" fill="none" stroke="url(#${uid}-edge)" stroke-width="1.35"/>
+          <use class="nimb-shell-fallback-v223" href="#${uid}-membrane" fill="none" stroke="url(#${uid}-edge)" stroke-width="1.35"/>
         </g>
       </g>
       <g class="nimb-heart" fill="#f5a5d5"><path d="${heart}" transform="translate(123 19)"/><path d="${heart}" transform="translate(135 30) scale(.5)" opacity=".7"/></g>
@@ -102,11 +113,87 @@
     if(svg.dataset.feeling!==feeling)svg.dataset.feeling=feeling;
     if(svg.hasAttribute('data-talk')!==talking)svg.toggleAttribute('data-talk',talking);
     if(svg.hasAttribute('data-simple')===extras)svg.toggleAttribute('data-simple',!extras);
+    const state=gels.get(svg);
+    if(!state)drawVolume(svg);
   }
   const reduced=matchMedia('(prefers-reduced-motion:reduce)');
   const motionAllowed=()=>!document.hidden&&!reduced.matches&&!['off','lite'].includes(document.body.dataset.uiMotionV184)&&window.exstraMotionV184?.enabled?.()!==false;
+  function drawVolume(svg,pulse=0,direction=-Math.PI/2,time=0,rippleTime=-1,rippleForce=0){
+    const renderer=window.exstraNimbThreeV223;
+    if(!renderer||svg.hasAttribute('hidden')||document.hidden)return;
+    let volume=volumes.get(svg);
+    if(!volume){
+      const canvas=svg.querySelector('.nimb-3d-canvas-v223');if(!canvas)return;
+      if(svg.closest('#pixel-eyes-dialog-v155')){canvas.width=192;canvas.height=149;}
+      volume={canvas,feeling:'',glow:'#69dce4',stamp:''};volumes.set(svg,volume);
+    }
+    const feeling=svg.dataset.feeling;
+    if(volume.feeling!==feeling){volume.feeling=feeling;volume.glow=getComputedStyle(svg).getPropertyValue('--nimb-glow').trim()||'#69dce4';}
+    const angleX=(parseFloat(svg.style.getPropertyValue('--nimb-x'))||0)/6,angleY=(parseFloat(svg.style.getPropertyValue('--nimb-y'))||0)/6;
+    const pressure=Math.round(pulse*24)/24,stamp=[feeling,angleX,angleY,pressure,time,direction,rippleTime,rippleForce].join('/');
+    if(stamp===volume.stamp)return;
+    const drawn=renderer.draw(volume.canvas,{glow:volume.glow,angleX,angleY,pressure,dentX:Math.cos(direction),dentY:Math.sin(direction),time,rippleTime,rippleForce});
+    if(drawn)volume.stamp=stamp;
+    svg.toggleAttribute('data-volume-v223',!!drawn);
+  }
+  function settle(svg){
+    const current=gels.get(svg);if(!current)return;
+    cancelAnimationFrame(current.frame);current.path.setAttribute('d',contour);gels.delete(svg);svg.removeAttribute('data-gel-v223');drawVolume(svg);
+  }
+  function deform(svg,mood,options={}){
+    if(!svg?.isConnected||svg.hasAttribute('hidden')||svg.closest('[data-nimb-away]')||!motionAllowed())return;
+    const flight=mood==='flight',duration=flight?options.duration:780,path=svg.querySelector('.nimb-membrane-v223');
+    if(!path||!Number.isFinite(duration)||duration<=0)return;
+    const now=performance.now(),old=gels.get(svg);
+    // Repeated message events shouldn't freeze the recoil at the start of every wave.
+    if(old&&now-old.start<350)return;
+    if(old)settle(svg);
+    const lookX=parseFloat(svg.style.getPropertyValue('--nimb-x'))||0,lookY=parseFloat(svg.style.getPropertyValue('--nimb-y'))||0;
+    const side=options.side<0?0:Math.PI;
+    const angle=mood==='pet'&&Math.hypot(lookX,lookY)>1?Math.atan2(lookY,lookX):
+      mood==='sad'?Math.PI/2:mood==='angry'||mood==='jealous'?0:mood==='love'?-2.3:-Math.PI/2;
+    const strength=({pet:17,happy:9,welcome:11,laugh:15,love:13,sad:10,angry:14,jealous:14,surprised:16,dizzy:13})[mood]||7;
+    const hits=flight?[[85,Math.PI/2,10],[duration*.43,side,16],[duration*.77,Math.PI/2,14]]:[[0,angle,strength]];
+    // Every point along the membrane receives the same spring at a different time.
+    // Sharing one path keeps the outline, glass fill and clipping edge in agreement.
+    const weights=membrane.map(({angle})=>hits.map(([at,direction,force])=>{
+      const distance=Math.acos(Math.cos(angle-direction));
+      return [(at+distance*51)/1000,force*(.48+.52*Math.cos(distance/2)**2)];
+    }));
+    const state={path,frame:0,start:now,last:0,lastGlass:0};gels.set(svg,state);svg.setAttribute('data-gel-v223','');
+    function ripple(stamp){
+      const age=stamp-state.start;
+      if(age>=duration||!svg.isConnected||svg.hasAttribute('hidden')||svg.closest('[data-nimb-away]')||!motionAllowed()){settle(svg);return;}
+      if(stamp-state.last>=14){
+        state.last=stamp;
+        const tail=Math.max(0,Math.min(1,(duration-age)/120));let d='';
+        for(let i=0;i<membrane.length;i++){
+          const {x,y,nx,ny}=membrane[i];let displacement=0;
+          for(const [delay,force] of weights[i]){
+            const t=age/1000-delay;if(t>0)displacement-=force*1.42*Math.sin(t*23)*Math.exp(-t*5.8);
+          }
+          const amount=tail*displacement;
+          d+=(i===0?'M':(i-1)%3===0?'C':' ')+(x+nx*amount).toFixed(1)+' '+(y+ny*amount).toFixed(1);
+        }
+        path.setAttribute('d',d+'Z');
+        if(stamp-state.lastGlass>=31){
+          state.lastGlass=stamp;
+          let energy=0,surfaceAngle=angle,waveAge=-1,waveForce=0,score=0;
+          for(const [at,where,force] of hits){
+            const t=(age-at)/1000;
+            if(t<0)continue;
+            const amplitude=tail*force/17,damped=amplitude*Math.exp(-t*5.8);
+            if(damped>score){score=damped;energy=1.30*Math.sin(t*23)*damped;surfaceAngle=where;waveAge=t;waveForce=amplitude;}
+          }
+          drawVolume(svg,energy,surfaceAngle,Math.round(age/32)*.032,waveAge,waveForce);
+        }
+      }
+      state.frame=requestAnimationFrame(ripple);
+    }
+    state.frame=requestAnimationFrame(ripple);
+  }
   function track(svg,target){
-    function reset(){if(!svg.style.getPropertyValue('--nimb-x'))return;svg.style.removeProperty('--nimb-x');svg.style.removeProperty('--nimb-y');}
+    function reset(){if(!svg.style.getPropertyValue('--nimb-x'))return;svg.style.removeProperty('--nimb-x');svg.style.removeProperty('--nimb-y');if(!gels.has(svg))drawVolume(svg);}
     target.addEventListener('pointerleave',reset,{passive:true});
     target.addEventListener('pointermove',event=>{
       if(event.pointerType==='touch'||!motionAllowed()||svg.closest('[data-nimb-away]')){reset();return;}
@@ -116,17 +203,19 @@
       const x=step(event.clientX,rect.left+rect.width/2,rect.width),y=step(event.clientY,rect.top+rect.height/2,rect.height);
       if(svg.style.getPropertyValue('--nimb-x')!==x)svg.style.setProperty('--nimb-x',x);
       if(svg.style.getPropertyValue('--nimb-y')!==y)svg.style.setProperty('--nimb-y',y);
+      if(!gels.has(svg))drawVolume(svg);
     },{passive:true});
   }
   function bounce(svg,mood) {
-    if(!svg?.isConnected||svg.hasAttribute('hidden')||!motionAllowed())return;
+    if(!svg?.isConnected||svg.hasAttribute('hidden')||svg.closest('[data-nimb-away]')||!motionAllowed())return;
+    deform(svg,mood);
     const target=svg.querySelector('.nimb-pose'),excited=['pet','happy','laugh','excited','love','welcome'].includes(mood),hot=['jealous','angry'].includes(mood);
     svg._nimbMotion?.cancel();
-    const animation=target.animate?.(hot?[{transform:'none'},{transform:'translateX(-3px) rotate(-6deg) scale(1.06,.93)'},{transform:'translateX(3px) rotate(4deg) scale(.97,1.04)'},{transform:'none'}]:[
-      {transform:'none'},{offset:.18,transform:'translateY(4px) scale(1.12,.85)'},
-      {offset:.49,transform:excited?'translateY(-8px) rotate(-3deg) scale(.91,1.12)':'translateY(-3px) scale(.96,1.055)'},
-      {offset:.77,transform:'translateY(1px) scale(1.04,.95)'},{transform:'none'}
-    ],{duration:hot?420:excited?670:520,easing:'ease-out'});
+    const animation=target.animate?.(hot?[{transform:'none'},{transform:'translateX(-3px) rotate(-3deg)'},{transform:'translateX(2px) rotate(2deg)'},{transform:'none'}]:[
+      {transform:'none'},{offset:.15,transform:'translateY(1px)'},
+      {offset:.49,transform:excited?'translateY(-6px) rotate(-3deg)':'translateY(-2px)'},
+      {offset:.77,transform:'translateY(1px)'},{transform:'none'}
+    ],{duration:hot?520:excited?760:620,easing:'ease-out'});
     svg._nimbMotion=animation;
     animation?.finished.then(()=>{if(svg._nimbMotion===animation)delete svg._nimbMotion;},()=>{if(svg._nimbMotion===animation)delete svg._nimbMotion;});
     if(mood==='pet'){
@@ -138,7 +227,7 @@
       svg._nimbLiquid=wave;const forget=()=>{if(svg._nimbLiquid===wave)delete svg._nimbLiquid;};wave?.finished.then(forget,forget);
     }
   }
-  function stop(svg){svg?._nimbMotion?.cancel();svg?._nimbLiquid?.cancel();}
+  function stop(svg){if(!svg)return;settle(svg);svg._nimbMotion?.cancel();svg._nimbLiquid?.cancel();}
   let audio=null,voice=null,lastSound=-Infinity;
   const sounds={
     calm:[.23,305,245,390,1050],glad:[.24,365,640,650,1680],laugh:[.32,430,570,625,1500],
@@ -172,5 +261,5 @@
       return Math.ceil((length+.024)*1000);
     }catch(_){silence();}
   }
-  window.exstraNimbV221=Object.freeze({make,paint,bounce,stop,track,motionAllowed,mark,speak,silence});
+  window.exstraNimbV221=Object.freeze({make,paint,bounce,deform,stop,track,motionAllowed,mark,speak,silence});
 })();

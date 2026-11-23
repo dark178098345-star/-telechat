@@ -173,8 +173,9 @@
    !document.querySelector('dialog[open],.side-panel.open,.modal-overlay.show,#voice-call-overlay.show,#voice-call-mini.show');
  }
  function flyTo(row,expression){
-  if(!wantsFlight()||!nimb.motionAllowed())return;
-  air??=window.exstraNimbFlightV222?.create(stage,messages,wantsFlight);
+  const flights=window.exstraNimbFlightV222;
+  if(!flights?.celebrates(expression)||!wantsFlight()||!nimb.motionAllowed())return;
+  air??=flights.create(stage,messages,wantsFlight);
   air?.request(row,expression,prefs.aura);
  }
  function renderPet(){
@@ -247,7 +248,7 @@
    const id=String(source.id||source.client_id||row.dataset.messageKeyV105||row.dataset.id||'');if(!id||seen.has(id))continue;seen.add(id);
    if(first||source.from_nick===owner||source.deleted||source.chat_key&&source.chat_key!==key||!Number.isFinite(Number(source.ts))||Math.abs(Date.now()-Number(source.ts))>30000)continue;
    const expression=emotion(source.text);react(expression||'curious',expression?emotionDuration(expression):1500,!!expression);if(expression)reply(expression,source.text);
-   if(Math.abs(Date.now()-Number(source.ts))<=6000){flightRow=row;flightMood=expression||'curious';}
+   if(window.exstraNimbFlightV222?.celebrates(expression)&&Math.abs(Date.now()-Number(source.ts))<=6000){flightRow=row;flightMood=expression;}
   }
   if(flightRow)flyTo(flightRow,flightMood);
   if(rows.length){primed=true;clearTimeout(primeTimer);primeTimer=0;}
@@ -331,7 +332,7 @@
    sound.innerHTML='<span>Мини-озвучка<small>Короткие звуки при отправке и реакциях. Во время музыки, звонков и голосовых — без звука.</small></span><input id="pe-pet-sound-v221" type="checkbox">';
    speechControl.after(sound);$('pe-pet-sound-v221').onchange=event=>{prefs.petSound=event.target.checked;save();};
    const flights=document.createElement('label');flights.className='pe-toggle-v155';flights.dataset.nimbControl='';
-   flights.innerHTML='<span>Полёты по чату<small>Нимб подлетает к новым сообщениям и подхватывает светящиеся капли.</small></span><input id="pe-pet-flight-v222" type="checkbox">';
+   flights.innerHTML='<span>Редкие полёты<small>Иногда Нимб подхватывает каплю у сердечка, смеха или удивления. На обычные сообщения он реагирует на месте.</small></span><input id="pe-pet-flight-v222" type="checkbox">';
    auraControl.before(flights);$('pe-pet-flight-v222').onchange=event=>{prefs.petFlight=event.target.checked;save();};
    const sample=document.createElement('button');sample.type='button';sample.id='pe-demo-sound-v221';sample.className='pe-demo-sound-v221';sample.dataset.nimbControl='';sample.textContent='Проверить голос';sample.onclick=()=>testMood('surprised');sound.after(sample);
    const jealous=document.createElement('button');jealous.type='button';jealous.dataset.pePetDemo='jealous';jealous.textContent='Ревность';jealous.onclick=()=>testMood('jealous');demos.append(jealous);
@@ -357,7 +358,11 @@
  input.addEventListener('paste',event=>{if([...event.clipboardData?.items||[]].some(item=>item.kind==='file'))react('attach',1200);});
  document.addEventListener('pointermove',event=>{if(!running||stage.hidden||event.pointerType==='touch')return;const r=canvas.getBoundingClientRect();look={x:Math.max(-2,Math.min(2,Math.round((event.clientX-r.left-r.width/2)/110))),y:Math.max(-1,Math.min(1,Math.round((event.clientY-r.top-r.height/2)/130)))};},{passive:true});
  window.addEventListener('telechat-chat-action-v155',event=>{sync();const data=event.detail;if(!data||data.owner!==owner||data.key!==conversation())return;if(data.action==='send'){typingUntil=0;draftRival=false;}const detected=emotion(data.text),expression=data.action==='delete'?'sad':data.action==='edit'||data.action==='reaction'&&!data.text?'wink':detected||(data.action==='reaction'?'excited':'happy');react(expression,emotionDuration(expression),true);if(data.action==='send'&&detected)reply(detected,data.text);if(data.action==='send'||data.action==='reaction')playPet(expression);});
- window.addEventListener('telechat-message-sent-v164',event=>{const data=event.detail;if(data?.owner===owner&&data.key===conversation())flyTo(data.element,currentMood(performance.now()));});
+ window.addEventListener('telechat-message-sent-v164',event=>{
+  const data=event.detail;if(data?.owner!==owner||data.key!==conversation()||!isPet())return;
+  // Another message/draft can change Nimb's mood before the outgoing bubble is painted.
+  flyTo(data.element,emotion(data.element?._messageSourceV136?.text));
+ });
  window.addEventListener('telechat-music-state-v97',event=>{const next=event.detail?.playing===true;if(next===musicPlaying)return;musicPlaying=next;if(next)hushPet();sync();if(next)say('Поймал ритм)');});
  function observeFlag(id,name,expression){const node=$(id);if(!node)return;let was=node.classList.contains(name);new MutationObserver(()=>{const value=node.classList.contains(name);if(value&&!was)react(expression,1000);was=value;}).observe(node,{attributes:true,attributeFilter:['class']});}
  observeFlag('reply-bar','show','think');observeFlag('message-edit-overlay-v36','show','think');observeFlag('pending-media','show','attach');observeFlag('emoji-picker','open','excited');observeFlag('poll-modal','show','think');

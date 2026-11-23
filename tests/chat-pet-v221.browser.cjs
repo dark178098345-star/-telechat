@@ -3,8 +3,8 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
 const {fixtureClient,musicWav}=require('./runtime-v180.browser.cjs');
 const root=path.resolve(__dirname,'..'),read=file=>fs.readFileSync(path.join(root,file),'utf8');
 const mime={'.html':'text/html; charset=utf-8','.js':'application/javascript; charset=utf-8','.css':'text/css','.svg':'image/svg+xml','.webp':'image/webp','.png':'image/png'};
-for(const file of ['chat-pet-v221.js','chat-pet-v221.css','pixel-eyes-v155.js','nimb-flight-v222.js','whats-new-v181.js']){
- for(const shell of ['index.html','sw.js'])assert(read(shell).includes('./'+file+'?v=222'),file+' in '+shell);
+for(const file of ['chat-pet-v221.js','chat-pet-v221.css','pixel-eyes-v155.js','nimb-flight-v222.js','nimb-3d-v223.js','whats-new-v181.js']){
+ for(const shell of ['index.html','sw.js'])assert(read(shell).includes('./'+file+'?v=223'),file+' in '+shell);
 }
 function mockVoice(){
  const stats=window.petAudio={contexts:0,starts:0,stops:0,pauses:0,pitches:[]};
@@ -129,28 +129,36 @@ function mockVoice(){
    await p.evaluate(()=>{window.previousPetFixtureAccount=me;me={nick:'other'};localStorage.setItem('telechat.pixel-eyes.v155.other',JSON.stringify({character:'eyes'}));telechatPixelEyesV155.refresh();});assert.equal((await state()).character,'eyes','An explicit choice is not overwritten');
    await p.evaluate(()=>{me=window.previousPetFixtureAccount;delete window.previousPetFixtureAccount;telechatPixelEyesV155.refresh();closeAllPanels();});assert.equal((await state()).character,'pet');
    const overlay=p.locator('.nimb-air-v222');
-   const append=()=>p.evaluate(()=>{
-    const row=document.createElement('div');row.className='msg them';row.innerHTML='<div class="msg-bubble">Новое сообщение</div>';
-    row._messageSourceV136={id:crypto.randomUUID(),text:'Привет!',from_nick:'bob',ts:Date.now(),chat_key:conversationKey()};
+   const append=(text='Новое сообщение')=>p.evaluate(text=>{
+    const row=document.createElement('div');row.className='msg them';row.innerHTML='<div class="msg-bubble"></div>';row.firstChild.textContent=text;
+    row._messageSourceV136={id:crypto.randomUUID(),text,from_nick:'bob',ts:Date.now(),chat_key:conversationKey()};
     const messages=document.getElementById('messages');messages.append(row);row.scrollIntoView({block:'end',behavior:'instant'});
-   });
+   },text);
+   await append('Привет! Как дела?');await p.waitForTimeout(390);
+   assert(!(await overlay.isVisible()),'Ordinary incoming messages do not trigger a flight even without cooldown');
    if(width===320){
-    await append();await p.waitForTimeout(450);assert(!(await overlay.isVisible()),'Reduced motion skips flights entirely');
+    await append('Ого! 😮');await p.waitForTimeout(450);assert(!(await overlay.isVisible()),'Reduced motion skips even eligible flights');
    }else{
-    await append();await overlay.waitFor({state:'visible',timeout:3500});
+    await append('Ура! 💖');await overlay.waitFor({state:'visible',timeout:3500});
     assert(await stage.evaluate(el=>el.hasAttribute('data-nimb-away')));
     assert.equal(await overlay.evaluate(el=>getComputedStyle(el).pointerEvents),'none');
+    assert.equal(await overlay.locator('.nimb-glider-v222 > .nimb-frost-v223').count(),1,'Only the flying bubble has a local frost layer');
     assert(await overlay.locator('.nimb-current').evaluate(el=>el.getAnimations().some(animation=>animation.effect.getKeyframes().length>30)),'Flight computes a damped spring for the liquid');
-    if(width===1440&&process.env.EXSTRA_PET_CAPTURE==='1')await p.screenshot({path:path.join(root,'outputs','nimb-v222-flight.png')});
+    if(width===1440&&process.env.EXSTRA_PET_CAPTURE==='1')await p.screenshot({path:path.join(root,'outputs','nimb-v223-flight.png')});
     await p.locator('#messages').evaluate(el=>el.dispatchEvent(new WheelEvent('wheel',{deltaY:40})));
     await overlay.waitFor({state:'hidden'});assert(!(await stage.evaluate(el=>el.hasAttribute('data-nimb-away'))),'Scrolling brings Nimb back to his dock');
+    await p.waitForTimeout(1950);await append('Ахах! 😂');await p.waitForTimeout(390);
+    assert(!(await overlay.isVisible()),'Even an eligible second message does not trigger a flight during the 25s cooldown');
     await stage.locator('.pe-character-v155').click();await dialog.locator('#pe-pet-flight-v222').uncheck();await dialog.locator('.pe-close-v155').click();
-    await p.waitForTimeout(1950);await append();await p.waitForTimeout(390);
+    await p.evaluate(()=>{const clock=performance.now.bind(performance);performance.now=()=>clock()+25000;});
+    await append('Вот это да! 😲');await p.waitForTimeout(390);
     assert(!(await overlay.isVisible()),'Switch turns off flights without hiding the pet');
     assert(await pet.isVisible());
     if(width===1440){
      await stage.locator('.pe-character-v155').click();await dialog.locator('#pe-pet-flight-v222').check();await dialog.locator('.pe-close-v155').click();
      await p.locator('#msg-input').fill('Проверка полёта при отправке');await p.evaluate(()=>sendMsg());
+     await p.waitForTimeout(390);assert(!(await overlay.isVisible()),'Ordinary outgoing messages do not trigger flights');
+     await p.locator('#msg-input').fill('Как здорово! 💖');await p.evaluate(()=>sendMsg());
      await overlay.waitFor({state:'visible',timeout:3500});await overlay.waitFor({state:'hidden',timeout:3500});
      assert(!(await stage.evaluate(el=>el.hasAttribute('data-nimb-away'))),'Successful flight lands normally');
     }
@@ -158,6 +166,6 @@ function mockVoice(){
    assert.deepEqual(errors,[]);
    await context.close();
   }
-  console.log('Nimb companion V222: gel, preview, account defaults, message flights and scrolling (320px, 390px, desktop)');
+  console.log('Nimb companion V223: gel, defaults, rare message flights, cooldown and scrolling (320px, 390px, desktop)');
  }finally{await browser.close();}
 })().catch(err=>{console.error(err);process.exitCode=1;});
