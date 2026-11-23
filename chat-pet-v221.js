@@ -10,6 +10,15 @@
   });
   const gels=new WeakMap();
   const volumes=new WeakMap();
+  const palettes=new WeakMap(),currents=new WeakMap(),floating=new Set();
+  const skies=[
+    {name:'morning',glow:'#ffc481',label:'Утренний свет'},
+    {name:'day',glow:'#76f1d8',label:'Дневной свет'},
+    {name:'evening',glow:'#ec9ce7',label:'Вечерний свет'},
+    {name:'night',glow:'#8e9ef5',label:'Ночной свет'}
+  ];
+  const skyAt=hour=>hour>=5&&hour<11?skies[0]:hour>=11&&hour<17?skies[1]:hour>=17&&hour<22?skies[2]:skies[3];
+  let floatTimer=0,scheduledSky=0,clockSky;
   const spark='M0-5Q1.5-1.5 5 0Q1.5 1.5 0 5Q-1.5 1.5-5 0Q-1.5-1.5 0-5Z';
   const heart='M0 5.5-5.9-.3C-9-4-4.7-8 0-4.6C4.7-8 9-4 5.9-.3Z';
   const moods=new Map(Object.entries({idle:'calm',welcome:'glad',pet:'glad',happy:'glad',laugh:'laugh',excited:'glad',love:'love',sad:'sad',angry:'angry',jealous:'angry',dance:'dance',sleep:'sleep',surprised:'wow',dizzy:'wow',wink:'glad',curious:'watch',typing:'watch',think:'watch',focus:'watch',read:'watch',record:'watch',attach:'glad'}));
@@ -53,7 +62,7 @@
         <path class="nimb-membrane-v223" id="${uid}-membrane" d="${contour}"/>
         <clipPath id="${uid}-mask"><use href="#${uid}-membrane"/></clipPath>
       </defs>
-      <ellipse class="nimb-shadow" cx="76" cy="97" rx="43" ry="6" fill="url(#${uid}-shadow)"/>
+      <ellipse class="nimb-shadow" cx="76" cy="53" rx="64" ry="46" fill="url(#${uid}-shadow)" opacity=".29"/>
       <g class="nimb-pose">
         <g class="nimb-body">
           <foreignObject class="nimb-volume-v223" x="18" y="8" width="116" height="90">
@@ -64,9 +73,9 @@
             <g class="nimb-depth">
               <ellipse cx="77" cy="55" rx="54" ry="39" fill="url(#${uid}-halo)"/>
               <g class="nimb-current">
-                <path d="M18 56C40 74 55 74 75 64C95 54 111 50 135 61L139 92H18Z" fill="url(#${uid}-current)"/>
-                <path d="M18 58C40 76 58 75 77 66C97 56 111 53 134 63" fill="none" stroke="url(#${uid}-caustic)" stroke-width=".9" opacity=".56"/>
-                <ellipse cx="76" cy="60" rx="36" ry="25" fill="url(#${uid}-glow)" opacity=".79"/>
+                <path d="M45 61C40 53 45 42 54 40C62 37 70 43 77 39C83 35 86 30 96 32C109 35 108 45 102 52C96 60 84 59 80 67C74 78 54 78 45 61Z" fill="url(#${uid}-current)"/>
+                <path d="M47 55C49 45 56 45 64 47C76 51 86 36 94 37" fill="none" stroke="url(#${uid}-caustic)" stroke-width="1" opacity=".56"/>
+                <ellipse cx="76" cy="54" rx="32" ry="25" fill="url(#${uid}-glow)" opacity=".73"/>
                 <circle class="nimb-soul" cx="77" cy="60" r="20" fill="url(#${uid}-soul)"/>
                 <g class="nimb-beads" fill="url(#${uid}-bead)">
                   <circle cx="45" cy="60" r="3.8"/><circle cx="53" cy="69" r="1.8"/><circle cx="71" cy="35" r="2.1"/>
@@ -113,26 +122,75 @@
     if(svg.dataset.feeling!==feeling)svg.dataset.feeling=feeling;
     if(svg.hasAttribute('data-talk')!==talking)svg.toggleAttribute('data-talk',talking);
     if(svg.hasAttribute('data-simple')===extras)svg.toggleAttribute('data-simple',!extras);
+    atmosphere(svg);
     const state=gels.get(svg);
     if(!state)drawVolume(svg);
   }
   const reduced=matchMedia('(prefers-reduced-motion:reduce)');
   const motionAllowed=()=>!document.hidden&&!reduced.matches&&!['off','lite'].includes(document.body.dataset.uiMotionV184)&&window.exstraMotionV184?.enabled?.()!==false;
-  function drawVolume(svg,pulse=0,direction=-Math.PI/2,time=0,rippleTime=-1,rippleForce=0){
+  function localSky(){
+    const now=Date.now();
+    if(!clockSky||now>=scheduledSky||now<scheduledSky-15000){clockSky=skyAt(new Date(now).getHours());scheduledSky=now+15000;}
+    return clockSky;
+  }
+  function atmosphere(svg){
+    const sky=localSky(),feeling=svg.dataset.feeling||'calm',look=palettes.get(svg);
+    if(look?.sky===sky&&look?.feeling===feeling)return look.glow;
+    const emotion=getComputedStyle(svg).getPropertyValue('--nimb-glow').trim();
+    let glow=sky.glow;
+    if(!['calm','watch','glad','sleep'].includes(feeling)&&/^#[0-9a-f]{6}$/i.test(emotion)){
+      glow='#'+[1,3,5].map(i=>Math.round(parseInt(emotion.slice(i,i+2),16)*.78+parseInt(sky.glow.slice(i,i+2),16)*.22).toString(16).padStart(2,'0')).join('');
+    }
+    palettes.set(svg,{sky,feeling,glow});svg.dataset.skyV224=sky.name;svg.style.setProperty('--nimb-tinted-glow',glow);
+    return glow;
+  }
+  function canFloat(svg){
+    return svg.isConnected&&!svg.hasAttribute('hidden')&&!svg.closest('[data-nimb-away],[data-nimb-drag-away]')&&!document.hidden;
+  }
+  function scheduleFloat(){
+    if(floatTimer||!floating.size)return;
+    const animated=motionAllowed()&&[...floating].some(svg=>svg.hasAttribute('data-volume-v223'));
+    floatTimer=setTimeout(()=>{
+      floatTimer=0;
+      for(const svg of floating){
+        if(!canFloat(svg)){floating.delete(svg);continue;}
+        if(!gels.has(svg)){
+          atmosphere(svg);
+          if(svg.hasAttribute('data-volume-v223'))drawVolume(svg,0,undefined,motionAllowed()?performance.now()/1000:undefined);
+        }
+      }
+      scheduleFloat();
+    },animated?92:15000);
+  }
+  function setFloat(svg,enabled){
+    if(!svg)return;
+    if(enabled&&canFloat(svg)){floating.add(svg);scheduleFloat();}
+    else if(floating.delete(svg)&&!floating.size){clearTimeout(floatTimer);floatTimer=0;}
+  }
+  const unit=value=>Math.max(-1,Math.min(1,Number(value)||0));
+  function drift(svg,x,y){
+    if(!svg)return;
+    const flow=[unit(x),unit(y)];
+    if(Math.hypot(...flow)>.015)currents.set(svg,flow);
+    else currents.delete(svg);
+    if(!gels.has(svg)&&motionAllowed())drawVolume(svg,0,undefined,performance.now()/1000);
+  }
+  function drawVolume(svg,pulse=0,direction=-Math.PI/2,time,rippleTime=-1,rippleForce=0,flow){
     const renderer=window.exstraNimbThreeV223;
     if(!renderer||svg.hasAttribute('hidden')||document.hidden)return;
     let volume=volumes.get(svg);
     if(!volume){
       const canvas=svg.querySelector('.nimb-3d-canvas-v223');if(!canvas)return;
       if(svg.closest('#pixel-eyes-dialog-v155')){canvas.width=192;canvas.height=149;}
-      volume={canvas,feeling:'',glow:'#69dce4',stamp:''};volumes.set(svg,volume);
+      volume={canvas,time:0,stamp:''};volumes.set(svg,volume);
     }
-    const feeling=svg.dataset.feeling;
-    if(volume.feeling!==feeling){volume.feeling=feeling;volume.glow=getComputedStyle(svg).getPropertyValue('--nimb-glow').trim()||'#69dce4';}
+    const glow=atmosphere(svg);
+    if(Number.isFinite(time))volume.time=Math.round(time*40)/40;
     const angleX=(parseFloat(svg.style.getPropertyValue('--nimb-x'))||0)/6,angleY=(parseFloat(svg.style.getPropertyValue('--nimb-y'))||0)/6;
-    const pressure=Math.round(pulse*24)/24,stamp=[feeling,angleX,angleY,pressure,time,direction,rippleTime,rippleForce].join('/');
+    const [driftX,driftY]=flow||currents.get(svg)||[0,0];
+    const pressure=Math.round(pulse*24)/24,stamp=[glow,angleX,angleY,pressure,volume.time,direction,rippleTime,rippleForce,driftX,driftY].join('/');
     if(stamp===volume.stamp)return;
-    const drawn=renderer.draw(volume.canvas,{glow:volume.glow,angleX,angleY,pressure,dentX:Math.cos(direction),dentY:Math.sin(direction),time,rippleTime,rippleForce});
+    const drawn=renderer.draw(volume.canvas,{glow,angleX,angleY,pressure,dentX:Math.cos(direction),dentY:Math.sin(direction),time:volume.time,rippleTime,rippleForce,driftX,driftY});
     if(drawn)volume.stamp=stamp;
     svg.toggleAttribute('data-volume-v223',!!drawn);
   }
@@ -141,7 +199,7 @@
     cancelAnimationFrame(current.frame);current.path.setAttribute('d',contour);gels.delete(svg);svg.removeAttribute('data-gel-v223');drawVolume(svg);
   }
   function deform(svg,mood,options={}){
-    if(!svg?.isConnected||svg.hasAttribute('hidden')||svg.closest('[data-nimb-away]')||!motionAllowed())return;
+    if(!svg||!canFloat(svg)||!motionAllowed())return;
     const flight=mood==='flight',duration=flight?options.duration:780,path=svg.querySelector('.nimb-membrane-v223');
     if(!path||!Number.isFinite(duration)||duration<=0)return;
     const now=performance.now(),old=gels.get(svg);
@@ -153,7 +211,7 @@
     const angle=mood==='pet'&&Math.hypot(lookX,lookY)>1?Math.atan2(lookY,lookX):
       mood==='sad'?Math.PI/2:mood==='angry'||mood==='jealous'?0:mood==='love'?-2.3:-Math.PI/2;
     const strength=({pet:17,happy:9,welcome:11,laugh:15,love:13,sad:10,angry:14,jealous:14,surprised:16,dizzy:13})[mood]||7;
-    const hits=flight?[[85,Math.PI/2,10],[duration*.43,side,16],[duration*.77,Math.PI/2,14]]:[[0,angle,strength]];
+    const hits=flight?[[45,side+Math.PI,6],[duration*.42,side,13],[duration*.76,side+Math.PI,6]]:[[0,angle,strength]];
     // Every point along the membrane receives the same spring at a different time.
     // Sharing one path keeps the outline, glass fill and clipping edge in agreement.
     const weights=membrane.map(({angle})=>hits.map(([at,direction,force])=>{
@@ -163,7 +221,7 @@
     const state={path,frame:0,start:now,last:0,lastGlass:0};gels.set(svg,state);svg.setAttribute('data-gel-v223','');
     function ripple(stamp){
       const age=stamp-state.start;
-      if(age>=duration||!svg.isConnected||svg.hasAttribute('hidden')||svg.closest('[data-nimb-away]')||!motionAllowed()){settle(svg);return;}
+      if(age>=duration||!canFloat(svg)||!motionAllowed()){settle(svg);return;}
       if(stamp-state.last>=14){
         state.last=stamp;
         const tail=Math.max(0,Math.min(1,(duration-age)/120));let d='';
@@ -185,7 +243,13 @@
             const amplitude=tail*force/17,damped=amplitude*Math.exp(-t*5.8);
             if(damped>score){score=damped;energy=1.30*Math.sin(t*23)*damped;surfaceAngle=where;waveAge=t;waveForce=amplitude;}
           }
-          drawVolume(svg,energy,surfaceAngle,Math.round(age/32)*.032,waveAge,waveForce);
+          let flow;
+          if(flight&&options.flow?.length>1){
+            const t=Math.max(0,Math.min(1,age/duration))*(options.flow.length-1);
+            const a=options.flow[Math.floor(t)],b=options.flow[Math.ceil(t)],mix=t-Math.floor(t);
+            flow=[a[0]+(b[0]-a[0])*mix,a[1]+(b[1]-a[1])*mix];
+          }
+          drawVolume(svg,energy,surfaceAngle,stamp/1000,waveAge,waveForce,flow);
         }
       }
       state.frame=requestAnimationFrame(ripple);
@@ -196,7 +260,7 @@
     function reset(){if(!svg.style.getPropertyValue('--nimb-x'))return;svg.style.removeProperty('--nimb-x');svg.style.removeProperty('--nimb-y');if(!gels.has(svg))drawVolume(svg);}
     target.addEventListener('pointerleave',reset,{passive:true});
     target.addEventListener('pointermove',event=>{
-      if(event.pointerType==='touch'||!motionAllowed()||svg.closest('[data-nimb-away]')){reset();return;}
+      if(event.pointerType==='touch'||!motionAllowed()||!canFloat(svg)){reset();return;}
       const rect=target.getBoundingClientRect();
       if(!rect.width||!rect.height)return;
       const step=(value,center,span)=>Math.max(-6,Math.min(6,Math.round((value-center)*12/span)))+'px';
@@ -207,14 +271,14 @@
     },{passive:true});
   }
   function bounce(svg,mood) {
-    if(!svg?.isConnected||svg.hasAttribute('hidden')||svg.closest('[data-nimb-away]')||!motionAllowed())return;
+    if(!svg||!canFloat(svg)||!motionAllowed())return;
     deform(svg,mood);
     const target=svg.querySelector('.nimb-pose'),excited=['pet','happy','laugh','excited','love','welcome'].includes(mood),hot=['jealous','angry'].includes(mood);
     svg._nimbMotion?.cancel();
     const animation=target.animate?.(hot?[{transform:'none'},{transform:'translateX(-3px) rotate(-3deg)'},{transform:'translateX(2px) rotate(2deg)'},{transform:'none'}]:[
-      {transform:'none'},{offset:.15,transform:'translateY(1px)'},
-      {offset:.49,transform:excited?'translateY(-6px) rotate(-3deg)':'translateY(-2px)'},
-      {offset:.77,transform:'translateY(1px)'},{transform:'none'}
+      {transform:'none'},{offset:.18,transform:'translate(-1px,1px)'},
+      {offset:.52,transform:excited?'translate(4px,-3px) rotate(-3deg)':'translate(2px,-1px)'},
+      {offset:.8,transform:'translate(1px,-1px)'},{transform:'none'}
     ],{duration:hot?520:excited?760:620,easing:'ease-out'});
     svg._nimbMotion=animation;
     animation?.finished.then(()=>{if(svg._nimbMotion===animation)delete svg._nimbMotion;},()=>{if(svg._nimbMotion===animation)delete svg._nimbMotion;});
@@ -227,7 +291,7 @@
       svg._nimbLiquid=wave;const forget=()=>{if(svg._nimbLiquid===wave)delete svg._nimbLiquid;};wave?.finished.then(forget,forget);
     }
   }
-  function stop(svg){if(!svg)return;settle(svg);svg._nimbMotion?.cancel();svg._nimbLiquid?.cancel();}
+  function stop(svg){if(!svg)return;setFloat(svg,false);currents.delete(svg);settle(svg);svg._nimbMotion?.cancel();svg._nimbLiquid?.cancel();}
   let audio=null,voice=null,lastSound=-Infinity;
   const sounds={
     calm:[.23,305,245,390,1050],glad:[.24,365,640,650,1680],laugh:[.32,430,570,625,1500],
@@ -261,5 +325,5 @@
       return Math.ceil((length+.024)*1000);
     }catch(_){silence();}
   }
-  window.exstraNimbV221=Object.freeze({make,paint,bounce,deform,stop,track,motionAllowed,mark,speak,silence});
+  window.exstraNimbV221=Object.freeze({make,paint,bounce,deform,stop,track,motionAllowed,drift,setFloat,skyAt,localSky,mark,speak,silence});
 })();

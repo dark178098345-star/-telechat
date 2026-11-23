@@ -1,20 +1,23 @@
-/* One shared WebGL mesh. Glass, its liquid and the droplets are shaded in 3D;
- * the caller schedules draws and provides the live backdrop under the alpha surface. */
+/* One shared WebGL mesh and a refracted view of liquid in microgravity.
+ * The caller schedules draws and provides the live backdrop under the alpha surface. */
 (() => {
   'use strict';
   const vertex=`
     precision mediump float;
     attribute vec3 aUnit;
-    uniform vec2 uLook, uDent;
+    uniform vec2 uLook, uDent, uDrift;
     uniform float uPressure, uTime, uRippleTime, uRippleForce;
     varying vec3 vPoint, vNormal;
     vec3 membrane(vec3 s) {
-      float rim=smoothstep(.33,.96,length(s.xy));
-      float lobe=cos(5.0*atan(s.y,s.x+.0001)+.43)*.034*rim;
-      float breath=cos(s.x*3.0+s.y*2.7+uTime*2.5)*.010;
-      vec3 p=s*(1.0+lobe+breath);
-      p.x*=1.0-.065*s.y;
-      p*=vec3(1.0,.70,.79);
+      float phase=uTime*.0785398163;
+      // A weak, rotating quadrupole changes shape without gaining volume.
+      vec3 axis=normalize(vec3(cos(phase*5.0+.55),sin(phase*5.0+.55),.42*sin(phase*3.0+.4)));
+      float along=dot(s,axis);
+      float tension=(along*along-.3333)*(.105+.053*sin(phase*4.0));
+      float lobe=.014*sin(s.x*3.2+s.z*2.6+phase*8.0)*cos(s.y*4.0-phase*7.0);
+      vec3 p=s*(1.0+tension+lobe);
+      p*=vec3(.969,.749,.819);
+      p.xy+=uDrift*.036*(.5-dot(s.xy,s.xy));
       vec3 direction=normalize(vec3(uDent,.12));
       float facing=clamp(dot(s,direction),-1.0,1.0);
       float contact=pow(max(0.0,facing),5.0);
@@ -44,24 +47,69 @@
   const fragment=`
     precision mediump float;
     uniform vec3 uGlow;
-    uniform vec2 uLook, uDent;
+    uniform vec2 uLook, uDent, uDrift;
     uniform float uPressure, uTime;
     varying vec3 vPoint, vNormal;
     const vec3 eye=vec3(0,0,1);
     const vec3 key=vec3(-.46,.72,.52);
     const vec3 fill=vec3(.76,-.45,.47);
 
-    vec4 bead(vec3 ro,vec3 rd,vec3 center,float radius) {
+    vec4 bead(vec3 ro,vec3 rd,vec3 center,float radius,out float depth) {
+      depth=3.0;
       vec3 fromCenter=ro-center;
       float along=dot(fromCenter,rd);
       float h=along*along-dot(fromCenter,fromCenter)+radius*radius;
       if(h<=0.0||along>=0.0)return vec4(0.0);
-      vec3 normal=normalize(ro+rd*(-along-sqrt(h))-center);
+      depth=max(0.0,-along-sqrt(h));
+      vec3 normal=normalize(ro+rd*depth-center);
       float shade=max(0.0,dot(normal,key));
       float rim=pow(1.0-max(0.0,-dot(rd,normal)),2.7);
       float gloss=pow(max(0.0,dot(reflect(rd,normal),key)),15.0);
       float body=.15+shade*.37+rim*.34;
       return vec4(mix(uGlow,vec3(.88,.98,1),body)+gloss*.73, clamp(.22+shade*.3+rim*.41+gloss*.39,0.0,.94));
+    }
+    float weld(float a,float b) {
+      float blend=max(0.0,.166-abs(a-b));
+      return min(a,b)-blend*blend*1.506024;
+    }
+    float water(vec3 p,vec3 a,vec3 b,vec3 c) {
+      return weld(weld(length(p-a)-.254,length(p-b)-.197),length(p-c)-.171);
+    }
+    vec4 floatingWater(vec3 ro,vec3 ray,vec3 center,float phase,out float depth) {
+      depth=3.0;
+      vec3 a=center+.054*vec3(cos(phase*4.0),sin(phase*5.0),cos(phase*6.0));
+      vec3 b=center+.315*vec3(cos(phase*6.0+.26),.67*sin(phase*6.0+.26),.57*sin(phase*7.0+.48));
+      vec3 c=center+.283*vec3(cos(phase*5.0+2.95),.73*sin(phase*5.0+2.95),.69*sin(phase*4.0+2.57));
+      vec3 offset=ro-center;
+      float along=-dot(offset,ray);
+      float limit=along*along-dot(offset,offset)+.3869;
+      if(limit<=0.0)return vec4(0.0);
+      float halfChord=sqrt(limit),at=max(0.0,along-halfChord),exit=along+halfChord;
+      if(exit<=0.0)return vec4(0.0);
+      // One bounded SDF trace, only for refracted rays that intersect the core's volume.
+      for(int i=0;i<11;i++) {
+        vec3 p=ro+ray*at;
+        float distance=water(p,a,b,c);
+        if(distance<.013) {
+          depth=at;
+          vec3 normal=normalize(vec3(
+            water(p+vec3(.012,0,0),a,b,c),
+            water(p+vec3(0,.012,0),a,b,c),
+            water(p+vec3(0,0,.012),a,b,c)
+          )-distance);
+          float edge=pow(1.0-max(0.0,-dot(ray,normal)),2.1);
+          float shine=pow(max(0.0,dot(reflect(ray,normal),key)),26.0);
+          float curl=pow(max(0.0,dot(reflect(ray,normal),fill)),8.0);
+          float deep=smoothstep(.004,.114,-water(p+ray*.172,a,b,c));
+          float softLight=.27+.48*max(dot(normal,key),0.0)+.25*deep;
+          vec3 clearWater=mix(vec3(.26,.29,.57),uGlow,.62+.23*softLight);
+          clearWater=mix(clearWater,vec3(.8,.94,1.0),.66*shine+.18*curl);
+          return vec4(clearWater,.23+.255*deep+.20*edge+.22*shine);
+        }
+        at+=max(.015,distance*.93);
+        if(at>exit)break;
+      }
+      return vec4(0.0);
     }
     void main(){
       vec3 n=normalize(vNormal);
@@ -70,35 +118,46 @@
       vec3 reflected=reflect(-eye,n);
       vec3 ray=refract(-eye,n,.751);
       vec3 ro=vPoint+ray*.016;
-      float phase=sin(uTime*2.3);
-      vec3 drift=vec3(-uLook.x*.17+phase*.027, uLook.y*.11-uPressure*uDent.y*.105, .018*phase);
-      vec3 basin=vec3(.0,-.29,-.12)+drift;
-      vec3 toCore=ro-basin;
+      float phase=uTime*.0785398163;
+      vec3 pull=vec3(uDrift*.125+vec2(-uLook.x*.079,uLook.y*.063)-uPressure*uDent*.085,0.0);
+      vec3 drift=vec3(.081*cos(phase*4.0+.3),.079*sin(phase*5.0+.3),.076*cos(phase*6.0)) +pull;
+      vec3 center=vec3(0.0,.008,-.087)+drift;
+      vec3 toCore=ro-center;
       float at=max(0.0,-dot(toCore,ray));
-      vec3 coreOffset=(toCore+ray*at)*vec3(1.0,1.37,.56);
-      float fog=exp(-dot(coreOffset,coreOffset)*6.2)*(1.0-exp(-at*3.8));
-      vec3 rippleN=normalize(vec3(uLook.x*.19+phase*.046-uDent.x*uPressure*.17,1.0,.19));
-      float below=dot(rippleN,vPoint-vec3(drift.x,-.20+drift.y,-.09));
-      float liquid=(1.0-smoothstep(-.14,.18,below))*(1.0-fresnel)*.72;
-      float meniscus=exp(-abs(below)*41.0)*liquid*smoothstep(.24,.78,ndv);
+      vec3 coreOffset=(toCore+ray*at)*vec3(1.0,1.05,.77);
+      float fog=exp(-dot(coreOffset,coreOffset)*6.4)*(1.0-exp(-at*3.8));
 
       vec3 film=.59+.41*cos(vec3(-.16,.82,2.42)+grazing*6.6+vPoint.x*.7-vPoint.y*.85);
-      vec3 inside=mix(vec3(.38,.31,.66),uGlow,.48);
-      vec3 glass=mix(inside,film,.32+fresnel*.56);
-      glass=mix(glass,uGlow,.22*liquid+.51*fog);
-      glass+=uGlow*(fog*.25+meniscus*.30)*vec3(.76,.92,1.0);
-      float alpha=.117+.19*liquid+.36*fog+.61*fresnel;
-      vec4 back=bead(ro,ray,vec3(.36,.26,-.31)+drift*.45,.075);
-      vec4 amber=bead(ro,ray,vec3(-.58,-.04,-.12)+drift*.70,.101);
-      vec4 front=bead(ro,ray,vec3(.45,-.29,.21)+drift*.77,.080);
-      glass=mix(glass,back.rgb,back.a*.70);
-      glass=mix(glass,amber.rgb,amber.a*.85);
-      glass=mix(glass,front.rgb,front.a);
-      alpha+=back.a*.32+amber.a*.37+front.a*.40;
+      vec3 tint=mix(vec3(.38,.31,.66),uGlow,.47);
+      vec3 glass=mix(tint,film,.31+fresnel*.56);
+      glass=mix(glass,uGlow,.43*fog);
+      glass+=uGlow*fog*vec3(.12,.19,.24);
+      float alpha=.097+.102*fog+.68*fresnel;
+      float poolDepth,d0,d1,d2,d3;
+      vec4 pool=floatingWater(ro,ray,center,phase,poolDepth);
+      // Independently inclined and phased ellipses: the drops orbit on different planes.
+      float orbit0=phase*7.0+.54,orbit1=phase*9.0+2.78,orbit2=phase*6.0+4.34,orbit3=phase*11.0+1.72;
+      vec4 a=bead(ro,ray,vec3(.51*cos(orbit0),.36*sin(orbit0),-.24+.26*sin(orbit0))+pull*.42,.087,d0);
+      vec4 b=bead(ro,ray,vec3(.53*cos(orbit1),.30*sin(orbit1)+.088*cos(orbit1),.32*sin(orbit1)+.096)+pull*.68,.105,d1);
+      vec4 c=bead(ro,ray,vec3(.58*cos(orbit2),.353*sin(orbit2),-.125+.24*cos(orbit2))+pull*.53,.072,d2);
+      vec4 d=bead(ro,ray,vec3(.43*sin(orbit3),.390*cos(orbit3),.30*cos(orbit3))+pull*.81,.055,d3);
+      vec4 droplets=a;
+      float nearest=d0;
+      if(d1<nearest){nearest=d1;droplets=b;}
+      if(d2<nearest){nearest=d2;droplets=c;}
+      if(d3<nearest){nearest=d3;droplets=d;}
+      if(nearest<poolDepth) {
+        glass=mix(glass,pool.rgb,pool.a);
+        glass=mix(glass,droplets.rgb,droplets.a*.86);
+      } else {
+        glass=mix(glass,droplets.rgb,droplets.a*.76);
+        glass=mix(glass,pool.rgb,pool.a);
+      }
+      alpha+=.42*pool.a+.49*droplets.a;
 
       float top=pow(max(0.0,dot(reflected,key)),9.0)*.31;
-      vec3 d=reflected-key;
-      float strip=exp(-d.y*d.y*165.0-d.x*d.x*14.0-d.z*d.z*20.0)*.65;
+      vec3 streak=reflected-key;
+      float strip=exp(-streak.y*streak.y*165.0-streak.x*streak.x*14.0-streak.z*streak.z*20.0)*.65;
       float glint=pow(max(0.0,dot(reflected,normalize(vec3(-.72,.55,.40)))),135.0)*.69;
       float lower=pow(max(0.0,dot(reflected,fill)),17.0)*.44;
       float outer=pow(grazing,10.0)*.31;
@@ -150,7 +209,7 @@
     gl.bindBuffer(gl.ARRAY_BUFFER,mesh);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(vertices),gl.STATIC_DRAW);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,faces);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,new Uint16Array(indices),gl.STATIC_DRAW);
     const unit=gl.getAttribLocation(program,'aUnit');
-    const names=['uLook','uDent','uPressure','uTime','uRippleTime','uRippleForce','uGlow'];
+    const names=['uLook','uDent','uDrift','uPressure','uTime','uRippleTime','uRippleForce','uGlow'];
     const uniforms=Object.fromEntries(names.map(name=>[name,gl.getUniformLocation(program,name)]));
     renderer={gl,program,mesh,faces,unit,uniforms,count:indices.length};
     return renderer;
@@ -170,7 +229,7 @@
     previousRgb=channels?channels.slice(1,4).map(value=>clamp(Number(value)/255,0,1)):[.57,.79,1];
     return previousRgb;
   }
-  function draw(canvas,{glow,angleX,angleY,dentX,dentY,pressure,time,rippleTime,rippleForce}={}){
+  function draw(canvas,{glow,angleX,angleY,dentX,dentY,pressure,time,rippleTime,rippleForce,driftX,driftY}={}){
     if(!canvas||canvas.width<=0||canvas.height<=0)return false;
     try{
       const stage=setup();if(!stage)return false;
@@ -187,8 +246,9 @@
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,faces);
       gl.uniform2f(uniforms.uLook,clamp(finite(angleX),-1,1),clamp(finite(angleY),-1,1));
       gl.uniform2f(uniforms.uDent,clamp(finite(dentX),-1,1),-clamp(finite(dentY,-1),-1,1));
+      gl.uniform2f(uniforms.uDrift,clamp(finite(driftX),-1,1),-clamp(finite(driftY),-1,1));
       gl.uniform1f(uniforms.uPressure,clamp(finite(pressure),-1,1));
-      gl.uniform1f(uniforms.uTime,finite(time)%160);
+      gl.uniform1f(uniforms.uTime,finite(time)%80);
       gl.uniform1f(uniforms.uRippleTime,clamp(finite(rippleTime,-1),-1,2));
       gl.uniform1f(uniforms.uRippleForce,clamp(finite(rippleForce),0,1.25));
       gl.uniform3fv(uniforms.uGlow,color(glow));

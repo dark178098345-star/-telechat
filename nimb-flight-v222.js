@@ -5,22 +5,69 @@
   if(!pet)return;
   const flightEmotions=new Set(['love','laugh','surprised']),cooldownMs=25000;
   const celebrates=expression=>flightEmotions.has(expression);
-  // Bake a damped spring once per launch; no per-frame JS or layout reads during flight.
-  function gelFrames(points,duration){
-    const steps=40,dt=duration/steps/1000,damping=Math.exp(-9*dt);
-    let segment=0,prevX=0,prevY=0,vx=0,vy=0,lagX=0,lagY=0;
-    return Array.from({length:steps+1},(_,i)=>{
-      const time=i/steps;
-      while(segment<points.length-2&&time>points[segment+1][0])segment++;
-      const [start,x0,y0]=points[segment],[end,x1,y1]=points[segment+1];
-      const t=clamp((time-start)/(end-start),0,1),ease=t*t*(3-2*t);
-      const x=x0+(x1-x0)*ease,y=y0+(y1-y0)*ease;
-      const forceX=clamp((prevX-x)*1.25,-12,12),forceY=clamp((prevY-y)*1.15,-12,12);
-      vx=(vx+(forceX-lagX)*145*dt)*damping;vy=(vy+(forceY-lagY)*145*dt)*damping;
-      lagX+=vx*dt;lagY+=vy*dt;prevX=x;prevY=y;
-      const settle=time>.92?(1-time)/.08:1;
-      return {offset:time,transform:'translate('+Number((lagX*settle).toFixed(2))+'px,'+Number((lagY*settle).toFixed(2))+'px) rotate('+Number((lagX*.7*settle).toFixed(2))+'deg)'};
+  const steps=48,round=value=>Number(value.toFixed(3));
+  // Cache a single trajectory for the shell, drifting wake and the liquid inside.
+  // Tangents are continuous through pickup, with zero velocity only at the dock.
+  function coast(dx,dy,side,duration,bounds){
+    const length=Math.hypot(dx,dy),ux=dx/length,uy=dy/length,nx=-uy*side,ny=ux*side;
+    const bend=clamp(length*.17,13,44),orbit=clamp(length*.075,8,21),dt=duration/steps/1000;
+    const project=(t,lateral,forward)=>[
+      t,clamp(forward*dx+lateral*nx,bounds.minX,bounds.maxX),clamp(forward*dy+lateral*ny,bounds.minY,bounds.maxY)
+    ];
+    const knots=[
+      [0,0,0],project(.22,bend,.40),project(.39,orbit*.65,1-orbit/length),[.5,dx,dy],
+      project(.62,-orbit*.80,1-orbit*.55/length),project(.80,-bend*.66,.44),[1,0,0]
+    ];
+    const tangent=knots.map((_,i)=>{
+      if(i===0||i===knots.length-1)return [0,0];
+      const [t0,x0,y0]=knots[i-1],[t1,x1,y1]=knots[i+1];
+      return [(x1-x0)*.83/(t1-t0),(y1-y0)*.83/(t1-t0)];
     });
+    let segment=0;
+    const points=Array.from({length:steps+1},(_,i)=>{
+      const offset=i/steps;
+      while(segment<knots.length-2&&offset>knots[segment+1][0])segment++;
+      const [start,x0,y0]=knots[segment],[end,x1,y1]=knots[segment+1],span=end-start,
+        t=(offset-start)/span,t2=t*t,t3=t2*t;
+      const value=(from,to,head,tail)=>(2*t3-3*t2+1)*from+(t3-2*t2+t)*span*head+
+        (-2*t3+3*t2)*to+(t3-t2)*span*tail;
+      return {
+        offset,
+        x:clamp(value(x0,x1,tangent[segment][0],tangent[segment+1][0]),bounds.minX,bounds.maxX),
+        y:clamp(value(y0,y1,tangent[segment][1],tangent[segment+1][1]),bounds.minY,bounds.maxY)
+      };
+    });
+    const motion=points.map(({x,y},i)=>{
+      if(i===0||i===steps)return {vx:0,vy:0,speed:0};
+      const before=points[i-1],after=points[i+1],vx=(after.x-before.x)/(2*dt),vy=(after.y-before.y)/(2*dt);
+      return {vx,vy,speed:Math.hypot(vx,vy)};
+    });
+    const shell=points.map(({offset,x,y},i)=>{
+      const {vx,vy,speed}=motion[i],along=1+clamp(speed/7000,0,.14),across=1/along;
+      const xx=speed?vx/speed:1,yy=speed?vy/speed:0,diff=along-across;
+      const first=across+diff*xx*xx,second=diff*xx*yy,last=across+diff*yy*yy;
+      // Area-preserving stretch follows velocity while the face stays upright.
+      return {offset,transform:'matrix('+[first,second,second,last,x,y].map(round).join(',')+')'};
+    });
+    const damping=Math.exp(-5.5*dt);let lagX=0,lagY=0,fluidVX=0,fluidVY=0;
+    const flow=motion.map(({vx,vy},i)=>{
+      const earlier=motion[Math.max(0,i-1)],ax=clamp((earlier.vx-vx)/dt,-5200,5200),
+        ay=clamp((earlier.vy-vy)/dt,-5200,5200);
+      fluidVX=(fluidVX+(ax*.16-41*lagX)*dt)*damping;
+      fluidVY=(fluidVY+(ay*.16-41*lagY)*dt)*damping;
+      lagX=clamp(lagX+fluidVX*dt,-14,14);lagY=clamp(lagY+fluidVY*dt,-14,14);
+      const dock=clamp((1-i/steps)/.13,0,1);
+      return [round(lagX*dock/14),round(lagY*dock/14)];
+    });
+    const liquid=flow.map(([px,py],i)=>({offset:i/steps,transform:'translate('+round(px*11)+'px,'+
+      round(py*11)+'px) rotate('+round((px*6-py*3)*side)+'deg)'}));
+    const wake=points.map(({offset},i)=>{
+      const trailing=Math.max(0,i-4),{x,y}=points[trailing],{speed,vx,vy}=motion[trailing],angle=Math.atan2(vy,vx);
+      const opacity=clamp(speed/650,0,.54)*clamp((1-offset)*10,0,1);
+      return {offset,opacity,transform:'translate('+round(x)+'px,'+round(y)+'px) rotate('+round(angle)+'rad) scale('+
+        round(.66+clamp(speed/950,0,.66))+',.55)'};
+    });
+    return {points,shell,flow,liquid,wake};
   }
   function create(stage,messages,eligible){
     let layer,ship,glider,seed,wake,wait=0,pending=null,flight=null,last=-Infinity;
@@ -61,58 +108,45 @@
       if(origin.width<24||mark.width<12||mark.height<12||bottom-top<155||right-left<220||
          mark.top<log.top-4||mark.top+Math.min(mark.height,40)>bottom+4)return;
       const width=right-left,height=bottom-top,side=row.classList.contains('me')?-1:1,
-       spriteWidth=clamp(origin.width,60,95),spriteHeight=spriteWidth*105/152;
+       spriteWidth=clamp(origin.width,52,116),spriteHeight=spriteWidth*105/152;
       const x=origin.left+origin.width/2-left,y=origin.top+origin.height/2-top;
       const bx=side<0?mark.left-left:mark.right-left,by=mark.top+Math.min(23,mark.height/2)-top;
       const tx=clamp(bx+side*spriteWidth*.13,spriteWidth*.52,width-spriteWidth*.52);
       const ty=clamp(by-12,spriteHeight*.6,height-spriteHeight*.55);
-      const dx=tx-x,dy=ty-y,arc=clamp(Math.abs(dx)*.27+Math.abs(dy)*.09,16,45),bend=side*arc;
+      const dx=tx-x,dy=ty-y;
       if(Math.hypot(dx,dy)<32)return;
+      const duration=clamp(1510+Math.hypot(dx,dy)*.43,1520,1900);
+      const route=coast(dx,dy,side,duration,{
+        minX:Math.min(0,spriteWidth*.50-x),maxX:Math.max(0,width-spriteWidth*.50-x),
+        minY:Math.min(0,spriteHeight*.55-y),maxY:Math.max(0,height-spriteHeight*.55-y)
+      });
       ensure();
       layer.style.cssText='left:'+left+'px;top:'+top+'px;width:'+width+'px;height:'+height+'px';
       glider.style.cssText='left:'+(x-spriteWidth/2)+'px;top:'+(y-spriteHeight/2)+'px;width:'+spriteWidth+'px;height:'+spriteHeight+'px';
       wake.style.cssText='left:'+x+'px;top:'+y+'px';
-      seed.style.cssText='left:'+clamp(bx,8,width-8)+'px;top:'+clamp(by,8,height-8)+'px';
+      const sx=clamp(bx,8,width-8),sy=clamp(by,8,height-8);
+      seed.style.cssText='left:'+sx+'px;top:'+sy+'px';
       layer.hidden=false;pet.paint(ship,expression,false,details);
       const took=()=>{if(flight===animations)land();};
       const animations=[];flight=animations;
-      const point=(offset,px,py,angle,sx,sy,easing='ease-in-out')=>({
-       offset,transform:'translate3d('+px+'px,'+py+'px,0) rotate('+angle+'deg) scale('+sx+','+sy+')',easing
-      });
-      const duration=clamp(1380+Math.abs(dy)*.45,1400,1720);
+      const drawnSeed=(offset,opacity,scale,approach)=>{
+        const point=route.points[Math.round(offset*steps)];
+        return {offset,opacity,transform:'translate('+round((x+point.x-sx)*approach)+'px,'+
+          round((y+point.y-sy)*approach)+'px) scale('+scale+')'};
+      };
       try{
-        const swoop=glider.animate([
-         point(0,0,0,0,1,1),point(.09,0,4,0,1.12,.83,'cubic-bezier(.2,.5,.3,1)'),
-         point(.33,dx*.53+bend,dy*.42,-side*14,.88,1.13),
-         point(.49,dx,dy,-side*3,1.11,.86,'ease-out'),
-         point(.61,dx,dy-3,side*3,.98,1.08),
-         point(.8,dx*.40-bend,dy*.46,side*12,.9,1.11),
-         point(.94,0,-2,0,1.12,.86,'ease-out'),point(1,0,0,0,1,1)
-        ],{duration});
+        const swoop=glider.animate(route.shell,{duration});
         animations.push(swoop);
         stage.setAttribute('data-nimb-away','');
         animations.push(seed.animate([
-          {offset:0,opacity:0,transform:'scale(.3)'},{offset:.16,opacity:1,transform:'scale(1.15)'},
-          {offset:.44,opacity:1,transform:'scale(.85)'},
-          {offset:.58,opacity:.75,transform:'translate('+(tx-bx)+'px,'+(ty-by)+'px) scale(.4)'},
-          {offset:.65,opacity:0,transform:'translate('+(tx-bx)+'px,'+(ty-by)+'px) scale(.12)'},{offset:1,opacity:0}
+          drawnSeed(0,0,.45,0),drawnSeed(.24,1,1,0),drawnSeed(.43,.95,.91,0),
+          drawnSeed(.51,.85,.74,.62),drawnSeed(.59,.44,.34,1),drawnSeed(.64,0,.14,1),{offset:1,opacity:0}
         ],{duration}));
-        if(details)animations.push(wake.animate([
-          {...point(0,0,0,0,.35,.35),opacity:0},
-          {...point(.14,0,5,0,1,.7),opacity:.40},
-          {...point(.39,dx*.48+bend,dy*.37,-side*16,1.6,.72),opacity:.75},
-          {...point(.57,dx,dy,0,.6,.6),opacity:0},
-          {...point(.73,dx,dy,side*8,.8,.6),opacity:.46},
-          {...point(.89,dx*.35-bend,dy*.40,side*16,1.45,.66),opacity:.61},
-          {...point(1,0,0,0,.56,.56),opacity:0}
-        ],{duration}));
+        if(details)animations.push(wake.animate(route.wake,{duration}));
         const soul=ship.querySelector('.nimb-soul');
-        animations.push(soul.animate([{offset:0,scale:1},{offset:.52,scale:1},{offset:.61,scale:1.55},{offset:.76,scale:1.05},{offset:1,scale:1}],{duration}));
-        animations.push(ship.querySelector('.nimb-current').animate(gelFrames([
-         [0,0,0],[.09,0,4],[.33,dx*.53+bend,dy*.42],[.49,dx,dy],[.61,dx,dy-3],
-         [.8,dx*.40-bend,dy*.46],[.94,0,-2],[1,0,0]
-        ],duration),{duration}));
-        pet.deform?.(ship,'flight',{duration,side});
+        animations.push(soul.animate([{offset:0,scale:1},{offset:.50,scale:1},{offset:.62,scale:1.22},{offset:.80,scale:1.04},{offset:1,scale:1}],{duration}));
+        animations.push(ship.querySelector('.nimb-current').animate(route.liquid,{duration}));
+        pet.deform?.(ship,'flight',{duration,side,flow:route.flow});
         last=performance.now();swoop.finished.then(took,took);
       }catch(_){land();}
     }

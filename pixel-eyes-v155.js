@@ -7,9 +7,10 @@
  const eyeIcon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3-6 10-6 10 6 10 6-3 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>';
  const active=$('active-chat'),messages=$('messages'),input=$('msg-input');if(!active||!messages||!input)return;
  const nimb=window.exstraNimbV221;
- const defaults={enabled:true,style:'classic',shake:false,aura:true,speech:true,character:nimb?'pet':'eyes',petSound:false,petFlight:true};
+ const defaults={enabled:true,style:'classic',shake:false,aura:true,speech:true,character:nimb?'pet':'eyes',petSound:false,petFlight:true,petSize:100};
+ const cleanSize=value=>Number.isFinite(value)?Math.max(75,Math.min(125,Math.round(value/5)*5)):100;
  let owner='',prefs={...defaults},stage,canvas,dialog,preview,focusBefore,stageAura,previewAura,speech;
- let stagePet,previewPet,previewTouch,air,petTimer=0,petDeadline=0,petVoiceUntil=0,petVoicePreview=false,playingVoice=null,draftRival=false;
+ let stagePet,previewPet,previewTouch,air,drag,petTimer=0,petDeadline=0,petVoiceUntil=0,petVoicePreview=false,playingVoice=null,draftRival=false;
  const isPet=()=>!!nimb&&prefs.character==='pet';
  let musicPlaying=false,speechUntil=0,lastSpeech=-Infinity;const replyCounts=new Map(),recentReplies=new Map();
  const replies={love:['Да у вас любовь)','Сердечки уже не помещаются)'],sad:['Побуду с тобой тихонько.','Давай немного выдохнем.'],laugh:['Ну всё, я тоже смеюсь)','Заразительный смех)'],angry:['Выдохнем? Я рядом.'],happy:['Вот это настроение!','Забираю немного твоего позитива)'],sleep:['Пора отдыхать. Я потише.'],surprised:['Ого! Глаза ещё шире)'],think:['Думаем вместе)'],jealous:['Хм. Я тоже умею удивлять!','А Нимб тут вообще-то рядом)']};
@@ -64,7 +65,7 @@
  }
  const emotionDuration=expression=>({angry:2300,laugh:2500,sad:2400,love:2400,sleep:2200,dizzy:2400,surprised:1800,think:1800,excited:1800,jealous:2000})[expression]||1600;
  const storageKey=nick=>'telechat.pixel-eyes.v155.'+nick;
- function read(){try{const p=JSON.parse(localStorage.getItem(storageKey(owner))||'null');prefs={enabled:p?.enabled!==false,style:styles.some(([id])=>id===p?.style)?p.style:'classic',shake:p?.shake===true,aura:p?.aura!==false,speech:p?.speech!==false,character:nimb&&p?.character!=='eyes'?'pet':'eyes',petSound:p?.petSound===true,petFlight:p?.petFlight!==false};}catch(_){prefs={...defaults};}}
+ function read(){try{const p=JSON.parse(localStorage.getItem(storageKey(owner))||'null');prefs={enabled:p?.enabled!==false,style:styles.some(([id])=>id===p?.style)?p.style:'classic',shake:p?.shake===true,aura:p?.aura!==false,speech:p?.speech!==false,character:nimb&&p?.character!=='eyes'?'pet':'eyes',petSound:p?.petSound===true,petFlight:p?.petFlight!==false,petSize:cleanSize(p?.petSize)};}catch(_){prefs={...defaults};}}
  function save(){try{localStorage.setItem(storageKey(owner),JSON.stringify(prefs));}catch(_){}sync();scheduleScan();paintSettings();}
  function pixel(ctx,color,x,y,w=1,h=1){ctx.fillStyle=color;ctx.fillRect(Math.round(x),Math.round(y),w,h);}
  function heartPixels(ctx,x,y,color,scale=1){['0110110','1111111','1111111','0111110','0011100','0001000'].forEach((row,yy)=>[...row].forEach((v,xx)=>{if(v==='1')pixel(ctx,color,x+xx*scale,y+yy*scale,scale,scale);}));}
@@ -168,9 +169,15 @@
   const length=nimb.speak(expression);
   if(length){petVoiceUntil=performance.now()+length;petVoicePreview=demo;renderPet();}
  }
- function wantsFlight(){
-  return isPet()&&prefs.petFlight&&!stage.hidden&&!document.hidden&&!nativeHidden&&owner===self()&&key===conversation()&&
+ function canMovePet(){
+  return isPet()&&!stage.hidden&&!document.hidden&&!nativeHidden&&owner===self()&&key===conversation()&&
    !document.querySelector('dialog[open],.side-panel.open,.modal-overlay.show,#voice-call-overlay.show,#voice-call-mini.show');
+ }
+ function wantsFlight(){return prefs.petFlight&&!drag?.away()&&canMovePet();}
+ function applyPetSize(){
+  const size=String(prefs.petSize/100);
+  for(const host of [stage,dialog])if(host&&host.style.getPropertyValue('--nimb-size')!==size)host.style.setProperty('--nimb-size',size);
+  const value=$('pe-pet-size-value-v224');if(value)value.textContent=prefs.petSize+'%';
  }
  function flyTo(row,expression){
   const flights=window.exstraNimbFlightV222;
@@ -186,18 +193,30 @@
   if(petVoiceUntil&&voiceBusy())hushPet();
   if(speechUntil&&now>=speechUntil)clearSpeech();
   if(stage.dataset.character!==(pet?'pet':'eyes'))stage.dataset.character=pet?'pet':'eyes';
+  if(pet)applyPetSize();
   canvas.hidden=pet;
   if(pet)stageAura.setAttribute('hidden','');
-  if(visible&&!stagePet){stagePet=nimb.make();canvas.after(stagePet);nimb.track(stagePet,canvas.parentElement);}
+  if(visible&&!stagePet){
+   const dock=canvas.parentElement;
+   stagePet=nimb.make();canvas.after(stagePet);nimb.track(stagePet,dock);
+   drag=window.exstraNimbDragV224?.create({stage,messages,dock,eligible:canMovePet,onGrab:()=>{air?.cancel();nimb.setFloat(stagePet,false);},
+    onDrop:()=>renderPet(),react:expression=>react(expression,1700,true)});
+  }
+  if(drag?.away()&&!canMovePet())drag.reset();
   if(stagePet){
    stagePet.toggleAttribute('hidden',!visible);
-   if(visible)nimb.paint(stagePet,currentMood(now),now<speechUntil||!petVoicePreview&&now<petVoiceUntil,prefs.aura);
+   if(visible){
+    const expression=currentMood(now),talking=now<speechUntil||!petVoicePreview&&now<petVoiceUntil;
+    if(!drag?.away())nimb.paint(stagePet,expression,talking,prefs.aura);
+    drag?.paint(expression,talking,prefs.aura);
+   }
+   nimb.setFloat(stagePet,visible&&!demo&&!drag?.away());
    if(!visible||demo)nimb.stop(stagePet);
   }
   if(demo&&!previewPet){previewPet=nimb.make();previewTouch.append(previewPet);nimb.track(previewPet,previewTouch);}
   if(previewPet){
    previewPet.toggleAttribute('hidden',!demo);
-   if(demo)nimb.paint(previewPet,now<previewUntil?previewMood:'idle',petVoicePreview&&now<petVoiceUntil,prefs.aura);
+   if(demo){nimb.paint(previewPet,now<previewUntil?previewMood:'idle',petVoicePreview&&now<petVoiceUntil,prefs.aura);nimb.setFloat(previewPet,true);}
    else nimb.stop(previewPet);
   }
   if(air&&(!wantsFlight()||!nimb.motionAllowed()))air.cancel();
@@ -216,7 +235,7 @@
   mood=expression;moodStart=performance.now();until=moodStart+duration;stage.dataset.mood=expression;sync();
   if(isPet()&&!dialog?.open)nimb.bounce(stagePet,expression);
  }
- function resetConversation(){clearSpeech();hushPet();air?.cancel();draftRival=false;lastSpeech=-Infinity;recentReplies.clear();clearTimeout(primeTimer);primeTimer=0;key=conversation();welcomePending=!!key;primed=false;seen.clear();mood='idle';until=typingUntil=readingUntil=0;remoteTyping=$('chat-status-text')?.classList.contains('typing')||false;stage.dataset.mood='idle';scheduleScan();}
+ function resetConversation(){clearSpeech();hushPet();air?.cancel();drag?.reset();draftRival=false;lastSpeech=-Infinity;recentReplies.clear();clearTimeout(primeTimer);primeTimer=0;key=conversation();welcomePending=!!key;primed=false;seen.clear();mood='idle';until=typingUntil=readingUntil=0;remoteTyping=$('chat-status-text')?.classList.contains('typing')||false;stage.dataset.mood='idle';scheduleScan();}
  function sync(){
   const account=self();if(account!==owner){owner=account;read();replyCounts.clear();const player=window.telechatMusicV96?.getState?.();musicPlaying=!!player?.track&&!player.paused;resetConversation();if(dialog?.open)dialog.close();paintSettings();}
   const pet=isPet(),musicOpen=document.body.classList.contains('music-hub-open-v117');
@@ -277,13 +296,14 @@
   $('pe-aura-v158').checked=prefs.aura;dialog.classList.toggle('pe-has-aura-v158',prefs.aura&&!pet);
   if(nimb){
    $('pe-title-v155').textContent=pet?'Питомец Нимб':'Живые глазки';
-   dialog.querySelector('.pe-preview-v155>span').textContent=pet?'Нажми на пузырёк — Нимб подпрыгнет, а жидкость внутри качнётся.':'Смотрят, радуются и переживают вместе с тобой';
+   dialog.querySelector('.pe-preview-v155>span').textContent=pet?nimb.localSky().label+' · Нажми на каплю, чтобы она поплыла по инерции.':'Смотрят, радуются и переживают вместе с тобой';
    dialog.querySelector('.pe-catalog-v155').hidden=pet;
    dialog.querySelectorAll('[data-nimb-control],[data-pe-pet-demo]').forEach(node=>node.hidden=!pet);
    dialog.querySelectorAll('[data-pe-character]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.peCharacter===prefs.character)));
-   $('pe-show-note-v221').textContent=pet?'Нажми на Нимба в чате, чтобы настроить его':'Нажми на глазки в чате, чтобы изменить их';
+   $('pe-show-note-v221').textContent=pet?'Перетащи Нимба в чате. Esc возвращает его на место.':'Нажми на глазки в чате, чтобы изменить их';
    $('pe-pet-sound-v221').checked=prefs.petSound;
    $('pe-pet-flight-v222').checked=prefs.petFlight;
+   $('pe-pet-size-v224').value=String(prefs.petSize);applyPetSize();
    $('pe-demo-sound-v221').disabled=!prefs.petSound;
    $('pe-details-label-v221').textContent=pet?'Искорки и детали':'Цветная обводка';
    $('pe-details-note-v221').textContent=pet?'Сердечки, нотки и другие детали эмоций':'Своя форма и цвет для каждой эмоции';
@@ -334,6 +354,11 @@
    const flights=document.createElement('label');flights.className='pe-toggle-v155';flights.dataset.nimbControl='';
    flights.innerHTML='<span>Редкие полёты<small>Иногда Нимб подхватывает каплю у сердечка, смеха или удивления. На обычные сообщения он реагирует на месте.</small></span><input id="pe-pet-flight-v222" type="checkbox">';
    auraControl.before(flights);$('pe-pet-flight-v222').onchange=event=>{prefs.petFlight=event.target.checked;save();};
+   const size=document.createElement('label');size.className='pe-size-v224';size.dataset.nimbControl='';
+   size.innerHTML='<span>Размер Нимба <output id="pe-pet-size-value-v224" for="pe-pet-size-v224">100%</output></span><input id="pe-pet-size-v224" aria-label="Размер Нимба" type="range" min="75" max="125" step="5">';
+   dialog.querySelector('.pe-preview-v155').after(size);
+   $('pe-pet-size-v224').oninput=event=>{prefs.petSize=cleanSize(event.target.valueAsNumber);applyPetSize();};
+   $('pe-pet-size-v224').onchange=save;
    const sample=document.createElement('button');sample.type='button';sample.id='pe-demo-sound-v221';sample.className='pe-demo-sound-v221';sample.dataset.nimbControl='';sample.textContent='Проверить голос';sample.onclick=()=>testMood('surprised');sound.after(sample);
    const jealous=document.createElement('button');jealous.type='button';jealous.dataset.pePetDemo='jealous';jealous.textContent='Ревность';jealous.onclick=()=>testMood('jealous');demos.append(jealous);
   }
@@ -341,7 +366,7 @@
   dialog.querySelector('.pe-close-v155').onclick=()=>dialog.close();dialog.addEventListener('close',()=>{previewUntil=0;sync();focusBefore?.isConnected&&focusBefore.focus({preventScroll:true});});
   dialog.addEventListener('click',e=>{if(e.target!==dialog)return;const r=dialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)dialog.close();});
  }
- function open(){if(!self())return;sync();ensureDialog();focusBefore=document.activeElement;paintSettings();if(!dialog.open)dialog.showModal();sync();}
+ function open(){if(!self())return;drag?.reset();sync();ensureDialog();focusBefore=document.activeElement;paintSettings();if(!dialog.open)dialog.showModal();sync();}
  stage=document.createElement('section');stage.id='pixel-eyes-stage-v155';stage.hidden=true;
  stage.innerHTML='<button type="button" class="pe-character-v155" aria-haspopup="dialog" aria-label="Настроить персонажа" title="Настроить персонажа">'+auraMarkup()+'<canvas width="64" height="32" aria-hidden="true"></canvas></button><button type="button" class="pe-settings-v155" aria-haspopup="dialog" aria-label="Внешность персонажа" title="Внешность персонажа">'+eyeIcon+'</button>';
  active.insertBefore(stage,messages);canvas=stage.querySelector('canvas');stageAura=stage.querySelector('.pe-aura-v158');stage.querySelectorAll('button').forEach(button=>button.onclick=open);
@@ -363,6 +388,7 @@
   // Another message/draft can change Nimb's mood before the outgoing bubble is painted.
   flyTo(data.element,emotion(data.element?._messageSourceV136?.text));
  });
+ if(nimb)new MutationObserver(renderPet).observe(stage,{attributes:true,attributeFilter:['data-nimb-away','data-nimb-drag-away']});
  window.addEventListener('telechat-music-state-v97',event=>{const next=event.detail?.playing===true;if(next===musicPlaying)return;musicPlaying=next;if(next)hushPet();sync();if(next)say('Поймал ритм)');});
  function observeFlag(id,name,expression){const node=$(id);if(!node)return;let was=node.classList.contains(name);new MutationObserver(()=>{const value=node.classList.contains(name);if(value&&!was)react(expression,1000);was=value;}).observe(node,{attributes:true,attributeFilter:['class']});}
  observeFlag('reply-bar','show','think');observeFlag('message-edit-overlay-v36','show','think');observeFlag('pending-media','show','attach');observeFlag('emoji-picker','open','excited');observeFlag('poll-modal','show','think');
@@ -382,5 +408,5 @@
  }
  document.addEventListener('visibilitychange',sync);window.addEventListener('pagehide',()=>{nativeHidden=true;sync();});window.addEventListener('pageshow',()=>{nativeHidden=false;sync();});window.addEventListener('telechat-native-visibility',event=>{nativeHidden=event.detail?.background===true;sync();});
  document.addEventListener('keydown',event=>{if(dialog?.open&&event.key==='Escape'){event.preventDefault();event.stopImmediatePropagation();dialog.close();}},true);
- window.telechatPixelEyesV155=Object.freeze({open,react,refresh:sync,getState:()=>({owner,enabled:prefs.enabled,style:prefs.style,shake:prefs.shake,aura:prefs.aura,speech:prefs.speech,character:prefs.character,petSound:prefs.petSound,petFlight:prefs.petFlight,talking:prefs.speech&&performance.now()<speechUntil,musicPlaying,mood:currentMood(performance.now()),running})});sync();scheduleScan();
+ window.telechatPixelEyesV155=Object.freeze({open,react,refresh:sync,getState:()=>({owner,enabled:prefs.enabled,style:prefs.style,shake:prefs.shake,aura:prefs.aura,speech:prefs.speech,character:prefs.character,petSound:prefs.petSound,petFlight:prefs.petFlight,petSize:prefs.petSize,petDragging:!!drag?.away(),talking:prefs.speech&&performance.now()<speechUntil,musicPlaying,mood:currentMood(performance.now()),running})});sync();scheduleScan();
 })();

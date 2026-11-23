@@ -3,8 +3,8 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
 const {fixtureClient,musicWav}=require('./runtime-v180.browser.cjs');
 const root=path.resolve(__dirname,'..'),read=file=>fs.readFileSync(path.join(root,file),'utf8');
 const mime={'.html':'text/html; charset=utf-8','.js':'application/javascript; charset=utf-8','.css':'text/css','.svg':'image/svg+xml','.webp':'image/webp','.png':'image/png'};
-for(const file of ['chat-pet-v221.js','chat-pet-v221.css','pixel-eyes-v155.js','nimb-flight-v222.js','nimb-3d-v223.js','whats-new-v181.js']){
- for(const shell of ['index.html','sw.js'])assert(read(shell).includes('./'+file+'?v=223'),file+' in '+shell);
+for(const file of ['chat-pet-v221.js','chat-pet-v221.css','pixel-eyes-v155.js','nimb-flight-v222.js','nimb-3d-v223.js','nimb-drag-v224.js','whats-new-v181.js']){
+ for(const shell of ['index.html','sw.js'])assert(read(shell).includes('./'+file+'?v=224'),file+' in '+shell);
 }
 function mockVoice(){
  const stats=window.petAudio={contexts:0,starts:0,stops:0,pauses:0,pitches:[]};
@@ -64,6 +64,15 @@ function mockVoice(){
    await stage.locator('.pe-character-v155').click();
    assert(await preview.isVisible());assert(!(await dialog.locator('#pe-pet-sound-v221').isChecked()),'The new default is silent unless the user enables sound');
    assert(await dialog.locator('#pe-pet-flight-v222').isChecked());
+   assert.deepEqual(await p.evaluate(()=>[7,13,19,23].map(hour=>exstraNimbV221.skyAt(hour).name)),['morning','day','evening','night']);
+   assert.equal(await preview.getAttribute('data-sky-v224'),await p.evaluate(()=>exstraNimbV221.skyAt(new Date().getHours()).name),'Color follows the local clock');
+   const slider=dialog.getByRole('slider',{name:'Размер Нимба'});
+   const defaultSize=await preview.evaluate(el=>el.clientWidth||el.getBoundingClientRect().width);
+   await slider.press('End');
+   assert.equal((await state()).petSize,125,'Size updates in live preview');
+   assert((await preview.evaluate(el=>el.clientWidth||el.getBoundingClientRect().width))>defaultSize+10);
+   assert.equal(await p.evaluate(()=>JSON.parse(localStorage.getItem('telechat.pixel-eyes.v155.alice')).petSize),125);
+   await slider.evaluate(el=>{el.value='100';el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}));});
    await dialog.getByRole('button',{name:'Погладить Нимба'}).click();assert.equal(await preview.getAttribute('data-feeling'),'glad');
    if(width===1440){
     await dialog.getByRole('button',{name:'Погладить Нимба'}).hover({position:{x:155,y:45}});
@@ -78,8 +87,8 @@ function mockVoice(){
    await dialog.locator('#pe-demo-sound-v221').click();assert.equal((await audio()).starts,1);
    assert.equal(await preview.getAttribute('data-feeling'),'wow');
    if(width===1440&&(process.env.EXSTRA_PET_CAPTURE==='1')){
-    await dialog.evaluate(el=>el.scrollTop=0);await p.waitForTimeout(330);await dialog.screenshot({path:path.join(root,'outputs','nimb-v222-settings.png')});
-    await dialog.locator('.pe-preview-v155').screenshot({path:path.join(root,'outputs','nimb-v222-preview.png')});
+    await dialog.evaluate(el=>el.scrollTop=0);await p.waitForTimeout(330);await dialog.screenshot({path:path.join(root,'outputs','nimb-v224-settings.png')});
+    await dialog.locator('.pe-preview-v155').screenshot({path:path.join(root,'outputs','nimb-v224-preview.png')});
    }
    await dialog.locator('#pe-pet-sound-v221').uncheck();assert(await dialog.locator('#pe-demo-sound-v221').isDisabled());
    await dialog.locator('[data-pe-demo=love]').click();assert.equal(await preview.getAttribute('data-feeling'),'love');
@@ -150,7 +159,11 @@ function mockVoice(){
     await p.waitForTimeout(1950);await append('Ахах! 😂');await p.waitForTimeout(390);
     assert(!(await overlay.isVisible()),'Even an eligible second message does not trigger a flight during the 25s cooldown');
     await stage.locator('.pe-character-v155').click();await dialog.locator('#pe-pet-flight-v222').uncheck();await dialog.locator('.pe-close-v155').click();
-    await p.evaluate(()=>{const clock=performance.now.bind(performance);performance.now=()=>clock()+25000;});
+    await p.evaluate(()=>{
+     const clock=performance.now.bind(performance),frame=window.requestAnimationFrame.bind(window);
+     performance.now=()=>clock()+25000;
+     window.requestAnimationFrame=callback=>frame(stamp=>callback(stamp+25000));
+    });
     await append('Вот это да! 😲');await p.waitForTimeout(390);
     assert(!(await overlay.isVisible()),'Switch turns off flights without hiding the pet');
     assert(await pet.isVisible());
@@ -161,11 +174,21 @@ function mockVoice(){
      await p.locator('#msg-input').fill('Как здорово! 💖');await p.evaluate(()=>sendMsg());
      await overlay.waitFor({state:'visible',timeout:3500});await overlay.waitFor({state:'hidden',timeout:3500});
      assert(!(await stage.evaluate(el=>el.hasAttribute('data-nimb-away'))),'Successful flight lands normally');
+     const dock=await pet.boundingBox();
+     const x=dock.x+dock.width/2,y=dock.y+dock.height/2;
+     await p.mouse.move(x,y);await p.mouse.down();
+     await p.mouse.move(x-140,y+110,{steps:9});await p.mouse.up();
+     await p.locator('.nimb-drag-layer-v224').waitFor({state:'visible'});
+     assert((await state()).petDragging,'Dragging moves the actual chat pet');
+     assert(['happy','laugh','dizzy'].includes((await state()).mood),'A drag release reacts emotionally');
+     assert(!(await dialog.isVisible()),'A drag does not accidentally open settings');
+     await p.keyboard.press('Escape');
+     await p.locator('.nimb-drag-layer-v224').waitFor({state:'hidden'});assert(!(await state()).petDragging);
     }
    }
    assert.deepEqual(errors,[]);
    await context.close();
   }
-  console.log('Nimb companion V223: gel, defaults, rare message flights, cooldown and scrolling (320px, 390px, desktop)');
+  console.log('Nimb V224: local clock, size, drag, rare flights, cooldown and scrolling (320px, 390px, desktop)');
  }finally{await browser.close();}
 })().catch(err=>{console.error(err);process.exitCode=1;});

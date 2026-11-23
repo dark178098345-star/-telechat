@@ -2,7 +2,7 @@
 .nimb-v221{--nimb-glow:#69dce4;--nimb-x:0px;--nimb-y:0px;display:block;overflow:visible;width:100%;height:auto;pointer-events:none}
 .nimb-v221[hidden],#pixel-eyes-dialog-v155 [data-nimb-control][hidden],#pixel-eyes-dialog-v155 .pe-catalog-v155[hidden],#pixel-eyes-dialog-v155 [data-pe-pet-demo][hidden]{display:none!important}
 #pixel-eyes-stage-v155 canvas[hidden],#pixel-eyes-dialog-v155 canvas[hidden]{display:none!important}
-.nimb-glow-stop{stop-color:var(--nimb-glow)}
+.nimb-glow-stop{stop-color:var(--nimb-tinted-glow,var(--nimb-glow))}
 .nimb-volume-v223{display:none;pointer-events:none}
 .nimb-v221[data-volume-v223] .nimb-volume-v223{display:inline}
 .nimb-v221[data-volume-v223] :is(.nimb-shell-fallback-v223,.nimb-depth,.nimb-refraction){display:none}
@@ -24,6 +24,8 @@
 .nimb-v221:is([data-feeling=laugh],[data-feeling=wow],[data-talk]) .nimb-open{display:inline}
 .nimb-v221:is([data-feeling=glad],[data-feeling=laugh],[data-feeling=dance],[data-feeling=angry],[data-feeling=sad],[data-feeling=sleep],[data-feeling=love]) .nimb-eyes,
 .nimb-v221:is([data-feeling=laugh],[data-feeling=wow],[data-talk],[data-feeling=sleep]) .nimb-mouth{display:none}
+.nimb-v221[data-feeling=calm][data-sky-v224=morning] .nimb-smile,.nimb-v221[data-feeling=calm][data-sky-v224=night] .nimb-sleep{display:inline}
+.nimb-v221[data-feeling=calm]:is([data-sky-v224=morning],[data-sky-v224=night]) .nimb-eyes{display:none}
 .nimb-v221[data-feeling=watch] .nimb-face{transform:translateY(3px)}
 .nimb-v221[data-feeling=glad],.nimb-v221[data-feeling=laugh]{--nimb-glow:#ffd188}
 .nimb-v221[data-feeling=love]{--nimb-glow:#ff89c2}
@@ -60,7 +62,7 @@
 .nimb-v221 :is(.nimb-heart,.nimb-stars,.nimb-fire,.nimb-zzz){animation:nimb-spark-v221 1.4s ease-out backwards}
 .nimb-v221 .nimb-tear{animation:nimb-tear-v221 1.85s ease-in backwards}
 .nimb-v221 .nimb-note{animation:nimb-spark-v221 1.6s ease-out 2}
-@keyframes nimb-float-v221{0%,100%{transform:none}55%{transform:translateY(-4px) rotate(-2deg)}}
+@keyframes nimb-float-v221{0%,100%{transform:none}26%{transform:translate(3px,-2.5px) rotate(2deg)}55%{transform:translate(1px,2px) rotate(-1deg)}79%{transform:translate(-3px,.5px) rotate(-2deg)}}
 @keyframes nimb-blink-v221{0%,88%,97%,100%{scale:1}93%{scale:1 .14}}
 @keyframes nimb-heart-v221{0%,100%{transform:none}22%{transform:translateY(-4px) scale(1.05)}44%{transform:scale(.99)}60%{transform:translateY(-2px) scale(1.04)}}
 @keyframes nimb-droop-v221{0%,100%{transform:none}45%{transform:translateY(4px) scale(1.04,.92) rotate(-3deg)}}
@@ -72,23 +74,30 @@
 @keyframes nimb-spark-v221{from{opacity:0;transform:translateY(6px)}65%{opacity:1;transform:translateY(-2px)}}
 @keyframes nimb-tear-v221{0%{opacity:0;transform:translateY(-4px)}65%{opacity:1;transform:none}}
 /* The liquid moves a fraction later than the shell; the surface glints stay attached to the rim. */
-@keyframes nimb-liquid-v221{0%,100%{transform:none}27%{transform:translate(2.5px,1.5px) rotate(4deg)}68%{transform:translate(-3px,-1px) rotate(-4deg)}}
+@keyframes nimb-liquid-v221{0%,100%{transform:none}28%{transform:translate(4px,-3px) rotate(13deg)}59%{transform:translate(-1px,3px) rotate(4deg)}77%{transform:translate(-4px,-1px) rotate(-10deg)}}
 @keyframes nimb-ripple-v221{0%,100%{transform:none}20%{transform:translate(-2px,3px) rotate(-6deg) scale(1.03,.94)}52%{transform:translate(2px,-2px) rotate(5deg)}78%{transform:rotate(-2deg)}}
 @keyframes nimb-slosh-v221{0%,100%{transform:none}27%{transform:translate(4px,2px) rotate(6deg)}75%{transform:translate(-4px,1px) rotate(-6deg)}}
 
-#pixel-eyes-stage-v155 .nimb-v221{width:93px;max-height:60px}
-html body.telechat-phone-v159:is(.telechat-mobile-keyboard-v100,.telechat-mobile-short-v100) #pixel-eyes-stage-v155 .nimb-v221{width:70px;max-height:43px}
+#pixel-eyes-stage-v155[data-character=pet] .pe-character-v155{touch-action:none;cursor:grab;grid-template-rows:minmax(0,1fr)}
+#pixel-eyes-stage-v155[data-character=pet] .pe-character-v155:active{cursor:grabbing}
+#pixel-eyes-stage-v155 .nimb-v221{width:calc(93px*var(--nimb-size,1));max-height:calc(60px*var(--nimb-size,1))}
+html body.telechat-phone-v159:is(.telechat-mobile-keyboard-v100,.telechat-mobile-short-v100) #pixel-eyes-stage-v155 .nimb-v221{width:calc(70px*var(--nimb-size,1));max-height:calc(43px*var(--nimb-size,1))}
 #pixel-eyes-stage-v155 .pe-character-v155[aria-expanded=true] .nimb-v221 *{animation-play-state:paused}
-#pixel-eyes-stage-v155[data-nimb-away] .pe-character-v155 .nimb-v221{visibility:hidden}
-#pixel-eyes-stage-v155[data-nimb-away] .pe-character-v155::after{content:'';position:absolute;left:33%;right:33%;bottom:12%;height:5px;border-radius:50%;background:radial-gradient(ellipse,#a18df075,transparent 74%);pointer-events:none}
-#pixel-eyes-dialog-v155 .nimb-v221{width:193px;max-width:100%;height:128px}
-#pixel-eyes-dialog-v155 .nimb-touch-v222{display:grid;place-items:center;width:min(208px,100%);height:130px;border:0;border-radius:34%;padding:0;background:transparent;touch-action:manipulation}
+#pixel-eyes-stage-v155:is([data-nimb-away],[data-nimb-drag-away]) .pe-character-v155 .nimb-v221{visibility:hidden}
+#pixel-eyes-stage-v155:is([data-nimb-away],[data-nimb-drag-away]) .pe-character-v155::after{content:'';position:absolute;left:33%;right:33%;bottom:12%;height:5px;border-radius:50%;background:radial-gradient(ellipse,#a18df075,transparent 74%);pointer-events:none}
+#pixel-eyes-dialog-v155 .nimb-v221{width:calc(193px*var(--nimb-size,1));max-width:100%;height:auto;max-height:calc(128px*var(--nimb-size,1))}
+#pixel-eyes-dialog-v155 .nimb-touch-v222{display:grid;place-items:center;width:min(248px,100%);height:153px;grid-template-rows:minmax(0,1fr);border:0;border-radius:34%;padding:0;background:transparent;touch-action:manipulation}
 #pixel-eyes-dialog-v155 .nimb-touch-v222:hover{background:radial-gradient(ellipse,#bb9ae817,transparent 71%)}
 #pixel-eyes-dialog-v155 .pe-companions-v221{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:16px}
 #pixel-eyes-dialog-v155 .pe-companions-v221 button{min-width:0;min-height:48px;display:flex;align-items:center;justify-content:center;gap:7px;border:1px solid #a68cdb35;border-radius:12px;padding:7px;background:var(--pe-block);font-size:12px}
 #pixel-eyes-dialog-v155 .pe-companions-v221 button[aria-pressed=true]{background:#a88be922;border-color:#bda2ed}
 #pixel-eyes-dialog-v155 .pe-companions-v221 svg{width:20px;height:20px;flex:none;color:var(--accent3,#bda2ed)}
-#pixel-eyes-dialog-v155[data-character=pet] .pe-scene-v158{height:130px}
+#pixel-eyes-dialog-v155[data-character=pet] .pe-scene-v158{height:154px;width:248px}
+#pixel-eyes-dialog-v155 .pe-size-v224{display:grid;gap:6px;padding:10px 12px;margin:0 0 17px;border:1px solid #b5a2e826;border-radius:13px;background:var(--pe-block);font-size:12px}
+#pixel-eyes-dialog-v155 .pe-size-v224[hidden]{display:none!important}
+#pixel-eyes-dialog-v155 .pe-size-v224 span{display:flex;align-items:center;justify-content:space-between}
+#pixel-eyes-dialog-v155 .pe-size-v224 output{font-variant-numeric:tabular-nums;color:var(--pe-muted)}
+#pixel-eyes-dialog-v155 .pe-size-v224 input{width:100%;height:24px;margin:0;cursor:pointer}
 #pixel-eyes-dialog-v155 .pe-demo-sound-v221{min-height:40px;margin:0 0 12px;padding:7px 12px;border:1px solid #a68cdb40;border-radius:10px;background:var(--pe-block);font-size:11px}
 #pixel-eyes-dialog-v155 .pe-demo-sound-v221:disabled{opacity:.45;cursor:default}
 .nimb-air-v222{position:fixed;z-index:35;pointer-events:none;overflow:hidden}
@@ -97,6 +106,11 @@ html body.telechat-phone-v159:is(.telechat-mobile-keyboard-v100,.telechat-mobile
 .nimb-glider-v222{transform-origin:center center}
 .nimb-frost-v223{position:absolute;inset:0;border-radius:50%;clip-path:ellipse(30.5% 29% at 50% 49%);backdrop-filter:blur(3.2px) saturate(1.08);-webkit-backdrop-filter:blur(3.2px) saturate(1.08);pointer-events:none}
 .nimb-glider-v222 .nimb-v221{position:relative}
+.nimb-drag-layer-v224{position:fixed;inset:0;z-index:36;pointer-events:none}
+.nimb-drag-layer-v224[hidden]{display:none!important}
+.nimb-drag-grip-v224{position:absolute;top:0;left:0;display:grid;place-items:center;border:0;border-radius:50%;padding:0;background:none;cursor:grab;pointer-events:auto;touch-action:none}
+.nimb-drag-grip-v224[data-dragging]{cursor:grabbing}
+.nimb-drag-grip-v224 .nimb-v221{position:relative;width:100%;height:100%}
 .nimb-air-sprite-v222 .nimb-body,.nimb-air-sprite-v222 .nimb-current{animation:none}
 .nimb-seed-v222{width:15px;height:15px;margin:-7px;border-radius:50%;opacity:0;background:radial-gradient(circle at 39% 35%,#fff 7%,#d6c7ff 27%,#a887fa91 48%,#b993ff00 72%);box-shadow:0 0 12px #bb9af377}
 .nimb-wake-v222{width:46px;height:22px;margin:-11px -23px;border-radius:50%;opacity:0;background:radial-gradient(ellipse,#c9a8ffb3 3%,#a17bfc70 28%,transparent 72%)}
