@@ -4,7 +4,8 @@ const {fixtureClient,musicWav}=require('./runtime-v180.browser.cjs');
 const root=path.resolve(__dirname,'..'),read=file=>fs.readFileSync(path.join(root,file),'utf8');
 const mime={'.html':'text/html; charset=utf-8','.js':'application/javascript; charset=utf-8','.css':'text/css','.svg':'image/svg+xml','.webp':'image/webp','.png':'image/png'};
 for(const file of ['chat-pet-v221.js','chat-pet-v221.css','pixel-eyes-v155.js','nimb-flight-v222.js','nimb-3d-v223.js','nimb-drag-v224.js','whats-new-v181.js']){
- for(const shell of ['index.html','sw.js'])assert(read(shell).includes('./'+file+'?v=224'),file+' in '+shell);
+ const version=['chat-pet-v221.js','whats-new-v181.js'].includes(file)?225:224;
+ for(const shell of ['index.html','sw.js'])assert(read(shell).includes('./'+file+'?v='+version),file+' in '+shell);
 }
 function mockVoice(){
  const stats=window.petAudio={contexts:0,starts:0,stops:0,pauses:0,pitches:[]};

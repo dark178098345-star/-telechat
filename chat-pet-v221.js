@@ -105,6 +105,14 @@
             </g>
           </g>
           <use class="nimb-shell-fallback-v223" href="#${uid}-membrane" fill="none" stroke="url(#${uid}-edge)" stroke-width="1.35"/>
+          <g class="nimb-winter-hat-v225" display="none" aria-hidden="true" transform="rotate(-11 72 22)">
+            <path d="M49 20C54 5 61-3 70-3c9 0 15 5 20 13-6-2-10 1-8 6l3 4Z" fill="#ce4f60" stroke="#9b3b53" stroke-width="1.15"/>
+            <path d="M68-2c9-1 17 4 22 12-6-2-10 1-8 6l3 4-14 0c4-9 5-15-3-22Z" fill="#a83d56"/>
+            <path d="M54 14c3-7 6-11 12-13" fill="none" stroke="#ffb9a8" stroke-width="1.5" stroke-linecap="round" opacity=".64"/>
+            <path d="M48 18c7 1 22 1 33-.6 2-.3 3.9.7 4.2 2.5l.3 1.9c.2 1.8-1.2 2.8-3 3-11 1.6-23 1.9-34.5.8-2-.2-3-1.4-2.7-3.3l.3-1.6c.3-1.9.9-2.9 2.4-2.7Z" fill="#fbfdff" stroke="#dce9f5" stroke-width="1.1"/>
+            <circle cx="90.5" cy="10.2" r="4.7" fill="#fcf9fa" stroke="#dce9f5" stroke-width="1"/>
+            <circle cx="89.5" cy="8.9" r="1.6" fill="#fff" opacity=".78"/>
+          </g>
         </g>
       </g>
       <g class="nimb-heart" fill="#f5a5d5"><path d="${heart}" transform="translate(123 19)"/><path d="${heart}" transform="translate(135 30) scale(.5)" opacity=".7"/></g>

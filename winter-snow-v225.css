@@ -1,0 +1,38 @@
+/* At most one snow field. It floats above the chat and never intercepts input. */
+#winter-snowfall-v225{
+ position:absolute;inset:12px 0 24px;z-index:6;overflow:hidden;pointer-events:none;contain:layout paint;
+ mask-image:linear-gradient(180deg,transparent,#000 9%,#000 85%,transparent);
+ -webkit-mask-image:linear-gradient(180deg,transparent,#000 9%,#000 85%,transparent)
+}
+#winter-snowfall-v225[hidden],body:not([data-winter-v225="on"]) #winter-snowfall-v225{display:none!important}
+.winter-flake-v225{
+ --winter-travel:calc(100vh + 24px);
+ position:absolute;top:-12px;left:var(--winter-x,50%);width:var(--winter-size,3px);height:var(--winter-size,3px);
+ border-radius:50%;background:radial-gradient(circle at 38% 35%,#fff 15%,#e3f2ff 48%,#d9eaff00 78%);
+ opacity:0;animation:winter-drift-v225 var(--winter-duration,14s) linear var(--winter-delay,-1s) infinite
+}
+.winter-flake-v225:nth-child(6n+3){
+ width:calc(var(--winter-size,3px) + 3px);height:calc(var(--winter-size,3px) + 3px);
+ background:center/contain no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M8 1.5v13M2.4 4.75l11.2 6.5M2.4 11.25l11.2-6.5M5.9 3.4 8 5.1l2.1-1.7M5.9 12.6 8 10.9l2.1 1.7' fill='none' stroke='%23eff8ff' stroke-width='1.3' stroke-linecap='round'/%3E%3C/svg%3E")
+}
+body.theme-light .winter-flake-v225{
+ box-shadow:0 0 1px #557496b0;
+ background-color:#ebf5ff
+}
+body.theme-light .winter-flake-v225:nth-child(6n+3){box-shadow:none;background-color:transparent;filter:drop-shadow(0 0 .65px #547292b0)}
+@supports (height:1cqh){
+ #winter-snowfall-v225{container-type:size}
+ .winter-flake-v225{--winter-travel:calc(100cqh + 24px)}
+}
+@keyframes winter-drift-v225{
+ 0%{transform:translate3d(0,0,0) rotate(-12deg);opacity:0}
+ 12%{opacity:var(--winter-opacity,.52)}
+ 32%{transform:translate3d(calc(var(--winter-drift,16px)*-.25),calc(var(--winter-travel)*.32),0) rotate(18deg)}
+ 68%{transform:translate3d(calc(var(--winter-drift,16px)*.7),calc(var(--winter-travel)*.68),0) rotate(46deg)}
+ 87%{opacity:var(--winter-opacity,.52)}
+ 100%{transform:translate3d(var(--winter-drift,16px),var(--winter-travel),0) rotate(62deg);opacity:0}
+}
+html body.telechat-phone-v159 #winter-snowfall-v225{inset:36px 0 58px;z-index:5}
+body:is([data-ui-motion-v184="off"],[data-ui-motion-v184="lite"],.telechat-mobile-keyboard-v100) #winter-snowfall-v225{display:none!important}
+@media(prefers-reduced-motion:reduce){#winter-snowfall-v225{display:none!important}.winter-flake-v225{animation:none!important}}
+@media(forced-colors:active){#winter-snowfall-v225{display:none!important}}
