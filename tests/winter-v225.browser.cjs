@@ -12,7 +12,7 @@ for(const host of ['index.html','sw.js']){
   const src=fs.readFileSync(path.join(root,host),'utf8');
   for(const [file,version] of [
     ['winter-decor-v225.css',225],['winter-snow-v225.css',225],['winter-effects-v225.js',226],
-    ['winter-surfaces-v226.css',227],['winter-surfaces-v226.js',227]
+    ['winter-surfaces-v226.css',228],['winter-surfaces-v226.js',228]
   ]){
     assert(src.includes('./'+file+'?v='+version),host+' references winter asset '+file);
   }
@@ -139,8 +139,8 @@ function sameLayout(actual,expected){
       await page.evaluate(()=>{for(let i=0;i<5;i++)exstraWinterV225.refresh();});
       const ridges=page.locator('.winter-ridge-v225');
       assert.equal(await ridges.count(),3,'Refreshing weather never duplicates the three panel edges');
-      assert(await ridges.evaluateAll(nodes=>nodes.every(node=>node.dataset.bankKind==='ridge'&&
-        node.children.length===3&&getComputedStyle(node).backgroundImage==='none')),'Three local banks replace the old strip rather than drawing over it');
+      assert(await ridges.evaluateAll(nodes=>nodes.filter(node=>getComputedStyle(node,'::before').backgroundImage!=='none').length===2&&
+        nodes.every(node=>getComputedStyle(node).backgroundImage==='none')),'Icicles replace snow on the two top edges');
       const before=await layout(page);
       const input=page.locator('#msg-input');
       await input.click();
@@ -149,43 +149,55 @@ function sameLayout(actual,expected){
 
       const cap=page.locator('#messages .winter-bubble-cap-v226').last();
       await cap.waitFor({state:'visible'});
-      const bubble=cap.locator('..'),bank=cap.locator('.winter-bank-v227'),art=bank.locator('.winter-bank-art-v227');
-      const r=await bubble.boundingBox(),b=await bank.boundingBox();
-      assert(b.x>r.x+5&&b.x+b.width<r.x+r.width-5&&b.y<r.y&&b.y+b.height<=r.y+3,
-        'A snow bank rests on the top, inset from both rounded corners, not over message content');
-      if(width===390)await page.touchscreen.tap(r.x+r.width*.5,r.y+r.height*.5);
-      else{
-        const x=b.x+b.width*.23,y=r.y-2;
+      const bubble=cap.locator('..'),r=await bubble.boundingBox(),b=await cap.boundingBox();
+      assert(b.x>r.x+5&&b.x+b.width<r.x+r.width-5&&b.y+b.height<=r.y+3,'Bubble powder fits between the two rounded corners');
+      if(width===390){
+        await page.touchscreen.tap(r.x+r.width*.5,r.y+r.height*.5);
+        await page.waitForFunction(()=>document.querySelector('.winter-spill-v226'));
+        assert(await bubble.evaluate(node=>node.getAnimations().some(a=>
+          a.effect.getKeyframes().some(frame=>frame.translate?.startsWith('-2px')))),'A tap shakes the bubble');
+      }else{
+        const shelf=page.locator('#input-area [data-snow-shelf=shelf]'),edge=await shelf.boundingBox();
+        const cover=shelf.locator('.winter-powder-v228'),heaps=shelf.locator('.winter-heaps-v228');
+        const base=await cover.getAttribute('d'),x=edge.x+edge.width*.18,y=edge.y+edge.height-5;
+        assert.equal(await heaps.getAttribute('d'),'','No heaps are drawn before the user gathers the snow');
         await page.mouse.move(x,y);
-        await page.waitForTimeout(115);
-        assert.equal(await page.locator('.winter-spill-v226').count(),0,'Hover does not clear snow');
-        assert.equal(await bank.evaluate(node=>parseFloat(node.style.translate)),0,'Hover does not move snow');
-        await page.mouse.move(x+8,y,{steps:2});
-        assert((await bank.evaluate(node=>parseFloat(node.style.translate)))>2,'A small cursor stroke pushes the bank');
-        assert.equal(await page.locator('.winter-spill-v226').count(),0,'Small movements do not dump the bank');
-        await page.mouse.move(x+57,y,{steps:8});
+        assert.equal(await cover.getAttribute('d'),base,'Hover does not move powder');
+        await page.mouse.move(x+140,y,{steps:12});
+        await page.waitForFunction(()=>document.querySelector('#input-area .winter-heaps-v228').getAttribute('d').length>0);
+        assert.notEqual(await cover.getAttribute('d'),base,'Powder moves into the heap from the path of the pointer');
+        const heap=await heaps.getAttribute('d');
+        await page.mouse.move(x+140,y-36);
+        assert.equal(await heaps.getAttribute('d'),heap,'The heap stays after lifting the cursor');
+        assert.equal(await page.locator('.winter-spill-v226').count(),0,'No automatic spill in the middle');
+        if(process.env.EXSTRA_WINTER_CAPTURE==='1')await page.screenshot({path:path.join(root,'outputs','winter-v228-heap.png')});
+        await page.mouse.move(x+127,y);
+        await page.mouse.move(edge.x+edge.width-2,y,{steps:55});
         const chunk=page.locator('.winter-spill-v226 .winter-spill-chunk-v227').first();
         await chunk.waitFor({state:'attached'});
         assert((await chunk.evaluate(node=>parseFloat(node.style.getPropertyValue('--spill-x'))))>0,
-          'Snow chunks keep the direction of the sweep');
+          'Snow chunks fly off the side in the sweep direction');
+        await page.waitForFunction(()=>!document.querySelector('#input-area .winter-heaps-v228').getAttribute('d'));
       }
-      await page.waitForFunction(()=>document.querySelector('.winter-spill-v226'));
-      assert(await art.evaluate(node=>node.getAnimations().some(a=>a.effect.getKeyframes()[0]?.scale==='1 0')),'Cleared snow can build up again');
-      if(width===390)assert(await bubble.evaluate(node=>node.getAnimations().some(a=>
-        a.effect.getKeyframes().some(frame=>frame.translate?.startsWith('-2px')))),'A tap shakes the bubble');
       await page.waitForFunction(()=>!document.querySelector('.winter-spill-v226'));
 
       if(width===1440){
+        const y=r.y-1;
+        await page.mouse.move(b.x+5,y);
+        await page.mouse.move(b.x+b.width*.66,y,{steps:9});
         const messageId=await bubble.evaluate(node=>node.closest('.msg').dataset.id);
+        const previousCap=page.locator(`#messages .msg[data-id=${JSON.stringify(messageId)}] .winter-heaps-v228`);
+        await page.waitForFunction(id=>document.querySelector(`#messages .msg[data-id=${JSON.stringify(id)}] .winter-heaps-v228`)?.getAttribute('d'),messageId);
+        const dimensions=node=>{const {x,y,width,height}=node.getBBox();return [x,y,width,height];};
+        const heap=await previousCap.evaluate(dimensions);
         const originalTop=await page.locator('#messages').evaluate(node=>{
           const top=node.scrollTop;node.scrollTo({top:Math.max(0,top-node.clientHeight*2),behavior:'instant'});return top;
         });
-        const previousCap=page.locator(`#messages .msg[data-id=${JSON.stringify(messageId)}] .winter-bank-art-v227`);
         await previousCap.waitFor({state:'detached'});
         await page.locator('#messages').evaluate((node,top)=>node.scrollTo({top,behavior:'instant'}),originalTop);
         await previousCap.waitFor({state:'attached'});
-        assert(await previousCap.evaluate(node=>parseFloat(getComputedStyle(node).scale.split(' ')[1])<.3),
-          'Scrolling the cleared bubble away and back does not replace its snow');
+        const restored=await previousCap.evaluate(dimensions);
+        assert(restored.every((v,i)=>Math.abs(v-heap[i])<3),'Scrolling away preserves the position and size of the heap');
       }
 
       if(process.env.EXSTRA_WINTER_CAPTURE==='1'){
@@ -215,7 +227,7 @@ function sameLayout(actual,expected){
       await page.emulateMedia({reducedMotion:'reduce'});await runningSnow(page,false);
       assert.equal(await winter(page),'on');
       assert(await decorationIsVisible(page),'reduced motion does not remove the static winter art');
-      await page.waitForFunction(()=>Array.from(document.querySelectorAll('.winter-bank-art-v227')).every(cap=>!cap.getAnimations().length));
+      assert.equal(await page.locator('.winter-spill-v226').count(),0);
       await page.emulateMedia({reducedMotion:'no-preference'});await runningSnow(page,true);
 
       await page.evaluate(()=>openPanel('settings-panel'));
