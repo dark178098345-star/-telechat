@@ -7,9 +7,9 @@
  const eyeIcon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3-6 10-6 10 6 10 6-3 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>';
  const active=$('active-chat'),messages=$('messages'),input=$('msg-input');if(!active||!messages||!input)return;
  const nimb=window.exstraNimbV221;
- const defaults={enabled:true,style:'classic',shake:false,aura:true,speech:true,character:'eyes',petSound:true};
+ const defaults={enabled:true,style:'classic',shake:false,aura:true,speech:true,character:nimb?'pet':'eyes',petSound:false,petFlight:true};
  let owner='',prefs={...defaults},stage,canvas,dialog,preview,focusBefore,stageAura,previewAura,speech;
- let stagePet,previewPet,petTimer=0,petDeadline=0,petVoiceUntil=0,petVoicePreview=false,playingVoice=null,draftRival=false;
+ let stagePet,previewPet,previewTouch,air,petTimer=0,petDeadline=0,petVoiceUntil=0,petVoicePreview=false,playingVoice=null,draftRival=false;
  const isPet=()=>!!nimb&&prefs.character==='pet';
  let musicPlaying=false,speechUntil=0,lastSpeech=-Infinity;const replyCounts=new Map(),recentReplies=new Map();
  const replies={love:['Да у вас любовь)','Сердечки уже не помещаются)'],sad:['Побуду с тобой тихонько.','Давай немного выдохнем.'],laugh:['Ну всё, я тоже смеюсь)','Заразительный смех)'],angry:['Выдохнем? Я рядом.'],happy:['Вот это настроение!','Забираю немного твоего позитива)'],sleep:['Пора отдыхать. Я потише.'],surprised:['Ого! Глаза ещё шире)'],think:['Думаем вместе)'],jealous:['Хм. Я тоже умею удивлять!','А Нимб тут вообще-то рядом)']};
@@ -64,7 +64,7 @@
  }
  const emotionDuration=expression=>({angry:2300,laugh:2500,sad:2400,love:2400,sleep:2200,dizzy:2400,surprised:1800,think:1800,excited:1800,jealous:2000})[expression]||1600;
  const storageKey=nick=>'telechat.pixel-eyes.v155.'+nick;
- function read(){try{const p=JSON.parse(localStorage.getItem(storageKey(owner))||'null');prefs={enabled:p?.enabled!==false,style:styles.some(([id])=>id===p?.style)?p.style:'classic',shake:p?.shake===true,aura:p?.aura!==false,speech:p?.speech!==false,character:p?.character==='pet'?'pet':'eyes',petSound:p?.petSound!==false};}catch(_){prefs={...defaults};}}
+ function read(){try{const p=JSON.parse(localStorage.getItem(storageKey(owner))||'null');prefs={enabled:p?.enabled!==false,style:styles.some(([id])=>id===p?.style)?p.style:'classic',shake:p?.shake===true,aura:p?.aura!==false,speech:p?.speech!==false,character:nimb&&p?.character!=='eyes'?'pet':'eyes',petSound:p?.petSound===true,petFlight:p?.petFlight!==false};}catch(_){prefs={...defaults};}}
  function save(){try{localStorage.setItem(storageKey(owner),JSON.stringify(prefs));}catch(_){}sync();scheduleScan();paintSettings();}
  function pixel(ctx,color,x,y,w=1,h=1){ctx.fillStyle=color;ctx.fillRect(Math.round(x),Math.round(y),w,h);}
  function heartPixels(ctx,x,y,color,scale=1){['0110110','1111111','1111111','0111110','0011100','0001000'].forEach((row,yy)=>[...row].forEach((v,xx)=>{if(v==='1')pixel(ctx,color,x+xx*scale,y+yy*scale,scale,scale);}));}
@@ -168,6 +168,15 @@
   const length=nimb.speak(expression);
   if(length){petVoiceUntil=performance.now()+length;petVoicePreview=demo;renderPet();}
  }
+ function wantsFlight(){
+  return isPet()&&prefs.petFlight&&!stage.hidden&&!document.hidden&&!nativeHidden&&owner===self()&&key===conversation()&&
+   !document.querySelector('dialog[open],.side-panel.open,.modal-overlay.show,#voice-call-overlay.show,#voice-call-mini.show');
+ }
+ function flyTo(row,expression){
+  if(!wantsFlight()||!nimb.motionAllowed())return;
+  air??=window.exstraNimbFlightV222?.create(stage,messages,wantsFlight);
+  air?.request(row,expression,prefs.aura);
+ }
  function renderPet(){
   const now=performance.now(),pet=isPet(),onscreen=!document.hidden&&!nativeHidden;
   const demo=pet&&onscreen&&!!dialog?.open,visible=pet&&onscreen&&!stage.hidden;
@@ -178,18 +187,19 @@
   if(stage.dataset.character!==(pet?'pet':'eyes'))stage.dataset.character=pet?'pet':'eyes';
   canvas.hidden=pet;
   if(pet)stageAura.setAttribute('hidden','');
-  if(visible&&!stagePet){stagePet=nimb.make();canvas.after(stagePet);}
+  if(visible&&!stagePet){stagePet=nimb.make();canvas.after(stagePet);nimb.track(stagePet,canvas.parentElement);}
   if(stagePet){
    stagePet.toggleAttribute('hidden',!visible);
    if(visible)nimb.paint(stagePet,currentMood(now),now<speechUntil||!petVoicePreview&&now<petVoiceUntil,prefs.aura);
    if(!visible||demo)nimb.stop(stagePet);
   }
-  if(demo&&!previewPet){previewPet=nimb.make();preview.after(previewPet);}
+  if(demo&&!previewPet){previewPet=nimb.make();previewTouch.append(previewPet);nimb.track(previewPet,previewTouch);}
   if(previewPet){
    previewPet.toggleAttribute('hidden',!demo);
    if(demo)nimb.paint(previewPet,now<previewUntil?previewMood:'idle',petVoicePreview&&now<petVoiceUntil,prefs.aura);
    else nimb.stop(previewPet);
   }
+  if(air&&(!wantsFlight()||!nimb.motionAllowed()))air.cancel();
   let next=Infinity;
   if(visible)for(const moment of [until,typingUntil,readingUntil,speechUntil])if(moment>now)next=Math.min(next,moment);
   if(demo&&previewUntil>now)next=Math.min(next,previewUntil);
@@ -205,7 +215,7 @@
   mood=expression;moodStart=performance.now();until=moodStart+duration;stage.dataset.mood=expression;sync();
   if(isPet()&&!dialog?.open)nimb.bounce(stagePet,expression);
  }
- function resetConversation(){clearSpeech();hushPet();draftRival=false;lastSpeech=-Infinity;recentReplies.clear();clearTimeout(primeTimer);primeTimer=0;key=conversation();welcomePending=!!key;primed=false;seen.clear();mood='idle';until=typingUntil=readingUntil=0;remoteTyping=$('chat-status-text')?.classList.contains('typing')||false;stage.dataset.mood='idle';scheduleScan();}
+ function resetConversation(){clearSpeech();hushPet();air?.cancel();draftRival=false;lastSpeech=-Infinity;recentReplies.clear();clearTimeout(primeTimer);primeTimer=0;key=conversation();welcomePending=!!key;primed=false;seen.clear();mood='idle';until=typingUntil=readingUntil=0;remoteTyping=$('chat-status-text')?.classList.contains('typing')||false;stage.dataset.mood='idle';scheduleScan();}
  function sync(){
   const account=self();if(account!==owner){owner=account;read();replyCounts.clear();const player=window.telechatMusicV96?.getState?.();musicPlaying=!!player?.track&&!player.paused;resetConversation();if(dialog?.open)dialog.close();paintSettings();}
   const pet=isPet(),musicOpen=document.body.classList.contains('music-hub-open-v117');
@@ -232,12 +242,14 @@
   scanQueued=false;sync();if(stage.hidden)return;
   const rows=[];for(let row=messages.lastElementChild;row&&rows.length<12;row=row.previousElementSibling)if(row.classList.contains('msg'))rows.push(row);
   rows.reverse();
-  const first=!primed;for(const row of rows){
+  const first=!primed;let flightRow=null,flightMood='';for(const row of rows){
    const source=row._messageSourceV136;if(!source)continue;
    const id=String(source.id||source.client_id||row.dataset.messageKeyV105||row.dataset.id||'');if(!id||seen.has(id))continue;seen.add(id);
    if(first||source.from_nick===owner||source.deleted||source.chat_key&&source.chat_key!==key||!Number.isFinite(Number(source.ts))||Math.abs(Date.now()-Number(source.ts))>30000)continue;
    const expression=emotion(source.text);react(expression||'curious',expression?emotionDuration(expression):1500,!!expression);if(expression)reply(expression,source.text);
+   if(Math.abs(Date.now()-Number(source.ts))<=6000){flightRow=row;flightMood=expression||'curious';}
   }
+  if(flightRow)flyTo(flightRow,flightMood);
   if(rows.length){primed=true;clearTimeout(primeTimer);primeTimer=0;}
   else if(!primeTimer){const initialKey=key;primeTimer=setTimeout(()=>{primeTimer=0;if(initialKey===key&&!stage.hidden)primed=true;},200);}
   if(seen.size>250)seen=new Set([...seen].slice(-150));
@@ -264,12 +276,13 @@
   $('pe-aura-v158').checked=prefs.aura;dialog.classList.toggle('pe-has-aura-v158',prefs.aura&&!pet);
   if(nimb){
    $('pe-title-v155').textContent=pet?'Питомец Нимб':'Живые глазки';
-   dialog.querySelector('.pe-preview-v155>span').textContent=pet?'Живой пузырёк: внутри переливается свет, а под музыку Нимб танцует.':'Смотрят, радуются и переживают вместе с тобой';
+   dialog.querySelector('.pe-preview-v155>span').textContent=pet?'Нажми на пузырёк — Нимб подпрыгнет, а жидкость внутри качнётся.':'Смотрят, радуются и переживают вместе с тобой';
    dialog.querySelector('.pe-catalog-v155').hidden=pet;
    dialog.querySelectorAll('[data-nimb-control],[data-pe-pet-demo]').forEach(node=>node.hidden=!pet);
    dialog.querySelectorAll('[data-pe-character]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.peCharacter===prefs.character)));
    $('pe-show-note-v221').textContent=pet?'Нажми на Нимба в чате, чтобы настроить его':'Нажми на глазки в чате, чтобы изменить их';
    $('pe-pet-sound-v221').checked=prefs.petSound;
+   $('pe-pet-flight-v222').checked=prefs.petFlight;
    $('pe-demo-sound-v221').disabled=!prefs.petSound;
    $('pe-details-label-v221').textContent=pet?'Искорки и детали':'Цветная обводка';
    $('pe-details-note-v221').textContent=pet?'Сердечки, нотки и другие детали эмоций':'Своя форма и цвет для каждой эмоции';
@@ -305,6 +318,8 @@
   for(const [expression,label] of [['happy','Отправка'],['love','Сердечко'],['sad','Удаление'],['typing','Набор'],['record','Запись'],['dizzy','Встряска'],['angry','Злость'],['laugh','Смех'],['surprised','Удивление'],['sleep','Сон'],['dance','Танец']]){const button=document.createElement('button');button.type='button';button.dataset.peDemo=expression;button.textContent=label;button.onclick=()=>testMood(expression);demos.append(button);}
   catalog.after(demos);
   if(nimb){
+   previewTouch=document.createElement('button');previewTouch.className='nimb-touch-v222';previewTouch.type='button';previewTouch.dataset.nimbControl='';
+   previewTouch.setAttribute('aria-label','Погладить Нимба');previewTouch.onclick=()=>testMood('pet');scene.append(previewTouch);
    const choices=document.createElement('div');choices.className='pe-companions-v221';choices.setAttribute('role','group');choices.setAttribute('aria-label','Персонаж чата');
    choices.innerHTML='<button type="button" data-pe-character="eyes">'+eyeIcon+'Живые глазки</button><button type="button" data-pe-character="pet">'+nimb.mark+'Нимб</button>';
    dialog.querySelector('header').after(choices);
@@ -315,6 +330,9 @@
    const sound=document.createElement('label');sound.className='pe-toggle-v155';sound.dataset.nimbControl='';
    sound.innerHTML='<span>Мини-озвучка<small>Короткие звуки при отправке и реакциях. Во время музыки, звонков и голосовых — без звука.</small></span><input id="pe-pet-sound-v221" type="checkbox">';
    speechControl.after(sound);$('pe-pet-sound-v221').onchange=event=>{prefs.petSound=event.target.checked;save();};
+   const flights=document.createElement('label');flights.className='pe-toggle-v155';flights.dataset.nimbControl='';
+   flights.innerHTML='<span>Полёты по чату<small>Нимб подлетает к новым сообщениям и подхватывает светящиеся капли.</small></span><input id="pe-pet-flight-v222" type="checkbox">';
+   auraControl.before(flights);$('pe-pet-flight-v222').onchange=event=>{prefs.petFlight=event.target.checked;save();};
    const sample=document.createElement('button');sample.type='button';sample.id='pe-demo-sound-v221';sample.className='pe-demo-sound-v221';sample.dataset.nimbControl='';sample.textContent='Проверить голос';sample.onclick=()=>testMood('surprised');sound.after(sample);
    const jealous=document.createElement('button');jealous.type='button';jealous.dataset.pePetDemo='jealous';jealous.textContent='Ревность';jealous.onclick=()=>testMood('jealous');demos.append(jealous);
   }
@@ -339,6 +357,7 @@
  input.addEventListener('paste',event=>{if([...event.clipboardData?.items||[]].some(item=>item.kind==='file'))react('attach',1200);});
  document.addEventListener('pointermove',event=>{if(!running||stage.hidden||event.pointerType==='touch')return;const r=canvas.getBoundingClientRect();look={x:Math.max(-2,Math.min(2,Math.round((event.clientX-r.left-r.width/2)/110))),y:Math.max(-1,Math.min(1,Math.round((event.clientY-r.top-r.height/2)/130)))};},{passive:true});
  window.addEventListener('telechat-chat-action-v155',event=>{sync();const data=event.detail;if(!data||data.owner!==owner||data.key!==conversation())return;if(data.action==='send'){typingUntil=0;draftRival=false;}const detected=emotion(data.text),expression=data.action==='delete'?'sad':data.action==='edit'||data.action==='reaction'&&!data.text?'wink':detected||(data.action==='reaction'?'excited':'happy');react(expression,emotionDuration(expression),true);if(data.action==='send'&&detected)reply(detected,data.text);if(data.action==='send'||data.action==='reaction')playPet(expression);});
+ window.addEventListener('telechat-message-sent-v164',event=>{const data=event.detail;if(data?.owner===owner&&data.key===conversation())flyTo(data.element,currentMood(performance.now()));});
  window.addEventListener('telechat-music-state-v97',event=>{const next=event.detail?.playing===true;if(next===musicPlaying)return;musicPlaying=next;if(next)hushPet();sync();if(next)say('Поймал ритм)');});
  function observeFlag(id,name,expression){const node=$(id);if(!node)return;let was=node.classList.contains(name);new MutationObserver(()=>{const value=node.classList.contains(name);if(value&&!was)react(expression,1000);was=value;}).observe(node,{attributes:true,attributeFilter:['class']});}
  observeFlag('reply-bar','show','think');observeFlag('message-edit-overlay-v36','show','think');observeFlag('pending-media','show','attach');observeFlag('emoji-picker','open','excited');observeFlag('poll-modal','show','think');
@@ -354,9 +373,9 @@
  if(nimb){
   const observer=new MutationObserver(()=>{if(isPet())sync();});
   for(const id of ['voice-call-overlay','voice-call-mini'])if($(id))observer.observe($(id),{attributes:true,attributeFilter:['class']});
-  observer.observe(document.body,{attributes:true,attributeFilter:['class']});
+  observer.observe(document.body,{attributes:true,attributeFilter:['class','data-ui-motion-v184']});
  }
  document.addEventListener('visibilitychange',sync);window.addEventListener('pagehide',()=>{nativeHidden=true;sync();});window.addEventListener('pageshow',()=>{nativeHidden=false;sync();});window.addEventListener('telechat-native-visibility',event=>{nativeHidden=event.detail?.background===true;sync();});
  document.addEventListener('keydown',event=>{if(dialog?.open&&event.key==='Escape'){event.preventDefault();event.stopImmediatePropagation();dialog.close();}},true);
- window.telechatPixelEyesV155=Object.freeze({open,react,refresh:sync,getState:()=>({owner,enabled:prefs.enabled,style:prefs.style,shake:prefs.shake,aura:prefs.aura,speech:prefs.speech,character:prefs.character,petSound:prefs.petSound,talking:prefs.speech&&performance.now()<speechUntil,musicPlaying,mood:currentMood(performance.now()),running})});sync();scheduleScan();
+ window.telechatPixelEyesV155=Object.freeze({open,react,refresh:sync,getState:()=>({owner,enabled:prefs.enabled,style:prefs.style,shake:prefs.shake,aura:prefs.aura,speech:prefs.speech,character:prefs.character,petSound:prefs.petSound,petFlight:prefs.petFlight,talking:prefs.speech&&performance.now()<speechUntil,musicPlaying,mood:currentMood(performance.now()),running})});sync();scheduleScan();
 })();
