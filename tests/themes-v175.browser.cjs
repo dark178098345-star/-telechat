@@ -12,6 +12,7 @@ function ratio(a,b){const x=luminance(a),y=luminance(b);return (Math.max(x,y)+.0
    for(const f of ['settings-navigation-v160.js','chat-comfort-v167.js','theme-presets-v175.js'])await p.addScriptTag({content:read(f)});
    await p.evaluate(()=>openPanel('settings-panel'));
    await p.locator('[data-settings-section="appearance"]').click();
+   await p.locator('[data-settings-section="theme"]').click();
    assert.equal(await p.locator('.theme-preset-v175').count(),16);
    assert(await p.evaluate(()=>originalThemeButtons.every(b=>b.isConnected)),'Existing controls/listeners retained');
    const themes=await p.evaluate(()=>exstraThemesV175.list());

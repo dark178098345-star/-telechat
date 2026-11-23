@@ -167,6 +167,7 @@ async function run() {
       await p.evaluate(()=>openPanel('settings-panel'));
       await p.waitForSelector('#settings-home-v160');
       await p.locator('[data-settings-section="appearance"]').click();
+      await p.locator('[data-settings-section="effects"]').click();
       await p.getByLabel('Анимации интерфейса',{exact:true}).selectOption('off');
       assert.equal(await p.evaluate(()=>exstraMotionV184.enabled()),false,'Actual settings disables decorative UI motion');
       await p.getByLabel('Анимации интерфейса',{exact:true}).selectOption('full');

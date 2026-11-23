@@ -73,6 +73,7 @@
       !body.classList.contains('telechat-mobile-cramped-v159')&&!body.classList.contains('music-hub-open-v117');
   }
   function refresh(){
+    const previous=[season,snowActive,decorations.length].join('/');
     const nick=readAccount();
     if(owner!==nick){owner=nick;prefs=readPrefs(owner);}
     season=!!owner&&prefs.enabled&&screen.classList.contains('active');
@@ -92,6 +93,7 @@
     snowActive=!!host;
     if(host)attachSnow(host,phone?16:30);
     if(layer&&layer.hidden===snowActive)layer.hidden=!snowActive;
+    if(previous!==[season,snowActive,decorations.length].join('/'))window.dispatchEvent(new Event('exstra-winter-change-v226'));
   }
   function schedule(){
     if(queued)return;

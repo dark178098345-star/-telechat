@@ -11,7 +11,7 @@ const root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f
    window.telechatDeliveryV72={diagnostics:async()=>({queued:2,failed:1,permanent:0,sending:0,durable:true}),drain:async()=>drainCalls++};
   });
   for(const f of ['settings-navigation-v160.js','theme-presets-v175.js','sleep-timer-v176.js','utilities-v176.js'])await p.addScriptTag({content:read(f)});
-  await p.evaluate(()=>openPanel('settings-panel'));await p.locator('[data-settings-section=connection]').click();await p.clock.runFor(150);
+  await p.evaluate(()=>openPanel('settings-panel'));await p.locator('[data-settings-section=storage]').click();await p.locator('[data-settings-section=connection]').click();await p.clock.runFor(150);
   assert.equal(await p.locator('#connection-queue-v176').textContent(),'2');assert.equal(await p.locator('#connection-latency-v176').textContent(),'123 мс');assert.equal(await p.evaluate(()=>probes),0,'Opening diagnostics does not poll server');
   assert(await p.locator('#settings-panel').evaluate(n=>n.scrollWidth<=n.clientWidth),'Settings fit '+width);
   if(width===390||width===1440)await p.screenshot({path:path.join(root,`outputs/connection-v176-${width}.png`)});
@@ -42,6 +42,8 @@ const root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f
   await p.evaluate(()=>exstraSleepTimerV176.setMinutes(30));const deadline=await p.evaluate(()=>exstraSleepTimerV176.getState().deadline);
   assert(deadline>Date.now());assert.deepEqual(errors,[]);await p.close();
  }
- for(const f of ['utilities-v176.js','utilities-v176.css','sleep-timer-v176.js']){assert(read('index.html').includes(f+'?v=176'));assert(read('sw.js').includes(f+'?v=176'));}
+ for(const [file,version] of [['utilities-v176.js',226],['utilities-v176.css',176],['sleep-timer-v176.js',176]]){
+  assert(read('index.html').includes(file+'?v='+version));assert(read('sw.js').includes(file+'?v='+version));
+ }
  console.log('PASS v176 utilities: local-only diagnostics, real reconnect entry points, no offline requests, 320/390/1440 fit, sleep deadline/fade/end/cancel/account/room safety.');
 }finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

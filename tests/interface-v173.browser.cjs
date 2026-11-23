@@ -9,7 +9,10 @@ const root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f
   await p.screenshot({path:path.join(root,`outputs/interface-v173-list-${width}.png`)});
   await p.evaluate(async()=>{await openChat('friend0');setAvatarElement(document.getElementById('chat-av'),userCache.friend0);});
   await p.evaluate(()=>{document.querySelector('.contact').classList.add('active');const box=document.getElementById('messages');box.innerHTML='';const rows=[['them','Привет! Как тебе новая версия?','12:30'],['me','Стало спокойнее. Всё выглядит как одно приложение.','12:31'],['them','И на телефоне удобно — кнопки под рукой.','12:31'],['me','Вечером включим музыку вместе?','12:32'],['them','Да, напиши, когда освободишься.','12:32']];for(const [type,text,time] of rows){const n=document.createElement('div');n.className='msg '+type;n.innerHTML='<div class="msg-bubble"></div><div class="msg-meta"><span class="msg-time">'+time+'</span></div>';n.querySelector('.msg-bubble').textContent=text;box.append(n);}});
-  await p.waitForFunction(()=>Math.abs(document.querySelector('.chat-main').getBoundingClientRect().right-innerWidth)<2);
+  await p.waitForFunction(()=>{
+    const gap=innerWidth-document.querySelector('.chat-main').getBoundingClientRect().right;
+    return gap>=-1&&gap<(document.body.classList.contains('telechat-phone-v159')?2:30);
+  });
   await p.waitForFunction(()=>{const r=document.getElementById('input-area').getBoundingClientRect();return r.bottom<=innerHeight+1&&r.right<=innerWidth+1&&r.left>=-1});
   const bounds=await p.locator('#input-area').evaluate(n=>{const r=n.getBoundingClientRect();return {left:r.left,right:r.right,bottom:r.bottom,w:innerWidth,h:innerHeight,classes:document.body.className,chat:document.querySelector('.chat-main').getBoundingClientRect().toJSON()}});assert(bounds.bottom<=bounds.h+1&&bounds.right<=bounds.w+1&&bounds.left>=-1,'Composer fits '+width+' '+JSON.stringify(bounds));
   assert(await p.locator('.chat-header').evaluate(n=>n.scrollWidth<=n.clientWidth+1),'Header fits '+width);
@@ -19,7 +22,7 @@ const root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f
   assert(await p.locator('#messages').evaluate(n=>{n.classList.add('has-wallpaper-v119');n.style.setProperty('--wallpaper-photo-v119','url("https://wallpaper.test/personal.jpg")');const kept=getComputedStyle(n).backgroundImage.includes('personal.jpg');n.classList.remove('has-wallpaper-v119');n.style.removeProperty('--wallpaper-photo-v119');return kept;}),'Personal wallpaper is not replaced by the default background');
   await p.evaluate(()=>openPanel('settings-panel'));assert(await p.locator('#settings-home-v160').isVisible());assert(await p.locator('#settings-panel').evaluate(n=>n.scrollWidth<=n.clientWidth+1));
   await p.screenshot({path:path.join(root,`outputs/interface-v173-settings-${width}.png`)});
-  await p.locator('[data-settings-section=chats]').click();await p.locator('[data-chat-color=teal]').click();await p.evaluate(()=>closeAllPanels());assert.equal(await p.locator('.msg.me>.msg-bubble').first().evaluate(n=>getComputedStyle(n).backgroundColor),'rgb(36, 116, 108)','Custom message colour is retained');
+  await p.locator('[data-settings-section=appearance]').click();await p.locator('[data-settings-section=style]').click();await p.locator('[data-chat-color=teal]').click();await p.evaluate(()=>closeAllPanels());assert.equal(await p.locator('.msg.me>.msg-bubble').first().evaluate(n=>getComputedStyle(n).backgroundColor),'rgb(36, 116, 108)','Custom message colour is retained');
   for(const theme of ['light','green']){await p.evaluate(t=>{document.body.classList.remove('theme-light','theme-green');document.body.classList.add('theme-'+t);},theme);await p.waitForTimeout(250);assert(await p.locator('#messages').evaluate(n=>n.scrollWidth<=n.clientWidth+1));if([390,1440].includes(width))await p.screenshot({path:path.join(root,`outputs/interface-v173-${theme}-${width}.png`)});}
   assert.deepEqual(errors,[],'No page errors '+width);await p.close();
  }

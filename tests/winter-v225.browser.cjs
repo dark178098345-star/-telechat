@@ -10,8 +10,11 @@ const mime={'.html':'text/html','.js':'application/javascript','.css':'text/css'
   '.png':'image/png','.webp':'image/webp','.webmanifest':'application/manifest+json'};
 for(const host of ['index.html','sw.js']){
   const src=fs.readFileSync(path.join(root,host),'utf8');
-  for(const file of ['winter-decor-v225.css','winter-snow-v225.css','winter-effects-v225.js']){
-    assert(src.includes('./'+file+'?v=225'),host+' references winter asset '+file);
+  for(const [file,version] of [
+    ['winter-decor-v225.css',225],['winter-snow-v225.css',225],['winter-effects-v225.js',226],
+    ['winter-surfaces-v226.css',226],['winter-surfaces-v226.js',226]
+  ]){
+    assert(src.includes('./'+file+'?v='+version),host+' references winter asset '+file);
   }
 }
 
@@ -84,9 +87,12 @@ const decorationIsVisible=async(page,mobile=false)=>Object.values(await visibleD
 
 async function openAppearance(page){
   await page.evaluate(()=>openPanel('settings-panel'));
-  const appearance=page.locator('#settings-panel.open button[data-settings-section="appearance"]');
-  if(await page.locator('#settings-panel').getAttribute('data-settings-view')!=='appearance')await appearance.click();
-  assert.equal(await page.locator('#settings-panel').getAttribute('data-settings-view'),'appearance');
+  const panel=page.locator('#settings-panel');
+  if(await panel.getAttribute('data-settings-view')!=='effects'){
+    await page.locator('#settings-panel.open button[data-settings-section="appearance"]').click();
+    await page.locator('[data-settings-section="effects"]').click();
+  }
+  assert.equal(await panel.getAttribute('data-settings-view'),'effects');
   const section=page.locator('#settings-panel .panel-section:not([hidden])').filter({hasText:'Интерфейс · Зима'});
   assert.equal(await section.count(),1);
   return {
@@ -136,10 +142,44 @@ function sameLayout(actual,expected){
       assert.equal(await page.evaluate(()=>document.activeElement?.id),'msg-input','snow and chat decorations do not intercept composer clicks');
       await input.blur();
 
+      const cap=page.locator('#messages .winter-bubble-cap-v226').last();
+      await cap.waitFor({state:'visible'});
+      const bubble=cap.locator('..');
+      const r=await bubble.boundingBox();
+      if(width===390)await page.touchscreen.tap(r.x+r.width*.5,r.y+r.height*.5);
+      else await page.mouse.move(r.x+r.width*.5,r.y+4);
+      await page.waitForFunction(()=>document.querySelector('.winter-spill-v226'));
+      assert(await cap.evaluate(node=>node.getAnimations().some(a=>a.effect.getKeyframes()[0]?.scale==='1 0')),'Cleared snow can build up again');
+      if(width===390)assert(await bubble.evaluate(node=>node.getAnimations().some(a=>
+        a.effect.getKeyframes().some(frame=>frame.translate?.startsWith('-2px')))),'A tap shakes the bubble');
+      await page.waitForFunction(()=>!document.querySelector('.winter-spill-v226'));
+
+      if(width===1440){
+        const messageId=await bubble.evaluate(node=>node.closest('.msg').dataset.id);
+        const originalTop=await page.locator('#messages').evaluate(node=>{
+          const top=node.scrollTop;node.scrollTo({top:Math.max(0,top-node.clientHeight*2),behavior:'instant'});return top;
+        });
+        const previousCap=page.locator(`#messages .msg[data-id=${JSON.stringify(messageId)}] .winter-bubble-cap-v226`);
+        await previousCap.waitFor({state:'detached'});
+        await page.locator('#messages').evaluate((node,top)=>node.scrollTo({top,behavior:'instant'}),originalTop);
+        await previousCap.waitFor({state:'attached'});
+        assert(await previousCap.evaluate(node=>parseFloat(getComputedStyle(node).scale.split(' ')[1])<.3),
+          'Scrolling the cleared bubble away and back does not replace its snow');
+      }
+
       if(process.env.EXSTRA_WINTER_CAPTURE==='1'){
         await page.screenshot({path:path.join(root,'outputs','winter-v225-'+width+'.png')});
       }
       if(width===390){
+        await page.evaluate(()=>openPanel('settings-panel'));
+        assert.equal(await page.locator('#settings-home-v160>button:visible').count(),5);
+        if(process.env.EXSTRA_WINTER_CAPTURE==='1')await page.locator('#settings-panel').screenshot({path:path.join(root,'outputs','settings-v226-phone.png')});
+        await page.locator('[data-settings-section="appearance"]').click();
+        await page.locator('[data-settings-section="effects"]').click();
+        await page.evaluate(()=>telechatPhoneV159.back());
+        assert.equal(await page.locator('#settings-panel').getAttribute('data-settings-view'),'appearance');
+        await page.evaluate(()=>telechatPhoneV159.back());
+        assert.equal(await page.locator('#settings-panel').getAttribute('data-settings-view'),'home');
         assert.deepEqual(errors,[]);
         await context.close();continue;
       }
@@ -156,6 +196,16 @@ function sameLayout(actual,expected){
       assert(await decorationIsVisible(page),'reduced motion does not remove the static winter art');
       await page.emulateMedia({reducedMotion:'no-preference'});await runningSnow(page,true);
 
+      await page.evaluate(()=>openPanel('settings-panel'));
+      assert.equal(await page.locator('#settings-home-v160>button:visible').count(),5,'Main settings has only five categories');
+      if(process.env.EXSTRA_WINTER_CAPTURE==='1')await page.locator('#settings-panel').screenshot({path:path.join(root,'outputs','settings-v226-home.png')});
+      await page.locator('[data-settings-section=app]').click();
+      await page.locator('[data-settings-section=updates]').click();
+      assert(await page.locator('#app-restart-open-v216').isVisible());
+      assert(await page.locator('#news-open-v181').isVisible());
+      await page.keyboard.press('Escape');assert.equal(await page.locator('#settings-panel').getAttribute('data-settings-view'),'app');
+      await page.locator('#settings-back-v160').click();
+      assert(await page.locator('#settings-home-v160').isVisible());
       let controls=await openAppearance(page);
       assert(await controls.master.isChecked());assert(await controls.snow.isChecked());
       await controls.snowLabel.click();await runningSnow(page,false);

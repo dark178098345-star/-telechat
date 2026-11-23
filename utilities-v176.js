@@ -31,7 +31,7 @@
  }
  function musicButton(){const b=document.createElement('button');b.type='button';b.className='sleep-open-v176';b.dataset.sleepOpenV176='';b.innerHTML=clockIcon+'<span><strong>Таймер сна</strong><small data-sleep-label-v176>Выключен</small></span><span aria-hidden="true">›</span>';b.onclick=()=>openTimer(b);return b;}
  function attachMusic(root){if(!root||root.querySelector('[data-sleep-open-v176]'))return;root.querySelector('.mh-queue-heading')?.before(musicButton());paintTimer();}
- function shown(){return section&&!section.hidden&&panel?.classList.contains('open')&&!document.hidden;}
+ function shown(){return section&&!section.closest('[hidden]')&&panel?.classList.contains('open')&&!document.hidden;}
  function field(name,text){const node=$('connection-'+name+'-v176');if(node&&node.textContent!==String(text))node.textContent=String(text);}
  async function refresh(){
   if(!shown())return;const token=++revision,nick=account(),transport=window.telechatTransportV172?.diagnostics(),presence=window.telechatPresenceV120?.diagnostics(),messages=window.telechatMessageCoreV104?.diagnostics();

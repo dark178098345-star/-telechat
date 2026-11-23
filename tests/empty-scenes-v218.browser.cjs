@@ -5,7 +5,7 @@ const root=path.resolve(__dirname,'..');
 const mime={'.html':'text/html','.js':'application/javascript','.css':'text/css','.svg':'image/svg+xml','.png':'image/png','.webp':'image/webp'};
 const read=f=>fs.readFileSync(path.join(root,f),'utf8');
 for(const file of ['empty-scenes-v218.js','empty-scenes-v218.css','shared-media-v152.js','music-hub-v117.js','quick-jump-v154.js','emoji-picker-v182.js','my-center-v187.js','wallet-ui-v197.js','whats-new-v181.js']){
- const version=file==='whats-new-v181.js'?225:file==='music-hub-v117.js'?220:219;
+ const version=file==='whats-new-v181.js'?226:file==='music-hub-v117.js'?220:219;
  assert(read('index.html').includes('./'+file+'?v='+version),file);
  assert(read('sw.js').includes('./'+file+'?v='+version),file+' offline');
 }

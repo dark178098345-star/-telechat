@@ -3,7 +3,7 @@ const root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f
 (async()=>{const browser=await chromium.launch({channel:'msedge',headless:true});try{
  for(const width of [320,390,1440]){
   const {p,errors}=await fixture(browser,width,844,width<600);await p.addScriptTag({content:read('settings-navigation-v160.js')});await p.addScriptTag({content:read('chat-comfort-v167.js')});await p.evaluate(()=>openChat('friend0'));await p.waitForTimeout(100);
-  await p.evaluate(()=>openPanel('settings-panel'));await p.locator('[data-settings-section="chats"]').click();assert(await p.locator('.comfort-preview-v167').isVisible());assert(!(await p.locator('#focus-note-v167').isVisible()));
+  await p.evaluate(()=>openPanel('settings-panel'));await p.locator('[data-settings-section="appearance"]').click();await p.locator('[data-settings-section="style"]').click();assert(await p.locator('.comfort-preview-v167').isVisible());assert(!(await p.locator('#focus-note-v167').isVisible()));
   await p.locator('[data-chat-color="teal"]').click();await p.locator('#chat-density-v167').selectOption('compact');await p.locator('#chat-radius-v167').fill('8');await p.locator('#chat-radius-v167').dispatchEvent('input');
   assert.equal(await p.locator('.comfort-me-v167').first().evaluate(n=>getComputedStyle(n).backgroundColor),'rgb(36, 116, 108)');assert.equal(await p.locator('.comfort-me-v167').first().evaluate(n=>getComputedStyle(n).borderRadius),'8px');
   assert.equal(await p.evaluate(()=>JSON.parse(localStorage.getItem('exstrachat.comfort.v167.creator')).density),'compact');assert(await p.locator('#settings-panel').evaluate(n=>n.scrollWidth<=n.clientWidth));await p.screenshot({path:path.join(root,`outputs/comfort-v167-${width}.png`)});

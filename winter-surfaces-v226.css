@@ -1,0 +1,22 @@
+.winter-bubble-cap-v226{display:none}
+body[data-winter-v225="on"] .winter-bubble-cap-v226{
+ position:absolute;display:block;z-index:2;inset:-2px 4px auto;height:7px;pointer-events:none;
+ border-radius:10px 10px 3px 3px;background:var(--winter-rim-art) center top / 100% 100% no-repeat;opacity:.94
+}
+body.theme-light[data-winter-v225="on"] .winter-bubble-cap-v226{filter:drop-shadow(0 1px 1px #7395b167)}
+.winter-bubble-cap-v226,.winter-ridge-v225,.winter-icon-snow-v225{transform-origin:50% 100%}
+.winter-spills-v226{position:fixed;inset:0;z-index:40;pointer-events:none;overflow:hidden}
+.winter-spill-v226{position:absolute;pointer-events:none}
+.winter-spill-v226>i{
+ position:absolute;top:0;left:0;width:var(--spill-size,3px);height:var(--spill-size,3px);border-radius:50%;
+ background:radial-gradient(circle at 30% 22%,#fff,#d5ebff 82%);opacity:0;pointer-events:none;
+ animation:winter-spill-fall-v226 610ms cubic-bezier(.26,.46,.54,.91) var(--spill-delay,0ms) both
+}
+@keyframes winter-spill-fall-v226{
+ 0%{transform:translate3d(0,-1px,0) scale(.8);opacity:0}
+ 14%{opacity:.95}
+ 36%{transform:translate3d(calc(var(--spill-x)*.64),7px,0);opacity:.9}
+ 100%{transform:translate3d(var(--spill-x),var(--spill-y),0) scale(.51);opacity:0}
+}
+@media(prefers-reduced-motion:reduce){.winter-spills-v226{display:none}}
+@media(forced-colors:active){.winter-bubble-cap-v226,.winter-spills-v226{display:none!important}}
