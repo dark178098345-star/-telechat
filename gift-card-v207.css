@@ -10,7 +10,12 @@
 .ex-wallet-dialog-v197 .ex-gift-top-v207>button{display:grid;place-items:center;width:36px;min-height:36px;padding:9px;border-radius:50%;background:var(--ew-block)}
 .ex-gift-stage-v207{position:relative;display:grid;place-items:center;height:238px;isolation:isolate}
 .ex-gift-stage-v207>[data-gift-card-art]{position:relative;display:grid;place-items:center;width:226px;aspect-ratio:1;z-index:1}
-.ex-wallet-dialog-v197 .ex-gift-stage-v207 svg{width:100%;height:100%;overflow:visible}
+.ex-wallet-dialog-v197 .ex-gift-stage-v207 [data-gift-card-art]>svg{width:100%;height:100%;overflow:visible}
+.ex-wallet-dialog-v197 [data-gift-card-turn]{position:absolute;z-index:2;right:0;bottom:9px;display:grid;place-items:center;
+ width:42px;min-height:42px;padding:9px;border-radius:50%;background:var(--ew-block);color:var(--ew-text)}
+.ex-wallet-dialog-v197 [data-gift-card-turn][hidden]{display:none}
+.ex-wallet-dialog-v197 [data-gift-card-turn]:focus-visible{outline:2px solid var(--accent3);outline-offset:3px}
+.ex-wallet-dialog-v197 [data-gift-card-turn]>svg{width:20px;height:20px}
 .ex-gift-orbit-v207{position:absolute;width:208px;height:208px;border:1px solid rgba(var(--gift-rgb),.12);border-radius:50%;transform:rotate(-20deg) scaleY(.83)}
 .ex-gift-orbit-v207::before,.ex-gift-orbit-v207::after{content:'';position:absolute;width:5px;height:5px;border-radius:50%;background:rgba(var(--gift-rgb),.5);top:33px;left:23px}
 .ex-gift-orbit-v207::after{top:auto;left:auto;right:23px;bottom:33px;width:3px;height:3px}

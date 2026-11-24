@@ -18,7 +18,7 @@ body[data-winter-v225="on"] :is(#sidebar,.chat-main)>.winter-ridge-v225{
 }
 body[data-winter-v225="on"] :is(#sidebar,.chat-main)>.winter-ridge-v225::before{
  content:"";position:absolute;right:18px;top:0;width:clamp(35px,9%,60px);height:28px;
- background:var(--winter-icicles-v228) right top/100% 100% no-repeat;opacity:.9
+ background:var(--winter-icicles-mesh-v229,var(--winter-icicles-v228)) right top/100% 100% no-repeat;opacity:.9
 }
 body[data-winter-v225="on"] #input-area>.winter-ridge-v225[data-snow-shelf]{
  inset:-18px 9px auto;height:22px

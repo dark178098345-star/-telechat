@@ -4,8 +4,8 @@ const {fixtureClient}=require('./runtime-v180.browser.cjs');
 const root=path.resolve(__dirname,'..');
 const mime={'.html':'text/html','.js':'application/javascript','.css':'text/css','.svg':'image/svg+xml','.png':'image/png','.webp':'image/webp'};
 const read=f=>fs.readFileSync(path.join(root,f),'utf8');
-for(const file of ['empty-scenes-v218.js','empty-scenes-v218.css','shared-media-v152.js','music-hub-v117.js','quick-jump-v154.js','emoji-picker-v182.js','my-center-v187.js','wallet-ui-v197.js','whats-new-v181.js']){
- const version=file==='whats-new-v181.js'?228:file==='music-hub-v117.js'?220:219;
+for(const file of ['mesh-art-v229.js','empty-scenes-v218.js','empty-scenes-v218.css','shared-media-v152.js','music-hub-v117.js','quick-jump-v154.js','emoji-picker-v182.js','my-center-v187.js','wallet-ui-v197.js','whats-new-v181.js']){
+ const version=['mesh-art-v229.js','empty-scenes-v218.js','wallet-ui-v197.js','whats-new-v181.js'].includes(file)?229:file==='music-hub-v117.js'?220:219;
  assert(read('index.html').includes('./'+file+'?v='+version),file);
  assert(read('sw.js').includes('./'+file+'?v='+version),file+' offline');
 }
@@ -28,6 +28,8 @@ for(const file of ['empty-scenes-v218.js','empty-scenes-v218.css','shared-media-
   await p.locator('#l-login').fill('alice');await p.locator('#l-pass').fill('fixture-only');await p.evaluate(()=>doLogin());
   await p.locator('#whats-new-v181[open] button[data-close]').last().click();await p.waitForSelector('#whats-new-v181',{state:'hidden'});
   assert.equal(await p.locator('#empty-state svg[data-scene=chats]').count(),1,'Welcome art exists even when the mobile list covers it');
+  assert.equal(await p.locator('#empty-state [data-mesh-art-v229]').count(),2,'Both chat bubbles have separate extruded sides');
+  assert.equal(await p.evaluate(()=>exstraEmptyV218.art('emoji-search').includes('data-mesh-art-v229')),false,'Emoji art is still flat');
   // Finish the initial scheduled unread refresh before simulating a read.
   await p.waitForFunction(()=>telechatExperienceV62.unread().alice_bob?.count>0);
   await p.evaluate(()=>telechatExperienceV62.refreshUnread());

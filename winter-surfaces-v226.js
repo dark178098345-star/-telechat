@@ -8,7 +8,7 @@
  const clamp=(v,min,max)=>Math.min(max,Math.max(min,v)),settleMs=26000;
  const canMove=()=>!reduce.matches&&!['off','lite'].includes(document.body.dataset.uiMotionV184);
  let enabled=false,falling=false,queued=false,owner='',memo=new WeakMap(),snowElapsed=0,snowStarted=0;
- let overlay,gesture,press,shake,frame=0,refillTimer=0;
+ let overlay,gesture,press,shake,iceMounted=false,frame=0,refillTimer=0;
  const snowTime=now=>snowElapsed+(falling?now-snowStarted:0);
  const svg=name=>document.createElementNS(ns,name);
  const n=x=>Math.round(x*10)/10;
@@ -108,6 +108,16 @@
   dirty.add(rec);
   if(!frame)frame=requestAnimationFrame(()=>{frame=0;for(const track of dirty)draw(track);dirty.clear();});
  }
+ function setupIce(){
+  const art=window.exstraMeshV229;if(!art||iceMounted)return;
+  iceMounted=true;
+  const m=art.mesh();
+  m.lathe([-.53,0,0],[[-.94,.012],[-.36,.105],[.03,.18],[.19,.28],[.27,.42]],'#b8e4f7',8,[0,0,-.10],.62);
+  m.lathe([.45,.12,.06],[[-.67,.009],[-.23,.111],[.10,.22],[.23,.32]],'#a6cdeb',7,[0,0,.14],.70);
+  const drawing='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 65 35"><g stroke-width=".22">'+
+   art.draw(m.faces,{yaw:.14,pitch:0,roll:0,scale:25,x:31,y:8})+'</g></svg>';
+  screen.style.setProperty('--winter-icicles-mesh-v229','url("data:image/svg+xml,'+encodeURIComponent(drawing)+'")');
+ }
  function sync(){
   const next=winter.getState(),newFalling=next.snowActive&&canMove();
   if(falling!==newFalling){
@@ -129,6 +139,7 @@
    gesture=null;press=null;shake?.cancel();shake=null;
   }
   if(!enabled)return;
+  setupIce();
   const sidebar=document.getElementById('sidebar');
   if(sidebar)makeTrack(sidebar,'winter-sidebar-shelf-v228','sidebar');
   for(const node of screen.querySelectorAll('#input-area>.winter-ridge-v225,.winter-icon-snow-v225'))

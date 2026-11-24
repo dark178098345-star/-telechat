@@ -12,7 +12,7 @@ for(const host of ['index.html','sw.js']){
   const src=fs.readFileSync(path.join(root,host),'utf8');
   for(const [file,version] of [
     ['winter-decor-v225.css',225],['winter-snow-v225.css',225],['winter-effects-v225.js',226],
-    ['winter-surfaces-v226.css',228],['winter-surfaces-v226.js',228]
+    ['winter-surfaces-v226.css',229],['winter-surfaces-v226.js',229]
   ]){
     assert(src.includes('./'+file+'?v='+version),host+' references winter asset '+file);
   }
@@ -138,6 +138,7 @@ function sameLayout(actual,expected){
       for(const selector of staticParts)assert.equal(await page.locator(selector).first().getAttribute('aria-hidden'),'true',selector);
       await page.evaluate(()=>{for(let i=0;i<5;i++)exstraWinterV225.refresh();});
       const ridges=page.locator('.winter-ridge-v225');
+      assert(await page.locator('#chat-screen').evaluate(node=>getComputedStyle(node).getPropertyValue('--winter-icicles-mesh-v229').includes('image/svg+xml')));
       assert.equal(await ridges.count(),3,'Refreshing weather never duplicates the three panel edges');
       assert(await ridges.evaluateAll(nodes=>nodes.filter(node=>getComputedStyle(node,'::before').backgroundImage!=='none').length===2&&
         nodes.every(node=>getComputedStyle(node).backgroundImage==='none')),'Icicles replace snow on the two top edges');

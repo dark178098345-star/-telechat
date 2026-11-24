@@ -16,7 +16,8 @@
   dialog.setAttribute('aria-labelledby','gift-card-title-v207');
   dialog.innerHTML=`<div class="ex-gift-hero-v207">
    <div class="ex-gift-top-v207"><span>EXSTRACHAT GIFTS</span><button type="button" data-gift-card-close aria-label="Закрыть карточку подарка">${icon('close')}</button></div>
-   <div class="ex-gift-stage-v207" aria-hidden="true"><span class="ex-gift-orbit-v207"></span><div data-gift-card-art></div></div>
+   <div class="ex-gift-stage-v207"><span class="ex-gift-orbit-v207" aria-hidden="true"></span><div data-gift-card-art aria-hidden="true"></div>
+    <button type="button" data-gift-card-turn aria-label="Повернуть подарок на 45 градусов" title="Повернуть подарок" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 5v5h-5m5 0a8 8 0 1 0 0 5"/></svg></button></div>
    <div class="ex-gift-caption-v207"><span data-gift-card-series></span><h2 id="gift-card-title-v207"></h2><p data-gift-card-subtitle></p></div>
   </div><div class="ex-gift-body-v207"><dl data-gift-card-details></dl><blockquote data-gift-card-note hidden></blockquote>
    <p class="ex-gift-card-status-v207" role="status" data-gift-card-status></p>
@@ -27,6 +28,13 @@
   let outside=false;dialog.addEventListener('pointerdown',e=>{outside=e.target===dialog;});
   dialog.addEventListener('click',e=>{if(outside&&e.target===dialog)close();outside=false;});
   dialog.querySelector('[data-gift-card-action]').onclick=act;
+  dialog.querySelector('[data-gift-card-turn]').onclick=()=>{
+   const art=window.exstraGiftArtV198,view=current;if(!art?.view||!view||view.account!==owner())return;
+   const stage=dialog.querySelector('[data-gift-card-art]');
+   view.turn=(view.turn+1)%8;stage.innerHTML=art.view(view.artId,view.turn);
+   if(!matchMedia('(prefers-reduced-motion:reduce)').matches&&!['off','lite'].includes(document.body.dataset.uiMotionV184))
+    stage.firstElementChild?.animate?.([{opacity:.69},{opacity:1}],{duration:145,easing:'ease-out'});
+  };
   dialog.addEventListener('close',()=>{if(dialog.open)return;const view=current;current=null;view?.host?.removeEventListener('close',view.onHostClose);if(view?.restore&&view.account===owner()&&view.trigger?.isConnected&&view.host?.open)view.trigger.focus({preventScroll:true});});
  }
  function row(label,value){const block=document.createElement('div'),term=document.createElement('dt'),detail=document.createElement('dd');term.textContent=label;if(value?.nodeType)detail.append(value);else detail.textContent=String(value);block.append(term,detail);dialog.querySelector('[data-gift-card-details]').append(block);return detail;}
@@ -59,8 +67,10 @@
   view.ended=!view.owned&&!!gift.limited&&Number(gift.available_until)<=Date.now();view.onHostClose=()=>{if(current===view)close(false);};current=view;view.host?.addEventListener('close',view.onHostClose);
   dialog.dataset.theme=themes.has(gift.theme)?gift.theme:'violet';dialog.dataset.owned=String(view.owned);
   const get=selector=>dialog.querySelector(selector),id=gift.gift_id||gift.id;
-  // Detail gradients must not resolve to a hidden SVG in the catalog/collection.
-  get('[data-gift-card-art]').innerHTML=(window.exstraGiftArtV198?.html(id)||icon('gift')).replace(/exg198-/g,'exg207-card-');
+  const artwork=window.exstraGiftArtV198;
+  view.artId=id;view.turn=0;
+  get('[data-gift-card-art]').innerHTML=artwork?.view?.(id)||artwork?.html?.(id)||icon('gift');
+  get('[data-gift-card-turn]').hidden=!artwork?.view;
   get('h2').textContent=gift.gift_name||gift.name||'Подарок';
   get('[data-gift-card-series]').textContent=gift.limited?'Лимитированная серия':'Коллекция ExstraChat';
   get('[data-gift-card-subtitle]').textContent=view.owned&&gift.id!==undefined?'Подарок №'+gift.id:'Маленький знак большого внимания';
