@@ -1,12 +1,12 @@
-# Music start card — web v216
+# In-chat music dock — web v230
 
-This is a web-only release. Windows stays at 1.4.8; no installer, native Sites change, database migration or user-data reset is needed.
+This is a web-only release; no installer, native Sites change, database migration or user-data reset is needed.
 
 ## Card
 
-music-start-v216.js listens to the existing telechat-music-progress-v117 event. A compact, dark, click-through card appears for 4.2 seconds on actual start/resume or a track change, not on loading, periodic progress updates or seek alone. Metadata comes from the existing player: title, optional cover and artist/filename, actual elapsed time and duration. Missing artwork uses a code-native disc icon; missing duration is visibly indeterminate rather than fabricated.
+music-start-v216.js now mounts the interactive v230 dock on actual playback. It replaces both the old chat strip and the transient v216 notification. One DOM instance moves between the chat list and the open conversation on phones, stays available while paused, hides in the full music section or above an active phone keyboard, and can be collapsed without stopping music.
 
-The card is lazy-mounted. It uses one dismissal timer and a short exit timer, with one animation frame for entry. There is no polling or new audio pipeline. Progress/metadata are only painted while visible; unchanged artwork is retained. Artwork is limited to supported raster data images, credential-free HTTP(S), or same-origin blob URLs; text is inserted with textContent. Background/account changes and errors clear the card, cover source and announcement. Late notifications for another account are ignored. A separate screen-reader status announces starts, not every progress tick. Reduced motion is supported.
+All controls call the existing music engine. Metadata comes from the same track, with elapsed and remaining time based on the real player. The card updates from playback events rather than a timer. A scrub commits on release/change, so dragging does not send repeated seeks. Artwork is restricted to supported raster data images, credential-free HTTP(S), or same-origin blob URLs; metadata is rendered as text. Reduced motion disables the waveform and title animation.
 
 Local imports now retain the original filename as additive metadata. Old stored File objects can supply their existing name when read; no library schema reset or bulk rewrite is performed. The card does not extract embedded album art from MP3 files.
 
@@ -20,6 +20,6 @@ Current chat drafts, pending attachments, recording, calls, active file/photo wo
 
 ## Verification
 
-tests/music-start-v216.browser.cjs covers 320/390/1440 layouts, real local audio import/play/pause, filenames, start/resume/progress/timeout behavior, keyed artwork/no extra requests, unsafe input, click-through, account/background cleanup, and explicit restart/draft/outbox/cancel/no-installer guards. Other release checks include music cache/recovery, the complete production script stack, startup, profile smoke and web update presentation.
+tests/music-start-v216.browser.cjs covers 320/390/1440 layouts, actual local audio, filenames, progress, keyboard-safe placement, collapse, queue/seek actions, metadata and account guards, and the retained explicit restart/draft/outbox/cancel/no-installer checks.
 
 No real account, messages, music catalog or installed app is modified by those tests.

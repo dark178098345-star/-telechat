@@ -310,7 +310,8 @@
   }
   function updatePlayers() {
     const media=player();
-    window.dispatchEvent(new CustomEvent('telechat-music-progress-v117',{detail:{track:current?{...current}:null,paused:media.paused,time:media.currentTime||0,duration:media.duration||current?.duration||0,repeat,shuffle,loading,error:playError}}));
+    const canStep=(queue.length?queue:tracks).length>1;
+    window.dispatchEvent(new CustomEvent('telechat-music-progress-v117',{detail:{track:current?{...current}:null,paused:media.paused,time:media.currentTime||0,duration:media.duration||current?.duration||0,repeat,shuffle,loading,error:playError,canStep}}));
     if (dialog) {
       const title = dialog.querySelector('.music-now-title-v97'), hint = dialog.querySelector('.music-now-hint-v97');
       const text = current?.title || 'Включи любимый трек';
@@ -340,8 +341,8 @@
       if (document.activeElement !== seek) seek.value = media.currentTime || 0;
       seek.style.setProperty('--music-progress',Math.min(100,Math.max(0,(media.currentTime||0)/Number(seek.max)*100||0))+'%');
       player.querySelector('.music-time').textContent = durationText(media.currentTime || 0) + ' / ' + durationText(current.duration);
-      player.querySelector('[data-music="previous"]').disabled = (queue.length?queue:tracks).length < 2;
-      player.querySelector('[data-music="next"]').disabled = (queue.length?queue:tracks).length < 2;
+      player.querySelector('[data-music="previous"]').disabled = !canStep;
+      player.querySelector('[data-music="next"]').disabled = !canStep;
     });
     dialog?.querySelectorAll('.music-track-v96').forEach(row => {
       const selected = row.dataset.id === current?.id;
@@ -524,8 +525,6 @@
       return play({id:'profile:'+nick+':'+url,owner:owner(),kind:'link',url,title:track.title||'Музыка профиля',duration:track.duration||0});
     }
   };
-  document.querySelector('.sidebar-footer')?.before(makePlayer('music-sidebar-player'));
-  document.querySelector('.chat-main')?.prepend(makePlayer('music-chat-player'));
   for (const name of ['play','pause','timeupdate','loadedmetadata','durationchange']) audio.addEventListener(name,updatePlayers);
   audio.addEventListener('loadedmetadata',()=>{if(current&&!isCloud(current)&&Number.isFinite(audio.duration)){current.duration=audio.duration;updatePlayers();}});
   if ('mediaSession' in navigator) {

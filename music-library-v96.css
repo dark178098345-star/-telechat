@@ -62,7 +62,6 @@ body.telechat-glass-v36 #music-dialog-v96{background:linear-gradient(145deg,rgba
 .music-player-v96 svg{width:16px;height:16px}
 .music-player-v96 [data-music=toggle]{background:rgba(171,146,255,.17);color:#eee7ff}
 .music-seek{display:block;width:100%;height:18px;margin:3px 0 0;accent-color:#a494f7;cursor:pointer}
-.music-chat-player{display:none}
 #music-dialog-v96 .music-dialog-player{margin:0;border-width:1px 0 0;border-radius:0;padding:12px 22px 8px;background:rgba(117,98,210,.11)}
 #music-dialog-v96 .music-dialog-player button{width:36px;height:36px;flex-basis:36px}
 #music-dialog-v96 .music-dialog-player .music-player-title{font-size:13px}
@@ -78,8 +77,6 @@ body.theme-green .music-entry-v96,body.theme-green .music-player-v96{border-colo
   .music-head-v96{padding:16px;gap:10px}.music-head-v96 h2{font-size:18px}.music-head-v96 p{font-size:10px}
   .music-body-v96{padding:16px}.music-track-v96{gap:8px}.music-track-remove{flex-basis:36px;width:36px;height:42px}
   #music-dialog-v96 input:not([type=range]):not([type=file]){font-size:16px}
-  .music-chat-player{display:block;margin:6px 8px;position:relative;z-index:2}
-  #chat-screen .chat-main:has(>.music-chat-player:not([hidden])) #active-chat{height:auto!important;flex:1!important;min-height:0!important}
   .music-player-v96 button{height:36px;flex-basis:30px;width:30px}
   .music-player-open{display:none!important}
   #music-dialog-v96 .music-dialog-player{padding:10px 16px calc(8px + env(safe-area-inset-bottom,0px))}

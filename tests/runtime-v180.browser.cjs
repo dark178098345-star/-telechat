@@ -163,7 +163,14 @@ async function run() {
       assert.equal(await p.evaluate(()=>telechatMusicV96.getState().error),null,'All production modules permit music playback '+width);
       await p.evaluate(()=>telechatMusicHubV117.close());await p.waitForTimeout(100);
       assert.equal(await p.evaluate(()=>telechatMusicV96.getState().paused),false,'Music continues after closing the full app music screen '+width);
+      const dock=p.locator('#music-dock-v230');
+      await dock.waitFor({state:'visible'});
+      assert.equal(await dock.evaluate(n=>n.parentElement.id),width<600?'active-chat':'sidebar');
+      assert.equal(await dock.locator('strong').textContent(),'Runtime music');
+      assert.equal(await p.locator('.music-sidebar-player,.music-chat-player').count(),0);
+      if(process.env.EXSTRA_MUSIC_CAPTURE==='1')await p.screenshot({path:path.join(root,'outputs/music-dock-v230-app-'+width+'.png')});
       await p.evaluate(()=>telechatMusicV96.stop());
+      await dock.waitFor({state:'hidden'});
       await p.evaluate(()=>openPanel('settings-panel'));
       await p.waitForSelector('#settings-home-v160');
       await p.locator('[data-settings-section="appearance"]').click();

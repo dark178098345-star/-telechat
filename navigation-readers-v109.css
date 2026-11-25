@@ -25,7 +25,6 @@
   html body #sidebar>.sidebar-top{padding:16px 12px 12px}
   html body #sidebar>.contacts-list{min-height:0;padding:5px}
   html body #sidebar .contact{padding-left:8px;padding-right:8px;gap:9px}
-  html body #sidebar>.music-sidebar-player{flex-shrink:0;margin:6px;width:auto;min-width:0}
   html body #sidebar .section-rail-v109 button:focus-visible{outline:2px solid var(--accent3);outline-offset:-2px}
 }
 @media(prefers-reduced-motion:reduce){.section-rail-v109 button{transition:none!important}}

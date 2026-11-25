@@ -1,208 +1,110 @@
 'use strict';
-const fs = require('node:fs'),
-  path = require('node:path'),
-  assert = require('node:assert/strict'),
-  { chromium } = require('playwright');
-const root = path.resolve(__dirname, '..'),
-  read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
-const png = Buffer.from(
-  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a4RcAAAAASUVORK5CYII=',
-  'base64',
-);
-function wav() {
-  const b = Buffer.alloc(44 + 80000);
-  b.write('RIFF');
-  b.writeUInt32LE(b.length - 8, 4);
-  b.write('WAVEfmt ', 8);
-  b.writeUInt32LE(16, 16);
-  b.writeUInt16LE(1, 20);
-  b.writeUInt16LE(1, 22);
-  b.writeUInt32LE(8000, 24);
-  b.writeUInt32LE(16000, 28);
-  b.writeUInt16LE(2, 32);
-  b.writeUInt16LE(16, 34);
-  b.write('data', 36);
-  b.writeUInt32LE(b.length - 44, 40);
-  return b;
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict'),{chromium}=require('playwright');
+const root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f),'utf8');
+const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a4RcAAAAASUVORK5CYII=','base64');
+function wav(){
+ const size=8000*2*8,b=Buffer.alloc(44+size);
+ b.write('RIFF');b.writeUInt32LE(36+size,4);b.write('WAVEfmt ',8);
+ b.writeUInt32LE(16,16);b.writeUInt16LE(1,20);b.writeUInt16LE(1,22);b.writeUInt32LE(8000,24);
+ b.writeUInt32LE(16000,28);b.writeUInt16LE(2,32);b.writeUInt16LE(16,34);b.write('data',36);b.writeUInt32LE(size,40);return b;
 }
-async function fixture(browser, width) {
-  const p = await browser.newPage({ viewport: { width, height: 860 } }),
-    errors = [],
-    requests = [];
-  p.on('pageerror', (e) => errors.push(e.message));
-  p.on('request', (r) => requests.push(r.url()));
-  await p.route('https://music-start.test/**', (r) =>
-    r.fulfill({
-      contentType: 'text/html',
-      body: '<div id="auth-screen"></div><div id="chat-screen" class="active"></div><button id="under" style="position:fixed;top:30px;left:50%;width:50px;height:35px">Under</button><nav id="settings-home-v160"></nav><textarea id="msg-input"></textarea><button id="record-btn"></button><div id="voice-recording"></div><div class="sidebar-top"></div><div class="sidebar-footer"></div><div class="chat-main"></div>',
-    }),
-  );
-  await p.route('https://art.test/**', (r) => r.fulfill({ contentType: 'image/png', body: png }));
-  await p.route('https://audio.test/**', (r) =>
-    r.fulfill({ contentType: 'audio/wav', body: wav() }),
-  );
-  await p.goto('https://music-start.test/');
-  await p.evaluate(() => {
-    window.me = { nick: 'alice' };
-    window.clicks = 0;
-    document.getElementById('under').onclick = () => clicks++;
-    window.emitMusic = (patch = {}) => {
-      const d = {
-        track: {
-          id: 'one',
-          owner: me.nick,
-          title: 'nyan pop',
-          kind: 'file',
-          fileName: 'nyan.mp3',
-          cover_url: 'https://art.test/cover.png',
-        },
-        paused: false,
-        loading: false,
-        time: 2,
-        duration: 120,
-        ...patch,
-      };
-      dispatchEvent(new CustomEvent('telechat-music-progress-v117', { detail: d }));
-    };
-  });
-  await p.clock.install();
-  await p.addStyleTag({ content: read('music-start-v216.css') });
-  await p.addScriptTag({ content: read('music-start-v216.js') });
-  return { p, errors, requests };
+async function fixture(browser,width){
+ const p=await browser.newPage({viewport:{width,height:860},hasTouch:width<600,isMobile:width<600}),errors=[],requests=[];
+ p.on('pageerror',error=>errors.push(error.message));p.on('request',req=>requests.push(req.url()));
+ await p.route('https://music-start.test/**',r=>r.fulfill({contentType:'text/html',body:
+  '<meta name="viewport" content="width=device-width,initial-scale=1"><style>body{margin:0;background:#13161d;color:#ddd}#chat-screen{display:flex;width:100vw;height:97vh;gap:10px}#sidebar{display:flex;flex-direction:column;width:310px;background:#1c1e25}.chat-main{flex:1}#active-chat{display:flex;flex-direction:column;height:100%}.chat-header{padding:24px}#messages,.fixture-chats{flex:1;min-height:0}.sidebar-footer{min-height:28px}body.telechat-phone-v159 #sidebar{width:100%}body.telechat-phone-v159 #sidebar.hidden,body.telechat-phone-v159 #sidebar:not(.hidden)+.chat-main{display:none}</style>'+
+  '<div id="auth-screen"></div><div id="chat-screen" class="active"><div id="sidebar"><div class="sidebar-top"></div><div class="fixture-chats"></div><nav class="sidebar-footer"></nav></div>'+
+  '<div class="chat-main"><div id="active-chat"><header class="chat-header">Чат</header><div id="messages"></div><div id="input-area"><textarea id="msg-input"></textarea></div></div></div></div>'+
+  '<nav id="settings-home-v160"></nav><button id="record-btn"></button><div id="voice-recording"></div>'}));
+ await p.route('https://art.test/**',r=>r.fulfill({contentType:'image/png',body:png}));
+ await p.route('https://audio.test/**',r=>r.fulfill({contentType:'audio/wav',body:wav()}));
+ await p.goto('https://music-start.test/');
+ await p.evaluate(phone=>{
+  window.me={nick:'alice'};window.calls=[];
+  document.body.classList.toggle('telechat-phone-v159',phone);document.body.dataset.phonePage='chats';
+  window.emit=(patch={})=>dispatchEvent(new CustomEvent('telechat-music-progress-v117',{detail:{
+   track:{id:'one',owner:me.nick,title:'Горы в ночи — длинное название трека',artist:'spacewalk',cover_url:'https://art.test/cover.png'},
+   paused:false,loading:false,time:2,duration:120,canStep:true,...patch
+  }}));
+  window.telechatMusicV96={toggle:()=>calls.push('toggle'),stop:()=>{calls.push('stop');emit({track:null,paused:true});},
+   step:d=>calls.push(d),seek:t=>calls.push(t),retry:()=>calls.push('retry')};
+  window.telechatMusicHubV117={open:()=>{calls.push('open');document.body.classList.add('music-hub-open-v117');}};
+ },width<600);
+ await p.addStyleTag({content:read('music-start-v216.css')});
+ await p.addScriptTag({content:read('music-start-v216.js')});
+ return {p,errors,requests};
 }
-(async () => {
-  const browser = await chromium.launch({
-    channel: 'msedge',
-    headless: true,
-    args: ['--mute-audio'],
-  });
-  try {
-    for (const width of [320, 390, 1440]) {
-      const { p, errors, requests } = await fixture(browser, width);
-      assert.equal(await p.locator('#music-start-v216').count(), 0, 'No idle DOM/image work');
-      await p.evaluate(() => emitMusic({ loading: true }));
-      assert.equal(await p.locator('#music-start-v216').count(), 0, 'Wait for actual playback');
-      await p.evaluate(() => emitMusic());
-      await p.waitForSelector('#music-start-v216.is-visible');
-      assert.equal(await p.locator('#music-start-v216 strong').textContent(), 'nyan pop');
-      assert.equal(await p.locator('.music-start-copy-v216>span').textContent(), 'nyan.mp3');
-      assert.equal(await p.locator('#music-start-v216 time').textContent(), '0:02');
-      await p.locator('#under').click();
-      assert.equal(await p.evaluate(() => clicks), 1, 'Card is click-through');
-      await p.waitForFunction(() => document.querySelector('#music-start-v216 img').complete);
-      await p.clock.runFor(350);
-      await p.screenshot({ path: path.join(root, 'outputs/music-start-v216-' + width + '.png') });
-      const b = await p.locator('#music-start-v216').boundingBox();
-      assert(b.x >= 0 && b.x + b.width <= width && b.height <= 90);
-      assert(await p.locator('body').evaluate((n) => n.scrollWidth <= innerWidth));
-      await p.evaluate(() => {
-        window.artNode = document.querySelector('#music-start-v216 img');
-        window.cardNode = document.getElementById('music-start-v216');
-        for (let i = 0; i < 8; i++) emitMusic({ time: 3 + i / 10 });
-      });
-      assert(
-        await p.evaluate(
-          () =>
-            artNode === document.querySelector('#music-start-v216 img') &&
-            cardNode === document.getElementById('music-start-v216'),
-        ),
-      );
-      assert.equal(requests.filter((u) => new URL(u).hostname === 'art.test').length, 1);
-      await p.clock.fastForward(4600);
-      await p.clock.runFor(300);
-      assert(
-        await p.locator('#music-start-v216').evaluate((n) => n.hidden),
-        'Progress does not prolong the popup',
-      );
-      await p.evaluate(() => emitMusic({ time: 10 }));
-      assert(
-        await p.locator('#music-start-v216').evaluate((n) => n.hidden),
-        'No periodic reappearance',
-      );
-      await p.evaluate(() => {
-        emitMusic({ paused: true });
-        emitMusic({ time: 10 });
-      });
-      await p.clock.runFor(40);
-      assert(await p.locator('#music-start-v216').evaluate((n) => !n.hidden));
-      await p.evaluate(() =>
-        emitMusic({
-          track: {
-            id: 'two',
-            owner: 'alice',
-            title: '<img src=x onerror=alert(1)>',
-            artist: 'Artist',
-            url: 'https://audio.test/2.wav',
-            cover_url: 'javascript:alert(1)',
-          },
-        }),
-      );
-      await p.clock.runFor(40);
-      assert.equal(await p.locator('#music-start-v216 strong img').count(), 0);
-      assert.equal(
-        await p.locator('#music-start-v216 strong').textContent(),
-        '<img src=x onerror=alert(1)>',
-      );
-      assert.equal(await p.locator('#music-start-v216 img').getAttribute('src'), null);
-      await p.evaluate(() => {
-        me = { nick: 'bob' };
-        dispatchEvent(new Event('telechat-account-ready-v175'));
-        emitMusic({ track: { id: 'old', owner: 'alice', title: 'Old private title' } });
-      });
-      assert(await p.locator('#music-start-v216').evaluate((n) => n.hidden));
-      assert.equal(await p.locator('#music-start-v216 strong').textContent(), '');
-      await p.evaluate(() => {
-        Object.defineProperty(document, 'hidden', { configurable: true, value: true });
-        emitMusic({
-          track: {
-            id: 'hidden',
-            owner: 'bob',
-            title: 'Hidden',
-            cover_url: 'https://art.test/hidden.png',
-          },
-        });
-      });
-      assert(!requests.some((u) => u.includes('hidden.png')));
-      assert(await p.locator('#music-start-v216').evaluate((n) => n.hidden));
-      await p.evaluate(() => {
-        Object.defineProperty(document, 'hidden', { configurable: true, value: false });
-        dispatchEvent(new Event('visibilitychange'));
-        emitMusic({ track: { id: 'hidden', owner: 'bob', title: 'Hidden' } });
-      });
-      assert(
-        await p.locator('#music-start-v216').evaluate((n) => n.hidden),
-        'No delayed notification on returning',
-      );
-      assert.deepEqual(errors, []);
-      await p.close();
-    }
-    const real = await fixture(browser, 390);
-    await real.p.addScriptTag({ content: read('music-library-v96.js') });
-    await real.p.evaluate(
-      async (bytes) => {
-        const result = await telechatMusicV96.importFilesReport([
-          new File([new Uint8Array(bytes)], 'nyan.mp3', { type: 'audio/wav' }),
-        ]);
-        window.added = result.added[0];
-      },
-      [...wav()],
-    );
-    assert.equal(await real.p.evaluate(() => added.fileName), 'nyan.mp3');
-    await real.p.evaluate(() => telechatMusicV96.playTrack(added));
-    await real.p.waitForFunction(
-      () =>
-        !telechatMusicV96.getState().paused &&
-        !telechatMusicV96.getState().loading &&
-        telechatMusicV96.getState().time > 0,
-    );
-    assert(await real.p.locator('#music-start-v216').evaluate((n) => !n.hidden));
-    assert.equal(await real.p.locator('.music-start-copy-v216>span').textContent(), 'nyan.mp3');
-    await real.p.evaluate(() => telechatMusicV96.pause());
-    await real.p.waitForTimeout(300);
-    assert(await real.p.locator('#music-start-v216').evaluate((n) => n.hidden));
-    assert.deepEqual(real.errors, []);
-    await real.p.close();
-    const restart = await fixture(browser, 390);
+(async()=>{
+ const browser=await chromium.launch({channel:'msedge',headless:true,args:['--mute-audio']});
+ try{
+  for(const width of [320,390,1440]){
+   const {p,errors,requests}=await fixture(browser,width),card=p.locator('#music-dock-v230');
+   const b=action=>card.locator('[data-dock-music='+action+']');
+   assert.equal(await card.count(),0);
+   await p.evaluate(()=>emit({loading:true}));
+   assert.equal(await card.count(),0,'Preparation does not create the card');
+   await p.evaluate(()=>emit());await card.waitFor({state:'visible'});
+   assert.equal(await card.locator('[data-dock-elapsed]').textContent(),'0:02');
+   assert.equal(await card.locator('[data-dock-remaining]').textContent(),'−1:58');
+   assert.equal(await card.locator('small').textContent(),'spacewalk');
+   await p.waitForFunction(()=>document.querySelector('#music-dock-v230 img').naturalWidth===1);
+   assert.equal(await card.evaluate(n=>n.parentElement.id),'sidebar');
+   const box=await card.boundingBox();
+   assert(box.x>=0&&box.x+box.width<=width+1&&box.height>=115&&box.height<=185);
+   await card.screenshot({path:path.join(root,'outputs/music-dock-v230-'+width+'.png'),animations:'disabled'});
+   await p.evaluate(()=>{window.sameCard=document.getElementById('music-dock-v230');emit({time:15});});
+   assert.equal(await card.locator('[data-dock-elapsed]').textContent(),'0:15');
+   assert.equal(requests.filter(url=>url==='https://art.test/cover.png').length,1);
+   await b('compact').click();assert(await card.locator('.md-timeline-v230').isHidden());
+   assert(await b('toggle').isVisible());await b('toggle').click();await b('compact').click();
+   await b('previous').click();await b('next').click();
+   await card.locator('input[type=range]').evaluate(n=>{n.value=24;n.dispatchEvent(new Event('input',{bubbles:true}));});
+   assert.equal(await card.locator('[data-dock-elapsed]').textContent(),'0:24');
+   assert.deepEqual(await p.evaluate(()=>calls),['toggle',-1,1],'Scrubbing does not repeatedly seek');
+   await card.locator('input[type=range]').dispatchEvent('change');
+   assert.deepEqual(await p.evaluate(()=>calls),['toggle',-1,1,24]);
+   await p.evaluate(()=>emit({paused:true,canStep:false}));assert(await card.isVisible(),'Paused player remains reachable');
+   assert.equal(await b('toggle').getAttribute('data-state'),'play');assert(await b('next').isDisabled());
+   await b('library').click();await card.waitFor({state:'hidden'});
+   await p.evaluate(()=>document.body.classList.remove('music-hub-open-v117'));await card.waitFor({state:'visible'});
+   if(width<600){
+    await p.evaluate(()=>document.getElementById('sidebar').classList.add('hidden'));
+    await p.waitForFunction(()=>sameCard.parentElement.id==='active-chat');
+    assert(await card.isVisible());assert(await card.evaluate(n=>n.nextElementSibling?.id==='messages'));
+    await p.evaluate(()=>document.body.classList.add('telechat-mobile-keyboard-v100'));
+    await card.waitFor({state:'hidden'});
+    await p.evaluate(()=>document.body.classList.remove('telechat-mobile-keyboard-v100'));
+    await card.waitFor({state:'visible'});assert(await p.evaluate(()=>sameCard===document.getElementById('music-dock-v230')));
+   }
+   await p.emulateMedia({reducedMotion:'reduce'});
+   assert.equal(await card.locator('.md-wave-v230 i').first().evaluate(n=>getComputedStyle(n).animationName),'none');
+   await p.evaluate(()=>emit({track:{id:'bad-cover',owner:me.nick,title:'<img onerror="window.bad=1">',cover_url:'javascript:alert(1)'},duration:0}));
+   assert.match(await card.locator('strong').textContent(),/<img onerror/);
+   assert.equal(await card.locator('strong img').count(),0);assert.equal(await card.locator('img').getAttribute('src'),null);
+   assert(await card.locator('input').isDisabled());
+   await p.evaluate(()=>emit({paused:true,error:{message:'test'}}));await b('toggle').click();
+   assert.equal(await p.evaluate(()=>calls.at(-1)),'retry');
+   await b('stop').click();await card.waitFor({state:'hidden'});
+   await p.evaluate(()=>{emit();me={nick:'bob'};dispatchEvent(new Event('telechat-account-ready-v175'));emit({track:{id:'old',owner:'alice',title:'Прежний аккаунт'}});});
+   assert(await card.isHidden());assert.equal(await card.locator('strong').textContent(),'');
+   assert.equal(await p.locator('.music-sidebar-player,.music-chat-player,#music-start-v216').count(),0);
+   assert.deepEqual(errors,[]);await p.close();
+  }
+  const real=await fixture(browser,390);
+  await real.p.addScriptTag({content:read('music-library-v96.js')});
+  await real.p.evaluate(async bytes=>{
+   const a=await telechatMusicV96.importFilesReport([new File([new Uint8Array(bytes)],'Свой трек.wav',{type:'audio/wav'})]);
+   await telechatMusicV96.playTrack(a.added[0]);
+  },[...wav()]);
+  await real.p.waitForFunction(()=>telechatMusicV96.getState().time>0&&!telechatMusicV96.getState().paused);
+  const live=real.p.locator('#music-dock-v230');
+  assert.equal(await live.locator('small').textContent(),'Свой трек.wav');
+  await live.locator('[data-dock-music=toggle]').click();
+  assert(await real.p.evaluate(()=>telechatMusicV96.getState().paused));
+  assert(await live.isVisible());await live.locator('[data-dock-music=stop]').click();
+  assert.equal(await real.p.evaluate(()=>telechatMusicV96.getState().track),null);
+  assert.deepEqual(real.errors,[]);await real.p.close();
+    const restart = await fixture(browser, 1440);
     await restart.p.evaluate(() => {
       window.restartCalls = 0;
       window.installs = 0;
@@ -224,6 +126,7 @@ async function fixture(browser, width) {
     await restart.p.locator('#app-restart-confirm-v216').click();
     assert.equal(await restart.p.evaluate(() => restartCalls), 0);
     await restart.p.locator('#app-restart-cancel-v216').click();
+    await restart.p.locator('#app-restart-v216').waitFor({state:'hidden'});
     await restart.p.locator('#msg-input').fill('');
     await restart.p.evaluate(() => (telechatDeliveryV72.diagnostics = async () => ({ queued: 1 })));
     await restart.p.locator('#app-restart-open-v216').click();
@@ -255,7 +158,7 @@ async function fixture(browser, width) {
     assert.deepEqual(restart.errors, []);
     await restart.p.close();
     console.log(
-      'PASS music start card: no idle work, actual local audio/import filename, one popup per start/resume, real progress, stable art, click-through, timer/races/account/visibility cleanup, unsafe text/art guards, 320/390/1440. Restart is explicit, no installer, draft/outbox/cancel guards.',
+      'PASS V230 music dock and V216 restart: real audio, safe controls, no duplicate player, 320/390/1440, keyboard fit, and explicit restart without an installer.',
     );
   } finally {
     await browser.close();
