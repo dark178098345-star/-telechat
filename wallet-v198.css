@@ -1,8 +1,45 @@
-/* Full-color static art; backgrounds stay quiet so each object remains legible. */
-.ex-wallet-dialog-v197 button{transition:border-color 140ms ease}
-.ex-wallet-dialog-v197 .ex-gift-art-v197{width:128px;max-width:100%;height:auto;aspect-ratio:1;border:0;border-radius:0;background:none;margin:0 0 10px;contain:layout paint}
+/* Quiet wallet surfaces, with saturated light around the gift artwork only. */
+.ex-wallet-dialog-v197 .ex-gift-art-v197{width:128px;max-width:100%;height:auto;aspect-ratio:1;border:0;border-radius:0;background:none;margin:0;contain:layout paint}
 .ex-wallet-dialog-v197 .ex-gift-art-v197>.ex-gift-svg-v198{display:block;width:100%;height:100%;stroke-width:1;overflow:visible}
-.ex-wallet-dialog-v197 .ex-gift-item-v197{border:1px solid var(--ew-line);border-radius:15px;background:linear-gradient(150deg,#b2b8cf08,transparent)!important;padding:10px 10px 17px!important;gap:0}
-.ex-wallet-dialog-v197 .ex-gift-item-v197:disabled{opacity:1}.ex-gift-item-v197:disabled strong,.ex-gift-item-v197:disabled small{opacity:.6}.ex-wallet-dialog-v197 .ex-gift-item-v197 strong{font-size:12px;line-height:1.5;max-width:100%}.ex-wallet-dialog-v197 .ex-gift-item-v197 small{font-size:10px}.ex-wallet-gifts-v197{align-items:stretch}
+.ex-wallet-dialog-v197 .ex-gift-spotlight-v233{position:relative;display:flex;align-items:center;isolation:isolate;min-height:154px;overflow:hidden;padding:22px;border-radius:21px;color:#f9f4ff;background:radial-gradient(ellipse at 100% 120%,#008a977c,transparent 62%),radial-gradient(ellipse at 87% 0%,#d28367a8,transparent 58%),linear-gradient(125deg,#2b1845,#47225c 55%,#294167)}
+.ex-gift-spotlight-v233[data-live=true]{background:radial-gradient(ellipse at 100% 90%,#1fb0b788,transparent 60%),radial-gradient(ellipse at 80% 0%,#d4898fa2,transparent 58%),linear-gradient(125deg,#2b174d,#512762 56%,#36385d)}
+.ex-gift-spotlight-v233::before{content:'';position:absolute;z-index:-1;inset:0;background:radial-gradient(circle at 65% 26%,#ffe4ba80 0 1.5px,transparent 2.5px),radial-gradient(circle at 95% 40%,#f8e5ff91 0 1px,transparent 2px),radial-gradient(circle at 66% 72%,#e9f5ff91 0 1px,transparent 2px),radial-gradient(circle at 88% 15%,#fcf0ca9f 0 2px,transparent 3px)}
+.ex-gift-spot-copy-v233{position:relative;z-index:1;width:min(56%,290px);min-width:0}
+.ex-gift-spot-copy-v233>small,.ex-gift-collection-head-v233>small{font-size:9px;font-weight:750;letter-spacing:.17em;color:#ffddba}
+.ex-wallet-dialog-v197 .ex-gift-spot-copy-v233 h3{color:#fff;font-size:26px;font-weight:700;letter-spacing:-.035em;line-height:1.08;margin:8px 0}
+.ex-gift-spot-copy-v233>p{margin:0;color:#f3e8fa;font-size:11px;line-height:1.55;text-wrap:pretty}
+.ex-gift-spot-art-v233{position:absolute;inset:0 0 0 auto;width:48%;pointer-events:none}
+.ex-wallet-dialog-v197 .ex-gift-spot-art-v233 .ex-gift-art-v197{position:absolute;width:47%;top:7%;left:4%;transform:rotate(-14deg)}
+.ex-wallet-dialog-v197 .ex-gift-spot-art-v233 .ex-gift-art-v197:nth-child(2){top:auto;bottom:4%;left:30%;transform:rotate(10deg)}
+.ex-wallet-dialog-v197 .ex-gift-spot-art-v233 .ex-gift-art-v197:nth-child(3){top:4%;left:auto;right:0;width:39%;transform:rotate(16deg)}
+.ex-wallet-dialog-v197 .ex-gift-spot-art-v233 .ex-gift-art-v197:only-child{width:74%;top:50%;left:14%;transform:translateY(-50%) rotate(10deg)}
+.ex-gift-fields-v233{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;margin:14px 0;min-width:0}
+.ex-gift-fields-v233 .ex-wallet-label-v197{margin:0;min-width:0}
+.ex-gift-collection-head-v233{padding:17px 19px;border-radius:16px;background:linear-gradient(115deg,#45244f,#253e60);color:#f8efff}
+.ex-wallet-dialog-v197 .ex-gift-collection-head-v233 h3{margin:5px 0 0;color:inherit}
+.ex-wallet-gifts-v197{align-items:stretch;gap:10px;margin-top:16px}
+.ex-gift-group-title-v233{grid-column:1/-1;font-size:13px;margin:5px 0 0;letter-spacing:-.01em}
+.ex-gift-group-title-v233:not(:first-child){margin-top:15px}
+.ex-wallet-dialog-v197 .ex-gift-item-v197{--gift-ink:#bf9aff;--gift-shade:#513772;position:relative;min-height:153px;border:0;border-radius:16px;background:radial-gradient(ellipse at 50% 25%,color-mix(in srgb,var(--gift-ink) 21%,transparent),transparent 68%),linear-gradient(155deg,color-mix(in srgb,var(--gift-shade) 29%,var(--ew-block)),var(--ew-bg))!important;padding:12px 8px 14px!important;gap:2px;transition:background-color .2s,transform .2s}
+.ex-wallet-dialog-v197 .ex-gift-item-v197:not(:disabled):hover{transform:translateY(-2px)}
+.ex-wallet-dialog-v197 .ex-gift-item-v197[data-gift-tone=blue]{--gift-ink:#91c5ff;--gift-shade:#315e91}
+.ex-wallet-dialog-v197 .ex-gift-item-v197[data-gift-tone=cyan]{--gift-ink:#7feefa;--gift-shade:#226d76}
+.ex-wallet-dialog-v197 .ex-gift-item-v197[data-gift-tone=rose]{--gift-ink:#ffc1d7;--gift-shade:#97365c}
+.ex-wallet-dialog-v197 .ex-gift-item-v197[data-gift-tone=amber]{--gift-ink:#ffdd95;--gift-shade:#87601f}
+.ex-wallet-dialog-v197 .ex-gift-item-v197[data-gift-tone=red]{--gift-ink:#ffa295;--gift-shade:#903b45}
+.ex-wallet-dialog-v197 .ex-gift-item-v197[data-gift-tone=green]{--gift-ink:#98f2bf;--gift-shade:#2b734f}
+.ex-wallet-dialog-v197 .ex-gift-item-v197[data-gift-tone=orange]{--gift-ink:#ffc392;--gift-shade:#9b503b}
+.ex-wallet-dialog-v197 .ex-gift-item-v197[data-gift-tone=indigo]{--gift-ink:#aebeff;--gift-shade:#3b4790}
+.ex-wallet-dialog-v197 .ex-gift-item-v197[data-gift-tone=black]{--gift-ink:#bad1e8;--gift-shade:#344359}
+.ex-gift-flag-v233{position:absolute;top:8px;left:8px;max-width:calc(100% - 16px);padding:2px 6px;border-radius:20px;background:color-mix(in srgb,#251224 73%,var(--gift-ink));color:#fff2e9;font-size:9px;line-height:1.35}
+.ex-wallet-dialog-v197 .ex-gift-item-v197:disabled{opacity:.65}
+.ex-wallet-dialog-v197 .ex-gift-item-v197 strong{font-size:12px;line-height:1.4;max-width:100%}
+.ex-wallet-dialog-v197 .ex-gift-item-v197 small{font-size:10px;margin-top:3px}
+.ex-wallet-dialog-v197 .ex-gift-switch-v197{margin-bottom:14px}
+.ex-wallet-dialog-v197 .ex-gift-switch-v197 button[aria-pressed=true]{color:var(--ew-text);border-color:transparent;background:color-mix(in srgb,#ae81ee 20%,var(--ew-block))}
+body.theme-light .ex-wallet-dialog-v197 .ex-gift-item-v197{background:radial-gradient(ellipse at 45% 25%,color-mix(in srgb,var(--gift-ink) 56%,transparent),transparent 74%),linear-gradient(155deg,color-mix(in srgb,var(--gift-shade) 9%,var(--ew-block)),var(--ew-bg))!important}
+@media(max-width:400px){.ex-wallet-dialog-v197 .ex-gift-spotlight-v233{padding:14px;min-height:132px}.ex-wallet-dialog-v197 .ex-gift-spot-copy-v233 h3{font-size:22px}.ex-gift-fields-v233{grid-template-columns:1fr;gap:9px}.ex-wallet-dialog-v197 .ex-gift-item-v197{min-height:135px}}
+@media(prefers-reduced-motion:reduce){.ex-wallet-dialog-v197 .ex-gift-item-v197{transition:none}.ex-wallet-dialog-v197 .ex-gift-item-v197:not(:disabled):hover{transform:none}}
+body[data-ui-motion-v184=off] .ex-wallet-dialog-v197 .ex-gift-item-v197{transition:none}
 .ex-recipient-picker-v198{margin:-5px 0 19px;min-width:0}.ex-recipient-preview-v198{min-height:48px;display:flex;align-items:center;gap:10px;padding:4px 1px;color:var(--ew-text)}.ex-recipient-preview-v198>small{font-size:11px;color:var(--ew-muted);line-height:1.6}.ex-recipient-avatar-v198{display:grid;place-items:center;width:32px;height:32px;min-width:32px;border-radius:50%;overflow:hidden;background:linear-gradient(145deg,#7b8bb93b,#a888be30);color:var(--ew-text);font:600 13px system-ui}.ex-recipient-avatar-v198 img{display:block;width:100%;height:100%;object-fit:cover;border-radius:50%}.ex-recipient-copy-v198{display:block;min-width:0;text-align:left}.ex-recipient-copy-v198 strong,.ex-recipient-copy-v198 small{display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.ex-recipient-copy-v198 strong{font-size:11px;font-weight:550;color:var(--ew-text);line-height:1.4}.ex-recipient-copy-v198 small{font-size:10px;color:var(--ew-muted);line-height:1.5;margin-top:2px}.ex-recipient-list-v198{display:flex;gap:7px;overflow-x:auto;max-width:100%;padding:7px 1px 5px;scrollbar-width:thin}.ex-wallet-dialog-v197 .ex-recipient-chip-v198{display:flex;align-items:center;gap:8px;flex:0 0 auto;max-width:200px;min-height:48px;padding:7px 11px 7px 8px;border-radius:12px;background:var(--ew-block)}.ex-wallet-dialog-v197 .ex-recipient-chip-v198[aria-pressed=true]{border-color:var(--ew-muted);background:color-mix(in srgb,var(--ew-text) 7%,var(--ew-block))}.ex-recipient-chip-v198 .ex-recipient-avatar-v198{width:28px;height:28px;min-width:28px;font-size:12px}.ex-recipient-preview-v198 .ex-recipient-copy-v198 strong{font-size:12px}
 @media(max-width:560px){.ex-wallet-dialog-v197 .ex-gift-art-v197{width:120px}.ex-wallet-dialog-v197 .ex-gift-item-v197{padding:7px 7px 14px!important}.ex-wallet-gifts-v197{gap:10px}.ex-wallet-dialog-v197 .ex-gift-item-v197 strong{font-size:11px}.ex-recipient-copy-v198 strong{max-width:125px}}

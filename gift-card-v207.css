@@ -1,24 +1,39 @@
-/* Static vector showcase. Only the brief opening animates; no backdrop blur. */
-.ex-wallet-dialog-v197.ex-gift-card-v207{--gift-rgb:164,140,242;width:min(420px,calc(100vw - 24px));max-width:420px;border-radius:28px;overflow-x:hidden;scrollbar-width:thin}
+/* 3D gift detail: material-led lighting and a finite introduction, without backdrop blur. */
+.ex-wallet-dialog-v197.ex-gift-card-v207{--gift-rgb:164,140,242;--gift-glint:#fff3fc;width:min(432px,calc(100vw - 24px));max-width:432px;border:0;border-radius:28px;overflow-x:hidden;scrollbar-width:thin}
 .ex-gift-card-v207[data-theme=blue],.ex-gift-card-v207[data-theme=indigo]{--gift-rgb:120,163,246}
-.ex-gift-card-v207[data-theme=cyan]{--gift-rgb:98,203,213}.ex-gift-card-v207[data-theme=rose],.ex-gift-card-v207[data-theme=red]{--gift-rgb:239,137,173}
-.ex-gift-card-v207[data-theme=amber],.ex-gift-card-v207[data-theme=orange]{--gift-rgb:235,183,106}.ex-gift-card-v207[data-theme=green]{--gift-rgb:109,195,151}.ex-gift-card-v207[data-theme=black]{--gift-rgb:152,163,188}
+.ex-gift-card-v207[data-theme=cyan]{--gift-rgb:98,203,213;--gift-glint:#aafff2}.ex-gift-card-v207[data-theme=rose],.ex-gift-card-v207[data-theme=red]{--gift-rgb:239,137,173;--gift-glint:#ffb8d7}
+.ex-gift-card-v207[data-theme=amber],.ex-gift-card-v207[data-theme=orange]{--gift-rgb:235,183,106;--gift-glint:#ffdf92}.ex-gift-card-v207[data-theme=green]{--gift-rgb:109,195,151;--gift-glint:#b9fff0}.ex-gift-card-v207[data-theme=black]{--gift-rgb:152,163,188}
 .ex-gift-card-v207[open]{animation:ex-gift-reveal-v207 180ms cubic-bezier(.2,.7,.2,1) both}
-.ex-gift-hero-v207{position:relative;padding:18px 22px 24px;background:radial-gradient(ellipse at 50% 43%,rgba(var(--gift-rgb),.19),transparent 68%),linear-gradient(150deg,rgba(var(--gift-rgb),.08),transparent);border-bottom:1px solid var(--ew-line)}
+.ex-gift-hero-v207{position:relative;padding:18px 22px 24px;background:radial-gradient(ellipse at 21% 11%,rgba(var(--gift-rgb),.27),transparent 61%),radial-gradient(ellipse at 86% 47%,color-mix(in srgb,rgb(var(--gift-rgb)) 28%,#6562b9) 0%,transparent 61%),linear-gradient(180deg,rgba(var(--gift-rgb),.08),var(--ew-bg) 98%)}
+.theme-light .ex-gift-hero-v207{background:radial-gradient(ellipse at 15% 18%,rgba(var(--gift-rgb),.29),transparent 64%),radial-gradient(ellipse at 93% 41%,#d8caff,transparent 61%),linear-gradient(var(--ew-bg),var(--ew-bg))}
 .ex-gift-top-v207{display:flex;align-items:center;justify-content:space-between;gap:12px;position:relative;z-index:1}
 .ex-gift-top-v207>span{font-size:9px;letter-spacing:.18em;font-weight:650;color:var(--ew-muted)}
 .ex-wallet-dialog-v197 .ex-gift-top-v207>button{display:grid;place-items:center;width:36px;min-height:36px;padding:9px;border-radius:50%;background:var(--ew-block)}
-.ex-gift-stage-v207{position:relative;display:grid;place-items:center;height:238px;isolation:isolate}
-.ex-gift-stage-v207>[data-gift-card-art]{position:relative;display:grid;place-items:center;width:226px;aspect-ratio:1;z-index:1}
+.ex-gift-stage-v207{position:relative;display:grid;place-items:center;height:244px;isolation:isolate}
+.ex-gift-stage-v207>[data-gift-card-art]{position:relative;display:grid;place-items:center;width:238px;aspect-ratio:1;z-index:1;transform-origin:50% 47%}
 .ex-wallet-dialog-v197 .ex-gift-stage-v207 [data-gift-card-art]>svg{width:100%;height:100%;overflow:visible}
-.ex-wallet-dialog-v197 [data-gift-card-turn]{position:absolute;z-index:2;right:0;bottom:9px;display:grid;place-items:center;
- width:42px;min-height:42px;padding:9px;border-radius:50%;background:var(--ew-block);color:var(--ew-text)}
-.ex-wallet-dialog-v197 [data-gift-card-turn][hidden]{display:none}
-.ex-wallet-dialog-v197 [data-gift-card-turn]:focus-visible{outline:2px solid var(--accent3);outline-offset:3px}
-.ex-wallet-dialog-v197 [data-gift-card-turn]>svg{width:20px;height:20px}
-.ex-gift-orbit-v207{position:absolute;width:208px;height:208px;border:1px solid rgba(var(--gift-rgb),.12);border-radius:50%;transform:rotate(-20deg) scaleY(.83)}
-.ex-gift-orbit-v207::before,.ex-gift-orbit-v207::after{content:'';position:absolute;width:5px;height:5px;border-radius:50%;background:rgba(var(--gift-rgb),.5);top:33px;left:23px}
-.ex-gift-orbit-v207::after{top:auto;left:auto;right:23px;bottom:33px;width:3px;height:3px}
+.ex-gift-stage-v207 [data-gift-part-v233]{transform-origin:50% 52%;transform-box:view-box}
+.ex-gift-stage-v207 [data-gift-part-v233^=tentacles]{transform-origin:50% 48%}
+.ex-wallet-dialog-v197 :is([data-gift-card-turn],[data-gift-card-replay]){position:absolute;z-index:3;right:0;bottom:9px;display:grid;place-items:center;
+ width:42px;min-height:42px;padding:9px;border:0;border-radius:50%;background:color-mix(in srgb,var(--ew-bg) 77%,transparent);color:var(--ew-text)}
+.ex-wallet-dialog-v197 [data-gift-card-replay]{right:auto;left:0}
+.ex-wallet-dialog-v197 :is([data-gift-card-turn],[data-gift-card-replay])[hidden]{display:none}
+.ex-wallet-dialog-v197 :is([data-gift-card-turn],[data-gift-card-replay]):focus-visible{outline:2px solid var(--accent3);outline-offset:3px}
+.ex-wallet-dialog-v197 :is([data-gift-card-turn],[data-gift-card-replay])>svg{width:20px;height:20px}
+.ex-gift-orbit-v207{position:absolute;width:240px;height:224px;border-radius:50%;opacity:.52;background:radial-gradient(ellipse,rgba(var(--gift-rgb),.60) 0%,rgba(var(--gift-rgb),.18) 47%,transparent 72%);pointer-events:none}
+.ex-gift-stage-v207 [data-gift-card-fx]{position:absolute;inset:5% 15%;z-index:2;pointer-events:none}
+.ex-gift-stage-v207 [data-gift-card-fx]>i{position:absolute;width:12px;height:12px;opacity:0;--particle:var(--gift-glint);rotate:var(--gift-particle-angle,0deg);background:var(--particle);clip-path:polygon(50% 0,61% 39%,100% 50%,61% 61%,50% 100%,39% 61%,0 50%,39% 39%);transform-origin:center}
+.ex-gift-stage-v207 [data-gift-card-fx]>i:nth-child(3n+2){width:8px;height:8px;--particle:#fff1b8}.ex-gift-stage-v207 [data-gift-card-fx]>i:nth-child(3n){width:5px;height:5px;--particle:#d6bafb}
+.ex-gift-stage-v207:is([data-gift-scene=jelly],[data-gift-scene=lantern],[data-gift-scene=wish]) [data-gift-card-fx]>i{clip-path:none;border-radius:50%;background:radial-gradient(circle at 29% 26%,white 1%,var(--particle) 14%,transparent 32%),radial-gradient(circle at 68% 76%,rgba(var(--gift-rgb),.72),transparent 64%);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--particle) 78%,transparent)}
+.ex-gift-stage-v207[data-gift-scene=bloom] [data-gift-card-fx]>i{clip-path:none;border-radius:3px 80% 3px 80%;width:14px;height:8px;background:linear-gradient(145deg,var(--particle),rgba(var(--gift-rgb),.52))}
+.ex-gift-stage-v207:is([data-gift-scene=rings],[data-gift-scene=time]) [data-gift-card-fx]>i{clip-path:none;width:7px;height:7px;border-radius:50%;background:radial-gradient(circle,white,var(--particle) 39%,transparent 73%)}
+.ex-gift-stage-v207[data-gift-scene=heart] [data-gift-card-fx]>i{clip-path:path('M 6 11 C -3 5 1 -1 6 3.1 C 11 -1 15 5 6 11 Z');width:12px;height:12px;rotate:0deg}
+.ex-gift-stage-v207[data-gift-scene=notes] [data-gift-card-fx]>i{clip-path:none;background:none;color:var(--particle);font-style:normal;font-weight:760;font-size:15px;rotate:-10deg}
+.ex-gift-stage-v207[data-gift-scene=notes] [data-gift-card-fx]>i::before{content:'♪'}.ex-gift-stage-v207[data-gift-scene=notes] [data-gift-card-fx]>i:nth-child(2n)::before{content:'♫'}
+.ex-gift-stage-v207[data-gift-scene=comet] [data-gift-card-fx]>i{width:19px;height:4px;clip-path:none;border-radius:99px;background:linear-gradient(90deg,transparent,var(--particle));rotate:-27deg}
+.ex-gift-stage-v207[data-gift-scene=flutter] [data-gift-card-fx]>i{clip-path:none;border-radius:95% 18% 95% 22%;width:11px;height:8px;background:linear-gradient(140deg,var(--particle),rgba(var(--gift-rgb),.30))}
+.ex-gift-stage-v207[data-gift-scene=moon] [data-gift-card-fx]>i{clip-path:none;border-radius:50%;background:none;box-shadow:inset -3px -1px 0 var(--particle)}
+.theme-light .ex-gift-stage-v207 [data-gift-card-fx]>i{--gift-glint:rgb(var(--gift-rgb))}
 .ex-gift-caption-v207{text-align:center;padding:0 6px}.ex-gift-caption-v207>[data-gift-card-series]{font-size:10px;letter-spacing:.035em;color:var(--ew-muted)}
 .ex-gift-card-v207 .ex-gift-caption-v207 h2{font-size:27px;line-height:1.2;letter-spacing:-.8px;margin:8px 0 7px;overflow-wrap:anywhere}
 .ex-gift-caption-v207 p{font-size:11px;color:var(--ew-muted);margin:0;line-height:1.6}

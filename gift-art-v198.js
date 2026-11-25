@@ -1,11 +1,11 @@
-/* The catalog stores only static previews; the open card can reproject the same solids. */
+/* Lazy static thumbnails and on-demand views of the same sculpted 3D meshes. */
 (()=>{
  'use strict';
  const renderer=window.exstraMeshV229;if(!renderer)return;
  const colors={violet:'#aa76ef',blue:'#53a9f1',cyan:'#59d5de',rose:'#f075b2',amber:'#efb251',red:'#f76b72',
   green:'#68cfab',orange:'#f69a63',indigo:'#8999f5',black:'#697ea7'};
  const gold='#f7c66c',metal='#aebdd9',dark='#334266',cream='#f8eee2',ink='#232641';
- const PI=Math.PI,R=PI/2,P=[0,R],models=new Map(),previews=new Map();
+ const PI=Math.PI,R=PI/2,P=[0,R],models=new Map(),previews=new Map(),geometry=new Map();
  const add=(id,color,build)=>models.set(id,{color:colors[color],build});
  const gem=(m,pos,r,c)=>m.lathe(pos,[[-r,0.015],[-r*.14,r*.65],[r*.12,r*.81],[r*.42,r*.43]],c,6);
  const ball=(m,pos,r,c)=>m.orb(pos,[r,r,r],c);
@@ -15,6 +15,50 @@
  const disk=(m,pos,r,d,c,steps=16,angle=P)=>m.lathe(pos,[[-d/2,r*.93],[-d*.29,r],[d*.29,r],[d/2,r*.93]],c,steps,angle);
  const line=(m,points,r,c)=>points.slice(1).forEach((p,i)=>m.bar(points[i],p,r,c));
  const badge=(m,pos,outline,c,depth=.24)=>m.prism(outline,depth,c,pos);
+ const mix=(a,b,t)=>'#'+a.slice(1).match(/../g).map((part,k)=>{
+  const x=parseInt(part,16),y=parseInt(b.slice(1+2*k,3+2*k),16);return Math.round(x+(y-x)*t).toString(16).padStart(2,'0');
+ }).join('');
+ // Rounded relief with a real back, curved bevels and a raised center. No colored outline.
+ function sculpt(m,pos,outline,c,depth=.24,gloss){
+  const contour=outline.reduce((sum,[x,y],i)=>{const [a,b]=outline[(i+1)%outline.length];return sum+x*b-y*a;},0)<0?[...outline].reverse():outline;
+  const points=contour,rings=[[.52,-.55],[.95,-.31],[1,0],[.91,.29],[.64,.53],[.18,.64]];
+  const vertices=rings.flatMap(([size,z])=>points.map(([x,y])=>[pos[0]+x*size,pos[1]+y*size,pos[2]+z*depth]));
+  const n=points.length;
+  m.poly(vertices,[points.map((_,i)=>n-1-i)],c);
+  for(let j=0;j<rings.length-1;j++){
+   const faces=[];for(let i=0;i<n;i++){const a=j*n+i,b=j*n+(i+1)%n;faces.push([a,b,b+n,a+n]);}
+   m.poly(vertices,faces,gloss?mix(c,gloss,Math.max(0,(j-1)/4)):c);
+  }
+  m.poly(vertices,[points.map((_,i)=>(rings.length-1)*n+i)],gloss?mix(c,gloss,.8):c);
+ }
+ const bead=(m,pos,x,y,z,c)=>m.orb(pos,[x,y,z],c,9,5);
+ const drop=(m,pos,r,c)=>m.orb(pos,[r,r,r],c,6,3);
+ function part(m,name,build){
+  const start=m.faces.length;build();for(let i=start;i<m.faces.length;i++)m.faces[i].part=name;
+ }
+ function slenderTube(m,path,color){
+  const sides=5,vertices=[],faces=[];
+  path.forEach(([x,y,z],j)=>{
+   const width=.063-.040*j/(path.length-1);
+   for(let i=0;i<sides;i++){const a=i*PI*2/sides;vertices.push([x+width*Math.cos(a),y,z+width*Math.sin(a)]);}
+  });
+  for(let j=0;j<path.length-1;j++)for(let i=0;i<sides;i++){const a=j*sides+i,b=j*sides+(i+1)%sides;faces.push([a,b,b+sides,a+sides]);}
+  m.poly(vertices,faces,color);
+ }
+ const bandPlanet=(m,radius)=>{
+  const stripes=['#6945a9','#a46cdf','#e3a0ce','#9555c9','#db84ae','#aa7fe1','#6878ba','#bd8fdf','#eac1dd'];
+  const bands=13,steps=18,vertices=[];
+  for(let j=0;j<=bands;j++)for(let i=0;i<steps;i++){
+   const a=i/steps*2*PI,u=j/bands,v=u*PI+Math.sin(u*PI)*(.072*Math.sin(a*3+j*.21)+.044*Math.cos(a*5-j*.1));
+   const y=-Math.cos(v)*radius,r=Math.max(.002,Math.sin(v)*radius);
+   vertices.push([Math.cos(a)*r,y,Math.sin(a)*r]);
+  }
+  for(let j=0;j<bands;j++){
+   const t=(j+.5)/bands*(stripes.length-1),k=Math.floor(t),band=mix(stripes[k],stripes[k+1]||stripes[k],t-k);
+   const f=Array.from({length:steps},(_,i)=>{const a=j*steps+i,b=j*steps+(i+1)%steps;return [a,a+steps,b+steps,b];});
+   m.poly(vertices,f,band);
+  }
+ };
  const crest=[[-.94,.36],[-.43,.07],[0,.64],[.43,.07],[.94,.36],[.65,-.49],[-.65,-.49]];
  const crescent=(m,pos,r,c)=>{
   const p=Array.from({length:19},(_,i)=>{const a=(.23+i*1.54/18)*PI;return [r*Math.cos(a),r*Math.sin(a)];});
@@ -146,13 +190,85 @@
  add('first_moon','amber',(m,c)=>{m.lathe([0,-.73,0],[[-.24,.65],[-.13,.62],[.15,.47]],c,10);ball(m,[0,.13,0],.72,'#ead399');
   for(const [x,y,z,r] of [[-.27,.13,.67,.16],[.34,.39,.58,.113],[.30,-.22,.54,.092]])
    m.orb([x,y,z],[r,r*.79,.053],'#bc9b6e',8,5);star(m,[.88,.64,.03],.16,'#ffeaa6',4);});
+ add('party_sparkler','amber',(m,c)=>{
+  const angle=[0,0,-.52],origin=[-.23,-.42,0],tip=[.26,.47,.025];
+  m.lathe(origin,[[-.54,.086],[-.51,.139],[-.42,.159],[.13,.148],[.28,.116],[.30,.086]],'#b45180',14,angle);
+  for(const [y,r] of [[-.45,.156],[-.12,.157],[.22,.142]])disk(m,[-.23+y*.496,-.42+y*.868,0],r,.068,gold,10,angle);
+  m.bar([-.09,-.17,0],tip,.047,'#ffe8a0',9);
+  bead(m,tip,.15,.14,.12,'#fff6b8');
+  for(const [a,len,col] of [[.15,.68,'#ffd77c'],[.69,.76,'#ffa86c'],[1.18,.75,'#ffe48b'],[1.68,.60,'#fff6ba'],[2.29,.62,'#fec97a'],[2.81,.58,'#f1a4be'],[3.59,.53,'#ffbe88'],[5.55,.63,'#ffda81']]){
+   const at=d=>[tip[0]+Math.cos(a)*d,tip[1]+Math.sin(a)*d,.04+Math.sin(a*5)*d*.30];
+   m.bar(at(.14),at(len*.72),.018,col,6);drop(m,at(len),.026,'#ffeda0');
+  }
+  star(m,[-.57,.78,.09],.17,'#fff0b9',4,.055);star(m,[.79,-.27,.18],.13,'#f9aace',4,.065);
+ });
+ add('glass_butterfly','rose',(m,c)=>{
+  const upper=[[-.58,-.43],[-.33,.16],[-.09,.47],[.23,.62],[.53,.56],[.64,.25],[.48,-.07],[.17,-.38],[-.21,-.49]];
+  const lower=[[-.42,.32],[-.21,.42],[.13,.31],[.42,-.04],[.24,-.35],[-.02,-.44],[-.34,-.32],[-.46,.01]];
+  for(const s of [-1,1]){
+   const reflect=p=>p.map(([x,y])=>[s*x,y]);
+   part(m,s<0?'wingLeft':'wingRight',()=>{
+    sculpt(m,[s*.52,.39,-.02],reflect(upper),s>0?'#df75bf':'#a76cdf',.32,s>0?'#ffdaf1':'#eddcfc');
+    sculpt(m,[s*.43,-.37,.055],reflect(lower),s>0?'#7d73d8':'#a67bdd',.26,s>0?'#dadbfb':'#f0d5f2');
+    for(const [x,y,z,r] of [[.91,.67,.132,.055],[.69,.80,.132,.032],[.57,-.52,.23,.048]])drop(m,[s*x,y,z],r*.8,'#fff2f9');
+   });
+   line(m,[[0,.43,.20],[s*.13,.64,.25],[s*.27,.77,.22]],.020,'#cacefa');
+   drop(m,[s*.28,.77,.22],.041,'#fff2fc');
+  }
+  m.lathe([0,0,.17],[[-.59,.025],[-.45,.061],[-.25,.075],[.04,.111],[.33,.103],[.47,.064]],'#74649f',10);
+  bead(m,[0,.41,.179],.12,.11,.10,'#aaa0db');
+ });
+ add('polar_lantern','cyan',(m,c)=>{
+  const mint='#83f0e9',steel='#7c9cc1',deep='#355871';
+  m.lathe([0,-.68,0],[[-.25,.43],[-.21,.49],[-.12,.54],[.03,.54],[.10,.47],[.15,.40]],steel,15);
+  disk(m,[0,-.52,0],.42,.06,'#62e6d9',12,[]);
+  m.lathe([0,0,0],[[-.50,.31],[-.38,.39],[-.19,.47],[.10,.48],[.32,.41],[.53,.32]],'#76cfdf',16);
+  // A carved warm-white aurora flame protrudes gently from the icy glass.
+  sculpt(m,[.02,-.045,.435],[[-.21,-.25],[-.26,-.08],[-.17,.08],[-.036,.23],[.012,.38],[.102,.26],[.117,.12],[.206,.05],[.24,-.13],[.14,-.28],[0,-.32]],'#c4fff0',.20);
+  for(const a of [.30,2.39,4.49]){const x=Math.cos(a),z=Math.sin(a);m.bar([x*.41,-.53,z*.41],[x*.34,.52,z*.34],.032,deep,8);}
+  m.lathe([0,.57,0],[[-.10,.41],[0,.45],[.09,.43],[.15,.34],[.23,.25],[.25,.18]],steel,15);
+  disk(m,[0,.68,0],.30,.045,mint,10,[]);
+  m.ring([0,.93,0],.18,.044,steel,P,14);
+  for(const x of [-.77,.71])star(m,[x,x<0?.33:-.12,.06],.13,mint,4,.05);
+ });
+ add('velvet_planet','violet',(m,c)=>{
+  bandPlanet(m,.73);
+  m.ring([0,-.10,0],1.00,.045,'#ead0a6',[.06,.54,-.27],23);
+  m.ring([0,-.10,0],1.13,.030,'#d9a6e6',[.06,.54,-.27],23);
+  drop(m,[-.98,.61,.08],.14,'#f4c9bc');drop(m,[.95,.51,-.09],.086,'#b0e8e2');
+  star(m,[.85,.82,.10],.12,'#ffe7c3',4,.045);
+ });
+ add('wish_bottle','blue',(m,c)=>{
+  const tilt=[0,0,-.25],place=(y,z=0)=>[Math.sin(.25)*y,Math.cos(.25)*y,z];
+  m.lathe([0,0,0],[[-.95,.30],[-.91,.47],[-.82,.58],[-.65,.625],[-.35,.64],[-.07,.56],[.10,.42],[.25,.28],[.44,.25],[.51,.27]],'#588bd5',18,tilt);
+  m.lathe(place(.49),[[-.075,.245],[-.04,.30],[.065,.31],[.11,.28]],'#a2e1f4',14,tilt);
+  m.lathe(place(.68),[[-.12,.19],[-.07,.23],[.10,.22],[.16,.17]],'#c9906b',12,tilt);
+  m.ring(place(.61),.224,.024,'#d7af88',tilt,12);
+  sculpt(m,[.02,-.36,.61],Array.from({length:10},(_,i)=>{const a=i*PI/5+R,r=i%2?.14:.32;return [Math.cos(a)*r,Math.sin(a)*r];}),'#ffe8a0',.12);
+  sculpt(m,[-.28,-.43,.49],[[-.04,-.18],[-.08,-.07],[-.06,.18],[-.01,.24],[.038,.11],[.027,-.11]],'#a5e8ff',.037);
+  for(const [x,y,z,r] of [[.34,-.22,.47,.067],[-.18,-.10,.50,.045],[.24,-.63,.53,.040],[-.25,-.60,.43,.040]])drop(m,[x,y,z],r,'#c4f7f6');
+  star(m,[.79,.41,.17],.18,'#ffd8a1',4,.052);drop(m,[-.69,.38,.02],.054,'#b8f6ed');
+ });
+ add('aurora_jelly','green',(m,c)=>{
+  m.lathe([0,.16,0],[[-.27,.26],[-.235,.58],[-.14,.71],[.01,.77],[.19,.72],[.36,.62],[.50,.48],[.61,.26],[.64,.036]],'#65d5c7',18,[],.82);
+  m.lathe([0,.04,0],[[-.16,.57],[-.10,.71],[-.03,.73],[.02,.75]],'#a2f1e0',16,[],.82);
+  for(let i=0;i<7;i++)part(m,i%2?'tentaclesOdd':'tentaclesEven',()=>{
+   const q=i-3,x=q*.195,z=.29-.035*Math.abs(q),length=.66+.09*(3-Math.abs(q));
+   const path=Array.from({length:7},(_,k)=>{const t=k/6;return [x+Math.sin(t*6+i*.78)*.11*t,-.10-t*length,z+Math.sin(t*4+i)*t*.13];});
+   slenderTube(m,path,['#8cadaf','#a2b4ed','#d9b7ee','#80dabf'][i%4]);
+  });
+  for(const [x,y,z,r] of [[-.84,-.43,.16,.075],[.85,-.54,.07,.06],[.82,.37,.08,.049],[-.74,.56,.11,.047]])drop(m,[x,y,z],r,'#a4e8f3');
+ });
  add('fallback','violet',(m,c)=>{m.box([0,-.22,0],[1.40,1.04,1.07],c);m.box([0,.38,0],[1.54,.25,1.20],metal);
   m.box([0,-.12,.553],[.23,1.14,.07],gold);m.box([0,.52,0],[.22,.07,1.2],gold);for(const s of [-1,1])m.ring([s*.19,.68,0],.23,.067,gold);});
 
- function frame(id,yaw){
-  const model=models.get(id),m=renderer.mesh();model.build(m,model.color);
-  return '<ellipse cx="80" cy="136" rx="42" ry="5.5" fill="#201a34" opacity=".19"/>'+
-   '<g stroke-width=".39" stroke-linejoin="round">'+renderer.draw(m.faces,{yaw,y:76})+'</g>';
+ const orderedParts={glass_butterfly:['wingLeft','wingRight',''],aurora_jelly:['tentaclesEven','tentaclesOdd','']};
+ function frame(id,yaw,detail=false){
+  if(!geometry.has(id)){const model=models.get(id),m=renderer.mesh();model.build(m,model.color);geometry.set(id,m.faces);if(geometry.size>8)geometry.delete(geometry.keys().next().value);}
+  const faces=geometry.get(id),draw=f=>renderer.draw(f,{yaw,y:76});
+  const shape=detail&&orderedParts[id]?orderedParts[id].map(key=>'<g'+(key?' data-gift-part-v233="'+key+'"':'')+'>'+draw(faces.filter(face=>(face.part||'')===key))+'</g>').join(''):draw(faces);
+  return '<ellipse cx="80" cy="137" rx="36" ry="4" fill="#201a34" opacity=".15"/>'+
+   '<g stroke-width=".35" stroke-linejoin="round">'+shape+'</g>';
  }
  const shell=(id,body)=>'<svg xmlns="http://www.w3.org/2000/svg" class="ex-gift-svg-v198" data-gift-art-v198="'+id+'" data-mesh-art-v229="" viewBox="0 0 160 160" aria-hidden="true" focusable="false">'+body+'</svg>';
  const resolve=value=>models.has(value)?value:'fallback';
@@ -186,6 +302,6 @@
   for(const img of images){if(observer)observer.observe(img);else pending.add(img);}
   schedule();
  }
- function view(value,turn=0){const id=resolve(value);return shell(id,frame(id,.38+(Number.isInteger(turn)?turn%8:0)*PI/4));}
+ function view(value,turn=0,detail=false){const id=resolve(value);return shell(id,frame(id,.38+(Number.isInteger(turn)?turn%8:0)*PI/4,detail&&turn===0));}
  window.exstraGiftArtV198=Object.freeze({html,view,watch,ids:()=>[...models.keys()].filter(id=>id!=='fallback')});
 })();

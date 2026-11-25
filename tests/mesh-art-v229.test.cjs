@@ -4,8 +4,8 @@ const root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f
 const sandbox={window:{},performance};
 for(const file of ['mesh-art-v229.js','gift-art-v198.js'])vm.runInNewContext(read(file),sandbox,{filename:file});
 const art=sandbox.window.exstraGiftArtV198;
-const catalog=[...read('supabase-moons-v20.sql').matchAll(/^\('([^']+)','[^']+','[^']*',\d+,'[^']+','[^']+',(true|false),/gm)].map(m=>m[1]);
-assert.equal(catalog.length,37);
+const catalog=require('./gift-catalog-v233.fixture.cjs')().map(gift=>gift.id);
+assert.equal(catalog.length,43);
 assert.deepEqual(Array.from(art.ids()).sort(),catalog.sort());
 let maxFaces=0;
 for(const id of [...catalog,'fallback']){
@@ -22,4 +22,4 @@ for(const id of [...catalog,'fallback']){
  assert(!art.html(id).includes(' src='),id+' does not render until its catalog card becomes visible');
 }
 assert.equal(art.view('<script>'),art.view('fallback'));
-console.log('PASS V229: 37 catalog models, 8 views per model, maximum '+maxFaces+' visible faces, bounded stage, lazy previews.');
+console.log('PASS gift meshes: 43 catalog models, 8 views per model, maximum '+maxFaces+' visible faces, bounded stage, lazy previews.');
