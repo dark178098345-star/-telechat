@@ -12,6 +12,7 @@ create table if not exists exstra_gift_release_v233.editions (
   closes_at bigint not null,
   check (closes_at - opens_at = 604800000)
 );
+alter table exstra_gift_release_v233.editions enable row level security;
 revoke all on table exstra_gift_release_v233.editions from public, anon, authenticated, service_role;
 
 -- Existing purchases keep their historical snapshots; no wallet balances change.
