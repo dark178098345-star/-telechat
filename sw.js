@@ -1,4 +1,4 @@
-const CACHE_NAME='telechat-shell-v233-gift-week';
+const CACHE_NAME='telechat-shell-v233-gift-week-b';
 const APP_SHELL=[
   './acrylic-surfaces-v231.css?v=231',
   './mesh-art-v229.js?v=229',
@@ -19,7 +19,7 @@ const APP_SHELL=[
   './music-refresh-v199.css?v=199',
   './gift-art-v198.js?v=233',
   './wallet-recipients-v198.js?v=198',
-  './wallet-v198.css?v=233',
+  './wallet-v198.css?v=233b',
   './gift-card-v207.css?v=233',
   './gift-card-v207.js?v=233',
   './profile-gift-orbit-v233.css?v=233',
