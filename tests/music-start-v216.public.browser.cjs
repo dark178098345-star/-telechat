@@ -18,7 +18,7 @@ const {fixtureClient}=require('./runtime-v180.browser.cjs');
       const page = await context.newPage(), errors = [];
       page.on('pageerror', error => errors.push(error.message));
       await page.goto('https://dark178098345-star.github.io/-telechat/?v=230&music-qa='+Date.now(), { waitUntil:'domcontentloaded' });
-      await page.waitForFunction(() => window.exstraWhatsNewV181?.version === 230 && !document.getElementById('startup-loader'));
+      await page.waitForFunction(() => window.exstraWhatsNewV181?.version >= 230 && !document.getElementById('startup-loader'));
       assert.equal(await page.locator('#app-restart-open-v216').count(),1);
       await page.locator('#l-login').fill('alice');
       await page.locator('#l-pass').fill('fixture-only');

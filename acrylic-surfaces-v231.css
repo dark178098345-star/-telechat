@@ -1,0 +1,38 @@
+/* Small, static translucent surfaces. No backdrop sampling, noise textures or extra animations. */
+html body :is(.contact-menu.show,.ctx-menu-v36.show,#attachment-menu-v141:not([hidden]),#quick-jump-v154[open]),
+html body:not(.telechat-phone-v159) #settings-panel.side-panel.v65-full-panel.settings-screens-v226.open{
+ --acrylic-paper:var(--bg2,#181b22);
+ --acrylic-glow:color-mix(in srgb,var(--accent3,#99b4df) 17%,transparent);
+ --acrylic-edge:color-mix(in srgb,var(--text,#f4f4ff) 16%,transparent);
+ --acrylic-density:90%;
+ background:radial-gradient(95% 170px at 89% -28px,var(--acrylic-glow),transparent 100%),
+   linear-gradient(150deg,#ffffff08,transparent 46%),
+   color-mix(in srgb,var(--acrylic-paper) var(--acrylic-density),transparent)!important;
+ border-color:var(--acrylic-edge)!important;
+ -webkit-backdrop-filter:none!important;backdrop-filter:none!important;
+}
+html body #quick-jump-v154[open]{--acrylic-paper:var(--qj-bg);--acrylic-density:94%}
+html body :is(.contact-menu.show,.ctx-menu-v36.show,#attachment-menu-v141:not([hidden])){--acrylic-density:94%}
+html body.theme-light :is(.contact-menu.show,.ctx-menu-v36.show,#attachment-menu-v141:not([hidden]),#quick-jump-v154[open]),
+html body.theme-light:not(.telechat-phone-v159) #settings-panel.side-panel.v65-full-panel.settings-screens-v226.open{
+ --acrylic-density:95%;--acrylic-glow:color-mix(in srgb,var(--accent3,#6352a0) 12%,transparent)
+}
+html body:not(.telechat-phone-v159) #settings-panel.side-panel.v65-full-panel.settings-screens-v226 .panel-head{
+ background:linear-gradient(135deg,color-mix(in srgb,var(--bg2) 94%,var(--accent3) 6%),var(--bg2))!important
+}
+html body.telechat-full-panel-open-v65:has(#settings-panel.open) #overlay.show{
+ background:#05070e78!important;
+ -webkit-backdrop-filter:none!important;backdrop-filter:none!important
+}
+html body #quick-jump-v154[open]::backdrop{background:#080b136c;-webkit-backdrop-filter:none;backdrop-filter:none}
+@media(max-width:730px){
+ html body :is(.contact-menu.show,.ctx-menu-v36.show,#attachment-menu-v141:not([hidden]),#quick-jump-v154[open]){
+  --acrylic-density:96%
+ }
+}
+@media(prefers-reduced-transparency:reduce),(forced-colors:active){
+ html body :is(.contact-menu.show,.ctx-menu-v36.show,#attachment-menu-v141:not([hidden]),#quick-jump-v154[open]),
+ html body:not(.telechat-phone-v159) #settings-panel.side-panel.v65-full-panel.settings-screens-v226.open{
+  background:var(--acrylic-paper)!important
+ }
+}

@@ -14,5 +14,30 @@ async function fixture(browser){const p=await browser.newPage();await p.route('h
  p=await fixture(b);await p.evaluate(()=>telechatMusicHubV117.open());await p.evaluate(()=>{fixture.tracks=fixture.tracks.filter(t=>t.id!=='old');const now=Date.now;Date.now=()=>now()+46000;telechatMusicHubV117.close();});await p.evaluate(()=>telechatMusicHubV117.open());await p.locator('.mh-nav [data-view=library]').click();results.deletedSavedMetadata=await p.locator('.mh-track[data-track=old]').count()===0;await p.close();
  p=await fixture(b);await p.evaluate(()=>{fixture.holdLibrary=true;window.firstOpen=telechatMusicHubV117.open();});await p.waitForFunction(()=>fixture.held.length===1);await p.evaluate(async()=>{me={nick:'alice',name:'New Alice session',pass:'fixture'};fixture.libraries.alice.saved=['new'];dispatchEvent(new Event('telechat-account-ready-v175'));await telechatMusicHubV117.open();fixture.held[0]();await firstOpen;});await p.locator('.mh-nav [data-view=library]').click();results.sameAccountNewSession=await p.locator('.mh-track-title').textContent()==='New metadata';await p.close();
  p=await fixture(b);await p.evaluate(()=>telechatMusicHubV117.open());await p.locator('.mh-track-artist').first().click();await p.waitForFunction(()=>document.querySelector('.mh-profile-identity h1')?.textContent==='Artist');await p.evaluate(()=>{window.userCache={artist:{nick:'artist',name:'Updated artist',av:1}};dispatchEvent(new CustomEvent('telechat-user-updated-v123',{detail:{nick:'artist'}}));});results.profileInvalidation=await p.locator('.mh-profile-identity h1').textContent()==='Updated artist';await p.close();
+ if(!baseline){
+  p=await fixture(b);
+  await p.clock.install();
+  await p.addStyleTag({content:'#mh-scroll{max-height:240px;overflow:auto}.mh-track{min-height:42px}'});
+  await p.evaluate(async()=>{
+   fixture.tracks=Array.from({length:60},(_,i)=>({...fixture.tracks[0],id:'track'+i,title:'Track '+i,cover_url:'https://music-cache.test/art/'+i+'.png'}));
+   await telechatMusicHubV117.open();
+   await telechatMusicV96.playTrack(fixture.tracks[0]);
+   window.audioWidget=document.createElement('iframe');telechatMusicHubV117.getPlayerHost().append(audioWidget);
+   const scroll=document.getElementById('mh-scroll');scroll.scrollTop=425;window.savedTop=scroll.scrollTop;window.musicReads=fixture.calls.length;
+  });
+  const before=await p.locator('#mh-content img').count(),nodes=await p.locator('#mh-content *').count();
+  assert(before>=60&&nodes>500);
+  await p.evaluate(()=>telechatMusicHubV117.close());
+  assert.equal(await p.locator('#mh-content img').count(),before,'A quick reopen still reuses warm art');
+  await p.clock.fastForward(12200);
+  assert.equal(await p.locator('#mh-content *').count(),0,'Closed hub releases the entire rendered collection');
+  assert(await p.evaluate(()=>audioWidget.isConnected&&!telechatMusicV96.getState().paused),'Release leaves the live audio and SoundCloud host intact');
+  await p.evaluate(()=>telechatMusicHubV117.open());
+  assert.equal(await p.locator('#mh-content img').count(),before);
+  assert(await p.evaluate(()=>document.getElementById('mh-scroll').scrollTop===savedTop&&savedTop>0),'Scroll position survives releasing the view');
+  assert.equal(await p.evaluate(()=>fixture.calls.length),await p.evaluate(()=>musicReads),'Warm data is reused without another library call');
+  console.log('V231 closed music fixture: '+before+' cover elements and '+nodes+' descendant elements released.');
+  await p.close();
+ }
  console.log(JSON.stringify(results));if(baseline){assert(Object.values(results).some(v=>!v));console.log('BASELINE reproduced stale hub metadata/account results; isolated fixtures only.');}else{for(const [name,ok]of Object.entries(results))assert(ok,name);console.log('PASS music hub cache: stable self avatar, author/profile invalidation, saved/deleted metadata refresh, account generation isolation.');}
 }finally{await b.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

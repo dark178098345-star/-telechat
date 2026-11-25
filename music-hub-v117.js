@@ -24,6 +24,7 @@
   let openVersionV199=0,renderVersionV199=0,renderMarkupV199='',playerViewV199='',queueMarkupV199='',libraryFlightV199=null,feedFlightV199=null;
   let generationV212=0,sheetVersionV212=0,publicationVersionV212=0,importVersionV212=0,profileVersionV212=0,playerTrackViewV212='',catalogRevisionV212=0,libraryRevisionV212=0;
   let linkCheckV217=null,motionViewV220='';
+  let releaseViewTimer=0,savedScroll=null;
   const requestsV212=new Set(),catalogAtV212=new Map(),catalogVersionsV212=new Map(),profileFlightsV212=new Map(),authorViewsV212=new Map();
   const captureV212=()=>({owner:state.owner,epoch:generationV212});
   const currentV212=ctx=>!!ctx.owner&&ctx.owner===state.owner&&ctx.owner===user()?.nick&&ctx.epoch===generationV212;
@@ -35,6 +36,7 @@
     generationV212++;state.request++;openVersionV199++;profileVersionV212++;publicationVersionV212++;importVersionV212++;
     for(const controller of requestsV212)controller.abort();libraryFlightV199=feedFlightV199=null;profileFlightsV212.clear();catalogAtV212.clear();catalogVersionsV212.clear();authorViewsV212.clear();catalogRevisionV212=libraryRevisionV212=0;
     publishing=false;importing=false;importPlaylist='';closeSheet();clearTimeout(searchTimer);searchTimer=0;
+    releaseView(true);
     state.owner=next;state.catalog.clear();state.feed=[];state.saved.clear();state.liked.clear();state.playlists=[];state.view='home';state.query='';state.profile=next;state.local=[];state.queue=[];state.waveActive=false;state.profiles.clear();state.genre='';state.selectedPlaylist='';state.offset=0;state.more=true;state.loading=false;state.server=true;state.busy.clear();state.feedAt=state.libraryAt=state.localAt=0;state.feedKey='';
     renderMarkupV199='';queueMarkupV199='';playerViewV199='';playerTrackViewV212='';if($('mh-search'))$('mh-search').value='';
   }
@@ -107,6 +109,7 @@
   async function open() {
     if(!user()?.nick){toast('Сначала войди в аккаунт');return;}
     const firstOpen=!state.opened;if(firstOpen)motionViewV220='';
+    clearTimeout(releaseViewTimer);releaseViewTimer=0;
     ensure();lastFocus=document.activeElement;state.opened=true;root.hidden=false;document.body.classList.add('music-hub-open-v117');document.querySelector('.music-entry-v96')?.setAttribute('aria-expanded','true');
     const changed=state.owner!==user().nick;
     if(changed)resetOwnerV212(user().nick);
@@ -121,7 +124,35 @@
     render();syncPlayer(core()?.getState());
     const shared=new URL(location.href).searchParams.get('music');if(shared){await openShared(shared);}
   }
-  function close(){if(publishing){toast('Подожди, трек ещё публикуется');return;}openVersionV199++;clearTimeout(searchTimer);searchTimer=0;state.opened=false;if(root)root.querySelectorAll('.mh-profile-avatar video').forEach(v=>v.pause());if(root){setNow(false);root.hidden=true;}closeSheet();document.body.classList.remove('music-hub-open-v117');document.querySelector('.music-entry-v96')?.setAttribute('aria-expanded','false');lastFocus?.focus?.({preventScroll:true});}
+  // Keep the short reopen fast; release heavy decoded images and duplicate HTML after a longer close.
+  function rememberScroll(){
+    const scroll=$('mh-scroll');if(!scroll||!$('mh-content')?.childElementCount)return;
+    savedScroll={top:scroll.scrollTop,shelves:[...scroll.querySelectorAll('[data-shelf-v171]')].map(n=>[n.dataset.shelfV171,n.scrollLeft])};
+  }
+  function releaseView(reset=false){
+    clearTimeout(releaseViewTimer);releaseViewTimer=0;
+    if(!root||(!reset&&state.opened))return;
+    if(reset)savedScroll=null;
+    // The separate mh-cloud-host owns live SoundCloud. Do not touch it or the audio core.
+    for(const id of ['mh-content','mh-queue','mh-now-art','mh-player-art','mh-notice'])$(id)?.replaceChildren();
+    renderMarkupV199=queueMarkupV199=playerViewV199=playerTrackViewV212='';
+    if(reset){
+      const self=root.querySelector('.mh-self');if(self){self.replaceChildren();delete self.avatarKeyV199;}
+      root.removeAttribute('data-playing-id');
+    }
+  }
+  function close(){
+    if(publishing){toast('Подожди, трек ещё публикуется');return;}
+    if(state.opened){
+      rememberScroll();
+      if(!releaseViewTimer)releaseViewTimer=setTimeout(releaseView,12000);
+    }
+    openVersionV199++;clearTimeout(searchTimer);searchTimer=0;state.opened=false;
+    if(root){root.querySelectorAll('.mh-profile-avatar video').forEach(v=>v.pause());setNow(false);root.hidden=true;}
+    closeSheet();document.body.classList.remove('music-hub-open-v117');
+    document.querySelector('.music-entry-v96')?.setAttribute('aria-expanded','false');
+    const opener=lastFocus;lastFocus=null;opener?.focus?.({preventScroll:true});
+  }
   async function boundedV199(query,timeout=10000,ctx=captureV212()){assertV212(ctx);const controller=new AbortController();requestsV212.add(controller);let timer;if(query.abortSignal)query=query.abortSignal(controller.signal);const expired=new Promise((_,reject)=>{if(timeout>0)timer=setTimeout(()=>{reject(Error('Музыка загружается дольше обычного. Попробуй обновить раздел.'));controller.abort();},timeout);controller.signal.addEventListener('abort',()=>{const error=new Error('Запрос музыки отменён');error.code=currentV212(ctx)?'MUSIC_CANCELLED':'MUSIC_CONTEXT_CHANGED';reject(error);},{once:true});});try{const value=await Promise.race([query,expired]);assertV212(ctx);return value;}finally{clearTimeout(timer);requestsV212.delete(controller);}}
   async function profiles(nicks,full=false) {
     const ctx=captureV212(),missing=[...new Set(nicks)].filter(n=>{const p=state.profiles.get(n);return n&&(!p||Date.now()-(p._atV212||0)>=60000||full&&(!p._fullV199||Date.now()-(p._fullAtV212||0)>=60000));});if(!missing.length)return;
@@ -203,7 +234,7 @@
       if(state.view==='home'&&state.more&&items.length)content+=`<button class="mh-load-more" data-action="load-more" ${state.loading?'disabled':''}>${state.loading?'Загружаем…':'Показать ещё'}</button>`;
     }
     const view=JSON.stringify([state.view,state.view==='profile'?state.profile:state.view==='playlist'?state.selectedPlaylist:'']),viewChanged=!!motionViewV220&&motionViewV220!==view;motionViewV220=view;
-    if(content!==renderMarkupV199){const scroll=$('mh-scroll'),top=scroll.scrollTop,shelves=[...scroll.querySelectorAll('[data-shelf-v171]')].map(n=>[n.dataset.shelfV171,n.scrollLeft]);const body=$('mh-content'),previousEmpty=body.querySelector('[data-empty-view-v218]')?.dataset.emptyViewV218;body.innerHTML=content;const nextEmpty=body.querySelector('[data-empty-view-v218]');if(nextEmpty&&nextEmpty.dataset.emptyViewV218===previousEmpty)nextEmpty.querySelector('.es-animate')?.classList.remove('es-animate');renderMarkupV199=content;renderVersionV199++;scroll.scrollTop=top;for(const [key,left] of shelves){const shelf=[...scroll.querySelectorAll('[data-shelf-v171]')].find(n=>n.dataset.shelfV171===key);if(shelf)shelf.scrollLeft=left;}if(viewChanged)window.exstraMotionV184?.reveal(body,'section');}syncPlayer(core()?.getState());
+    if(content!==renderMarkupV199){const scroll=$('mh-scroll'),body=$('mh-content'),restore=body.childElementCount?null:savedScroll,top=restore?.top??scroll.scrollTop,shelves=restore?.shelves??[...scroll.querySelectorAll('[data-shelf-v171]')].map(n=>[n.dataset.shelfV171,n.scrollLeft]);savedScroll=null;const previousEmpty=body.querySelector('[data-empty-view-v218]')?.dataset.emptyViewV218;body.innerHTML=content;const nextEmpty=body.querySelector('[data-empty-view-v218]');if(nextEmpty&&nextEmpty.dataset.emptyViewV218===previousEmpty)nextEmpty.querySelector('.es-animate')?.classList.remove('es-animate');renderMarkupV199=content;renderVersionV199++;scroll.scrollTop=top;for(const [key,left] of shelves){const shelf=[...scroll.querySelectorAll('[data-shelf-v171]')].find(n=>n.dataset.shelfV171===key);if(shelf)shelf.scrollLeft=left;}if(viewChanged)window.exstraMotionV184?.reveal(body,'section');}syncPlayer(core()?.getState());
   }
   function resolveTrack(id){return state.catalog.get(id)||state.local.find(t=>t.id===id);}
   function playable(t){return {...t,kind:t.kind||'link',owner:state.owner,artist:t.artist||t.author_nick||'Моя музыка'};}
@@ -232,7 +263,7 @@
     try{await api(kind,{track_id:id,enabled},ctx);assertV212(ctx);enabled?set.add(id):set.delete(id);if(kind==='like'){const t=state.catalog.get(id);if(t)rememberTracksV212([{...t,likes_count:Math.max(0,(t.likes_count||0)+(enabled?1:-1))}]);}render();}catch(error){if(currentV212(ctx))toast(err(error));}finally{state.busy.delete(key);}
   }
   function sheet(title,html){ensure();linkCheckV217?.dispose();linkCheckV217=null;const version=++sheetVersionV212;$('mh-sheet-title').textContent=title;$('mh-sheet-body').innerHTML=html;$('mh-sheet').hidden=false;setTimeout(()=>{if(version===sheetVersionV212&&!$('mh-sheet').hidden)$('mh-sheet').querySelector('input,button')?.focus();},0);}
-  function closeSheet(){if(publishing)return;linkCheckV217?.dispose();linkCheckV217=null;sheetVersionV212++;if($('mh-sheet'))$('mh-sheet').hidden=true;if(coverPreview)URL.revokeObjectURL(coverPreview);coverPreview='';if(uploadObjectUrl)URL.revokeObjectURL(uploadObjectUrl);uploadObjectUrl='';uploadFile=null;coverFile=null;}
+  function closeSheet(){if(publishing)return;linkCheckV217?.dispose();linkCheckV217=null;sheetVersionV212++;if($('mh-sheet')){$('mh-sheet').hidden=true;$('mh-sheet-body')?.replaceChildren();}if(coverPreview)URL.revokeObjectURL(coverPreview);coverPreview='';if(uploadObjectUrl)URL.revokeObjectURL(uploadObjectUrl);uploadObjectUrl='';uploadFile=null;coverFile=null;}
   // Validate on demand, not by crawling the library. Media loading works even
   // when a host does not allow CORS; an optional HEAD only explains failures.
   async function explainLinkFailureV217(url,signal,error){
